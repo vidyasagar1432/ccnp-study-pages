@@ -1,0 +1,3167 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routing Fundamentals — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 09 Routing Fundamentals: the routing table and RIB, Administrative Distance and metrics, recursive lookup, the FIB, CEF and the adjacency table, static, floating static and default routes, route summarization and the four dynamic routing families.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Routing Fundamentals — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[13px] font-black tracking-tight text-white">RF</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Routing Fundamentals</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 09</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 09</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">12 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 09 &mdash; Routing Fundamentals</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">How a router decides where a packet goes: the structures behind the decision, the static tools for fixing it in place, and the summarization and protocol work that keeps a large table small.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Routing Fundamentals &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 09 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `A router forwards a packet by looking up its destination, and everything else in this level is about how that lookup gets filled in. **[[RIB]]** decides where traffic should go, **[[FIB]]** forwards it, and **[[CEF]]** is the architecture that ties them together. Then the static tools — [[Static Routing]], [[Floating Static]] and the [[Default Route]] — and the two things that keep a large table small: [[Summarization]] and [[Dynamic Routing]].`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'structures', title: 'Routing Table',
+            blurb: 'Route sources, the [AD/metric] notation, route codes, and why longest prefix match comes first',
+            overview: 'The **[[Routing Table|routing table]]**, also called the **[[RIB]] (Routing Information Base)**, is the control-plane database holding the **best route to each known destination prefix**. Routes arrive from connected networks, static configuration or dynamic routing protocols, and the router installs the winner or the equal-cost set into it.',
+            keyIdea: 'The RIB decides where traffic should go; the FIB forwards traffic. Longest prefix match, then AD, then metric — in that order.',
+            sections: [
+              { kind: 'para', h: 'Where the routes come from', p: 'Three sources feed the table. A **connected** route exists because an interface is up with an address. A **static** route was typed by an administrator. A **dynamic** route was learned from a routing protocol. Each source has an Administrative Distance that says how much it is trusted.' },
+              { kind: 'code', h: 'The three sources', code:
+`  Connected  ->  an interface is up with an address
+  Static     ->  configured by an administrator
+  Dynamic    ->  learned from a routing protocol
+
+  Each one has an Administrative Distance.` },
+              { kind: 'table', h: 'The route codes you will see', cols: ['Code', 'Meaning'], rows: [
+                ['C', 'A directly connected network'],
+                ['L', 'The router’s own interface address, /32'],
+                ['S', 'A static route'],
+                ['S*', 'A static default route that is the gateway of last resort'],
+                ['D', 'EIGRP'],
+                ['O', 'OSPF intra-area'],
+                ['O IA', 'OSPF inter-area'],
+                ['O E1 / O E2', 'OSPF external Type 1 and Type 2'],
+                ['O N1 / O N2', 'OSPF NSSA external Type 1 and Type 2'],
+                ['B', 'BGP'],
+                ['i', 'An iBGP route']
+              ]},
+              { kind: 'para', h: 'Connected against Local', p: 'Both appear for the same interface and they are different things. %%C%% is the **network** the interface belongs to. %%L%% is the **router’s own IP address**, advertised as a /32 so traffic addressed to the router itself is delivered locally rather than forwarded.' },
+              { kind: 'code', h: 'C and L for one interface', code:
+`  C    192.168.1.0/24   is directly connected
+  L    192.168.1.1/32   is THIS router's own address
+
+  Do not say the L route is what routing protocols
+  advertise. Routing protocols advertise the network.` },
+              { kind: 'code', h: 'Reading the output', code:
+`  show ip route
+
+  Gateway of last resort is 192.0.2.1 to network 0.0.0.0
+
+  C    192.168.1.0/24 is directly connected, Gi0/0
+  L    192.168.1.1/32 is directly connected, Gi0/0
+  D     10.10.0.0/16 [90/2172416] via 192.0.2.2, 00:10:11, Gi0/1
+  O     10.20.0.0/16 [110/20] via 192.0.2.6, 00:04:52, Gi0/2
+  S     172.16.0.0/12 [1/0] via 192.0.2.10
+  S*    0.0.0.0/0 [1/0] via 192.0.2.1` },
+              { kind: 'table', h: 'What the square brackets mean', cols: ['Part', 'Meaning'], rows: [
+                ['[90/2172416]', 'AD 90, metric 2172416 — an EIGRP internal route'],
+                ['[110/20]', 'AD 110, metric 20 — an OSPF route with cost 20'],
+                ['[1/0]', 'AD 1, metric 0 — a static route'],
+                ['via 192.0.2.2', 'The next-hop address'],
+                ['00:10:11', 'How long the route has been in the table'],
+                ['Gi0/1', 'The exit interface']
+              ]},
+              { kind: 'para', h: 'The order of the decision', p: 'Three steps, always in this order. **Longest prefix match** picks the most specific matching prefix. Among the routes to that prefix, **Administrative Distance** picks the source. Within that source, the **metric** picks the path. Getting these out of order is the most common exam mistake in the topic.' },
+              { kind: 'code', h: 'The three steps', code:
+`  1. Longest prefix match   -> which prefix matches
+  2. Administrative Distance -> which source to trust
+  3. Metric                 -> which path within that source
+
+  NOT: AD first, then prefix.
+  A /24 beats a /8 no matter what the ADs say.` },
+              { kind: 'code', h: 'A concrete example', code:
+`  Routes installed:
+    S    10.0.0.0/8      [1/0]      via 192.0.2.1
+    O    10.10.10.0/24   [110/20]   via 192.0.2.6
+
+  Traffic to 10.10.10.5
+
+  1. Prefixes matching: /8 and /24
+  2. /24 is longer  -> OSPF route wins
+  3. The static route with AD 1 is not used.
+
+  Lower AD does NOT beat a more specific prefix.` },
+              { kind: 'para', h: 'Equal-cost multipath', p: '"One route per prefix" is an oversimplification. When several paths to the same prefix qualify at the same metric, the router installs **all of them** and the data plane shares the traffic across them. That is ECMP, and it is why a single prefix can legitimately have more than one next hop.' },
+              { kind: 'code', h: 'ECMP in the table', code:
+`  O     10.30.0.0/16 [110/20]
+        via 192.0.2.6, 00:04:52, Gi0/2
+        via 192.0.2.10, 00:04:52, Gi0/3
+
+  Two installed next hops, equal cost.
+  The RIB installs the best route OR qualifying
+  equal-cost paths.` },
+              { kind: 'table', h: 'The table against the FIB against CEF', cols: ['Structure', 'Plane', 'Job'], rows: [
+                ['RIB', 'Control plane', 'Holds the selected best routes'],
+                ['FIB', 'Data plane', 'The forwarding lookup structure, derived from the RIB'],
+                ['Adjacency table', 'Data plane', 'The Layer 2 next-hop details CEF attaches to a FIB entry'],
+                ['CEF', 'Both', 'The forwarding architecture that uses the FIB and adjacency information together']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip route 10.10.10.0
+  show ip route ospf
+  show ip route static
+  show ip protocols
+  show ip route summary` }
+            ],
+            commands: [
+              { label: 'Read the whole table and one prefix', code:
+`show ip route
+show ip route 10.10.10.0` },
+              { label: 'Filter by source', code:
+`show ip route ospf
+show ip route static
+show ip route connected` },
+              { label: 'Summarise what is installed', code:
+`show ip route summary
+show ip protocols` }
+            ],
+            traps: [
+              'The router does not forward packets directly using the routing table. The **RIB** is the control-plane database and the **FIB**, derived from it, is what the data plane uses.',
+              'AD and the metric answer different questions. Different sources use AD; the best path within one source uses the metric.',
+              '%%C%% is the connected network and %%L%% is the router’s own interface address. Do not say the L route is what routing protocols advertise.',
+              '"One route per prefix" is an oversimplification. Equal-cost paths mean a prefix can have several installed next hops.',
+              'Lower AD does not always win. Longest prefix match comes first, so a /24 beats a /8 regardless of AD.',
+              'A lowercase %%o%% is not an OSPF NSSA route. NSSA externals are %%O N1%% and %%O N2%%.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Other name', 'The RIB, the Routing Information Base'],
+                ['Plane', 'Control plane'],
+                ['Purpose', 'Hold the best route to each known prefix'],
+                ['Sources', 'Connected, static and dynamic'],
+                ['Route code C', 'Directly connected network'],
+                ['Route code L', 'The router’s own address, /32'],
+                ['Route code S', 'Static'],
+                ['Route code S*', 'A static default, the gateway of last resort'],
+                ['Route code D', 'EIGRP'],
+                ['Route codes O', 'OSPF, with IA, E1, E2, N1 and N2 variants'],
+                ['Bracket notation', '[AD/metric]'],
+                ['Decision 1', 'Longest prefix match'],
+                ['Decision 2', 'Administrative Distance among sources'],
+                ['Decision 3', 'Metric within the chosen source'],
+                ['ECMP', 'Several equal-cost next hops for one prefix'],
+                ['Forwarding', 'The FIB, not the RIB directly'],
+                ['Main command', 'show ip route']
+              ]
+            },
+            related: [
+              { t: '02. Administrative Distance', d: 'the second step of the decision' },
+              { t: '05. FIB', d: 'what the table is turned into' },
+              { t: '06. RIB', d: 'this same structure, in depth' }
+            ],
+            glossary: ['Routing Table', 'RIB', 'FIB', 'CEF', 'Administrative Distance', 'Metrics', 'Control Plane', 'Data Plane', 'Static Routing', 'Default Route']
+          },
+          {
+            id: 't02', num: '02', group: 'structures', title: 'Administrative Distance',
+            blurb: 'The 0–255 trust ranking, the default values worth memorising, and why AD is a local decision',
+            overview: '**[[Administrative Distance|Administrative Distance (AD)]]** is a Cisco value from **0 to 255** that ranks how much a routing source is trusted. When the same prefix is learned from several sources, AD decides which source gets installed in the [[RIB]].',
+            keyIdea: 'Lower AD is more trusted. AD picks the source; the metric picks the path inside that source. AD is local and is never advertised.',
+            sections: [
+              { kind: 'table', h: 'The default values worth knowing', cols: ['Source', 'AD'], rows: [
+                ['Connected', '0'],
+                ['Static', '1'],
+                ['EIGRP summary', '5'],
+                ['eBGP', '20'],
+                ['EIGRP internal', '90'],
+                ['IGRP', '100'],
+                ['OSPF', '110'],
+                ['IS-IS', '115'],
+                ['RIP', '120'],
+                ['EIGRP external', '170'],
+                ['iBGP', '200'],
+                ['Unknown or unusable', '255']
+              ]},
+              { kind: 'code', h: 'The comparison', code:
+`  AD 90   vs   AD 110
+     |            |
+     v            v
+  EIGRP        OSPF
+
+  The route with AD 90 wins.
+  Lower is better.` },
+              { kind: 'para', h: 'AD against the metric', p: 'This is the single most examined distinction in the topic. AD is only consulted when the candidate routes come from **different** sources. Once a source has been chosen, its own metric decides which of its paths is best — and metrics from different protocols cannot be compared at all.' },
+              { kind: 'code', h: 'Two different questions', code:
+`  Different routing sources
+       |
+       v
+  Administrative Distance
+       |
+       v
+  "Which routing source should I trust?"
+
+
+  Same routing protocol
+       |
+       v
+  Metric
+       |
+       v
+  "Which path within that protocol is best?"` },
+              { kind: 'code', h: 'Reading it in the output', code:
+`  O     10.10.0.0/16 [110/20] via 192.0.2.6
+                       ^    ^
+                       |    |
+                       AD   metric
+
+  110 is the AD.
+  20 is the OSPF cost.
+  They are not the same number and not the same idea.` },
+              { kind: 'para', h: 'AD is local', p: 'AD is **not** an attribute that is advertised between routers. Changing it on one router changes only that router’s own preference between its local sources. It does not change what any neighbour believes, and it is not a way to influence another router’s choice.' },
+              { kind: 'code', h: 'Scope of AD', code:
+`  R1 changes AD for OSPF locally.
+       |
+       +-- R1's own route-source preference changes
+       +-- R2 is unaffected
+       +-- nothing is advertised
+
+  AD is a local trust ranking, not a route attribute.` },
+              { kind: 'para', h: 'Changing it', p: 'You can adjust AD for a source, and a static route can be given a much larger AD so that it only installs when the better source is gone — which is exactly what a floating static route is. The command sets the distance on the route or the protocol.' },
+              { kind: 'code', h: 'Changing AD', code:
+`  ! a floating static: AD above OSPF's 110
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1 150
+
+  ! adjust a protocol's AD in one direction
+  router ospf 1
+   distance 120
+
+  ! or only for one neighbour
+  router ospf 1
+   distance 110 192.0.2.2 0.0.0.0` },
+              { kind: 'para', h: 'AD and redistribution', p: 'When a route is redistributed between protocols it keeps competing on AD in its new home, so the AD of the source it came from matters. A redistributed route also picks up the external AD of the receiving protocol — which is why EIGRP external sits at 170.' },
+              { kind: 'table', h: 'Where AD applies', cols: ['Situation', 'What decides'], rows: [
+                ['Same prefix, different sources', 'Administrative Distance'],
+                ['Same prefix, same source', 'The protocol’s metric'],
+                ['Different prefixes', 'Longest prefix match, before either of them'],
+                ['Between neighbours', 'AD is not exchanged at all'],
+                ['After redistribution', 'The route competes on AD in the new protocol']
+              ]},
+              { kind: 'code', h: 'The traps in one block', code:
+`  Connected 0  ->  beats everything for the same prefix
+  Static    1  ->  normally beats dynamic routes
+  eBGP 20 vs iBGP 200  ->  very different, memorise both
+  EIGRP 90 internal vs 170 external  ->  do not swap them` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip protocols
+  show ip route 10.10.0.0 longer-prefixes
+  debug ip routing` }
+            ],
+            commands: [
+              { label: 'See the AD in the table', code:
+`show ip route
+show ip route 10.10.0.0` },
+              { label: 'Change the AD of a static route', code:
+`ip route 10.1.1.0 255.255.255.0 192.0.2.1 150` },
+              { label: 'Change a protocol AD', code:
+`router ospf 1
+ distance 120` }
+            ],
+            traps: [
+              'Lower AD wins. AD 90 beats AD 110.',
+              'AD is not the metric. In %%[110/20]%%, 110 is the AD and 20 is the metric.',
+              'AD compares **sources**, not paths. The metric decides the best path inside one protocol.',
+              'eBGP is 20 and iBGP is 200. Those two values are far apart and both are examined.',
+              'EIGRP internal is 90 and EIGRP external is 170. Do not swap them.',
+              'A normal static route has AD 1, so it normally beats EIGRP 90, OSPF 110 and RIP 120 for the same prefix.',
+              'Connected routes have AD 0, so they beat static and dynamic routes for the same prefix.',
+              'AD is local. It is not advertised, so changing it on one router does not change what a neighbour uses.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Administrative Distance'],
+                ['Range', '0 to 255'],
+                ['Purpose', 'Rank routing sources'],
+                ['Lower or higher', 'Lower is better'],
+                ['Connected', '0'],
+                ['Static', '1'],
+                ['EIGRP summary', '5'],
+                ['eBGP', '20'],
+                ['EIGRP internal', '90'],
+                ['IGRP', '100'],
+                ['OSPF', '110'],
+                ['IS-IS', '115'],
+                ['RIP', '120'],
+                ['EIGRP external', '170'],
+                ['iBGP', '200'],
+                ['Unknown or unusable', '255'],
+                ['Scope', 'Local route-source selection'],
+                ['Metric scope', 'Path selection within a protocol'],
+                ['Displayed as', '[AD/metric]'],
+                ['Main command', 'show ip route']
+              ]
+            },
+            related: [
+              { t: '03. Metrics', d: 'the other half of the decision' },
+              { t: '09. Floating Static', d: 'AD used deliberately as a backup' },
+              { t: '01. Routing Table', d: 'where it is applied' }
+            ],
+            glossary: ['Administrative Distance', 'Metrics', 'Routing Table', 'RIB', 'Static Routing', 'EIGRP', 'OSPF', 'BGP', 'Control Plane']
+          },
+          {
+            id: 't03', num: '03', group: 'structures', title: 'Metrics',
+            blurb: 'OSPF cost and reference bandwidth, the EIGRP composite and K values, and RIP’s 15-hop ceiling',
+            overview: 'A **[[Metrics|routing metric]]** is the value a routing protocol uses to measure how good a path is. It only decides between paths from the **same** protocol — across protocols the router uses [[Administrative Distance|AD]] instead, and metrics from different protocols cannot be compared.',
+            keyIdea: 'Different sources use AD; the same source uses its metric. OSPF, EIGRP, RIP and IS-IS each measure cost in completely different units.',
+            sections: [
+              { kind: 'table', h: 'The four metrics at a glance', cols: ['Protocol', 'Metric', 'Direction'], rows: [
+                ['OSPF', 'Cost, from bandwidth', 'Lower is better'],
+                ['EIGRP', 'A composite of bandwidth and delay by default', 'Lower is better'],
+                ['RIP', 'Hop count', 'Lower is better'],
+                ['IS-IS', 'Cost, from bandwidth', 'Lower is better']
+              ]},
+              { kind: 'para', h: 'OSPF cost', p: 'OSPF cost is **reference bandwidth divided by interface bandwidth**. The classic reference is 100 Mbit/s, which is why a 100 Mbit/s link is cost 1 — and also why a 1 Gbit/s and a 10 Gbit/s link are **both** cost 1. That is a defect of the default, not a design.' },
+              { kind: 'code', h: 'The cost formula', code:
+`  Cost = reference bandwidth / interface bandwidth
+
+  Classic reference = 100 Mbit/s
+
+    100 Mbit/s  ->  100/100   = 1
+      1 Gbit/s  ->  100/1000  = 1   (rounded up to 1)
+     10 Gbit/s  ->  100/10000 = 1   (also 1)
+
+  Everything fast looks identical.` },
+              { kind: 'para', h: 'Fixing the reference bandwidth', p: 'The standard practice on a modern network is to raise the reference so fast links cost different amounts. The command sets the reference in Mbit/s, and it has to match on every router in the area or the costs — and therefore the paths — will disagree.' },
+              { kind: 'code', h: 'Raising the reference', code:
+`  router ospf 1
+   auto-cost reference-bandwidth 100000
+
+  100000 Mbit/s as the reference:
+
+    1 Gbit/s  -> 100
+    10 Gbit/s -> 10
+    100 Gbit/s -> 1
+
+  Set it consistently across the area.` },
+              { kind: 'para', h: 'OSPF cost is cumulative', p: 'The cost of a path is the sum of the outgoing interface costs along it, not just the cost of the last link. This is the difference between an interface cost and a path cost.' },
+              { kind: 'code', h: 'Adding it up', code:
+`  R1 ----10---- R2 ----20---- R3
+
+  Cost from R1 to R3 = 10 + 20 = 30
+
+  Do not use only the destination interface cost.` },
+              { kind: 'para', h: 'Setting a cost by hand', p: 'Cost can be set directly on an interface to steer the path. It overrides the calculated value, which is useful when the bandwidth does not reflect what you actually want.' },
+              { kind: 'code', h: 'Manual cost', code:
+`  interface GigabitEthernet0/0
+   ip ospf cost 50` },
+              { kind: 'para', h: 'The EIGRP composite metric', p: 'EIGRP builds a composite metric from bandwidth, delay, load and reliability, weighted by **K values**. The defaults are K1 = 1, K2 = 0, K3 = 1, K4 = 0, K5 = 0, which means the default metric is effectively **bandwidth plus delay** — load and reliability are not normally part of it.' },
+              { kind: 'code', h: 'The K values', code:
+`  K1 = 1   bandwidth
+  K2 = 0   load          (unused by default)
+  K3 = 1   delay
+  K4 = 0   reliability   (unused by default)
+  K5 = 0   reliability
+
+  Default: bandwidth + delay
+  Load and reliability are not normally included.` },
+              { kind: 'table', h: 'The EIGRP metric components', cols: ['Component', 'How it is used'], rows: [
+                ['Bandwidth', 'The **minimum** bandwidth along the path, not the average or the total'],
+                ['Delay', 'The accumulated interface delay along the path'],
+                ['Load', 'Interface utilisation. K2 by default'],
+                ['Reliability', 'Interface error rate. K4 and K5 by default'],
+                ['MTU', 'Carried in the update but not part of the metric']
+              ]},
+              { kind: 'code', h: 'Minimum bandwidth', code:
+`  R1 ==== 1G ==== R2 ==== 100M ==== R3
+
+  The bandwidth component uses 100 Mbit/s,
+  the slowest link on the path.
+
+  Not the average. Not the total.` },
+              { kind: 'para', h: 'K values must match', p: 'Changing K values is not a free local tuning exercise. Neighbouring EIGRP routers with **incompatible K values will not form an adjacency**, so any change has to be applied consistently.' },
+              { kind: 'code', h: 'Changing the weights', code:
+`  router eigrp 100
+   metric weights 0 1 0 1 0 0
+
+  K values must match between neighbours,
+  or the adjacency does not form.` },
+              { kind: 'para', h: 'RIP and hop count', p: 'RIP counts hops, which means every link costs 1 regardless of bandwidth. The ceiling is **15 hops reachable and 16 unreachable**, which is why RIP does not fit a network larger than fifteen routers.' },
+              { kind: 'code', h: 'The 15 and 16 rule', code:
+`  15  =  the maximum reachable hop count
+  16  =  infinity, the route is unreachable
+
+  Every link is 1 hop, whatever its bandwidth.` },
+              { kind: 'para', h: 'Equal-cost paths and maximum-paths', p: 'When several paths share the same metric, the router can install more than one. %%maximum-paths%% controls **how many** equal-cost paths are installed — it does not change the metric itself.' },
+              { kind: 'code', h: 'maximum-paths is not metric tuning', code:
+`  router ospf 1
+   maximum-paths 4
+
+  Controls HOW MANY equal-cost paths are installed.
+  It does NOT change the underlying metric.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip ospf interface GigabitEthernet0/0
+  show ip protocols
+  show ip eigrp topology
+  show ip eigrp interfaces` }
+            ],
+            commands: [
+              { label: 'Set the OSPF reference bandwidth', code:
+`router ospf 1
+ auto-cost reference-bandwidth 100000` },
+              { label: 'Override an interface cost', code:
+`interface GigabitEthernet0/0
+ ip ospf cost 50` },
+              { label: 'Change the EIGRP K values', code:
+`router eigrp 100
+ metric weights 0 1 0 1 0 0` },
+              { label: 'Verify', code:
+`show ip route
+show ip ospf interface GigabitEthernet0/0
+show ip eigrp topology` }
+            ],
+            traps: [
+              'AD and the metric never mix. Different sources use AD; the same source uses its metric.',
+              'Lower is better for every protocol here: OSPF cost, EIGRP composite, RIP hop count and IS-IS cost.',
+              'OSPF cost with the classic 100 Mbit/s reference gives cost 1 for 100 Mbit/s, 1 Gbit/s and 10 Gbit/s alike — which is why the reference is raised on modern networks.',
+              'OSPF path cost is **cumulative**. It is the sum of the outgoing interface costs along the path, not the destination interface cost alone.',
+              'The default EIGRP metric is bandwidth plus delay. Load and reliability are excluded because K2, K4 and K5 are 0.',
+              'The EIGRP bandwidth component uses the **minimum** bandwidth along the path, not an average or a total.',
+              'RIP’s 15 is the maximum reachable hop count and 16 means unreachable.',
+              '%%maximum-paths%% is not metric tuning. It controls how many equal-cost paths are installed.',
+              'EIGRP K values must match between neighbours — incompatible values stop the adjacency from forming.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Measure the preference of a path inside one protocol'],
+                ['Compared across protocols', 'No — that is AD’s job'],
+                ['OSPF metric', 'Cost'],
+                ['OSPF cost formula', 'Reference bandwidth divided by interface bandwidth'],
+                ['Classic OSPF reference', '100 Mbit/s'],
+                ['Raise the reference', 'auto-cost reference-bandwidth'],
+                ['OSPF cost is', 'Cumulative along the path'],
+                ['EIGRP metric', 'A composite, lower is better'],
+                ['Default K values', 'K1 = 1, K2 = 0, K3 = 1, K4 = 0, K5 = 0'],
+                ['Default EIGRP metric', 'Bandwidth plus delay'],
+                ['EIGRP bandwidth', 'The minimum along the path'],
+                ['EIGRP K values', 'Must match between neighbours'],
+                ['RIP metric', 'Hop count'],
+                ['RIP maximum', '15 reachable, 16 unreachable'],
+                ['IS-IS metric', 'Cost, lower is better'],
+                ['ECMP', 'Equal-cost paths are installed together'],
+                ['maximum-paths', 'How many ECMP paths, not a metric change']
+              ]
+            },
+            related: [
+              { t: '02. Administrative Distance', d: 'what happens instead when sources differ' },
+              { t: '12. Dynamic Routing', d: 'the protocols that define these metrics' },
+              { t: '01. Routing Table', d: 'where the result is installed' }
+            ],
+            glossary: ['Metrics', 'Administrative Distance', 'OSPF', 'OSPF Cost', 'EIGRP', 'Routing Table', 'RIB']
+          },
+          {
+            id: 't04', num: '04', group: 'structures', title: 'Recursive Lookup',
+            blurb: 'Resolving a next hop that is not directly connected, and why it is not done per packet',
+            overview: '**[[Recursive Lookup]]** is the process of resolving a route’s next-hop address when that address is not directly connected. The router looks up the next hop in the [[RIB|routing table]], and keeps doing so until it finds an exit interface.',
+            keyIdea: 'Longest prefix match selects the destination route; recursive lookup resolves that route’s next hop. The two operations are different.',
+            sections: [
+              { kind: 'para', h: 'Why it is needed', p: 'A route can point at a next hop the router does not know how to reach directly. %%ip route 10.1.1.0 255.255.255.0 192.0.2.1%% says nothing about how to get to 192.0.2.1 — so the router has to look that up too, and the forwarding information is not complete until it can.' },
+              { kind: 'code', h: 'The chain', code:
+`  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+
+  1. Destination 10.1.1.0/24 -> next hop 192.0.2.1
+  2. Next hop 192.0.2.1      -> is it directly connected?
+  3. No  -> look it up in the RIB
+  4. Repeat until an exit interface is found` },
+              { kind: 'table', h: 'The three static route types', cols: ['Form', 'What is specified'], rows: [
+                ['Next hop only', 'The next-hop address. Requires resolution.'],
+                ['Interface only', 'The exit interface. No separate next-hop recursion.'],
+                ['Fully specified', 'Both the exit interface and the next hop. No ambiguity.']
+              ]},
+              { kind: 'code', h: 'The three forms', code:
+`  ! next hop only -> needs recursive resolution
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+
+  ! interface only -> no next-hop recursion
+  ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1
+
+  ! fully specified -> interface AND next hop
+  ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1 192.0.2.1` },
+              { kind: 'para', h: 'Interface-only is context dependent', p: 'An interface-only static route does not perform next-hop recursion, but that does not make it universally correct. On a broadcast interface such as Ethernet the router may still have to ARP for the **destination** itself, which is why specifying a next hop is normally clearer.' },
+              { kind: 'code', h: 'The Ethernet wrinkle', code:
+`  ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1
+
+  No next-hop recursion.
+  On Ethernet the router may ARP for 10.1.1.1
+  on that segment.
+
+  Usually less desirable than naming a next hop.` },
+              { kind: 'para', h: 'Where recursion is common', p: 'An [[BGP|iBGP]] route very often needs it. %%B 10.10.10.0/24 [200/0] via 192.0.2.1%% is only usable if 192.0.2.1 is reachable through the IGP — the interior protocol supplies reachability to the BGP next hop.' },
+              { kind: 'code', h: 'iBGP relying on the IGP', code:
+`  B    10.10.10.0/24 [200/0] via 192.0.2.1
+                          |
+                          v
+              Is 192.0.2.1 reachable?
+                          |
+                          v
+            OSPF / IS-IS / EIGRP route
+                          |
+                          v
+                  Egress interface
+
+  The IGP provides reachability to the BGP next hop.` },
+              { kind: 'para', h: 'eBGP usually does not need it', p: 'Normal eBGP peers are directly connected, so there is nothing to resolve. Recursion can still appear with loopback peering, %%ebgp-multihop%%, or a next hop that is not on the local segment.' },
+              { kind: 'code', h: 'When eBGP still recurses', code:
+`  Normal eBGP peers  ->  directly connected, no recursion
+  Loopback peering   ->  recursion required
+  ebgp-multihop      ->  recursion required
+  Non-direct next hop->  recursion required` },
+              { kind: 'para', h: 'It is not done per packet', p: 'The control plane resolves the forwarding information once and installs it. The data plane then uses the FIB rather than walking the routing table for every packet. Saying the router performs destination lookup then next-hop lookup then next-hop lookup on each packet is wrong.' },
+              { kind: 'code', h: 'When resolution happens', code:
+`  Control plane
+       |
+       +-- resolve the next hop recursively
+       +-- install the result in the FIB
+       |
+       v
+  Data plane
+       |
+       +-- CEF uses the resolved FIB entry
+       +-- no per-packet table walking` },
+              { kind: 'para', h: 'Recursion against longest prefix match', p: 'Longest prefix match chooses **which destination route** applies. Recursive lookup determines **how to reach the next hop of that route**. They are different operations and the exam asks you to separate them.' },
+              { kind: 'table', h: 'The two operations', cols: ['Operation', 'Question it answers'], rows: [
+                ['Longest prefix match', 'Which destination route matches this packet?'],
+                ['Recursive lookup', 'How do I reach this route’s next hop?']
+              ]},
+              { kind: 'para', h: 'When it fails', p: 'If the next hop cannot be resolved the route is not usable, and it does not appear as an active route. Circular routing — where resolving A depends on B which depends on A — produces a route that never installs.' },
+              { kind: 'code', h: 'Circular routing', code:
+`  Route A next hop -> reachable via Route B
+  Route B next hop -> reachable via Route A
+
+  Neither resolves.
+  Neither is installed as an active route.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route 10.1.1.0
+  show ip cef 10.1.1.0
+  show ip cef 10.1.1.0 detail
+  show ip route summary` }
+            ],
+            commands: [
+              { label: 'The three static forms', code:
+`ip route 10.1.1.0 255.255.255.0 192.0.2.1
+ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1
+ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1 192.0.2.1` },
+              { label: 'Follow the resolution', code:
+`show ip route 10.1.1.0
+show ip cef 10.1.1.0 detail` }
+            ],
+            traps: [
+              'Recursive lookup does not find the best destination route. Longest prefix match selects the destination route; recursion resolves that route’s **next hop**.',
+              'iBGP commonly needs recursion. The IGP has to provide reachability to the BGP next hop.',
+              'eBGP does not always need recursion. Directly connected peers do not; loopback peering and %%ebgp-multihop%% do.',
+              'A next-hop-only static route needs resolution. The router must already know how to reach that next hop.',
+              'A fully specified static route specifies both the exit interface and the next hop, which removes the ambiguity.',
+              'An interface-only static route does not perform next-hop recursion — but on Ethernet the router may still ARP for the destination, so it is generally less desirable.',
+              'Recursion is not per-packet table walking. The control plane resolves it and CEF uses the result.',
+              'Recursive lookup is not longest prefix match. They answer different questions.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Resolve a next hop that is not directly connected'],
+                ['Next hop only', 'Needs resolution'],
+                ['Interface only', 'No next-hop recursion, but may still ARP on Ethernet'],
+                ['Fully specified', 'Interface and next hop, no ambiguity'],
+                ['Common with', 'iBGP, loopback peering, ebgp-multihop'],
+                ['eBGP', 'Usually directly connected, so no recursion'],
+                ['Where it happens', 'The control plane, before forwarding'],
+                ['Not per packet', 'CEF uses the resolved result'],
+                ['Against longest prefix match', 'LPM picks the route, recursion picks the way to the next hop'],
+                ['Failure', 'The route is not installed as active'],
+                ['Circular routing', 'Resolution depends on itself and never completes']
+              ]
+            },
+            related: [
+              { t: '05. FIB', d: 'where the result is installed' },
+              { t: '08. Static Routing', d: 'the routes that most often need it' },
+              { t: '01. Routing Table', d: 'the table it searches' }
+            ],
+            glossary: ['Recursive Lookup', 'Routing Table', 'RIB', 'FIB', 'BGP', 'Static Routing', 'Loopback Address', 'CEF']
+          }
+        ,
+          {
+            id: 't05', num: '05', group: 'structures', title: 'FIB',
+            blurb: 'The forwarding table: glean, receive, drop, and why longest prefix match still applies',
+            overview: 'The **[[FIB]] (Forwarding Information Base)** is the data-plane lookup structure, built from the [[RIB]]. It holds one entry per prefix with the next hop and the output interface, so the data plane never has to walk the routing process to forward a packet.',
+            keyIdea: 'The RIB selects the route; the FIB forwards. Longest prefix match still applies, and ECMP can put several next hops in one entry.',
+            sections: [
+              { kind: 'para', h: 'Why a second table exists', p: 'The routing table is optimised for route selection — it holds alternatives, protocols and metrics. Forwarding needs something different: a flat, hardware-friendly structure keyed on the prefix. The FIB is that structure, and it is derived from the RIB rather than built independently.' },
+              { kind: 'code', h: 'RIB to FIB', code:
+`  RIB                          FIB
+  control plane                data plane
+  route selection              packet forwarding
+  alternatives, metrics        one lookup per prefix
+       |                            |
+       +-------- install ------------+
+              best routes only` },
+              { kind: 'table', h: 'The FIB against the RIB', cols: ['', 'RIB', 'FIB'], rows: [
+                ['Plane', 'Control plane', 'Data plane'],
+                ['Job', 'Select the best route', 'Forward the packet'],
+                ['Contents', 'All candidate routes', 'The selected routes only'],
+                ['Shown by', 'show ip route', 'show ip cef'],
+                ['Hardware', 'No', 'Yes, typically in ASIC or TCAM']
+              ]},
+              { kind: 'para', h: 'The adjacency table', p: 'A FIB entry tells the router which next hop to use, but forwarding also needs the **Layer 2** detail — the MAC address on an Ethernet segment, the output PVC on a serial link. That lives in the **adjacency table**, and CEF uses the two together.' },
+              { kind: 'code', h: 'The two structures together', code:
+`  FIB entry                        Adjacency entry
+  prefix -> next hop               next hop -> Layer 2 detail
+       |                                |
+       +----------- CEF ----------------+
+                   both, together` },
+              { kind: 'table', h: 'The FIB entry types', cols: ['Entry', 'What it means'], rows: [
+                ['Receive', 'The address is owned by the router and is handled locally'],
+                ['Drop', 'The prefix is known but is deliberately discarded'],
+                ['Glean', 'The subnet is connected but the specific host adjacency is not resolved yet'],
+                ['Null', 'Traffic for the prefix is discarded, as with a Null0 summary route'],
+                ['Normal', 'A resolved next hop and output interface']
+              ]},
+              { kind: 'para', h: 'Glean', p: 'A **glean** entry means the router knows the destination belongs to a connected subnet but has no resolved adjacency for that particular host. It is not a missing route — it is a missing Layer 2 entry, which usually gets filled in when the router ARPs for the host.' },
+              { kind: 'code', h: 'Glean in context', code:
+`  Glean  =  the subnet is known
+            the specific host adjacency is NOT resolved
+
+  It is NOT "the route is missing".
+  It usually resolves via ARP.` },
+              { kind: 'code', h: 'Receive against Drop', code:
+`  Receive  ->  traffic destined to an address OWNED BY THE ROUTER
+               handled locally, not forwarded
+
+  Drop     ->  traffic for a prefix that is deliberately discarded
+
+  Receive is not normal forwarding.` },
+              { kind: 'para', h: 'Longest prefix match still applies', p: 'Moving the lookup into the FIB does not change the selection rule. The most specific matching prefix still wins, and the default route is still the last resort.' },
+              { kind: 'code', h: 'LPM in the FIB', code:
+`  10.0.0.0/8       -> Gi0/1
+  10.10.0.0/16     -> Gi0/2
+  10.10.10.0/24    -> Gi0/3
+  0.0.0.0/0        -> Gi0/9
+
+  10.10.10.5  ->  /24 wins.
+  10.20.5.5   ->  /8 wins.
+  8.8.8.8     ->  the default route.` },
+              { kind: 'para', h: 'ECMP in the FIB', p: 'A single FIB entry can carry **several equal-cost next hops**, and the data plane shares traffic between them. That is where CEF load sharing happens — inside the entry, not by running the routing process again.' },
+              { kind: 'code', h: 'One entry, several next hops', code:
+`  FIB entry 10.30.0.0/16
+       |
+       +-- next hop 192.0.2.6   Gi0/2
+       +-- next hop 192.0.2.10  Gi0/3
+
+  CEF hashes a flow onto one of them.` },
+              { kind: 'para', h: 'What a healthy RIB does not guarantee', p: 'A correct routing table does not by itself mean packets arrive. The FIB has to be installed, the adjacency has to resolve, Layer 2 has to work, and the hardware has to have room. Forwarding failures with a perfect routing table are common enough to be an exam theme.' },
+              { kind: 'code', h: 'The chain that has to hold', code:
+`  RIB correct
+      |
+  FIB installed
+      |
+  Adjacency resolved
+      |
+  Layer 2 works
+      |
+  Hardware has capacity
+      |
+      v
+  The packet actually leaves` },
+              { kind: 'para', h: 'Recursion happens before forwarding', p: 'Recursive next-hop resolution is completed when the forwarding information is built, not as a full routing lookup on every packet. The data plane uses the already-resolved entry.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip cef
+  show ip cef 10.10.10.0
+  show ip cef 10.10.10.0 detail
+  show ip cef summary
+  show adjacency
+  show adjacency detail` }
+            ],
+            commands: [
+              { label: 'Read the FIB', code:
+`show ip cef
+show ip cef 10.10.10.0 detail` },
+              { label: 'Read the adjacency table', code:
+`show adjacency
+show adjacency detail` },
+              { label: 'Summary and counts', code:
+`show ip cef summary` }
+            ],
+            traps: [
+              'The RIB is the control plane and the FIB is the data plane. The FIB is populated **from** the RIB.',
+              'The FIB selects nothing on its own — the RIB selects the best route and the FIB is what forwarding uses.',
+              'CEF is the forwarding architecture, not another name for the routing table.',
+              'The FIB and the adjacency table are separate structures that work together.',
+              '%%show ip route%% shows the RIB; %%show ip cef%% shows CEF and FIB information.',
+              'Glean does not mean the route is missing. It means the connected subnet is known but that host’s adjacency is not resolved.',
+              'Receive is not normal forwarding — it is traffic destined to an address owned by the router.',
+              'Recursive resolution happens **before** forwarding, not as a routing lookup for every packet.',
+              'Longest prefix match still determines the destination prefix, even inside the FIB.',
+              'A healthy RIB does not guarantee successful forwarding. FIB, adjacency, Layer 2 and hardware all still matter.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Forwarding Information Base'],
+                ['Plane', 'Data plane'],
+                ['Built from', 'The RIB'],
+                ['Job', 'Provide the forwarding lookup'],
+                ['Shown by', 'show ip cef'],
+                ['Companion structure', 'The adjacency table'],
+                ['Receive entry', 'Traffic to the router’s own address'],
+                ['Drop entry', 'Deliberately discarded prefix'],
+                ['Glean entry', 'Connected subnet known, host adjacency not resolved'],
+                ['Null entry', 'Discarded, as with a Null0 summary'],
+                ['Longest prefix match', 'Still applies'],
+                ['ECMP', 'Several next hops in one entry'],
+                ['Recursion', 'Completed before forwarding'],
+                ['Hardware', 'Platform dependent'],
+                ['Verification', 'show ip cef and show adjacency']
+              ]
+            },
+            related: [
+              { t: '06. RIB', d: 'what the FIB is built from' },
+              { t: '07. CEF', d: 'the architecture that uses it' },
+              { t: '04. Recursive Lookup', d: 'the resolution the FIB records' }
+            ],
+            glossary: ['FIB', 'RIB', 'CEF', 'Routing Table', 'Control Plane', 'Data Plane', 'Recursive Lookup', 'Metrics']
+          },
+          {
+            id: 't06', num: '06', group: 'structures', title: 'RIB',
+            blurb: 'Route selection, ECMP, convergence, route flapping, and the difference from show ip route output',
+            overview: 'The **[[RIB]] (Routing Information Base)** is the control-plane database of selected routes. Each routing protocol contributes candidates, the RIB applies [[Administrative Distance|AD]] and the metric, and installs the winner or the equal-cost set.',
+            keyIdea: 'The RIB is a selection database, not a forwarding structure. What you see in show ip route is the active table, not every route the protocols know.',
+            sections: [
+              { kind: 'para', h: 'How a route is selected', p: 'Every protocol feeds its best candidates into the RIB process. For each prefix the RIB compares the Administrative Distance of the competing sources, then lets the winning source choose by its own metric, then installs the result.' },
+              { kind: 'code', h: 'The selection sequence', code:
+`  Protocols contribute candidates
+              |
+              v
+  Compare AD between sources
+              |
+              v
+  Metric within the winning source
+              |
+              v
+  Install the best route or the ECMP set` },
+              { kind: 'table', h: 'What the RIB holds', cols: ['Item', 'Detail'], rows: [
+                ['Contents', 'The installed best route for each prefix'],
+                ['Alternatives', 'Routing protocols may keep their own candidates that are not installed'],
+                ['ECMP', 'Several equal-cost paths for one prefix'],
+                ['AD', 'The source selection value'],
+                ['Metric', 'The path selection value inside a source'],
+                ['Prefixes', 'Longest prefix match still applies at lookup time']
+              ]},
+              { kind: 'para', h: 'Not one route per prefix, and not every learned route', p: 'Two opposite errors sit here. The RIB can hold **several** installed paths for one prefix because of ECMP — and it does **not** hold every route the protocols learned, only the ones that won.' },
+              { kind: 'code', h: 'Both mistakes', code:
+`  "One route per prefix"
+      -> too simplistic. ECMP installs several.
+
+  "show ip route shows every learned route"
+      -> wrong. It shows the ACTIVE table.
+         Alternatives live in the protocol's own
+         database and are not installed.` },
+              { kind: 'para', h: 'The RIB does not forward', p: 'For normal modern Cisco forwarding the RIB is not consulted per packet. It is the route-selection database; **CEF** and the FIB provide the forwarding path. Saying the RIB forwards every packet describes process switching, which is the exception rather than the rule.' },
+              { kind: 'code', h: 'Who does what', code:
+`  RIB  ->  control plane  ->  route selection
+  CEF  ->  forwarding    ->  FIB + adjacency
+
+  The RIB does not forward every packet.` },
+              { kind: 'para', h: 'BGP selects before the RIB sees it', p: 'BGP runs its own path-selection process first. Only after BGP has chosen its candidate does that candidate compete with other sources using AD. So AD is not what makes BGP pick its own best path.' },
+              { kind: 'code', h: 'BGP’s own selection first', code:
+`  BGP path selection
+       |
+       v
+  BGP's chosen candidate
+       |
+       v
+  AD compared against other sources
+       |
+       v
+  RIB installation
+
+  AD does not drive BGP's internal choice.` },
+              { kind: 'para', h: 'Convergence and flapping', p: 'When a link or neighbour fails the RIB has to be updated, and every update costs reconvergence. A route that keeps appearing and disappearing is **route flapping**, and the cost is repeated reconvergence rather than a single event.' },
+              { kind: 'code', h: 'The convergence chain', code:
+`  Topology change
+       |
+       v
+  Protocol update
+       |
+       v
+  RIB recalculation
+       |
+       v
+  FIB update
+       |
+       v
+  Forwarding resumes
+
+  Flapping = this chain running again and again.` },
+              { kind: 'para', h: 'Scale and VRFs', p: 'The RIB holds every prefix the router knows about, and on a large router that is a lot of memory. **[[VRF]]**s split it: each virtual routing and forwarding instance has its own RIB and its own FIB, so the same prefix can exist in several tables at once.' },
+              { kind: 'code', h: 'Multiple RIBs', code:
+`  VRF Blue   ->  its own RIB  ->  its own FIB
+  VRF Green  ->  its own RIB  ->  its own FIB
+  Global     ->  the global RIB
+
+  10.10.0.0/16 can exist in all three with
+  completely different next hops.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip route summary
+  show ip protocols
+  show vrf
+  show ip route vrf Blue
+  debug ip routing` }
+            ],
+            commands: [
+              { label: 'Read the active table', code:
+`show ip route
+show ip route summary` },
+              { label: 'Look at VRF tables', code:
+`show vrf
+show ip route vrf Blue` },
+              { label: 'Watch it change', code:
+`show ip protocols
+debug ip routing` }
+            ],
+            traps: [
+              'The RIB is not the FIB. The RIB is the control-plane selection database; the FIB is the data-plane forwarding structure.',
+              'A low AD does not mean a low metric. AD compares sources; the metric compares paths inside one source.',
+              '"One route per prefix" is too simplistic — ECMP can install several, and protocols may hold uninstalled alternatives.',
+              'The RIB does not forward every packet. CEF and the FIB do that on modern platforms.',
+              'Recursive lookup is not performed for every packet. It happens when the forwarding information is built.',
+              '%%show ip route%% does not show every route learned by every protocol — it shows the **active** table.',
+              'AD does not determine BGP’s best path. BGP selects first, and only then does the winner compete on AD.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Routing Information Base'],
+                ['Plane', 'Control plane'],
+                ['Job', 'Route selection'],
+                ['Contents', 'The installed best route or routes per prefix'],
+                ['Selection 1', 'Administrative Distance between sources'],
+                ['Selection 2', 'Metric within the chosen source'],
+                ['ECMP', 'Several equal-cost paths installed'],
+                ['Alternatives', 'Kept by the protocols, not installed in the RIB'],
+                ['Forwarding', 'Done by CEF and the FIB, not the RIB'],
+                ['Shown by', 'show ip route'],
+                ['Convergence', 'Every change costs a recalculation'],
+                ['Route flapping', 'Repeated changes and repeated reconvergence'],
+                ['VRFs', 'Each instance has its own RIB and FIB'],
+                ['BGP', 'Selects internally before AD applies']
+              ]
+            },
+            related: [
+              { t: '05. FIB', d: 'what the RIB becomes' },
+              { t: '01. Routing Table', d: 'the same structure, introduced' },
+              { t: '02. Administrative Distance', d: 'the first selection step' }
+            ],
+            glossary: ['RIB', 'FIB', 'Routing Table', 'Administrative Distance', 'VRF', 'Control Plane', 'Data Plane', 'BGP']
+          },
+          {
+            id: 't07', num: '07', group: 'structures', title: 'CEF',
+            blurb: 'FIB plus adjacency, hash-based load sharing, hash polarization, and what glean and receive really mean',
+            overview: '**[[CEF]] (Cisco Express Forwarding)** is the default forwarding architecture on Cisco routers. It uses the **[[FIB]]** for the prefix lookup and the **adjacency table** for the Layer 2 detail, so packets are forwarded without invoking the routing process.',
+            keyIdea: 'CEF is the architecture; the FIB and adjacency table are its two structures. Load sharing is hash-based, not per-packet by default.',
+            sections: [
+              { kind: 'para', h: 'The model', p: 'The simplest useful exam model is that CEF is the FIB **plus** adjacency information. The FIB answers "which next hop", the adjacency table answers "what Layer 2 header", and CEF puts them together for each packet.' },
+              { kind: 'code', h: 'CEF in two lines', code:
+`  CEF
+   |-- FIB              (prefix -> next hop)
+   +-- Adjacency table  (next hop -> Layer 2 detail)
+
+  CEF uses both structures together.` },
+              { kind: 'table', h: 'The three approaches', cols: ['Approach', 'How it works'], rows: [
+                ['Process switching', 'The routing process is invoked for each packet'],
+                ['Fast switching', 'A cache is built from the first packet of a flow'],
+                ['CEF', 'A pre-built FIB and adjacency table are used for every packet']
+              ]},
+              { kind: 'para', h: 'Longest prefix match', p: 'CEF still performs longest prefix match, and the lookup can still miss. A miss goes to the default route if one exists, and to the exception path if it does not.' },
+              { kind: 'code', h: 'A lookup miss', code:
+`  Packet arrives
+       |
+  Longest prefix match in the FIB
+       |
+       +-- match      -> forward via the adjacency
+       |
+       +-- no match   -> default route if present
+       |
+       +-- no default -> drop` },
+              { kind: 'table', h: 'The adjacency types', cols: ['Type', 'What it is'], rows: [
+                ['Receive', 'Traffic to the router’s own address, handled locally'],
+                ['Drop', 'Deliberately discarded'],
+                ['Glean', 'A connected subnet with no resolved host adjacency yet'],
+                ['Null', 'Discarded, as with a Null0 summary route'],
+                ['Point-to-point', 'A resolved output interface with no ARP needed'],
+                ['ARP', 'A resolved next hop with a MAC address in the adjacency table']
+              ]},
+              { kind: 'para', h: 'Recursive next hops', p: 'A CEF entry whose next hop is not directly connected needs that next hop resolved before forwarding. CEF records the resolution in the entry, so the work is done once rather than per packet.' },
+              { kind: 'code', h: 'Resolution recorded in the entry', code:
+`  Prefix 10.10.10.0/24
+    next hop 192.0.2.1  ->  is 192.0.2.1 reachable?
+                              |
+                    resolved via the RIB once
+                              |
+                              v
+  FIB entry carries the final egress interface` },
+              { kind: 'para', h: 'Load sharing is hash-based', p: 'When an entry has several equal-cost next hops, CEF **hashes** the flow onto one of them. Packets of the same flow stay on the same path. Per-packet load balancing is not the default and is rarely what you want.' },
+              { kind: 'code', h: 'Hash, not round-robin', code:
+`  FIB entry with 2 next hops
+       |
+       |  hash(src, dst, ports...)
+       v
+  Flow A -> Gi0/2
+  Flow B -> Gi0/3
+  Flow A -> Gi0/2   (same flow, same path)
+
+  Not per-packet round-robin.` },
+              { kind: 'para', h: 'Hash polarization', p: 'When the same hash input is reused at more than one layer of the topology, the flows collapse onto the same paths at every layer and the load is uneven. This is **hash polarization**, and it is the reason the hash inputs matter in a multi-tier design.' },
+              { kind: 'code', h: 'Polarization across layers', code:
+`  Two layers hashing on the SAME bits:
+
+  Layer 1:  flow X -> link A
+  Layer 2:  flow X -> link A   (again, unlucky)
+
+  Result: some links idle, some overloaded.
+
+  Avoid by varying the hash inputs between layers.` },
+              { kind: 'para', h: 'The hash inputs vary by platform', p: 'The exact fields CEF hashes on differ between platforms, software versions and configuration. "All CEF hash inputs are universal" is the trap — you cannot assume the same fields on two different devices.' },
+              { kind: 'code', h: 'Configuring the load-balancing method', code:
+`  ! choose the hashing method
+  ip cef load-balance src-dst
+  ip cef load-balance src-only
+
+  ! or per VRF
+  ip cef load-balance per-vrf` },
+              { kind: 'para', h: 'Hardware is platform dependent', p: 'CEF is the forwarding architecture. Whether it is implemented in an ASIC, a TCAM, or software, and how much it can hold, is entirely platform dependent. "CEF always means ASIC or TCAM forwarding" is not a safe statement.' },
+              { kind: 'table', h: 'Control plane against data plane', cols: ['Plane', 'What runs there'], rows: [
+                ['Control plane', 'Routing protocols, the RIB, route selection, management traffic'],
+                ['Data plane', 'CEF forwarding, the FIB and adjacency lookups, hardware switching']
+              ]},
+              { kind: 'code', h: 'Updates and failures', code:
+`  CEF updates when the RIB installs a new best route.
+  Until then the old entry is used.
+
+  Exceptional conditions
+       |
+       +-- adjacency missing   -> punt to the control plane
+       +-- FIB miss            -> default route or drop
+       +-- CEF disabled        -> process switching fallback` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip cef
+  show ip cef summary
+  show ip cef 10.10.10.0 detail
+  show adjacency
+  show adjacency detail
+  show cef not-routed
+  show cef drops
+  show cef input drops` }
+            ],
+            commands: [
+              { label: 'Read CEF', code:
+`show ip cef
+show ip cef summary
+show ip cef 10.10.10.0 detail` },
+              { label: 'Read the adjacency table', code:
+`show adjacency
+show adjacency detail` },
+              { label: 'Set the load-balancing method', code:
+`ip cef load-balance src-dst` },
+              { label: 'Counters and drops', code:
+`show cef not-routed
+show cef drops` }
+            ],
+            traps: [
+              'CEF is not the RIB. The RIB selects routes in the control plane; CEF is the forwarding architecture.',
+              'CEF is not just the FIB. The useful model is CEF as the FIB **plus** the adjacency information.',
+              'CEF does not do a routing-table lookup for every packet. It uses the pre-built FIB and adjacency tables.',
+              'CEF does not always mean ASIC or TCAM forwarding. The hardware implementation is platform dependent.',
+              'Per-packet load balancing is not the default. CEF uses **hash-based** load sharing that keeps a flow on one path.',
+              'The CEF hash inputs are not universal. The fields vary by platform, software and configuration.',
+              'Glean does not mean the route is missing. It means the subnet is known and that host’s adjacency is not yet resolved.',
+              'Receive is not normal forwarding. It is traffic destined to an address owned by the router.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Cisco Express Forwarding'],
+                ['Role', 'The default forwarding architecture'],
+                ['Structures', 'The FIB and the adjacency table'],
+                ['Longest prefix match', 'Still applies'],
+                ['Load sharing', 'Hash based, per flow'],
+                ['Per-packet', 'Not the default'],
+                ['Hash polarization', 'The same hash inputs reused across layers'],
+                ['Hash inputs', 'Platform, software and configuration dependent'],
+                ['Glean', 'Connected subnet known, host adjacency not resolved'],
+                ['Receive', 'Traffic to the router’s own address'],
+                ['Drop', 'Deliberately discarded'],
+                ['Recursive next hop', 'Resolved before forwarding'],
+                ['Hardware', 'Platform dependent'],
+                ['Against process switching', 'No routing process per packet'],
+                ['Verification', 'show ip cef and show adjacency']
+              ]
+            },
+            related: [
+              { t: '05. FIB', d: 'the lookup structure inside it' },
+              { t: '06. RIB', d: 'what populates it' },
+              { t: '01. Routing Table', d: 'where the load-balanced routes are chosen' }
+            ],
+            glossary: ['CEF', 'FIB', 'RIB', 'Control Plane', 'Data Plane', 'Metrics', 'Loopback Address']
+          },
+          {
+            id: 't08', num: '08', group: 'static', title: 'Static Routing',
+            blurb: 'Manual routes, AD 1, Null0 discard routes, tracking, and the routes that never get advertised',
+            overview: '**[[Static Routing|Static routes]]** are configured by hand rather than learned. They have a default [[Administrative Distance|AD]] of **1**, they never discover a path on their own, and they are not advertised to anybody unless you redistribute them.',
+            keyIdea: 'Longest prefix match comes before AD. A static route beats a dynamic route for the same prefix, but a more specific dynamic prefix still wins.',
+            sections: [
+              { kind: 'code', h: 'The basic forms', code:
+`  ! next hop only
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+
+  ! exit interface only
+  ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1
+
+  ! fully specified: interface and next hop
+  ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1 192.0.2.1
+
+  ! with an explicit AD
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1 150` },
+              { kind: 'table', h: 'What a static route is and is not', cols: ['Property', 'Static route'], rows: [
+                ['Default AD', '1'],
+                ['Path discovery', 'None — it is configured manually'],
+                ['Neighbour discovery', 'None'],
+                ['Topology exchange', 'None'],
+                ['Advertised automatically', 'No — redistribution is required'],
+                ['Failover', 'Needs floating statics, tracking, IP SLA or ECMP'],
+                ['Against connected', 'Connected is AD 0 and wins']
+              ]},
+              { kind: 'para', h: 'Longest prefix match comes first', p: 'The classic trap is to say that AD 1 always beats AD 110. It does not, because a more specific prefix is selected before AD is even considered. A static /8 loses to an OSPF /24 for a destination inside the /24.' },
+              { kind: 'code', h: 'Prefix length beats AD', code:
+`  S    10.0.0.0/8        [1/0]
+  O    10.10.10.0/24     [110/20]
+
+  Traffic to 10.10.10.5
+
+  1. Longest prefix match -> /24 wins
+  2. AD is never compared
+
+  The static route with AD 1 is not used.` },
+              { kind: 'para', h: 'A higher AD makes a backup', p: 'Appending an AD above the primary source turns the route into a backup that only installs when the better route disappears. That is a [[Floating Static|floating static route]], and it is the simplest failover a static-only design has.' },
+              { kind: 'code', h: 'Backup by AD', code:
+`  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+  ip route 10.1.1.0 255.255.255.0 198.51.100.1 200
+
+  AD 1   -> primary
+  AD 200 -> backup, installed only if the primary is gone` },
+              { kind: 'para', h: 'Null0 discard routes', p: 'A route pointing at **Null0** deliberately discards matching traffic. It is normally paired with summarization, so that traffic for a subnet inside the summary that does not actually exist is dropped instead of forwarded somewhere wrong.' },
+              { kind: 'code', h: 'Why Null0 exists', code:
+`  ip route 10.0.0.0 255.0.0.0 Null0
+
+  Traffic for a 10.x.x.x address that has no
+  more-specific route is DISCARDED.
+
+  Commonly used with summarization to prevent
+  forwarding loops and black holes.` },
+              { kind: 'para', h: 'Multiple statics and ECMP', p: 'Two static routes to the same prefix with the same AD are both installed, and the data plane shares traffic across them. That is a static equivalent of equal-cost multipath.' },
+              { kind: 'code', h: 'Static ECMP', code:
+`  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+  ip route 10.1.1.0 255.255.255.0 192.0.2.5
+
+  Same AD, same prefix -> both installed.` },
+              { kind: 'para', h: 'Tracking', p: 'A static route with a next hop that stays reachable but leads nowhere will keep forwarding into a black hole. **Object tracking** and **[[IP SLA]]** let the route depend on a probe rather than on the local interface state.' },
+              { kind: 'code', h: 'IP SLA and tracking', code:
+`  ip sla 1
+   icmp-echo 8.8.8.8 source-ip 192.0.2.1
+   frequency 10
+  ip sla schedule 1 life forever start-time now
+
+  track 1 ip sla 1 reachability
+
+  ip route 10.1.1.0 255.255.255.0 198.51.100.1 150 track 1` },
+              { kind: 'para', h: 'They are not advertised', p: 'A static route exists on this router only. For it to appear in a routing domain it has to be **redistributed** into the protocol, and how that redistribution is metric-ed depends on the protocol.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route static
+  show ip route 10.1.1.0
+  show ip static route
+  show track
+  show ip sla statistics` }
+            ],
+            commands: [
+              { label: 'The static forms', code:
+`ip route 10.1.1.0 255.255.255.0 192.0.2.1
+ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1
+ip route 10.1.1.0 255.255.255.0 GigabitEthernet0/1 192.0.2.1` },
+              { label: 'A backup and a discard route', code:
+`ip route 10.1.1.0 255.255.255.0 198.51.100.1 200
+ip route 10.0.0.0 255.0.0.0 Null0` },
+              { label: 'IP SLA tracking', code:
+`ip sla 1
+ icmp-echo 8.8.8.8 source-ip 192.0.2.1
+ frequency 10
+ip sla schedule 1 life forever start-time now
+track 1 ip sla 1 reachability
+ip route 10.1.1.0 255.255.255.0 198.51.100.1 150 track 1` },
+              { label: 'Verify', code:
+`show ip route static
+show ip route 10.1.1.0
+show track
+show ip sla statistics` }
+            ],
+            traps: [
+              'Static AD is 1 and connected AD is 0. Static normally beats dynamic routes for the same prefix — but not a connected one.',
+              'Longest prefix match comes **before** AD. A more-specific dynamic route beats a less-specific static route even though the static has AD 1.',
+              'A higher AD is what makes the backup. %%ip route 10.1.1.0 255.255.255.0 192.0.2.1 200%% is a floating static route.',
+              'Static routes do not discover paths. Failover needs floating statics, tracking, IP SLA or equal-cost statics.',
+              'Fully specified does not mean magic. It provides both the interface and the next hop, but the next hop still has to be usable.',
+              'An interface-only static is not universally equivalent to "the interface is up so the network is reachable" — on Ethernet the router may still ARP for the destination.',
+              'A route to Null0 **intentionally drops** matching traffic. It is normally used with summarization.',
+              'Static routes are not advertised automatically. They have to be redistributed.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Default AD', '1'],
+                ['Connected AD', '0'],
+                ['Path discovery', 'None'],
+                ['Advertised', 'No, unless redistributed'],
+                ['Failover', 'Floating static, tracking, IP SLA or ECMP'],
+                ['Next hop only', 'Needs recursive resolution'],
+                ['Interface only', 'No next-hop recursion, may ARP on Ethernet'],
+                ['Fully specified', 'Interface and next hop'],
+                ['Longest prefix', 'Beats AD'],
+                ['Null0', 'Discards matching traffic'],
+                ['Multiple statics', 'Same AD means both are installed'],
+                ['Tracking', 'Ties the route to a probe'],
+                ['Verification', 'show ip route static']
+              ]
+            },
+            related: [
+              { t: '09. Floating Static', d: 'the backup version in detail' },
+              { t: '10. Default Route', d: 'the static catch-all' },
+              { t: '04. Recursive Lookup', d: 'how the next hop is resolved' }
+            ],
+            glossary: ['Static Routing', 'Administrative Distance', 'Floating Static', 'Default Route', 'IP SLA', 'Routing Loop', 'Summarization', 'Recursive Lookup']
+          }
+        ,
+          {
+            id: 't09', num: '09', group: 'static', title: 'Floating Static',
+            blurb: 'A higher AD backup route, the 254/255 boundary, and the IP SLA chain that makes it actually fail over',
+            overview: 'A **[[Floating Static|floating static route]]** is a static route configured with an **AD higher than the primary source**, so it installs only when that primary route is gone. It is the simplest failover a static or mixed design has.',
+            keyIdea: 'The AD has to be higher than the route it backs up and lower than 255. AD 255 is unreachable and never installs.',
+            sections: [
+              { kind: 'code', h: 'The basic shape', code:
+`  ! Primary
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1
+
+  ! Backup, AD above the primary
+  ip route 10.1.1.0 255.255.255.0 198.51.100.1 200
+
+  AD 1   -> primary, installed
+  AD 200 -> backup, installed only if the primary is gone` },
+              { kind: 'table', h: 'Choosing the AD', cols: ['Primary source', 'AD', 'Floating static AD must be'], rows: [
+                ['Connected', '0', 'Greater than 0'],
+                ['Static', '1', 'Greater than 1'],
+                ['EIGRP internal', '90', 'Greater than 90'],
+                ['OSPF', '110', 'Greater than 110'],
+                ['RIP', '120', 'Greater than 120'],
+                ['EIGRP external', '170', 'Greater than 170'],
+                ['iBGP', '200', 'Greater than 200']
+              ]},
+              { kind: 'para', h: 'The 254 and 255 boundary', p: 'The AD range runs to 255, but **255 means unreachable** and the route will never be installed. So a usable floating AD has to be above the primary and still below 255 — 254 is the highest practical value.' },
+              { kind: 'code', h: 'The ceiling', code:
+`  AD 254  ->  potentially installable
+  AD 255  ->  unreachable, never installed
+
+  Use an AD greater than the primary and less than 255.` },
+              { kind: 'para', h: 'No magic margin', p: 'There is no rule that the difference has to be a particular number. "AD must be primary plus 40" is not a rule — any value works as long as it is higher than the route it is backing up and below 255.' },
+              { kind: 'code', h: 'Any margin works', code:
+`  OSPF 110
+    floating at 111   ->  works
+    floating at 150   ->  works
+    floating at 254   ->  works
+
+  No arbitrary margin is required.` },
+              { kind: 'para', h: 'Floating is about preference, not link state', p: 'A physical interface going down is one way the primary disappears, but the mechanism is **route availability and preference**, not cable detection. For a failure beyond the directly connected next hop you need tracking or [[IP SLA]].' },
+              { kind: 'code', h: 'Why a probe is needed', code:
+`  Primary next hop 192.0.2.1
+       |
+  The local interface stays UP.
+  The far end is dead.
+       |
+  The primary route never disappears.
+       |
+  The floating backup never installs.
+
+  IP SLA + tracking fixes this.` },
+              { kind: 'code', h: 'The full chain', code:
+`  IP SLA
+     |
+     v
+  Track object
+     |
+     v
+  Tracked static route
+     |
+     +-- tracking OK    -> primary stays installed
+     |
+     +-- tracking fails -> route withdrawn
+                               |
+                               v
+                         Floating static becomes preferred` },
+              { kind: 'code', h: 'Configuring the chain', code:
+`  ip sla 1
+   icmp-echo 203.0.113.1 source-ip 192.0.2.1
+   frequency 10
+   timeout 500
+  ip sla schedule 1 life forever start-time now
+
+  track 1 ip sla 1 reachability
+
+  ! primary, withdrawn when the track fails
+  ip route 10.1.1.0 255.255.255.0 192.0.2.1 track 1
+
+  ! floating backup
+  ip route 10.1.1.0 255.255.255.0 198.51.100.1 150` },
+              { kind: 'para', h: 'Floating against tracked', p: 'A floating static rests on **AD preference**. A tracked static rests on **whether a tracked object is up**. They solve different problems and are normally combined rather than chosen between.' },
+              { kind: 'table', h: 'Floating against tracked', cols: ['', 'Floating static', 'Tracked static'], rows: [
+                ['Depends on', 'AD preference', 'A tracking object'],
+                ['Installs when', 'The better AD is gone', 'The track is reachable'],
+                ['Detects', 'Route disappearance', 'Probe success or failure'],
+                ['Detects a dead far end', 'No, not by itself', 'Yes, via IP SLA'],
+                ['Configuration', 'One extra AD value', 'IP SLA plus a track object']
+              ]},
+              { kind: 'para', h: 'It is still static', p: 'A floating static route does not discover neighbours, does not exchange topology, and does not advertise itself. If other routers need to know about the destination, it has to be redistributed.' },
+              { kind: 'para', h: 'Prefix length still comes first', p: 'AD is not consulted before longest prefix match. A floating static for a /8 never installs over an OSPF /24 for a destination inside that /24, because the prefix decision happens first.' },
+              { kind: 'code', h: 'Prefix length still wins', code:
+`  S    10.0.0.0/8        [1/0]
+  O    10.10.10.0/24     [110/20]
+
+  10.10.10.5 -> the /24, regardless of AD.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip route 10.1.1.0
+  show track
+  show ip sla statistics
+  show ip static route
+  show logging` }
+            ],
+            commands: [
+              { label: 'Primary and floating backup', code:
+`ip route 10.1.1.0 255.255.255.0 192.0.2.1
+ip route 10.1.1.0 255.255.255.0 198.51.100.1 200` },
+              { label: 'IP SLA and a tracked primary', code:
+`ip sla 1
+ icmp-echo 203.0.113.1 source-ip 192.0.2.1
+ frequency 10
+ip sla schedule 1 life forever start-time now
+track 1 ip sla 1 reachability
+ip route 10.1.1.0 255.255.255.0 192.0.2.1 track 1` },
+              { label: 'Verify', code:
+`show ip route 10.1.1.0
+show track
+show ip sla statistics` }
+            ],
+            traps: [
+              'Higher AD is what makes it float. %%ip route 10.1.1.0 255.255.255.0 192.0.2.1 200%% is the floating form.',
+              'The AD has to be higher than the intended primary. OSPF is 110, so the floating static must be above 110; EIGRP internal is 90 and RIP is 120.',
+              'AD 255 is not a normal backup value — it means unreachable. Use an AD above the primary and below 255.',
+              'Floating does not mean "link down means backup". It is route availability and preference; a dead far end needs tracking or IP SLA.',
+              'IP SLA is not the same as a floating static. IP SLA measures, a track object binds the result, and the route is what reacts.',
+              'A floating static is still static. No neighbour discovery, no topology exchange, no automatic advertisement.',
+              'AD is not checked before longest prefix match. The /24 still beats the /8.',
+              'No arbitrary AD margin is required. Any value above the primary and below 255 works.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Floating static route'],
+                ['How it works', 'A static route with a higher AD than the primary'],
+                ['Requirement', 'AD above the primary and below 255'],
+                ['AD 255', 'Unreachable, never installs'],
+                ['Highest practical AD', '254'],
+                ['Against OSPF', 'Must be above 110'],
+                ['Against EIGRP internal', 'Must be above 90'],
+                ['Against RIP', 'Must be above 120'],
+                ['Detects a dead far end', 'No — use tracking or IP SLA'],
+                ['IP SLA role', 'Measures reachability'],
+                ['Track object role', 'Binds the measurement to the route'],
+                ['Still static', 'No discovery, no advertisement'],
+                ['Prefix length', 'Longest match still comes first'],
+                ['Verification', 'show track and show ip sla statistics']
+              ]
+            },
+            related: [
+              { t: '08. Static Routing', d: 'where the extra AD comes from' },
+              { t: '02. Administrative Distance', d: 'the value it is set above' },
+              { t: '10. Default Route', d: 'the same trick with a catch-all' }
+            ],
+            glossary: ['Floating Static', 'Static Routing', 'Administrative Distance', 'IP SLA', 'Default Route', 'Metrics']
+          },
+          {
+            id: 't10', num: '10', group: 'static', title: 'Default Route',
+            blurb: '0.0.0.0/0, gateway of last resort, default gateway against default route, and originating one in OSPF',
+            overview: 'The **[[Default Route]]** %%0.0.0.0/0%% is the least-specific route there is. It is used only when nothing more specific matches, and a router that has no default route simply drops packets it cannot match.',
+            keyIdea: 'A host has a default gateway; a router has a default route. The default route is only consulted when longest prefix match finds nothing else.',
+            sections: [
+              { kind: 'code', h: 'The static form', code:
+`  ip route 0.0.0.0 0.0.0.0 192.0.2.1
+
+  IPv6 equivalent:
+  ipv6 route ::/0 2001:db8::1` },
+              { kind: 'code', h: 'More specific always wins', code:
+`  Routes installed:
+    10.0.0.0/8
+    10.10.0.0/16
+    10.10.10.0/24
+    0.0.0.0/0
+
+  10.10.10.5 -> 10.10.10.0/24 wins, the default is ignored
+  10.20.5.5  -> 10.10.0.0/16 wins
+  8.8.8.8    -> the default route
+
+  A default route is used only when nothing more
+  specific matches.` },
+              { kind: 'para', h: 'Default gateway against default route', p: 'These are different devices’ words for the same idea. A **host** is configured with a **default gateway** — the router it hands unknown traffic to. A **router** has a **default route** — where that unknown traffic goes next.' },
+              { kind: 'code', h: 'Host to ISP', code:
+`  Host
+    |
+    |  default gateway
+    v
+  Router
+    |
+    |  default route 0.0.0.0/0
+    v
+  ISP` },
+              { kind: 'para', h: 'AD and prefix length are separate', p: 'The default route is the **least specific** prefix, which is not a statement about its AD. A static default has AD 1 and an OSPF default has AD 110, and both are just ordinary routes competing on AD like any other.' },
+              { kind: 'table', h: 'Two separate properties', cols: ['Property', 'Meaning'], rows: [
+                ['Prefix length', '/0 — the least specific prefix of all'],
+                ['Administrative Distance', 'A separate route-selection attribute'],
+                ['Static default AD', '1, so it normally beats an OSPF default'],
+                ['OSPF default AD', '110']
+              ]},
+              { kind: 'code', h: 'Static against OSPF default', code:
+`  S*   0.0.0.0/0 [1/0] via 192.0.2.1
+  O*E2 0.0.0.0/0 [110/1] via 192.0.2.6
+
+  Same prefix length.
+  AD decides: the static default wins.` },
+              { kind: 'para', h: 'Gateway of last resort', p: 'When a default route is installed and usable, the router reports it as the **gateway of last resort**. %%S*%% in the table marks a static default that has taken that role.' },
+              { kind: 'code', h: 'What the table says', code:
+`  Gateway of last resort is 192.0.2.1 to network 0.0.0.0
+
+  S*    0.0.0.0/0 [1/0] via 192.0.2.1
+
+  S* = the static default carrying the role.` },
+              { kind: 'para', h: 'A floating default', p: 'The same floating trick works on the default route: a second 0.0.0.0/0 with a higher AD installs only when the primary default disappears.' },
+              { kind: 'code', h: 'Primary and backup defaults', code:
+`  ip route 0.0.0.0 0.0.0.0 192.0.2.1
+  ip route 0.0.0.0 0.0.0.0 198.51.100.1 200
+
+  AD 1   -> primary
+  AD 200 -> backup` },
+              { kind: 'para', h: 'Originating a default in OSPF', p: '%%default-information originate%% advertises a default into OSPF, and it normally requires a local default route to exist. Adding %%always%% lets OSPF originate the default even when the router has none.' },
+              { kind: 'code', h: 'The two OSPF forms', code:
+`  router ospf 1
+   default-information originate
+       |
+       +-- requires a local default route
+
+
+  router ospf 1
+   default-information originate always
+       |
+       +-- originates the default regardless
+
+  Neither creates 0.0.0.0/0 locally.` },
+              { kind: 'para', h: 'Default gateway against default network', p: '%%ip default-network%% is the older classful mechanism, and it is largely historical. The modern form is a static default plus origination. Knowing it exists is enough.' },
+              { kind: 'code', h: 'The legacy form', code:
+`  ip default-network 10.0.0.0
+
+  Legacy classful behaviour.
+  Prefer:
+    ip route 0.0.0.0 0.0.0.0 <next hop>` },
+              { kind: 'para', h: 'No default route means a drop', p: 'If there is no matching route and no default route, the packet is dropped. A router does not send unknown traffic somewhere by itself.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip route 0.0.0.0
+  show ip route static
+  show ip protocols` }
+            ],
+            commands: [
+              { label: 'Static default, primary and backup', code:
+`ip route 0.0.0.0 0.0.0.0 192.0.2.1
+ip route 0.0.0.0 0.0.0.0 198.51.100.1 200` },
+              { label: 'IPv6 default', code:
+`ipv6 route ::/0 2001:db8::1` },
+              { label: 'Originate it in OSPF', code:
+`router ospf 1
+ default-information originate
+default-information originate always` },
+              { label: 'Verify', code:
+`show ip route
+show ip route 0.0.0.0` }
+            ],
+            traps: [
+              'A default route is not always used. It is only consulted when no more-specific route matches.',
+              'A default route is not a default gateway. A **host** has a default gateway; a **router** has a default route.',
+              'AD is not the same as prefix length. /0 is the least specific prefix, and AD is a separate selection attribute.',
+              'A static default has AD 1, so it normally beats an OSPF default at AD 110 for the same 0.0.0.0/0.',
+              '%%default-information originate%% does not create a local default. It advertises one, and normally needs a local default to exist.',
+              '%%always%% changes OSPF origination so the default is originated even without a local default route.',
+              'A floating default is just a second 0.0.0.0/0 with a higher AD.',
+              'No default route means no catch-all. An unmatched packet is dropped.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Prefix', '0.0.0.0/0'],
+                ['IPv6 form', '::/0'],
+                ['Least specific', 'Yes — the catch-all'],
+                ['Used when', 'No more-specific route matches'],
+                ['Static AD', '1'],
+                ['OSPF default AD', '110'],
+                ['Gateway of last resort', 'The router’s reported next hop for the default'],
+                ['Route code', 'S* for a static default'],
+                ['Host term', 'Default gateway'],
+                ['Router term', 'Default route'],
+                ['Floating default', 'A second 0.0.0.0/0 with a higher AD'],
+                ['OSPF origination', 'default-information originate'],
+                ['Forced origination', 'default-information originate always'],
+                ['ip default-network', 'Legacy classful behaviour'],
+                ['No default route', 'The packet is dropped']
+              ]
+            },
+            related: [
+              { t: '08. Static Routing', d: 'where the catch-all comes from' },
+              { t: '05. FIB', d: 'the last entry in the lookup' },
+              { t: '09. Floating Static', d: 'the backup default' }
+            ],
+            glossary: ['Default Route', 'Static Routing', 'Floating Static', 'Administrative Distance', 'OSPF', 'FIB']
+          },
+          {
+            id: 't11', num: '11', group: 'optimize', title: 'Route Summarization',
+            blurb: 'Aligned CIDR blocks, the two OSPF commands, EIGRP’s Null0, and why longest prefix still wins',
+            overview: '**[[Summarization|Route summarization]]** represents many specific prefixes with one less-specific prefix. The benefit is a smaller [[Routing Table|routing table]] and less update traffic; the cost is the loss of granularity. It only works if [[VLSM]] gave you subnets that already line up as an aligned [[CIDR]] block.',
+            keyIdea: 'The networks must form a valid, aligned CIDR block. The summary is the longest common prefix with correct alignment — not just any grouping.',
+            sections: [
+              { kind: 'code', h: 'The basic example', code:
+`  10.1.0.0/24
+  10.1.1.0/24
+  10.1.2.0/24
+  10.1.3.0/24
+        |
+        v
+  10.1.0.0/22
+
+  Four /24s, one aligned /22.` },
+              { kind: 'para', h: 'Why it is worth doing', p: 'A smaller routing table means less memory, less lookup work and — more importantly — fewer updates. A link flap inside the summarized block no longer shakes the whole network, because the summary stays stable while the specifics flap underneath it.' },
+              { kind: 'code', h: 'The stability argument', code:
+`  Without summarization:
+    10.1.0.0/24 flaps -> every router reacts
+    10.1.1.0/24 flaps -> every router reacts
+
+  With summarization:
+    10.1.0.0/22 stays stable
+    the flap stays inside the summary` },
+              { kind: 'table', h: 'Benefit against cost', cols: ['Benefit', 'Cost'], rows: [
+                ['Smaller routing tables', 'Loss of routing granularity'],
+                ['Less update and control-plane traffic', 'A failure inside the summary affects every covered prefix'],
+                ['Stability at the summary boundary', 'Suboptimal paths if the summary spans a topology where the specifics would have chosen better'],
+                ['Simpler tables to reason about', 'The alignment must be correct or the summary is invalid']
+              ]},
+              { kind: 'para', h: 'EIGRP summarization', p: 'EIGRP summarization is configured per interface with %%ip summary-address eigrp%%. An interface summary normally installs a matching **Null0** discard route so that traffic for a subnet inside the summary that does not exist is dropped rather than forwarded.' },
+              { kind: 'code', h: 'EIGRP and its Null0', code:
+`  interface GigabitEthernet0/1
+   ip summary-address eigrp 100 10.1.0.0 255.255.252.0
+
+  EIGRP also installs:
+  S     10.1.0.0/22 is a summary, Null0
+
+  The discard route stops loops for traffic
+  that matches only the summary.` },
+              { kind: 'para', h: 'OSPF has two different commands', p: '%%area range%% is used on an **ABR** and summarises **inter-area** routes. %%summary-address%% is used on an **ASBR** and summarises **external** routes. They are different commands for different directions and the exam counts on the distinction.' },
+              { kind: 'code', h: 'The two OSPF commands', code:
+`  ! ABR: inter-area routes
+  router ospf 1
+   area 0 range 10.1.0.0 255.255.252.0
+
+  ! ASBR: external routes
+  router ospf 1
+   summary-address 172.16.0.0 255.255.0.0
+
+  area range        -> inter-area, ABR
+  summary-address   -> external, ASBR` },
+              { kind: 'para', h: 'Not inside an area', p: 'OSPF cannot summarise routes inside an area, because every router in an area has to share the same link-state information. Summarization happens at the **area border** and at the **AS boundary**, never between routers in one area.' },
+              { kind: 'code', h: 'Where OSPF summarises', code:
+`  Inside area 0      ->  no summarization
+  ABR, area 0 <-> 1  ->  area range
+  ASBR               ->  summary-address` },
+              { kind: 'para', h: 'BGP aggregation', p: 'BGP uses %%aggregate-address%%. Adding %%summary-only%% advertises the aggregate and **suppresses the contributing specifics**. Unlike EIGRP, an aggregate does not automatically imply a Null0 route — a manual aggregate design may use one.' },
+              { kind: 'code', h: 'BGP aggregation', code:
+`  router bgp 65001
+   aggregate-address 10.1.0.0 255.255.0.0 summary-only
+
+  Advertises the /16.
+  Suppresses the contributing more-specific routes.
+
+  NOT an automatic Null0.` },
+              { kind: 'para', h: 'Null0 and loop prevention', p: 'A summary route on the router that created it can attract traffic back if a more-specific route is missing. The Null0 discard route prevents that loop by dropping traffic that matches only the summary.' },
+              { kind: 'code', h: 'The loop Null0 prevents', code:
+`  Summary 10.1.0.0/22 points back toward the source
+  More-specific 10.1.1.0/24 is missing
+
+  Without Null0:
+    traffic matches the summary, goes back, comes back again
+
+  With Null0:
+    the /16 attracts it, the /24 is missing,
+    Null0 drops it -> no loop` },
+              { kind: 'code', h: 'Longest prefix match still wins', code:
+`  10.1.0.0/16  ->  Null0
+  10.1.1.0/24  ->  GigabitEthernet0/1
+
+  10.1.1.10 -> the /24, because /24 is more specific.
+
+  The summary is a catch-all, not a hijack.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip route 10.1.0.0 longer-prefixes
+  show ip protocols
+  show ip ospf border-routers
+  show ip eigrp topology` }
+            ],
+            commands: [
+              { label: 'EIGRP summary on an interface', code:
+`interface GigabitEthernet0/1
+ ip summary-address eigrp 100 10.1.0.0 255.255.252.0` },
+              { label: 'OSPF: ABR and ASBR', code:
+`router ospf 1
+ area 0 range 10.1.0.0 255.255.252.0
+ summary-address 172.16.0.0 255.255.0.0` },
+              { label: 'BGP aggregation', code:
+`router bgp 65001
+ aggregate-address 10.1.0.0 255.255.0.0 summary-only` },
+              { label: 'Verify', code:
+`show ip route 10.1.0.0 longer-prefixes
+show ip protocols` }
+            ],
+            traps: [
+              'Summarization is not simply combining any networks. They have to form a **valid, aligned CIDR block**.',
+              'OSPF cannot summarise **inside** an area. %%area range%% is on an ABR and %%summary-address%% is on an ASBR.',
+              '%%area range%% and %%summary-address%% are different. Area range summarises inter-area routes; summary-address summarises external routes.',
+              'An EIGRP interface summary normally creates a matching **Null0** discard route.',
+              'BGP %%aggregate-address%% does **not** automatically create a Null0 route — a manual design may use one.',
+              '%%summary-only%% advertises the aggregate while **suppressing the contributing more-specific routes**.',
+              'Longest prefix match still wins. A /24 beats a /16 even when the /16 points at Null0.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Also called', 'Aggregation'],
+                ['Benefit', 'Smaller tables and less update traffic'],
+                ['Trade-off', 'Loss of granularity'],
+                ['Calculation', 'The longest common prefix with correct alignment'],
+                ['EIGRP command', 'ip summary-address eigrp, on an interface'],
+                ['EIGRP Null0', 'An interface summary normally installs one'],
+                ['OSPF inter-area', 'area range, on an ABR'],
+                ['OSPF external', 'summary-address, on an ASBR'],
+                ['OSPF inside an area', 'No summarization'],
+                ['BGP', 'aggregate-address'],
+                ['BGP summary-only', 'Suppresses the contributing specifics'],
+                ['BGP Null0', 'Not automatic'],
+                ['Null0 purpose', 'Safely discards traffic matching only the summary'],
+                ['Longest prefix match', 'A more-specific route beats the summary']
+              ]
+            },
+            related: [
+              { t: '08. Static Routing', d: 'the Null0 discard route' },
+              { t: '12. Dynamic Routing', d: 'the protocols that summarise' },
+              { t: '01. Routing Table', d: 'what gets smaller' }
+            ],
+            glossary: ['Summarization', 'CIDR', 'VLSM', 'Routing Table', 'Static Routing', 'OSPF', 'OSPF Area', 'ABR', 'ASBR', 'BGP', 'EIGRP', 'Routing Loop']
+          },
+          {
+            id: 't12', num: '12', group: 'optimize', title: 'Dynamic Routing',
+            blurb: 'Distance vector, advanced distance vector, link state and path vector — and the operations every protocol performs',
+            overview: '**[[Dynamic Routing|Dynamic routing protocols]]** exchange reachability information, build a topology view, and converge on new paths automatically when the network changes. They come in four families: distance vector, advanced distance vector, link state and path vector.',
+            keyIdea: 'Distance vector asks neighbours for directions. Link state builds a map and computes the path itself. Path vector carries the path through autonomous systems.',
+            sections: [
+              { kind: 'table', h: 'The four families', cols: ['Family', 'How it works', 'Example'], rows: [
+                ['Distance vector', 'Learns distance and direction from its neighbours', 'RIP'],
+                ['Advanced distance vector', 'Distance vector with query mechanisms and fast convergence', 'EIGRP'],
+                ['Link state', 'Builds a topology database and runs SPF', 'OSPF and IS-IS'],
+                ['Path vector', 'Carries the path through autonomous systems and applies policy', 'BGP']
+              ]},
+              { kind: 'code', h: 'The two mental models', code:
+`  Distance vector:   "Ask your neighbour for directions."
+
+  Link state:        "Build a map of the entire city and
+                      calculate the best route yourself."
+
+  Path vector:       "Which countries do I pass through?"` },
+              { kind: 'para', h: 'Why dynamic at all', p: 'Static routing cannot react. A dynamic protocol discovers neighbours, learns the topology, installs routes, and then recomputes when something changes — which is what makes a large or changing network manageable.' },
+              { kind: 'code', h: 'The operation every protocol performs', code:
+`  1. Neighbor discovery
+  2. Routing updates / exchanges
+  3. Build the protocol database
+  4. Route installation
+  5. Convergence` },
+              { kind: 'para', h: 'Distance vector', p: 'A distance vector protocol tells its neighbours what it knows and what it costs to get there. It does not see the topology — it knows distance and direction, and its view of the network is limited to what its neighbours report.' },
+              { kind: 'code', h: 'Distance vector in one line', code:
+`  R2 says "Network X is 3 hops away."
+       |
+       v
+  R1 believes R2 and does not know
+  what the path actually looks like.` },
+              { kind: 'table', h: 'RIP as the distance vector example', cols: ['Property', 'RIP'], rows: [
+                ['Family', 'Distance vector'],
+                ['Metric', 'Hop count'],
+                ['Maximum', '15 hops, 16 is unreachable'],
+                ['Updates', 'Periodic full routing table'],
+                ['Scale', 'Limited by the hop ceiling']
+              ]},
+              { kind: 'para', h: 'EIGRP, the advanced distance vector', p: 'EIGRP is described as advanced distance vector because it keeps the neighbour-based model but adds a **diffusing update algorithm**, query and reply mechanisms, and a composite metric. It converges far faster than classic distance vector and it is Cisco proprietary.' },
+              { kind: 'code', h: 'What EIGRP adds', code:
+`  Classic distance vector
+       |
+       +-- periodic updates
+       +-- slow convergence
+       +-- count to infinity
+       |
+  EIGRP adds
+       |
+       +-- DUAL, the diffusing update algorithm
+       +-- query and reply
+       +-- feasible successors
+       +-- a composite metric
+       +-- fast, loop-free convergence` },
+              { kind: 'para', h: 'Link state', p: 'A link-state protocol learns the links and topology of the network and stores them in a **link-state database**. Every router then runs the **SPF** algorithm — Dijkstra’s — on its own copy of the database and installs the resulting paths independently.' },
+              { kind: 'code', h: 'The link-state sequence', code:
+`  Discover neighbors
+       |
+  Learn link information
+       |
+  Exchange link-state information
+       |
+  Build the LSDB
+       |
+  Run SPF (Dijkstra)
+       |
+  Calculate best paths
+       |
+  Install routes` },
+              { kind: 'para', h: 'OSPF as the link-state example', p: 'OSPF is open standard, link state, an IGP and classless. It runs SPF on the LSDB and each router arrives at its own view of the best paths from the topology it holds.' },
+              { kind: 'code', h: 'The OSPF model', code:
+`  Network topology
+       |
+  Link-state information
+       |
+  LSDB
+       |
+  SPF / Dijkstra
+       |
+  Shortest and best paths
+       |
+  Routing table` },
+              { kind: 'para', h: 'Path vector and BGP', p: '**[[BGP]]** is the path vector protocol, designed to route **between autonomous systems**. What it carries is the path — the AS_PATH — and policy, not just a metric. That is why BGP can make decisions based on which networks a route has already passed through.' },
+              { kind: 'code', h: 'The AS path', code:
+`  AS 65001
+     |
+     v
+  AS 65002
+     |
+     v
+  AS 65003
+     |
+     v
+  Network X
+
+  BGP learns:
+    Network X
+    AS_PATH: 65003 65002
+
+  You care which countries you pass through.` },
+              { kind: 'table', h: 'IGP against EGP', cols: ['Type', 'Scope', 'Examples'], rows: [
+                ['IGP', 'Inside one autonomous system', 'RIP, EIGRP, OSPF, IS-IS'],
+                ['EGP', 'Between autonomous systems', 'BGP, the only one still in use']
+              ]},
+              { kind: 'table', h: 'Distance vector against link state against path vector', cols: ['Feature', 'Distance vector', 'Link state', 'Path vector'], rows: [
+                ['Basic idea', 'Learn from neighbours', 'Build a topology view', 'Carry the path'],
+                ['Knowledge', 'Distance and direction', 'The network topology', 'The AS path and attributes'],
+                ['Database', 'Routing information', 'Link-state database', 'The BGP table'],
+                ['Algorithm', 'Distance-vector calculation', 'SPF, Dijkstra', 'Path selection with policy'],
+                ['Example', 'RIP', 'OSPF and IS-IS', 'BGP'],
+                ['Scale', 'Lower', 'Higher', 'Highest'],
+                ['Convergence', 'Generally slower', 'Generally faster', 'Policy driven']
+              ]},
+              { kind: 'para', h: 'Convergence and triggered updates', p: 'A protocol converges when every router agrees on the new topology. **Triggered updates** — sending an update immediately on a change rather than waiting for the periodic one — are what make convergence fast, and route flapping is what makes it expensive.' },
+              { kind: 'code', h: 'The convergence chain', code:
+`  Change detected
+       |
+  Triggered update
+       |
+  Neighbours recalculate
+       |
+  Routes installed in the RIB
+       |
+  FIB updated
+       |
+  Forwarding resumes` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip protocols
+  show ip route
+  show ip ospf neighbor
+  show ip eigrp neighbors
+  show ip rip database
+  show bgp all` }
+            ],
+            commands: [
+              { label: 'Check what is running', code:
+`show ip protocols
+show ip route` },
+              { label: 'OSPF and EIGRP neighbours', code:
+`show ip ospf neighbor
+show ip eigrp neighbors` },
+              { label: 'BGP', code:
+`show bgp all` }
+            ],
+            traps: [
+              'A metric from one protocol is not comparable with a metric from another. Different sources use AD instead.',
+              'Distance vector does not build a topology map. It learns distance and direction from its neighbours.',
+              'EIGRP is not a link-state protocol. It is advanced distance vector, with DUAL and query mechanisms.',
+              'BGP is not an IGP. It is the path vector protocol used between autonomous systems.',
+              'RIP’s 16 is not a valid hop count — it means unreachable.',
+              'Convergence is not instantaneous. It depends on the protocol, the topology and the failure.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Distance vector', 'Learn from neighbours, RIP'],
+                ['Advanced distance vector', 'EIGRP, with DUAL and queries'],
+                ['Link state', 'Build the LSDB and run SPF, OSPF and IS-IS'],
+                ['Path vector', 'Carry the AS path and apply policy, BGP'],
+                ['IGP', 'Inside an autonomous system'],
+                ['EGP', 'Between autonomous systems — BGP only'],
+                ['SPF', 'Dijkstra’s algorithm'],
+                ['LSDB', 'The link-state database'],
+                ['Convergence', 'When every router agrees on the new topology'],
+                ['Triggered updates', 'An update sent immediately on change'],
+                ['Route flapping', 'Repeated changes costing repeated reconvergence'],
+                ['RIP maximum', '15 hops, 16 unreachable'],
+                ['EIGRP', 'Cisco proprietary'],
+                ['OSPF', 'Open standard']
+              ]
+            },
+            related: [
+              { t: '02. Administrative Distance', d: 'how these sources are ranked' },
+              { t: '03. Metrics', d: 'how each one measures a path' },
+              { t: '06. RIB', d: 'where the learned routes land' }
+            ],
+            glossary: ['Dynamic Routing', 'OSPF', 'EIGRP', 'BGP', 'Metrics', 'Administrative Distance', 'Routing Table', 'RIB', 'OSPF Area']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'structures', label: 'Forwarding Structures', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'static', label: 'Static Routing', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'optimize', label: 'Route Optimization', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'Routing Table', def: 'The RIB: the control-plane database holding the best route to each known prefix, populated by connected, static and dynamic sources.' },
+          { term: 'RIB', def: 'Routing Information Base — the control-plane database of selected routes that CEF turns into the FIB for forwarding.' },
+          { term: 'FIB', def: 'Forwarding Information Base — the data-plane lookup structure derived from the RIB, worked on with the adjacency table.' },
+          { term: 'CEF', def: 'Cisco Express Forwarding — the default forwarding architecture, the FIB plus adjacency information, with hash-based load sharing.' },
+          { term: 'Administrative Distance', def: 'The 0–255 local ranking of how trustworthy a routing source is. Lower is better: connected 0, static 1, eBGP 20, EIGRP 90, OSPF 110, RIP 120, iBGP 200.' },
+          { term: 'Metrics', def: 'The value a routing protocol uses to rank paths inside itself. OSPF cost, the EIGRP composite, RIP hop count — never comparable across protocols.' },
+          { term: 'Recursive Lookup', def: 'Resolving a route’s next-hop address by looking it up in the RIB until an exit interface is found. Done by the control plane, not per packet.' },
+          { term: 'Static Routing', def: 'A manually configured route with default AD 1. It discovers nothing, advertises nothing, and needs redistribution to reach other routers.' },
+          { term: 'Floating Static', def: 'A static route with an AD higher than the primary source, so it installs only when that route is gone. Below 255, which means unreachable.' },
+          { term: 'Default Route', def: '0.0.0.0/0, the least-specific catch-all. Used only when nothing more specific matches. A host calls it a default gateway.' },
+          { term: 'Summarization', def: 'Representing many specific prefixes with one aligned CIDR block. Smaller tables and less update traffic, at the cost of granularity.' },
+          { term: 'Dynamic Routing', def: 'Protocols that exchange reachability, build a topology view and converge automatically: distance vector, advanced distance vector, link state and path vector.' },
+          { term: 'Control Plane', def: 'Where the router runs its routing protocols, builds the RIB and decides where traffic should go.' },
+          { term: 'Data Plane', def: 'Where packets are actually forwarded, using the FIB and adjacency tables through CEF.' },
+          { term: 'IP SLA', def: 'Cisco IP Service Level Agreement — an active probe such as an ICMP echo that measures reachability, usually bound to a track object.' },
+          { term: 'OSPF', def: 'Open Shortest Path First — the open-standard link-state IGP, using SPF on a link-state database, with AD 110.' },
+          { term: 'EIGRP', def: 'Cisco’s advanced distance vector protocol using DUAL, with a composite metric of bandwidth and delay by default, AD 90 internal and 170 external.' },
+          { term: 'BGP', def: 'Border Gateway Protocol — the path vector protocol that routes between autonomous systems using the AS path and policy, AD 20 eBGP and 200 iBGP.' },
+          { term: 'VRF', def: 'Virtual Routing and Forwarding — an isolated routing instance with its own RIB and FIB, so the same prefix can exist with different next hops.' },
+          { term: 'Loopback Address', def: 'A software interface with an address that stays up as long as the router does. Used for router identifiers and BGP peering.' },
+          { term: 'Routing Loop', def: 'Traffic circulating because routes disagree. Summarization with a Null0 discard route is one of the defences.' },
+          { term: 'CIDR', def: 'Classless Inter-Domain Routing — addressing by prefix length rather than class, which is what makes summarization possible.' },
+          { term: 'VLSM', def: 'Variable Length Subnet Masking — different prefix lengths within one major network, so summarization has aligned blocks to work with.' },
+          { term: 'OSPF Cost', def: 'The OSPF metric: reference bandwidth divided by interface bandwidth, accumulated along the path. Lower is better.' },
+          { term: 'OSPF Area', def: 'One of OSPF’s link-state domains. Every router in an area shares the same link-state information, which is why summarization happens at the area border rather than inside it.' },
+          { term: 'ABR', def: 'Area Border Router — the router joining an OSPF area to the backbone, and the place where area range summarization is configured.' },
+          { term: 'ASBR', def: 'Autonomous System Boundary Router — the OSPF router injecting external routes, and the place where summary-address is configured.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'What are the three route sources that populate the RIB, and what separates them?',
+            options: [
+              'Connected, static and dynamic, separated by Administrative Distance',
+              'Connected, static and dynamic, separated by metric',
+              'Local, remote and redistributed, separated by prefix length',
+              'IGP, EGP and static, separated by AD and metric'
+            ],
+            answer: 0,
+            why: 'Connected, static and dynamic sources all feed the RIB, and Administrative Distance is what ranks them.'
+          },
+          {
+            q: 'What does the notation [110/20] mean in show ip route?',
+            options: ['AD 110, metric 20', 'Metric 110, AD 20', 'Prefix 110, AD 20', 'Bandwidth 110, delay 20'],
+            answer: 0,
+            why: 'The bracket is always [AD/metric], so 110 is the Administrative Distance and 20 is the metric.'
+          },
+          {
+            q: 'What is the difference between a C and an L route code?',
+            options: [
+              'C is a static route and L is a local route',
+              'C is the directly connected network and L is the router’s own interface address',
+              'C is a classful route and L is a classless route',
+              'They are the same thing written differently'
+            ],
+            answer: 1,
+            why: 'C is the connected network and L is the router’s own address as a /32, delivered locally rather than forwarded.'
+          },
+          {
+            q: 'A router has a static 10.0.0.0/8 with AD 1 and an OSPF 10.10.10.0/24 with AD 110. Which is used for 10.10.10.5?',
+            options: ['The static route, because AD 1 beats AD 110', 'The OSPF route, because the /24 is longer', 'Both, as equal-cost paths', 'Neither — the router drops the packet'],
+            answer: 1,
+            why: 'Longest prefix match is checked before Administrative Distance, so the /24 wins despite the higher AD.'
+          },
+          {
+            q: 'What is the Administrative Distance of a connected route?',
+            options: ['0', '1', '20', '90'],
+            answer: 0,
+            why: 'Connected is AD 0, so it beats static and dynamic routes for the same prefix.'
+          },
+          {
+            q: 'What is the Administrative Distance of a normal static route?',
+            options: ['0', '1', '5', '20'],
+            answer: 1,
+            why: 'A normal static route has AD 1, which is why it normally beats EIGRP, OSPF and RIP.'
+          },
+          {
+            q: 'Which pair of Administrative Distance values is correct?',
+            options: ['eBGP 20, iBGP 200', 'eBGP 200, iBGP 20', 'eBGP 90, iBGP 110', 'eBGP 20, iBGP 20'],
+            answer: 0,
+            why: 'eBGP is 20 and iBGP is 200 — a very large difference that is examined often.'
+          },
+          {
+            q: 'What are the Administrative Distances of EIGRP internal and EIGRP external?',
+            options: ['90 and 170', '170 and 90', '90 and 110', '20 and 200'],
+            answer: 0,
+            why: 'EIGRP internal is 90 and EIGRP external is 170.'
+          },
+          {
+            q: 'Administrative Distance is best described as which of these?',
+            options: [
+              'An attribute advertised between routers',
+              'A local ranking of how trustworthy a routing source is',
+              'The cost of a path inside a protocol',
+              'A measure of link bandwidth'
+            ],
+            answer: 1,
+            why: 'AD is local route-source preference. It is never exchanged, so changing it does not affect a neighbour.'
+          },
+          {
+            q: 'What is OSPF’s metric, and how is it calculated?',
+            options: [
+              'Hop count, counted per link',
+              'Cost, from reference bandwidth divided by interface bandwidth',
+              'A composite of bandwidth and delay',
+              'Delay, accumulated along the path'
+            ],
+            answer: 1,
+            why: 'OSPF uses cost, calculated as reference bandwidth divided by the interface bandwidth.'
+          },
+          {
+            q: 'With the classic 100 Mbit/s reference bandwidth, what cost does a 1 Gbit/s link get?',
+            options: ['1', '10', '100', '1000'],
+            answer: 0,
+            why: '100/1000 rounds up to 1 — the same as a 10 Mbit/s and a 10 Gbit/s link, which is why the reference is raised.'
+          },
+          {
+            q: 'What is the cumulative OSPF cost from R1 to R3 across links of cost 10 and 20?',
+            options: ['10', '20', '30', '200'],
+            answer: 2,
+            why: 'OSPF cost accumulates: 10 plus 20 is 30. It is not just the destination interface cost.'
+          },
+          {
+            q: 'What command raises the OSPF reference bandwidth?',
+            options: [
+              'auto-cost reference-bandwidth 100000',
+              'ip ospf cost 100000',
+              'ospf reference-bandwidth 100000',
+              'ip ospf bandwidth 100000'
+            ],
+            answer: 0,
+            why: 'auto-cost reference-bandwidth sets the reference in Mbit/s, and it must match across the area.'
+          },
+          {
+            q: 'What are the default EIGRP K values?',
+            options: ['K1=1, K2=0, K3=1, K4=0, K5=0', 'K1=1, K2=1, K3=1, K4=1, K5=1', 'K1=0, K2=1, K3=0, K4=1, K5=0', 'K1=1, K2=0, K3=0, K4=0, K5=0'],
+            answer: 0,
+            why: 'With K2, K4 and K5 at zero the default EIGRP metric is bandwidth plus delay.'
+          },
+          {
+            q: 'Which bandwidth value does EIGRP use in its metric?',
+            options: ['The minimum along the path', 'The average along the path', 'The total along the path', 'The bandwidth of the last link'],
+            answer: 0,
+            why: 'EIGRP uses the minimum bandwidth encountered anywhere on the path.'
+          },
+          {
+            q: 'Why must EIGRP K values match between neighbours?',
+            options: [
+              'To keep the metric comparable',
+              'Incompatible K values prevent the adjacency from forming',
+              'To enable summarization',
+              'To allow unequal-cost load balancing'
+            ],
+            answer: 1,
+            why: 'EIGRP neighbours with incompatible K values will not form an adjacency, so the change has to be applied consistently.'
+          },
+          {
+            q: 'In RIP, what do 15 and 16 mean?',
+            options: [
+              '15 is the maximum reachable hop count and 16 is unreachable',
+              '15 is the maximum metric and 16 is the default',
+              '15 is the update interval and 16 is the invalid timer',
+              'They are the AD of RIP and its successor'
+            ],
+            answer: 0,
+            why: 'RIP’s ceiling is 15 reachable hops, and 16 means the route is unreachable.'
+          },
+          {
+            q: 'What does maximum-paths control?',
+            options: [
+              'The routing protocol metric',
+              'How many equal-cost paths are installed',
+              'The maximum hop count',
+              'The number of routing processes'
+            ],
+            answer: 1,
+            why: 'maximum-paths sets how many ECMP paths are installed. It does not change the metric.'
+          },
+          {
+            q: 'What does recursive lookup actually resolve?',
+            options: [
+              'The best destination route',
+              'The next-hop address of the selected route',
+              'The Administrative Distance',
+              'The metric of the route'
+            ],
+            answer: 1,
+            why: 'Longest prefix match selects the destination route; recursive lookup resolves that route’s next hop.'
+          },
+          {
+            q: 'Which routing situation most commonly requires recursive resolution?',
+            options: ['Directly connected eBGP peers', 'An iBGP route whose next hop is reachable via the IGP', 'A connected route', 'An interface-only static route'],
+            answer: 1,
+            why: 'iBGP routes very often point at a next hop that must be resolved through the interior gateway protocol.'
+          },
+          {
+            q: 'Which static route form provides both an exit interface and a next hop?',
+            options: ['Next hop only', 'Interface only', 'Fully specified', 'A floating static route'],
+            answer: 2,
+            why: 'A fully specified static route names the exit interface and the next hop, removing the ambiguity.'
+          },
+          {
+            q: 'What is a potential problem with an interface-only static route on Ethernet?',
+            options: [
+              'It cannot be removed',
+              'The router may need to ARP for the destination itself',
+              'It always has AD 255',
+              'It cannot carry IPv6'
+            ],
+            answer: 1,
+            why: 'On a broadcast interface the router may ARP for the destination, which is why naming a next hop is normally clearer.'
+          },
+          {
+            q: 'What does a glean entry in the FIB indicate?',
+            options: [
+              'The route is missing',
+              'The subnet is known but the host adjacency is not resolved',
+              'The packet is being dropped',
+              'The address belongs to the router'
+            ],
+            answer: 1,
+            why: 'Glean means the connected subnet is known and the specific host adjacency is not resolved yet — usually resolved by ARP.'
+          },
+          {
+            q: 'What does a receive entry in the FIB indicate?',
+            options: [
+              'Normal forwarding',
+              'Traffic destined to an address owned by the router',
+              'Traffic being discarded',
+              'A resolved adjacency'
+            ],
+            answer: 1,
+            why: 'Receive is traffic to the router’s own address, handled locally rather than forwarded.'
+          },
+          {
+            q: 'What is the default CEF load-sharing behaviour?',
+            options: [
+              'Per-packet round robin',
+              'Hash-based, keeping a flow on one path',
+              'Per-interface weighting',
+              'No load sharing unless configured'
+            ],
+            answer: 1,
+            why: 'CEF hashes the flow onto one next hop, so packets of the same flow stay on the same path.'
+          },
+          {
+            q: 'What is hash polarization?',
+            options: [
+              'A FIB overflow condition',
+              'The same hash inputs reused at several layers, concentrating flows on the same paths',
+              'A type of adjacency entry',
+              'Uneven bandwidth between two links'
+            ],
+            answer: 1,
+            why: 'When the same hash inputs are reused across layers, flows collapse onto the same paths at every layer.'
+          },
+          {
+            q: 'Which two structures make up CEF in the useful exam model?',
+            options: ['RIB and FIB', 'FIB and adjacency table', 'RIB and adjacency table', 'FIB and LSDB'],
+            answer: 1,
+            why: 'CEF is the FIB for the prefix lookup plus the adjacency table for the Layer 2 detail.'
+          },
+          {
+            q: 'Which command shows the FIB rather than the RIB?',
+            options: ['show ip route', 'show ip cef', 'show ip protocols', 'show ip interface brief'],
+            answer: 1,
+            why: 'show ip route shows the RIB; show ip cef shows CEF and FIB information.'
+          },
+          {
+            q: 'How does a static route with AD 200 behave against an OSPF route with AD 110?',
+            options: [
+              'The static route always wins',
+              'The static route installs only when the OSPF route is gone',
+              'Both are installed as ECMP paths',
+              'Neither is installed'
+            ],
+            answer: 1,
+            why: 'The higher AD makes it a floating static route — a backup that installs only when the better route disappears.'
+          },
+          {
+            q: 'What is the highest usable Administrative Distance for a floating static route?',
+            options: ['254', '255', '200', '170'],
+            answer: 0,
+            why: '255 means unreachable and never installs, so 254 is the highest practical value.'
+          },
+          {
+            q: 'Why does a floating static route not fail over when the far end of the link is dead?',
+            options: [
+              'The AD is too high',
+              'The primary route never disappears, because the local interface stays up',
+              'Floating statics cannot be tracked',
+              'OSPF holds the route permanently'
+            ],
+            answer: 1,
+            why: 'Floating works on route preference, not link state — so IP SLA and a track object are needed to detect a dead far end.'
+          },
+          {
+            q: 'What is the correct chain for a probe-driven backup route?',
+            options: [
+              'Track, then IP SLA, then static route',
+              'IP SLA, then a track object, then the tracked static route',
+              'Static route, then IP SLA, then the RIB',
+              'CEF, then the FIB, then the adjacency'
+            ],
+            answer: 1,
+            why: 'IP SLA measures, the track object binds the result, and the tracked static route is withdrawn when the track fails.'
+          },
+          {
+            q: 'What is the prefix for a static default route?',
+            options: ['255.255.255.255', '0.0.0.0 0.0.0.0', '0.0.0.0 255.255.255.255', '255.255.255.0 0.0.0.0'],
+            answer: 1,
+            why: 'The static default is written ip route 0.0.0.0 0.0.0.0 next-hop.'
+          },
+          {
+            q: 'When is a default route actually used?',
+            options: [
+              'For every packet',
+              'Only when no more-specific route matches',
+              'Only for broadcast traffic',
+              'When the AD of the matching route is above 200'
+            ],
+            answer: 1,
+            why: 'Longest prefix match runs first, so the default is only reached when nothing more specific matches.'
+          },
+          {
+            q: 'What is the difference between a default gateway and a default route?',
+            options: [
+              'There is no difference',
+              'A host has a default gateway; a router has a default route',
+              'A router has a default gateway; a host has a default route',
+              'One is IPv4 and the other is IPv6'
+            ],
+            answer: 1,
+            why: 'They are the same idea described from each device’s point of view.'
+          },
+          {
+            q: 'What does default-information originate do in OSPF?',
+            options: [
+              'Creates a local 0.0.0.0/0 route',
+              'Advertises a default route through OSPF',
+              'Disables the default route on the router',
+              'Sets the reference bandwidth'
+            ],
+            answer: 1,
+            why: 'It advertises a default into OSPF. It does not create one locally, and normally needs a local default to exist.'
+          },
+          {
+            q: 'What does default-information originate always change?',
+            options: [
+              'The AD of the default route',
+              'OSPF originates the default even without a local default route',
+              'The metric of the default route',
+              'The area the default is flooded into'
+            ],
+            answer: 1,
+            why: 'always removes the requirement for a local default route before OSPF will originate one.'
+          },
+          {
+            q: 'Which pair of OSPF summarization commands is correct?',
+            options: [
+              'area range on an ABR, summary-address on an ASBR',
+              'summary-address on an ABR, area range on an ASBR',
+              'Both on the ABR',
+              'Both on the ASBR'
+            ],
+            answer: 0,
+            why: 'area range summarises inter-area routes on an ABR; summary-address summarises external routes on an ASBR.'
+          },
+          {
+            q: 'Where can OSPF NOT summarise routes?',
+            options: ['Between areas', 'At the AS boundary', 'Inside an area', 'On an ABR'],
+            answer: 2,
+            why: 'OSPF cannot summarise inside an area, because every router in the area must share the same link-state information.'
+          },
+          {
+            q: 'What does an EIGRP interface summary normally install alongside the summary?',
+            options: ['A default route', 'A Null0 discard route', 'A floating static route', 'An adjacency entry'],
+            answer: 1,
+            why: 'A Null0 discard route prevents loops for traffic that matches only the summary and has no more-specific route.'
+          },
+          {
+            q: 'What does aggregate-address 10.1.0.0 255.255.0.0 summary-only do in BGP?',
+            options: [
+              'Advertises the aggregate and suppresses the contributing specifics',
+              'Advertises only the contributing specifics',
+              'Creates an automatic Null0 route',
+              'Summarises inside an area'
+            ],
+            answer: 0,
+            why: 'summary-only advertises the aggregate while suppressing the more-specific routes that contributed to it.'
+          },
+          {
+            q: 'How many specific routes can be summarised into a single CIDR block?',
+            options: [
+              'Any number, as long as they share a major network',
+              'Any power of two, if they form an aligned block',
+              'At most four',
+              'Only contiguous classful ranges'
+            ],
+            answer: 1,
+            why: 'The block must be a valid, aligned CIDR block — a power of two aligned on that boundary.'
+          },
+          {
+            q: 'What problem does the Null0 summary route prevent?',
+            options: [
+              'A routing loop when a more-specific route inside the summary is missing',
+              'A broadcast storm',
+              'An adjacency failure',
+              'A FIB overflow'
+            ],
+            answer: 0,
+            why: 'Without Null0, traffic matching only the summary can be forwarded back toward the source and loop.'
+          },
+          {
+            q: 'Which category does OSPF belong to?',
+            options: ['Distance vector', 'Advanced distance vector', 'Link state', 'Path vector'],
+            answer: 2,
+            why: 'OSPF is a link-state protocol: it builds an LSDB and runs SPF.'
+          },
+          {
+            q: 'Which category does EIGRP belong to?',
+            options: ['Distance vector', 'Advanced distance vector', 'Link state', 'Path vector'],
+            answer: 1,
+            why: 'EIGRP is advanced distance vector — neighbour-based, with DUAL and query mechanisms.'
+          },
+          {
+            q: 'Which category does BGP belong to?',
+            options: ['Distance vector', 'Advanced distance vector', 'Link state', 'Path vector'],
+            answer: 3,
+            why: 'BGP is path vector: it carries the AS path and applies policy between autonomous systems.'
+          },
+          {
+            q: 'What algorithm does a link-state protocol run on its database?',
+            options: ['Dijkstra’s SPF', 'Bellman-Ford', 'DUAL', 'Diffie-Hellman'],
+            answer: 0,
+            why: 'Link-state protocols run the Shortest Path First algorithm, which is Dijkstra’s.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'rf.theme', done: 'rf.done', best: 'rf.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
