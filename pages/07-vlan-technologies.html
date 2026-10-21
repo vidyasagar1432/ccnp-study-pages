@@ -1,0 +1,2790 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VLAN Technologies — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 07 VLAN Technologies: VLANs and broadcast domains, access, voice, private and native VLANs, 802.1Q tagging, DTP, QinQ, inter-VLAN routing and router-on-a-stick.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">VLAN Technologies — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[13px] font-black tracking-tight text-white">VL</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">VLAN Technologies</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 07</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 07</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">11 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 07 &mdash; VLAN Technologies</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The whole of Layer 2 segmentation: what a VLAN is and is not, the port roles that carry it, the protocols that tag and negotiate it, and the three ways to route between VLANs.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        VLAN Technologies &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 07 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `A [[VLAN]] splits one Layer 2 switched network into many **broadcast domains** without adding switches. This level covers what a VLAN is and is not, the port roles that carry it — [[Access Port]], [[Trunk Port]] and the [[Native VLAN]] — the trunking protocols that tag and negotiate it, and the three ways to route between VLANs: [[Router-on-a-Stick]], SVI routing and routed access.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'concept', title: 'VLAN',
+            blurb: 'The Layer 2 broadcast domain, the VLAN ID ranges, and what a VLAN is not',
+            overview: 'A [[VLAN]] logically divides a Layer 2 switched network into multiple **broadcast domains**. Hosts in the same VLAN reach each other directly at Layer 2, while hosts in different VLANs are isolated at Layer 2 and need **Layer 3 routing** to communicate.',
+            keyIdea: 'A VLAN is a **Layer 2 broadcast domain**. An IP subnet is a **Layer 3 addressing and routing domain**. One VLAN to one subnet is the normal design, not the definition of a VLAN.',
+            sections: [
+              { kind: 'para', h: 'What a VLAN actually does', p: 'The switch keeps a VLAN membership table and uses it when making forwarding decisions. A frame received on an **access port** is normally untagged, and the switch associates it internally with the port access VLAN. When several VLANs share a link, **802.1Q** tagging identifies which VLAN each frame belongs to.' },
+              { kind: 'table', h: 'A flat network against a VLAN-based network', cols: ['Feature', 'Flat network', 'VLAN-based network'], rows: [
+                ['Broadcast domains', 'One large domain', 'Multiple domains'],
+                ['Port membership', 'Every port in the same Layer 2 domain', 'Ports separated into VLANs'],
+                ['Broadcast traffic', 'Reaches every port in the domain', 'Contained inside its own VLAN'],
+                ['Logical segmentation', 'Very limited', 'Users, servers, voice and management separated'],
+                ['IP addressing', 'Usually one subnet', 'Typically one subnet per VLAN']
+              ]},
+              { kind: 'para', h: 'The VLAN identifier', p: '802.1Q defines a **12-bit VLAN Identifier**. Twelve bits gives 4096 possible values, but the reserved values mean the usable range is **1 to 4094**. The VLAN ID is what appears in the tag and what you use in configuration.' },
+              { kind: 'table', h: 'The VLAN ID ranges', cols: ['VLAN ID', 'Meaning'], rows: [
+                ['0', 'Reserved. Used to indicate priority tagging rather than a normal VLAN'],
+                ['1 to 4094', 'The usable VLAN IDs'],
+                ['4095', 'Reserved'],
+                ['1002 to 1005', 'Legacy Cisco default VLANs associated with FDDI and Token Ring']
+              ]},
+              { kind: 'table', h: 'The Cisco VLAN ranges', cols: ['Range', 'Description'], rows: [
+                ['1', 'The default VLAN'],
+                ['2 to 1001', 'The normal VLAN range'],
+                ['1002 to 1005', 'Legacy VLANs'],
+                ['1006 to 4094', 'The extended VLAN range']
+              ]},
+              { kind: 'para', h: 'VLAN 1 and the default native VLAN', p: '**VLAN 1** exists by default on Cisco switches, ports land in it by default, it normally cannot be deleted, and it is the default native VLAN on many configurations. Avoiding it for user traffic is a sensible design practice, but VLAN 1 is not a security control in itself and changing the native VLAN does not secure a trunk on its own.' },
+              { kind: 'code', h: 'Broadcast containment', code:
+`  VLAN 10 -> Users
+  VLAN 20 -> Servers
+  VLAN 30 -> Voice
+  VLAN 40 -> Management
+
+  A broadcast sent in VLAN 10 is forwarded only inside the
+  Layer 2 domain of VLAN 10. It does not cross into VLAN 20,
+  VLAN 30 or VLAN 40.
+
+  Contained traffic includes ARP broadcasts, DHCP Discover
+  broadcasts, and every other Ethernet broadcast.` },
+              { kind: 'para', h: 'A VLAN is not an IP subnet', p: 'A VLAN identifies a broadcast domain and is used by switches. An IP subnet defines an addressing and routing boundary and is used by routers and Layer 3 switches. The common enterprise design maps one VLAN to one subnet so that a Layer 3 gateway can route between them, but the two ideas are separate.' },
+              { kind: 'table', h: 'VLAN against IP subnet', cols: ['', 'VLAN', 'IP subnet'], rows: [
+                ['Layer', 'Layer 2', 'Layer 3'],
+                ['Defines', 'A broadcast domain', 'An addressing and routing boundary'],
+                ['Used by', 'Switches', 'Routers and Layer 3 switches'],
+                ['Relationship', 'Usually one subnet per VLAN in a normal design', 'Usually one VLAN per subnet in a normal design']
+              ]},
+              { kind: 'para', h: 'Inter-VLAN communication', p: 'Devices in different VLANs cannot talk through ordinary Layer 2 switching. Traffic has to pass through a **Layer 3 device** — a router, a Layer 3 switch or a firewall. On a Layer 3 switch the usual mechanism is an **SVI**, and the SVI address becomes the default gateway for the hosts in that VLAN.' },
+              { kind: 'code', h: 'The SVI as a gateway', code:
+`             Layer 3 Switch
+            +----------------+
+            | VLAN 10 SVI   |  10.10.10.1
+            | VLAN 20 SVI   |  10.10.20.1
+            +-------+--------+
+                    |
+           Inter-VLAN routing
+
+  VLAN 10 host 10.10.10.25  -> gateway 10.10.10.1
+  VLAN 20 host 10.10.20.25  -> gateway 10.10.20.1` },
+              { kind: 'list', h: 'Design guidelines that come up in the exam', items: [
+                { t: 'Separate traffic types', d: 'Dedicated VLANs for user data, servers, voice, wireless clients, guest access, network management and infrastructure services.' },
+                { t: 'Keep broadcast domains small', d: 'Avoid unnecessarily large Layer 2 domains, which keeps broadcast traffic and failure scope under control.' },
+                { t: 'Use meaningful IDs and names', d: 'VLAN 10 USERS, VLAN 20 SERVERS, VLAN 30 VOICE, VLAN 40 MANAGEMENT, VLAN 50 GUEST, VLAN 999 NATIVE.' },
+                { t: 'Restrict the trunk VLAN list', d: 'Allow only the VLANs that are genuinely required to cross each trunk.' },
+                { t: 'Do not treat VLAN 1 as protection', d: 'Avoid it for user traffic, but know that the real controls are trunk restrictions, access lists and Layer 3 policy.' }
+              ]},
+              { kind: 'para', h: 'Beyond the 12-bit VLAN ID', p: 'Traditional campus designs run access VLANs into 802.1Q trunks and then SVIs for inter-VLAN routing. Modern fabrics extend the same idea: **[[VXLAN]]** uses a **24-bit VNI** to identify overlay segments, which gives a far larger segmentation namespace than the 12-bit VLAN ID. In Cisco **SD-Access** the fabric data plane is built on that overlay.' }
+            ],
+            commands: [
+              { label: 'Create a VLAN and name it', code:
+`vlan 10
+ name Users` },
+              { label: 'Assign an access port to the VLAN', code:
+`interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 10` },
+              { label: 'Verify the VLAN database', code:
+`show vlan brief
+show vlan id 10` },
+              { label: 'Verify a port and the trunks', code:
+`show interfaces GigabitEthernet0/1 switchport
+show interfaces trunk` }
+            ],
+            traps: [
+              'A VLAN is not an IP subnet. A VLAN is a Layer 2 broadcast domain; a subnet is a Layer 3 addressing and routing concept.',
+              'Access ports do not normally tag frames. The switch associates an untagged frame with the configured access VLAN internally.',
+              'Trunks are not untagged. An 802.1Q trunk normally tags every VLAN except the native VLAN.',
+              'VLAN 1 does not carry the other VLANs. It is one ordinary VLAN that happens to be the default.',
+              'VLAN 1 is not a security feature. Avoiding it for user traffic is a practice, not a control.',
+              'Changing the native VLAN does not by itself secure a trunk. It helps with certain scenarios but is not sufficient.',
+              'Extended VLANs 1006 to 4094 do not need the vlan database mode on modern IOS and IOS XE. Use normal configuration mode.',
+              'VLANs do not give complete security isolation. Inter-VLAN traffic can still be routed, so access lists and firewalls are still needed.',
+              'VLAN 0 is reserved for priority-tagged frames. It does not identify a normal VLAN.',
+              'VLAN 4095 is reserved. The usable 802.1Q range is 1 to 4094.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['VLAN', 'A logical Layer 2 broadcast domain'],
+                ['Layer', 'Layer 2'],
+                ['VLAN ID', 'A 12-bit VID'],
+                ['Usable VID range', '1 to 4094'],
+                ['VLAN 1', 'The default Cisco VLAN'],
+                ['VLAN 0', 'Reserved, priority tagging'],
+                ['VLAN 4095', 'Reserved'],
+                ['VLAN 1002 to 1005', 'Legacy FDDI and Token Ring VLANs'],
+                ['Access port', 'One VLAN, normally untagged host traffic'],
+                ['Trunk', 'Multiple VLANs, normally 802.1Q tagged'],
+                ['Native VLAN', 'Normally transmitted untagged on a trunk'],
+                ['Broadcast', 'Contained inside the VLAN'],
+                ['VLAN against subnet', 'VLAN is Layer 2, subnet is Layer 3'],
+                ['Inter-VLAN', 'Requires Layer 3 routing'],
+                ['SVI', 'The Layer 3 interface for a VLAN'],
+                ['Security', 'Layer 2 segmentation, not complete isolation'],
+                ['VXLAN', 'A 24-bit VNI for overlay segmentation']
+              ]
+            },
+            related: [
+              { t: '04. Access Port', d: 'the port that belongs to one VLAN' },
+              { t: '05. Trunk Port', d: 'the port that carries many' },
+              { t: '10. Inter-VLAN Routing', d: 'how traffic leaves the VLAN' }
+            ],
+            glossary: ['VLAN', 'Broadcast Domain', 'Access Port', 'Trunk Port', 'Native VLAN', '802.1Q', 'Inter-VLAN Routing', 'VXLAN', 'SD-Access', 'MAC Learning', 'CAM Table']
+          },
+          {
+            id: 't02', num: '02', group: 'concept', title: 'Voice VLAN',
+            blurb: 'Phone and PC on one port, VLAN discovery, DHCP options and the trust boundary',
+            overview: 'A [[Voice VLAN]] is a dedicated VLAN for **IP phone** traffic, kept separate from ordinary data. The classic Cisco design lets a phone and a PC share one physical switch port: the PC sends untagged traffic on the data VLAN, and the phone sends its voice traffic **802.1Q-tagged** with the voice VLAN ID.',
+            keyIdea: 'The phone-facing port stays an **access port**. The voice VLAN is an additional association, not a trunk, and the PC behind the phone is not automatically trusted.',
+            sections: [
+              { kind: 'table', h: 'Why a separate voice VLAN', cols: ['Purpose', 'Benefit'], rows: [
+                ['Segmentation', 'Separates voice and data Layer 2 traffic'],
+                ['QoS', 'Lets voice traffic receive the priority it needs'],
+                ['Addressing', 'Phones can use a dedicated IP subnet'],
+                ['DHCP', 'Phones can receive voice-specific configuration'],
+                ['Security', 'Voice traffic can be policed separately from user traffic'],
+                ['Management', 'Voice endpoints are administered as a separate device class'],
+                ['Troubleshooting', 'Voice and data traffic can be analysed independently']
+              ]},
+              { kind: 'code', h: 'The classic topology', code:
+`                 +---------------+
+                 |    Switch     |
+                 |               |
+                 |  Access Port  |
+                 |  Data VLAN 10 |
+                 |  Voice VLAN 20|
+                 +-------+-------+
+                         |
+                    +----v----+
+                    |IP Phone |
+                    +----+----+
+                         |
+                        PC
+
+  PC     --- untagged ------------>  Data VLAN 10
+  Phone  --- tagged VLAN 20 ------>  Voice VLAN 20
+
+  The phone's built-in switch provides the PC connection.` },
+              { kind: 'para', h: 'How the port behaves', p: 'The interface is configured as an access port with the data VLAN, and then given a voice VLAN association. The switch can then tell the two apart: untagged traffic belongs to the access VLAN, and traffic tagged with the voice VLAN ID belongs to the voice VLAN. The port is **not** switched to trunk mode.' },
+              { kind: 'code', h: 'The configuration and its effect', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   switchport access vlan 10
+   switchport voice vlan 20
+   spanning-tree portfast
+
+  Physical port Gi0/1
+         |
+         +-- untagged traffic ----> VLAN 10  (the PC)
+         |
+         +-- tagged VLAN 20 ------> VLAN 20  (the phone)
+
+  The administrative mode stays "static access".
+  It is never changed to trunk.` },
+              { kind: 'para', h: 'How the phone learns the voice VLAN', p: 'The switch is configured with the voice VLAN, and the phone discovers it over **CDP** or **LLDP-MED**, which can carry network information such as the voice VLAN. This is the common mechanism, but it is not the only one — a phone can also be configured manually or provisioned by a vendor-specific mechanism, so discovery is not something you can assume is mandatory.' },
+              { kind: 'table', h: 'The DHCP options that matter for phones', cols: ['Option', 'What it carries'], rows: [
+                ['150', 'The address of a TFTP server used for phone configuration and provisioning. Strongly associated with Cisco IP telephony.'],
+                ['66', 'A TFTP or provisioning server hostname or address. Used by many device types, not only phones.'],
+                ['242', 'Associated particularly with Avaya environments. It is not a generic Cisco VoIP option.']
+              ]},
+              { kind: 'code', h: 'What a phone does at power-on', code:
+`  Phone
+    |
+    | DHCP
+    v
+  Gets IP address + gateway + Option 150
+    |
+    | contacts the TFTP / provisioning server
+    v
+  Downloads its configuration
+
+  The voice VLAN then comes from CDP or LLDP-MED.` },
+              { kind: 'para', h: 'Voice traffic and QoS', p: 'Voice media is carried over **[[RTP]]** and is sensitive to delay, jitter and packet loss. The common marking for bearer media is **DSCP EF (46)**, which is normally mapped to the highest priority queue. **Signaling** is a separate traffic class — SIP, SCCP or H.323 — and is commonly marked differently, often CS3, depending on the design.' },
+              { kind: 'table', h: 'Media and signaling are different classes', cols: ['Traffic', 'Typical marking', 'Notes'], rows: [
+                ['Voice bearer media over RTP', 'DSCP EF (46)', 'Low latency, generally the highest priority queue'],
+                ['Voice signaling', 'Often CS3 or an equivalent', 'The exact marking depends on the platform and QoS design'],
+                ['Data', 'Usually best effort', 'Marked by the endpoint or by the switch trust configuration']
+              ]},
+              { kind: 'para', h: 'The trust boundary', p: 'The point of a separate voice VLAN is that the phone and the PC attached to it get different treatment. A common design trusts the markings from the phone, because a Cisco phone is expected to mark its own voice traffic correctly, and treats the attached PC as untrusted. The exact trust command is platform and IOS release dependent, so understand the boundary rather than memorising a legacy command.' },
+              { kind: 'code', h: 'Trust at the phone', code:
+`  IP Phone  --->  trusted voice markings
+
+  PC        --->  endpoint markings are not automatically trusted
+
+  Conceptually:
+    mls qos trust device cisco-phone     (platform dependent)` },
+              { kind: 'para', h: 'Power over Ethernet', p: 'Most enterprise phones are powered with **PoE** over the same cable as the Ethernet connection. The standards are 802.3af for PoE, 802.3at for PoE+, and 802.3bt for the higher-power variants. A phone that needs more power than the switch can supply will fail to start even though the data link is up, which is a common and confusing symptom.' }
+            ],
+            commands: [
+              { label: 'Configure the voice VLAN on an access port', code:
+`interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 10
+ switchport voice vlan 20
+ spanning-tree portfast` },
+              { label: 'Check the switchport configuration', code:
+`show interfaces GigabitEthernet0/1 switchport` },
+              { label: 'Check VLAN discovery neighbours', code:
+`show cdp neighbors detail
+show lldp neighbors detail` },
+              { label: 'Check PoE on the port', code:
+`show power inline GigabitEthernet0/1` }
+            ],
+            traps: [
+              'A voice VLAN does not make the port a trunk. The interface stays in static access mode.',
+              'PC traffic behind the phone is normally untagged. The phone tags its own voice traffic with the voice VLAN.',
+              'A voice VLAN is not just another trunk VLAN. It is special handling on an access port.',
+              'CDP and LLDP-MED are the common discovery mechanisms, but they are not mandatory. Phones can also be configured or provisioned by other means.',
+              'DHCP Option 150 is not required by every VoIP phone. It is a common Cisco IP telephony provisioning option.',
+              'Option 242 is associated with Avaya. The Cisco skinny protocol is SCCP, not Option 242.',
+              'DSCP EF (46) marks voice media, not signaling. Signaling is a separate class and commonly uses CS3.',
+              'Do not trust the PC just because it hangs off a phone. The phone is the trust boundary.',
+              'PoE is not required for a voice VLAN. A phone can be mains-powered and still use one.',
+              'A voice VLAN gives Layer 2 segmentation, not complete security. Access lists and firewall policy still apply.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Separates IP phone traffic from data traffic'],
+                ['Data VLAN', 'Normally carries untagged PC traffic'],
+                ['Voice VLAN', 'Normally carries tagged phone traffic'],
+                ['Port type', 'An access port with switchport voice vlan'],
+                ['Trunk', 'No, the phone-facing port stays an access port'],
+                ['VLAN discovery', 'Commonly CDP or LLDP-MED'],
+                ['DHCP', 'Phones commonly use DHCP'],
+                ['Option 150', 'The common Cisco TFTP provisioning option'],
+                ['Option 66', 'A common TFTP or server provisioning option'],
+                ['Option 242', 'Associated with Avaya'],
+                ['RTP', 'Carries real-time voice media'],
+                ['Voice media QoS', 'Commonly DSCP EF (46)'],
+                ['Signaling', 'Separate from RTP, marking depends on the design'],
+                ['QoS trust', 'Established at the phone and network boundary'],
+                ['PoE', 'A common way to power IP phones'],
+                ['Security', 'Layer 2 segmentation, not complete security'],
+                ['Verification', 'show interfaces switchport, CDP/LLDP, VLAN, PoE, DHCP']
+              ]
+            },
+            related: [
+              { t: '04. Access Port', d: 'the port type the phone sits on' },
+              { t: '07. 802.1Q', d: 'how the voice tag works' },
+              { t: '21. QoS', d: 'where the trust boundary is configured' }
+            ],
+            glossary: ['Voice VLAN', 'VLAN', 'Access Port', '802.1Q', 'QoS', 'DSCP', 'RTP', 'SIP', 'Trust Boundary', 'TFTP', 'DHCP']
+          },
+          {
+            id: 't03', num: '03', group: 'concept', title: 'Private VLAN',
+            blurb: 'Primary and secondary VLANs, the three port roles and the isolation matrix',
+            overview: 'A [[Private VLAN]] subdivides one Layer 2 VLAN into smaller forwarding domains while the hosts stay in the **same primary VLAN and the same IP subnet**. It gives Layer 2 isolation between hosts without needing a separate VLAN and subnet for every isolated host or group.',
+            keyIdea: 'Promiscuous talks to everyone, community talks to its own community and to promiscuous, isolated talks only to promiscuous.',
+            sections: [
+              { kind: 'code', h: 'The architecture', code:
+`  Primary VLAN
+       |
+       +-- Isolated secondary VLAN
+       |
+       +-- Community secondary VLAN A
+       |
+       +-- Community secondary VLAN B
+
+  The primary VLAN is the overall domain.
+  The secondary VLANs define the isolation relationships.` },
+              { kind: 'table', h: 'The three port roles', cols: ['Role', 'Can communicate with'], rows: [
+                ['Promiscuous', 'All hosts in every associated secondary VLAN'],
+                ['Isolated', 'Promiscuous ports only'],
+                ['Community', 'Ports in the same community, plus promiscuous ports']
+              ]},
+              { kind: 'para', h: 'The promiscuous port', p: 'A promiscuous port can reach every host in the associated secondary VLANs. It is normally where the default gateway, router, firewall or load balancer sits, and it is the port that lets traffic out of the isolated environment.' },
+              { kind: 'code', h: 'Isolated ports', code:
+`          Gateway
+             |
+       Promiscuous
+             |
+      +------+------+
+      |      |      |
+     H1     H2     H3
+      |      |      |
+      +--X---+--X---+
+         Isolated
+
+  H1 cannot reach H2 or H3 directly.
+  All isolated hosts can reach the gateway.` },
+              { kind: 'code', h: 'Community ports', code:
+`            Promiscuous
+                 |
+        +--------+--------+
+        |                 |
+   Community A       Community B
+     |     |           |     |
+    A1    A2          B1    B2
+
+  A1 <-> A2    Yes
+  B1 <-> B2    Yes
+  A1 <-> B1    No
+  A1 <-> Gateway   Yes
+  B1 <-> Gateway   Yes` },
+              { kind: 'table', h: 'The communication matrix', cols: ['Source', 'Promiscuous', 'Same community', 'Different community', 'Isolated'], rows: [
+                ['Promiscuous', 'Yes', 'Yes', 'Yes', 'Yes'],
+                ['Same community', 'Yes', 'Yes', 'No', 'No'],
+                ['Different community', 'Yes', 'No', 'Yes', 'No'],
+                ['Isolated', 'Yes', 'No', 'No', 'No']
+              ]},
+              { kind: 'para', h: 'Primary and secondary VLANs', p: 'The **primary VLAN** represents the whole domain and is the VLAN the Layer 3 gateway is attached to. The **secondary VLANs** are associated with it and carry the actual isolation groups — one or more isolated VLANs and as many community VLANs as you need.' },
+              { kind: 'para', h: 'The same subnet', p: 'The classic design puts every host in one IP subnet even though their Layer 2 forwarding is restricted. The hosts still have to reach each other through the gateway, so they need a default gateway address that is reachable from their subnet. PVLAN is fundamentally a Layer 2 forwarding mechanism, and the shared subnet is the common design rather than the definition.' },
+              { kind: 'code', h: 'A complete example', code:
+`  Primary VLAN 100
+  IP subnet: 192.168.100.0/24
+  Gateway:   192.168.100.1
+
+  Secondary VLAN 200  Isolated
+  Secondary VLAN 300  Community A
+
+                     Gateway
+                192.168.100.1
+                       |
+                Promiscuous Port
+                       |
+         +-------------+-------------+
+         |                           |
+  Isolated VLAN 200        Community VLAN 300
+     |       |                  |       |
+    H1      H2                 H3      H4
+
+  H1 -> Gateway   Yes       H3 -> H4    Yes
+  H1 -> H2       No        H3 -> H1    No` },
+              { kind: 'para', h: 'The Layer 3 gateway', p: 'In the traditional design the gateway is associated with the **primary VLAN**, not with each secondary VLAN. The promiscuous port is the one that talks to the gateway, and it maps the primary VLAN to the secondary VLANs it should reach.' },
+              { kind: 'para', h: 'Protected ports are not PVLANs', p: 'Cisco also has **protected ports**, configured with switchport protected. They give simple local isolation between protected ports on the same switch and nothing more. A protected port is not a one-for-one replacement for PVLAN: it creates no secondary VLANs and does not span switches.' },
+              { kind: 'table', h: 'Protected port against PVLAN', cols: ['Feature', 'Protected port', 'Private VLAN'], rows: [
+                ['Scope', 'One switch only', 'Can span supported switch infrastructure'],
+                ['VLAN model', 'No secondary VLANs', 'Primary plus secondary VLANs'],
+                ['Relationships', 'All protected ports isolated from each other', 'Isolated and community relationships'],
+                ['Gateway', 'Ordinary SVI or router', 'Usually associated with the primary VLAN'],
+                ['Shared subnet', 'Not the point', 'The common design'],
+                ['Best for', 'Quick local isolation', 'Multi-tenant and hosting isolation']
+              ]},
+              { kind: 'list', h: 'Where private VLANs are used', items: [
+                { t: 'Service provider subscriber isolation', d: 'Many subscribers share one subnet and one gateway, and cannot reach each other directly.' },
+                { t: 'Hosting and data centre', d: 'Servers share a subnet but are prevented from talking to each other, with only the firewall or load balancer in the path.' },
+                { t: 'DMZ and shared infrastructure', d: 'Shared service networks where the server tier must not reach each other.' },
+                { t: 'Multi-tenant environments', d: 'Each tenant gets its own isolation group inside a single provider VLAN.' }
+              ]},
+              { kind: 'para', h: 'Security limits', p: 'PVLAN stops the Layer 2 traffic between hosts, but traffic still flows **host to gateway to policy to destination**. Layer 3 controls, firewalls, authentication and monitoring are still required for strong isolation, and support for PVLAN depends on the switch platform and software version.' }
+            ],
+            commands: [
+              { label: 'Create the primary VLAN', code:
+`vlan 100
+ private-vlan primary` },
+              { label: 'Create the secondary VLANs and associate them', code:
+`vlan 200
+ private-vlan isolated
+vlan 300
+ private-vlan community
+vlan 100
+ private-vlan association 200,300` },
+              { label: 'Configure an isolated host port', code:
+`interface GigabitEthernet0/1
+ switchport mode private-vlan host
+ switchport private-vlan host-association 100 200` },
+              { label: 'Configure the promiscuous port', code:
+`interface GigabitEthernet0/24
+ switchport mode private-vlan promiscuous
+ switchport private-vlan mapping 100 200,300` },
+              { label: 'Verify', code:
+`show vlan private-vlan
+show interfaces GigabitEthernet0/1 switchport` }
+            ],
+            traps: [
+              'PVLAN does not create separate IP subnets. In the common design the hosts stay in the same subnet.',
+              'Isolated hosts cannot communicate with each other. Only promiscuous ports are reachable.',
+              'Community A cannot communicate with community B. A community reaches its own members and the promiscuous ports.',
+              'Promiscuous does not mean untrusted. It describes the communication permissions of the port.',
+              'A promiscuous port is not a trunk. It is a PVLAN port role.',
+              'The gateway is normally associated with the primary VLAN, not with each secondary VLAN.',
+              'PVLAN still needs VLAN IDs. It uses a primary VLAN plus secondary VLANs.',
+              'switchport protected is not the same as PVLAN. It is a simpler local port-to-port isolation feature.',
+              'PVLAN does not replace access lists and firewalls. It is a Layer 2 mechanism.',
+              'PVLAN is not supported on every switch. Support and syntax depend on the platform and software version.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['PVLAN', 'Layer 2 VLAN subdivision providing host isolation'],
+                ['Primary VLAN', 'The main PVLAN domain'],
+                ['Secondary VLAN', 'An isolated or community VLAN'],
+                ['Isolated VLAN', 'Hosts cannot talk to each other directly'],
+                ['Community VLAN', 'Members can talk within the same community'],
+                ['Promiscuous port', 'Can reach every associated PVLAN host'],
+                ['Isolated port', 'Reaches promiscuous ports only'],
+                ['Community port', 'Reaches its own community plus promiscuous'],
+                ['IP subnet', 'Commonly shared across the PVLAN domain'],
+                ['Gateway', 'Commonly associated with the primary VLAN'],
+                ['Layer', 'Layer 2'],
+                ['Security', 'L2 isolation, does not replace firewall or ACL policy'],
+                ['VLAN IDs', 'Still required'],
+                ['Protected port', 'A simpler local port isolation feature'],
+                ['Trunk', 'Not the same as a promiscuous PVLAN port'],
+                ['Verification', 'show vlan private-vlan and the interface commands']
+              ]
+            },
+            related: [
+              { t: '01. VLAN', d: 'the broadcast domain that gets subdivided' },
+              { t: '10. Inter-VLAN Routing', d: 'the gateway that isolates still needs' },
+              { t: '06. Native VLAN', d: 'the other Layer 2 forwarding nuance' }
+            ],
+            glossary: ['Private VLAN', 'VLAN', 'Broadcast Domain', 'Inter-VLAN Routing', 'ACL', 'Device Hardening']
+          },
+          {
+            id: 't04', num: '04', group: 'ports', title: 'Access Port',
+            blurb: 'One VLAN, untagged host traffic, PortFast and the edge security features',
+            overview: 'An [[Access Port]] belongs to **one access VLAN** and connects endpoint devices such as PCs, printers and cameras. Traffic to and from the endpoint is normally **untagged**, and the switch associates an incoming untagged frame with the port access VLAN.',
+            keyIdea: 'Access means one VLAN and untagged host traffic. The voice VLAN is the one exception, and it does not turn the port into a trunk.',
+            sections: [
+              { kind: 'para', h: 'What an access port does', p: 'An access port is assigned one access VLAN, normally receives untagged frames from the endpoint, associates those frames with the configured VLAN, and normally sends endpoint traffic back untagged. It does not operate as an 802.1Q trunk, and the mode is forced explicitly with switchport mode access.' },
+              { kind: 'code', h: 'The basic configuration', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   switchport access vlan 10
+
+  Gi0/1 is an access port for VLAN 10.
+  The endpoint needs no configuration at all.` },
+              { kind: 'table', h: 'Access against trunk', cols: ['Feature', 'Access port', 'Trunk port'], rows: [
+                ['VLANs', 'One access VLAN', 'Multiple VLANs'],
+                ['Normal traffic', 'Untagged', '802.1Q tagged'],
+                ['Typical peer', 'PC, printer, camera', 'Switch, router, firewall, AP'],
+                ['Configuration', 'switchport mode access', 'switchport mode trunk'],
+                ['Access VLAN', 'Yes', 'No'],
+                ['Native VLAN', 'Not a trunk concept', 'One VLAN carried untagged'],
+                ['DTP', 'Prevented by the forced access mode', 'Depends on the configuration']
+              ]},
+              { kind: 'para', h: 'The voice VLAN exception', p: 'A Cisco access port can hold an **access VLAN** for data and a **voice VLAN** for the phone. The switch distinguishes them by the tag: untagged traffic is data, and traffic tagged with the voice VLAN ID is voice. This does not make the port a normal trunk — it stays an access port with an extra association.' },
+              { kind: 'code', h: 'Data and voice on one access port', code:
+`         PC
+          |
+    Untagged data
+          |
+          v
+     +----------+
+     | IP Phone |
+     +----------+
+          |
+          | 802.1Q tagged voice
+          v
+       Switch
+
+  interface GigabitEthernet0/1
+   switchport mode access
+   switchport access vlan 10
+   switchport voice vlan 20` },
+              { kind: 'para', h: 'Access ports and spanning tree', p: 'Access ports still take part in **STP**. The reason the command is applied to edge ports is speed, not exclusion: **PortFast** lets an edge port move straight to the forwarding state instead of going through the normal listening and learning states. The port stays in the STP topology.' },
+              { kind: 'code', h: 'PortFast on an edge port', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   switchport access vlan 10
+   spanning-tree portfast
+
+  The port still sends and processes BPDUs.
+  It simply converges to forwarding immediately.` },
+              { kind: 'para', h: 'Where Layer 2 security lives', p: 'Endpoint-facing access ports are the natural home for the Layer 2 security controls. **Port security** limits the number of MAC addresses and can shut the port down on a violation. **BPDU Guard** disables a port that receives a BPDU, which catches an unauthorised switch being plugged in. **DHCP snooping** marks the uplink as trusted so rogue DHCP servers cannot be inserted, and **IP Source Guard** and **Dynamic ARP Inspection** then use that trust information to block address spoofing.' },
+              { kind: 'code', h: 'A hardened edge port', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   switchport access vlan 10
+   switchport nonegotiate
+   spanning-tree portfast
+   spanning-tree bpduguard enable
+   switchport port-security
+   switchport port-security maximum 1
+   switchport port-security violation restrict` },
+              { kind: 'para', h: 'Power over Ethernet', p: 'Access ports commonly serve PoE devices — IP phones, wireless access points and IP cameras. PoE is a **power-delivery feature**, not a requirement of access-port operation: a port can be an access port with no PoE, and PoE can exist on ports of other types.' },
+              { kind: 'table', h: 'The switchport modes', cols: ['Mode', 'Behaviour'], rows: [
+                ['access', 'Forces the port into access mode. The preferred setting for endpoints.'],
+                ['dynamic desirable', 'Actively attempts to negotiate trunking with DTP.'],
+                ['dynamic auto', 'Willing to become a trunk if the peer actively negotiates it.'],
+                ['trunk', 'Forces the port into trunk mode.']
+              ]},
+              { kind: 'para', h: 'Why dynamic modes are a bad idea on a user port', p: 'A port left in dynamic desirable will try to become a trunk with anything that answers. An attacker who plugs in a device that can generate DTP frames may be able to negotiate trunking and reach VLANs that were never meant to leave the switch. For that reason every endpoint-facing port should be statically access, with DTP disabled.' },
+              { kind: 'code', h: 'Access VLAN against native VLAN', code:
+`  Access VLAN
+     -> the VLAN associated with an access port
+
+  Native VLAN
+     -> the VLAN whose traffic is normally sent untagged
+        on an 802.1Q trunk
+
+  The native VLAN is a trunk concept.
+  The two are not the same thing.` }
+            ],
+            commands: [
+              { label: 'Configure a basic access port', code:
+`interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 10
+ no shutdown` },
+              { label: 'Configure an access port with PortFast and BPDU Guard', code:
+`interface GigabitEthernet0/1
+ switchport mode access
+ switchport access vlan 10
+ switchport nonegotiate
+ spanning-tree portfast
+ spanning-tree bpduguard enable` },
+              { label: 'Verify the port', code:
+`show interfaces GigabitEthernet0/1 switchport
+show interfaces GigabitEthernet0/1 status` },
+              { label: 'Verify the VLAN and the MAC table', code:
+`show vlan brief
+show mac address-table interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              'An access port can still carry a tag. The voice VLAN is the normal case, so "no tag can ever exist" is not strictly correct.',
+              'PortFast does not disable STP. It changes how an edge port reaches the forwarding state.',
+              'Access ports do participate in STP. The port remains part of the topology.',
+              'Dynamic desirable is not safe for a host port. It can negotiate a trunk with a compatible neighbour.',
+              'An access VLAN and a native VLAN are different things. The native VLAN only exists on a trunk.',
+              'An access point does not always use an access port. An enterprise AP with several SSIDs mapped to different VLANs commonly needs a trunk.',
+              'PoE is not part of access-port operation. It is a separate power-delivery feature.'
+            ],
+            table: {
+              cols: ['Item', 'Access port'],
+              rows: [
+                ['Primary purpose', 'Endpoint connectivity'],
+                ['Access VLAN', 'One'],
+                ['Normal endpoint traffic', 'Untagged'],
+                ['802.1Q trunk', 'No'],
+                ['Typical peer', 'PC, printer, camera, phone'],
+                ['Access point', 'Access or trunk, depending on the VLAN requirements'],
+                ['Configuration', 'switchport mode access'],
+                ['VLAN assignment', 'switchport access vlan <id>'],
+                ['Voice VLAN', 'Optional'],
+                ['Voice traffic', 'Can be 802.1Q tagged'],
+                ['STP', 'Participates'],
+                ['PortFast', 'Recommended for edge and host ports'],
+                ['Security', 'Commonly applied here'],
+                ['PoE', 'Optional'],
+                ['DTP', 'Disabled by the forced access mode'],
+                ['Verification', 'show interfaces <interface> switchport']
+              ]
+            },
+            related: [
+              { t: '05. Trunk Port', d: 'the other side of the comparison' },
+              { t: '02. Voice VLAN', d: 'the exception to one VLAN' },
+              { t: '06. Native VLAN', d: 'the trunk-side idea that gets confused with it' }
+            ],
+            glossary: ['Access Port', 'VLAN', 'Trunk Port', '802.1Q', 'PortFast', 'STP', 'PVST+', 'BPDU Guard', 'Port Security', 'DHCP Snooping', 'IP Source Guard', 'Dynamic ARP Inspection']
+          },
+          {
+            id: 't05', num: '05', group: 'ports', title: 'Trunk Port',
+            blurb: 'Many VLANs on one link, the allowed list, and the native VLAN exception',
+            overview: 'A [[Trunk Port]] is a Layer 2 port that carries traffic for **multiple VLANs over a single physical link**. VLAN information normally travels in an **802.1Q tag**, with the **native VLAN** as the important exception: its frames go out untagged.',
+            keyIdea: 'A trunk carries many VLANs and tags them. The native VLAN is the one exception, and switchport nonegotiate turns off DTP without turning off the trunk.',
+            sections: [
+              { kind: 'code', h: 'What a trunk does', code:
+`  VLAN 10 ----+
+  VLAN 20 ----+
+  VLAN 30 ----+----> Trunk ----> Switch
+  VLAN 40 ----+
+  VLAN 50 ----+
+
+  One physical link replaces one link per VLAN.` },
+              { kind: 'para', h: 'The 802.1Q tag on a trunk', p: 'A tagged Ethernet frame carries a **4-byte VLAN tag** inserted between the source MAC address and the EtherType field. The tag itself is made of a TPID that says "a VLAN tag follows" and a TCI that carries the priority, the drop eligibility and the 12-bit VLAN identifier.' },
+              { kind: 'code', h: 'The tag layout', code:
+`  +-------------+-------------+-------------+-------------+
+  | Destination | Source MAC  | 802.1Q Tag  | EtherType   |
+  | MAC         |             | 4 bytes    |             |
+  +-------------+-------------+-------------+-------------+
+
+  802.1Q Tag
+  |
+  +-- TPID   (0x8100)
+  |
+  +-- TCI
+       |
+       +-- PCP   3 bits, Layer 2 priority
+       +-- DEI   1 bit,  drop eligible
+       +-- VID   12 bits, the VLAN ID` },
+              { kind: 'para', h: 'The native VLAN', p: 'The native VLAN is the VLAN associated with **untagged** traffic on the trunk. VLAN 1 is the common default, but it is not inherent to the concept — the native VLAN can be changed, and both ends of the trunk should be configured the same way.' },
+              { kind: 'code', h: 'Tagged and untagged', code:
+`  Tagged:
+    VLAN 10  ---> 802.1Q tagged
+    VLAN 20  ---> 802.1Q tagged
+    VLAN 30  ---> 802.1Q tagged
+
+  Untagged:
+    VLAN 999 ---> native VLAN` },
+              { kind: 'table', h: 'Trunk against access', cols: ['Feature', 'Trunk port', 'Access port'], rows: [
+                ['VLANs', 'Multiple', 'One primary access VLAN'],
+                ['VLAN identification', '802.1Q tags', 'Untagged'],
+                ['Native VLAN', 'Yes', 'Not a trunk concept'],
+                ['Typical peer', 'Switch, router, firewall, AP', 'PC, printer, camera'],
+                ['Configuration', 'switchport mode trunk', 'switchport mode access'],
+                ['Allowed VLAN list', 'Yes', 'No trunk allowed list'],
+                ['DTP', 'May participate', 'Forced access disables negotiation']
+              ]},
+              { kind: 'para', h: 'The allowed VLAN list', p: 'A trunk should only carry the VLANs that are genuinely needed. The allowed list controls which VLANs may cross that particular link — it does not remove the VLAN from the switch, and it is not the same thing as the VLANs that happen to have traffic on the trunk right now.' },
+              { kind: 'code', h: 'What the allowed list does', code:
+`  Switch A                         Switch B
+
+  VLAN 10 ----+                +---- VLAN 10
+  VLAN 20 ----+--- TRUNK ------+---- VLAN 20
+  VLAN 30 ----+                +---- VLAN 30
+
+  VLAN 40 ----X  not allowed
+
+  The VLAN still exists on both switches.
+  It simply may not cross this trunk.` },
+              { kind: 'para', h: 'Configuring a trunk', p: 'A trunk is configured statically in almost every modern design. The allowed list is then set to the VLANs that must cross, and the native VLAN is set to a dedicated unused VLAN so that both ends agree and untagged traffic has somewhere sensible to go.' },
+              { kind: 'code', h: 'A complete trunk configuration', code:
+`  interface GigabitEthernet0/24
+   switchport mode trunk
+   switchport nonegotiate
+   switchport trunk native vlan 999
+   switchport trunk allowed vlan 10,20,30,999` },
+              { kind: 'para', h: '802.1Q and ISL', p: 'Cisco historically supported **ISL**, a proprietary trunking encapsulation, alongside 802.1Q. Modern Catalyst platforms use 802.1Q, and on older platforms that allow a configurable encapsulation the dot1q command may have to be set before the port can become a trunk.' },
+              { kind: 'para', h: 'EtherChannel is not a trunk', p: 'EtherChannel aggregates several physical links into one logical interface. That logical interface can then be configured as an **access port or a trunk**, depending on the design. So a port-channel is the bundle, and the trunking mode is a separate decision made on the bundle.' },
+              { kind: 'code', h: 'A trunk over an EtherChannel bundle', code:
+`  interface Port-channel1
+   switchport mode trunk
+   switchport trunk allowed vlan 10,20,30
+
+  interface GigabitEthernet1/0/1
+   channel-group 1 mode active
+  interface GigabitEthernet1/0/2
+   channel-group 1 mode active` }
+            ],
+            commands: [
+              { label: 'Configure a basic trunk', code:
+`interface GigabitEthernet0/24
+ switchport mode trunk` },
+              { label: 'Configure the allowed VLANs and the native VLAN', code:
+`interface GigabitEthernet0/24
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30
+ switchport trunk native vlan 999` },
+              { label: 'Disable DTP on a static trunk', code:
+`interface GigabitEthernet0/24
+ switchport mode trunk
+ switchport nonegotiate` },
+              { label: 'Verify', code:
+`show interfaces trunk
+show interfaces GigabitEthernet0/24 switchport` }
+            ],
+            traps: [
+              'Not all trunk traffic is tagged. The native VLAN is normally transmitted untagged.',
+              'The native VLAN is not always VLAN 1. It is the default on many platforms, and it can be changed.',
+              'switchport nonegotiate disables DTP, not the trunk. The port is still a statically configured trunk.',
+              'Dynamic desirable does not always create a trunk. It depends on both ends of the link.',
+              'Dynamic auto plus dynamic auto never creates a trunk. Both sides are passive.',
+              'The allowed VLAN list does not remove the VLAN from the switch. It only stops the VLAN crossing that trunk.',
+              'A native VLAN mismatch is not only a management problem. It changes how untagged traffic is classified.',
+              'EtherChannel is not a trunk. It aggregates links, and the bundle is then configured as access or trunk.',
+              'An access point with several SSIDs on several VLANs normally needs a trunk, not an access port.'
+            ],
+            table: {
+              cols: ['Item', 'Trunk port'],
+              rows: [
+                ['Primary purpose', 'Carry multiple VLANs'],
+                ['VLANs', 'Multiple'],
+                ['VLAN identification', '802.1Q'],
+                ['Normal tagged traffic', 'Yes'],
+                ['Native VLAN', 'Normally untagged'],
+                ['Typical peers', 'Switch, router, firewall, AP'],
+                ['Configuration', 'switchport mode trunk'],
+                ['Allowed VLANs', 'switchport trunk allowed vlan'],
+                ['Native VLAN', 'switchport trunk native vlan'],
+                ['DTP', 'May negotiate trunking'],
+                ['Disable DTP', 'switchport nonegotiate'],
+                ['Encapsulation', '802.1Q'],
+                ['Legacy encapsulation', 'ISL'],
+                ['EtherChannel', 'Can carry a trunk'],
+                ['Security', 'Restrict VLANs and control DTP'],
+                ['Verification', 'show interfaces trunk'],
+                ['Main trap', 'The native VLAN is untagged']
+              ]
+            },
+            related: [
+              { t: '07. 802.1Q', d: 'the tag that makes it work' },
+              { t: '06. Native VLAN', d: 'the untagged exception' },
+              { t: '04. Access Port', d: 'the other side of the comparison' }
+            ],
+            glossary: ['Trunk Port', 'VLAN', 'Access Port', 'Native VLAN', '802.1Q', 'DTP', 'EtherChannel', 'Broadcast Domain']
+          },
+          {
+            id: 't06', num: '06', group: 'ports', title: 'Native VLAN',
+            blurb: 'The untagged VLAN on a trunk, mismatches, and double-tagging',
+            overview: 'The [[Native VLAN]] is the VLAN associated with **untagged traffic on an 802.1Q trunk**. Normal VLAN traffic is tagged, while native VLAN traffic is normally sent without a tag. Both ends of a trunk should use the same native VLAN, because a mismatch makes the two switches classify untagged frames differently.',
+            keyIdea: 'The native VLAN is not inherently VLAN 1, and a mismatch mainly affects untagged traffic rather than correctly tagged traffic.',
+            sections: [
+              { kind: 'para', h: 'The untagged exception', p: 'An 802.1Q trunk normally identifies VLAN traffic with a tag in every frame. The native VLAN is the single exception: its frames carry no tag, and the receiving switch infers the VLAN from the configuration rather than from the frame.' },
+              { kind: 'code', h: 'What the receiving switch sees', code:
+`  VLAN 10:
+    [Ethernet Frame][802.1Q Tag: VLAN 10]
+
+  VLAN 20:
+    [Ethernet Frame][802.1Q Tag: VLAN 20]
+
+  Native VLAN 999:
+    [Ethernet Frame][NO 802.1Q TAG]` },
+              { kind: 'para', h: 'Changing it', p: 'On many Cisco switches the default native VLAN is VLAN 1. It can be changed per interface, and the usual design is a dedicated unused VLAN so that untagged traffic has no real user data associated with it.' },
+              { kind: 'code', h: 'Setting a dedicated native VLAN', code:
+`  interface GigabitEthernet0/24
+   switchport mode trunk
+   switchport trunk native vlan 999
+   switchport trunk allowed vlan 10,20,30,999
+
+  Tagged:
+    VLAN 10, VLAN 20, VLAN 30
+
+  Untagged:
+    VLAN 999` },
+              { kind: 'para', h: 'Why the native VLAN exists', p: 'Not every Ethernet frame on a trunk carries an 802.1Q tag. The native VLAN gives untagged traffic a defined VLAN association so that it is not simply dropped or dumped somewhere arbitrary. Cisco Layer 2 control protocols such as **CDP**, **DTP** and **PAgP** also use untagged frames, and those are handled by protocol-specific logic rather than being treated as ordinary native-VLAN data.' },
+              { kind: 'para', h: 'Both ends must match', p: 'A native VLAN mismatch means one switch thinks an untagged frame belongs to VLAN 999 and the other thinks it belongs to VLAN 100. The result is misclassified traffic, one-VLAN connectivity problems, and a native VLAN mismatch warning from Cisco.' },
+              { kind: 'code', h: 'A mismatch', code:
+`  Switch A                         Switch B
+
+  Native VLAN 999                  Native VLAN 100
+        |                                 |
+        +------------ TRUNK --------------+
+
+  Switch A reads an untagged frame as VLAN 999.
+  Switch B reads the same frame as VLAN 100.
+
+  Consequences:
+    - untagged traffic is misclassified
+    - connectivity in one VLAN breaks
+    - a native VLAN mismatch is reported
+
+  Correctly tagged VLAN 10 and VLAN 20 traffic
+  is normally unaffected.` },
+              { kind: 'para', h: 'Native VLAN and VLAN hopping', p: 'The native VLAN matters to the security discussion of **double-tagging VLAN hopping**. In that attack a double-tagged frame is sent so that the first switch strips the outer tag — the one matching the native VLAN — and the second switch then reads the remaining tag as the destination VLAN. The native VLAN mismatch by itself does not cause VLAN hopping; the risk is the interaction between native VLAN behaviour and double-tagged frames.' },
+              { kind: 'code', h: 'The double-tagging shape', code:
+`  Attacker
+     |
+     | double-tagged frame
+     |   outer tag = native VLAN
+     |   inner tag = target VLAN
+     v
+  First switch
+     |
+     | removes the outer, native VLAN tag
+     v
+  Second switch
+     |
+     | reads the remaining inner tag
+     v
+  Target VLAN
+
+  This is why the native VLAN should be a dedicated
+  unused VLAN and why trunk restrictions matter.` },
+              { kind: 'list', h: 'Security best practice', items: [
+                { t: 'Use an unused native VLAN', d: 'A dedicated VLAN that is not assigned to any endpoint, so untagged traffic has no user data associated with it.' },
+                { t: 'Keep it consistent', d: 'Both ends of every trunk must use the same native VLAN. Configure it explicitly on each side rather than relying on the default.' },
+                { t: 'Restrict the allowed VLANs', d: 'Limit each trunk to the VLANs it really needs, which shrinks the scope of any Layer 2 problem.' },
+                { t: 'Tag the native VLAN where supported', d: 'vlan dot1q tag native removes the untagged exception on platforms that support it.' },
+                { t: 'Do not rely on it alone', d: 'Changing the native VLAN helps with certain scenarios. It is not a substitute for trunk restrictions, access lists and switch hardening.' }
+              ]},
+              { kind: 'para', h: 'Native VLAN on a router subinterface', p: 'On a router-on-a-stick design the native VLAN is mapped explicitly with the native keyword on the subinterface, because the router has to be told which VLAN the untagged frames belong to.' },
+              { kind: 'code', h: 'The router-side mapping', code:
+`  interface GigabitEthernet0/0.999
+   encapsulation dot1Q 999 native
+   ip address 10.1.999.1 255.255.255.0` }
+            ],
+            commands: [
+              { label: 'Set and verify the native VLAN on a trunk', code:
+`interface GigabitEthernet0/24
+ switchport mode trunk
+ switchport trunk native vlan 999` },
+              { label: 'Check the trunk state', code:
+`show interfaces trunk` },
+              { label: 'Check the port configuration', code:
+`show interfaces GigabitEthernet0/24 switchport` },
+              { label: 'Map the native VLAN on a router subinterface', code:
+`interface GigabitEthernet0/0.999
+ encapsulation dot1Q 999 native
+ ip address 10.1.999.1 255.255.255.0` }
+            ],
+            traps: [
+              'The native VLAN is not VLAN 1. VLAN 1 is only the common default, and the native VLAN can be changed.',
+              'Native VLAN traffic is normally untagged. That is the normal behaviour of an 802.1Q trunk.',
+              'A native VLAN mismatch does not break the whole trunk. Correctly tagged traffic normally keeps working.',
+              'A native VLAN mismatch does not automatically cause VLAN hopping. Double-tagging is the technique that exploits native VLAN behaviour.',
+              'Configuring one side only still leaves a mismatch. Both ends have to agree.',
+              'Not every untagged frame is ordinary user data in the native VLAN. Layer 2 control protocols use untagged frames too.',
+              'The router does not handle the native VLAN automatically. On a router subinterface it is mapped with encapsulation dot1Q <id> native.'
+            ],
+            table: {
+              cols: ['Item', 'Native VLAN'],
+              rows: [
+                ['Where it is used', 'On an 802.1Q trunk'],
+                ['Primary purpose', 'Defines the VLAN for untagged trunk traffic'],
+                ['Normal tag', 'None'],
+                ['Cisco default', 'VLAN 1'],
+                ['Can be changed', 'Yes'],
+                ['Both ends', 'Should match'],
+                ['Mismatch effect', 'Untagged and native traffic is misclassified'],
+                ['Tagged VLAN traffic', 'Normally unaffected by a native mismatch'],
+                ['Security relevance', 'Double-tagging and VLAN-hopping considerations'],
+                ['Recommended design', 'A dedicated unused native VLAN'],
+                ['Optional hardening', 'Tag the native VLAN where supported'],
+                ['Verification', 'show interfaces trunk'],
+                ['Router mapping', 'encapsulation dot1Q <id> native']
+              ]
+            },
+            related: [
+              { t: '05. Trunk Port', d: 'where the native VLAN lives' },
+              { t: '07. 802.1Q', d: 'the tag format' },
+              { t: '08. DTP', d: 'the control protocol that also sends untagged frames' }
+            ],
+            glossary: ['Native VLAN', 'Trunk Port', '802.1Q', 'VLAN', 'DTP', 'Router-on-a-Stick']
+          },
+          {
+            id: 't07', num: '07', group: 'trunking', title: '802.1Q',
+            blurb: 'The IEEE tagging standard, the 4-byte tag, and the frame size it produces',
+            overview: '**IEEE 802.1Q** is the standard that defines **VLAN tagging and VLAN-aware Ethernet bridging**. It lets several VLANs share one physical link by carrying a **VLAN Identifier** inside the Ethernet frame, and it is the trunk encapsulation used by Cisco switches.',
+            keyIdea: 'The tag is 4 bytes: a 16-bit TPID and a 16-bit TCI holding PCP, DEI and the 12-bit VID. It makes the frame 1522 bytes, not the IP MTU.',
+            sections: [
+              { kind: 'code', h: 'Where the tag sits', code:
+`  +--------------+---------------+---------------+----------------+
+  | Destination  | Source MAC    | 802.1Q Tag    | EtherType /    |
+  | MAC          |               | 4 bytes      | Length         |
+  +--------------+---------------+---------------+----------------+
+
+  802.1Q TAG
+  |
+  +-- TPID  16 bits, 0x8100
+  |
+  +-- TCI   16 bits
+       |
+       +-- PCP   3 bits
+       +-- DEI   1 bit
+       +-- VID  12 bits` },
+              { kind: 'para', h: 'TPID', p: 'The **Tag Protocol Identifier** is 16 bits and its value is 0x8100 for the standard IEEE VLAN tag. Its job is to say that the next field is a VLAN tag, so a bridge that does not understand 802.1Q can skip the four bytes. Provider environments such as QinQ use additional TPIDs for the outer tag.' },
+              { kind: 'para', h: 'PCP', p: 'The **Priority Code Point** is a 3-bit field giving eight priority values, 0 to 7. It is the Layer 2 priority, commonly referred to as 802.1p priority or Class of Service, and switches use it to classify traffic into internal queues. It is not the same thing as the DSCP marking in the IP header.' },
+              { kind: 'para', h: 'DEI', p: 'The **Drop Eligible Indicator** is a single bit that marks the frame as a candidate for dropping under congestion. The way it is treated depends on the congestion-management implementation, but the flag itself is what carries the intent across the Layer 2 boundary.' },
+              { kind: 'para', h: 'VID', p: 'The **VLAN Identifier** is 12 bits, so it can hold 0 to 4095. Values 0 and 4095 are reserved, and the usable range for normal assignment is **1 to 4094**. The answer to "how many VLANs does 802.1Q support" is 4094 usable VLAN IDs, not 4095.' },
+              { kind: 'table', h: 'The tag fields', cols: ['Field', 'Bits', 'Value or range', 'Purpose'], rows: [
+                ['TPID', '16', '0x8100', 'Identifies the VLAN tagging protocol'],
+                ['PCP', '3', '0 to 7', 'Layer 2 priority, the 802.1p priority'],
+                ['DEI', '1', '0 or 1', 'Marks the frame drop eligible under congestion'],
+                ['VID', '12', '1 to 4094 usable', 'Identifies the VLAN']
+              ]},
+              { kind: 'code', h: 'Untagged and tagged frames side by side', code:
+`  Untagged:
+    +------+-----+------+---------+-----+
+    | DA   | SA  | Type | Payload | FCS |
+    +------+-----+------+---------+-----+
+
+  Tagged:
+    +------+-----+------+-----------+------+---------+-----+
+    | DA   | SA  | TPID | TCI       | Type | Payload | FCS |
+    +------+-----+------+-----------+------+---------+-----+
+                         |
+                         +-- PCP, DEI, VID` },
+              { kind: 'para', h: 'Frame size', p: 'A standard Ethernet frame carrying a 1500-byte IP payload is about **1518 bytes**. Adding the 802.1Q tag makes it **1522 bytes**. The common mistake is to conclude that the IP MTU becomes 1522 — it does not. The IP MTU stays at 1500 while the Layer 2 frame that carries it grows by four bytes.' },
+              { kind: 'code', h: 'Where the extra four bytes go', code:
+`  Untagged maximum Ethernet frame   1518 bytes
+  802.1Q tagged frame               1522 bytes
+
+  Layer 3 view:
+    IP MTU                          1500 bytes  (unchanged)
+
+  Layer 2 view:
+    frame carrying that packet       1522 bytes
+
+  QinQ takes this one step further:
+    two tags                          1530 bytes` },
+              { kind: 'para', h: 'The native VLAN is the exception', p: 'On a standard Cisco 802.1Q trunk the native VLAN is normally sent untagged, so "802.1Q means every frame is tagged" is too absolute. Cisco can also be configured to tag native VLAN traffic with vlan dot1q tag native, where the platform supports it.' },
+              { kind: 'table', h: 'Where 802.1Q is used', cols: ['Place', 'What it does there'], rows: [
+                ['Switch to switch trunk', 'Carries several VLANs over one link and lets the receiver classify each frame'],
+                ['Router subinterface', 'encapsulation dot1Q <vlan> binds a subinterface to a VLAN'],
+                ['Native mapping', 'encapsulation dot1Q <vlan> native binds the untagged VLAN'],
+                ['Service provider', 'The customer tag inside QinQ, and the outer tag under 802.1ad']
+              ]},
+              { kind: 'code', h: 'The router mapping', code:
+`  interface GigabitEthernet0/0.10
+   encapsulation dot1Q 10
+   ip address 10.1.10.1 255.255.255.0
+
+  interface GigabitEthernet0/0.999
+   encapsulation dot1Q 999 native
+   ip address 10.1.999.1 255.255.255.0` }
+            ],
+            commands: [
+              { label: 'Map a VLAN to a router subinterface', code:
+`interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 10.1.10.1 255.255.255.0` },
+              { label: 'Configure a trunk with an explicit native VLAN', code:
+`interface GigabitEthernet0/24
+ switchport mode trunk
+ switchport trunk native vlan 999` },
+              { label: 'Check the trunk and the tag state', code:
+`show interfaces trunk
+show interfaces GigabitEthernet0/24 switchport` },
+              { label: 'Capture and read the tag on the wire', code:
+`show interface GigabitEthernet0/24 | include line protocol
+tcpdump -i eth0 -e -n` }
+            ],
+            traps: [
+              'TPID is not the VLAN ID. TPID identifies the tagging protocol, the VID identifies the VLAN.',
+              'The 802.1Q tag is 4 bytes, not 2. TPID is 2 bytes and the TCI is 2 bytes.',
+              'The VID does not give 4095 usable VLANs. The usable range is 1 to 4094.',
+              'Not every 802.1Q frame is tagged. The native VLAN is normally untagged.',
+              'PCP is not the VLAN ID. PCP is priority, VID is the VLAN.',
+              'PCP and DSCP are not the same. PCP is the Layer 2 priority, DSCP is the Layer 3 marking.',
+              '802.1Q does not change the IP MTU to 1522. The MTU stays at 1500 while the Layer 2 frame grows by 4 bytes.',
+              'ISL is not the modern Cisco trunking protocol. Modern Cisco Ethernet trunking uses 802.1Q.',
+              'switchport nonegotiate does not disable 802.1Q. It disables DTP, and the port can stay an explicit 802.1Q trunk.'
+            ],
+            table: {
+              cols: ['Item', '802.1Q'],
+              rows: [
+                ['Standard', 'IEEE 802.1Q'],
+                ['Purpose', 'VLAN tagging and VLAN-aware bridging'],
+                ['Tag size', '4 bytes'],
+                ['TPID', 'Commonly 0x8100'],
+                ['TCI', '16 bits'],
+                ['PCP', 'A 3-bit Layer 2 priority'],
+                ['DEI', 'A 1-bit drop eligible indicator'],
+                ['VID', 'A 12-bit VLAN identifier'],
+                ['Normal VLAN IDs', '1 to 4094'],
+                ['Native VLAN', 'Normally untagged on a trunk'],
+                ['Tagged frame overhead', '4 extra bytes'],
+                ['Typical maximum tagged frame', '1522 bytes'],
+                ['IP MTU', 'Commonly still 1500 bytes'],
+                ['Modern Cisco trunking', '802.1Q'],
+                ['Legacy Cisco alternative', 'ISL'],
+                ['Router mapping', 'encapsulation dot1Q <vlan>'],
+                ['Native router mapping', 'encapsulation dot1Q <vlan> native'],
+                ['QoS field', 'PCP']
+              ]
+            },
+            related: [
+              { t: '05. Trunk Port', d: 'where the tag appears' },
+              { t: '09. QinQ', d: 'stacking a second tag' },
+              { t: '11. Router-on-a-Stick', d: 'the router side of the tag' }
+            ],
+            glossary: ['802.1Q', 'VLAN', 'Trunk Port', 'Native VLAN', 'Router-on-a-Stick', 'MTU', 'Ethernet Frame', 'QinQ']
+          },
+          {
+            id: 't08', num: '08', group: 'trunking', title: 'DTP',
+            blurb: 'Trunk negotiation, the mode matrix, and why user ports should never negotiate',
+            overview: '**DTP (Dynamic Trunking Protocol)** is a **Cisco-proprietary** Layer 2 protocol that negotiates whether a link should operate as a **trunk** or stay a **non-trunk**. It applies to Cisco switch-to-switch links, and user-facing ports should always be statically access with DTP disabled.',
+            keyIdea: 'DTP negotiates whether the link becomes a trunk. It does **not** negotiate which VLANs are allowed, which VLAN is native, or who is in which VLAN.',
+            sections: [
+              { kind: 'table', h: 'The switchport modes', cols: ['Mode', 'Behaviour', 'Trunk forms'], rows: [
+                ['dynamic desirable', 'Actively attempts to negotiate a trunk', 'Yes, if the peer supports or triggers trunking'],
+                ['dynamic auto', 'Passively waits for the peer to initiate', 'Yes, if the peer is desirable or trunk'],
+                ['trunk', 'Forces the port into trunk mode', 'Yes'],
+                ['access', 'Forces the port into access mode', 'No'],
+                ['nonegotiate', 'Stops DTP frames being sent', 'Does not itself decide access or trunk']
+              ]},
+              { kind: 'table', h: 'The negotiation matrix', cols: ['Side A', 'Side B', 'Trunk forms'], rows: [
+                ['desirable', 'desirable', 'Yes'],
+                ['desirable', 'auto', 'Yes'],
+                ['desirable', 'trunk', 'Yes'],
+                ['auto', 'trunk', 'Yes'],
+                ['trunk', 'trunk', 'Yes'],
+                ['auto', 'auto', 'No'],
+                ['access', 'desirable', 'No'],
+                ['access', 'auto', 'No'],
+                ['access', 'trunk', 'No'],
+                ['access', 'access', 'No']
+              ]},
+              { kind: 'code', h: 'The rule in one block', code:
+`  desirable = actively wants a trunk
+  auto      = passively waits
+  trunk     = statically forces trunk
+  access    = statically forces access
+
+  desirable + desirable = trunk
+  desirable + auto      = trunk
+  desirable + trunk     = trunk
+  auto + trunk          = trunk
+  auto + auto           = NO trunk
+  access + anything     = NO trunk` },
+              { kind: 'para', h: 'How DTP works', p: 'DTP frames use a Cisco-proprietary encapsulation and are sent to the Cisco multicast MAC address 01:00:0C:CC:CC:CC. DTP is entirely separate from the trunk encapsulation: one decides whether trunking happens, the other decides how VLAN information is carried.' },
+              { kind: 'code', h: 'Four separate concepts', code:
+`  DTP
+  +-- "Should this link become a trunk?"
+
+  802.1Q
+  +-- "How is VLAN information carried?"
+
+  Allowed VLAN list
+  +-- "Which VLANs may cross the trunk?"
+
+  Native VLAN
+  +-- "Which VLAN is transmitted untagged?"
+
+  DTP does not decide:
+    which VLANs exist
+    which VLANs are allowed
+    the native VLAN
+    VLAN membership` },
+              { kind: 'para', h: 'The security problem', p: 'Dynamic trunk negotiation on a user-facing port is a risk. An attacker who plugs in a device that can generate DTP frames may be able to make the switch negotiate a trunk — **switch spoofing** — and reach traffic from VLANs that were never supposed to leave that port.' },
+              { kind: 'code', h: 'The hardened user port', code:
+`  interface GigabitEthernet0/1
+   description USER-PC
+   switchport mode access
+   switchport access vlan 10
+   switchport nonegotiate
+
+  switchport mode access
+  +-- prevents the port becoming a trunk
+
+  switchport nonegotiate
+  +-- stops DTP negotiation frames being sent` },
+              { kind: 'para', h: 'The hardened switch-to-switch trunk', p: 'For a known trunk, configure both sides statically. The mode forces the trunk and nonegotiate removes the dynamic behaviour, while the allowed list and the native VLAN are set explicitly so that both ends are unambiguous.' },
+              { kind: 'code', h: 'The hardened uplink', code:
+`  interface GigabitEthernet0/24
+   description SWITCH-UPLINK
+   switchport mode trunk
+   switchport nonegotiate
+   switchport trunk allowed vlan 10,20,30,99
+   switchport trunk native vlan 99` },
+              { kind: 'table', h: 'DTP against the other protocols', cols: ['Protocol', 'Purpose', 'Type'], rows: [
+                ['DTP', 'Negotiates trunking', 'Cisco proprietary'],
+                ['802.1Q', 'Carries VLAN tags across trunks', 'IEEE standard'],
+                ['VTP', 'Distributes the VLAN database', 'Cisco proprietary'],
+                ['LLDP', 'Advertises neighbour and device information', 'IEEE standard']
+              ]},
+              { kind: 'para', h: 'Interoperability', p: 'Because DTP is Cisco proprietary, a non-Cisco device should not be expected to take part in the negotiation. For a link to any other vendor, configure trunking explicitly on both sides rather than relying on dynamic negotiation.' }
+            ],
+            commands: [
+              { label: 'Harden a user-facing access port', code:
+`interface GigabitEthernet0/1
+ description USER-ACCESS
+ switchport mode access
+ switchport access vlan 10
+ switchport nonegotiate` },
+              { label: 'Harden a switch-to-switch trunk', code:
+`interface GigabitEthernet0/24
+ description SWITCH-UPLINK
+ switchport mode trunk
+ switchport nonegotiate
+ switchport trunk allowed vlan 10,20,30,99
+ switchport trunk native vlan 99` },
+              { label: 'Show the current mode on every port', code:
+`show interfaces status` },
+              { label: 'Show the negotiated state of one port', code:
+`show interfaces GigabitEthernet0/24 switchport` }
+            ],
+            traps: [
+              'Dynamic auto plus dynamic auto never forms a trunk. Both sides are passive.',
+              'Dynamic desirable plus dynamic auto does form a trunk. The desirable side initiates.',
+              'switchport nonegotiate does not mean "make this an access port". It means "stop sending DTP frames", and the configured mode still decides.',
+              'DTP is not 802.1Q. One negotiates trunking, the other carries the tags.',
+              'DTP does not negotiate VLAN membership, the allowed VLAN list or the native VLAN. Those are separate configuration functions.',
+              'DTP is Cisco proprietary. Do not expect a non-Cisco device to participate.',
+              'A static trunk with switchport nonegotiate is still a trunk. The mode forces it and nonegotiate only disables DTP.'
+            ],
+            table: {
+              cols: ['Concept', 'Key point'],
+              rows: [
+                ['DTP', 'A Cisco proprietary trunk negotiation protocol'],
+                ['Purpose', 'Negotiates the trunking state'],
+                ['desirable', 'Actively attempts trunk negotiation'],
+                ['auto', 'Passively waits for the peer'],
+                ['trunk', 'Forces trunk mode'],
+                ['access', 'Forces access mode'],
+                ['auto plus auto', 'No trunk'],
+                ['desirable plus auto', 'Trunk'],
+                ['desirable plus desirable', 'Trunk'],
+                ['auto plus trunk', 'Trunk'],
+                ['access plus anything', 'No trunk'],
+                ['nonegotiate', 'Stops DTP negotiation frames'],
+                ['802.1Q', 'VLAN tagging and encapsulation'],
+                ['Allowed VLANs', 'A separate trunk configuration'],
+                ['Native VLAN', 'A separate trunk configuration'],
+                ['VTP', 'VLAN database distribution'],
+                ['LLDP', 'Neighbour discovery'],
+                ['Security', 'Avoid dynamic trunking on user-facing ports'],
+                ['User port', 'switchport mode access plus switchport nonegotiate'],
+                ['Static trunk', 'switchport mode trunk plus switchport nonegotiate']
+              ]
+            },
+            related: [
+              { t: '05. Trunk Port', d: 'what DTP is negotiating' },
+              { t: '04. Access Port', d: 'where DTP must be switched off' },
+              { t: '07. 802.1Q', d: 'the protocol DTP is not' }
+            ],
+            glossary: ['DTP', 'Trunk Port', 'Access Port', '802.1Q', 'VLAN', 'Native VLAN']
+          },
+          {
+            id: 't09', num: '09', group: 'trunking', title: 'QinQ',
+            blurb: 'VLAN stacking, the customer and service tags, and provider Layer 2 services',
+            overview: '**QinQ** (commonly associated with **IEEE 802.1ad Provider Bridges**) is a Layer 2 VLAN-stacking technique. The provider adds an **outer service tag** around the frame that already carries the customer 802.1Q tag, so many customers can keep their own VLAN numbering across one provider network.',
+            keyIdea: 'The C-Tag identifies the customer VLAN, the S-Tag identifies the provider service. Together they are 8 bytes of overhead.',
+            sections: [
+              { kind: 'code', h: 'The frame structure', code:
+`  [ DA | SA | S-TAG | C-TAG | EtherType | Payload | FCS ]
+             |       |
+             |       +-- Customer VLAN
+             |
+             +-- Service provider VLAN
+
+  More precisely:
+
+  [DA | SA | 0x88A8 | S-VID | 0x8100 | C-VID | Type | Payload | FCS]
+           +--- S-Tag ----+ +--- C-Tag ----+
+
+  S-Tag  TPID 0x88A8   the outer provider tag
+  C-Tag  TPID 0x8100   the customer 802.1Q tag` },
+              { kind: 'table', h: 'The two tags', cols: ['Tag', 'Meaning', 'Common TPID'], rows: [
+                ['S-Tag', 'The outer service or provider tag, identifying the transport context', '0x88A8'],
+                ['C-Tag', 'The inner customer tag, identifying the customer VLAN', '0x8100']
+              ]},
+              { kind: 'para', h: 'The overhead', p: 'Each VLAN tag is 4 bytes, so a QinQ frame carries **8 bytes of VLAN-tag overhead** compared with an untagged Ethernet frame. The provider path has to accommodate the larger frame, and the exact MTU number depends on the original frame size, on whether a customer tag was already present, and on how the platform defines the MTU.' },
+              { kind: 'code', h: 'The overhead arithmetic', code:
+`  Untagged Ethernet
+        |
+        +-- plus C-Tag = 4 bytes
+
+  802.1Q frame
+        |
+        +-- plus S-Tag = 4 more bytes
+
+  QinQ frame
+        |
+        +-- two tags = 8 bytes over untagged Ethernet
+
+  Do not memorise a fixed QinQ MTU number.
+  Work out the frame size from the original frame.` },
+              { kind: 'table', h: 'The CE and PE roles', cols: ['Device', 'Role'], rows: [
+                ['CE', 'Customer Edge, part of the customer network'],
+                ['PE', 'Provider Edge, connects the customer to the provider network'],
+                ['S-VLAN', 'The provider service VLAN'],
+                ['C-VLAN', 'The customer VLAN']
+              ]},
+              { kind: 'code', h: 'What the provider edge does', code:
+`  Customer network            Provider network
+
+  [C-Tag VLAN 10]  --->  [S-Tag VLAN 100][C-Tag VLAN 10]
+                          (the PE adds the S-Tag)
+
+  [S-Tag VLAN 100][C-Tag VLAN 10]  --->  [C-Tag VLAN 10]
+                                          (the far PE removes it)
+
+  The customer sees its own VLAN 10 the whole way.` },
+              { kind: 'para', h: 'Why a provider needs it', p: 'Without stacking, a provider struggles to carry many customers who all use the same VLAN numbers. With QinQ each customer is placed in a different service VLAN, so Customer A VLAN 10, Customer B VLAN 10 and Customer C VLAN 10 all remain distinct while travelling over one provider network.' },
+              { kind: 'code', h: 'The scaling model', code:
+`                 Provider Network
+                       |
+          +------------+------------+
+          |            |            |
+    S-VLAN 100   S-VLAN 200   S-VLAN 300
+          |            |            |
+    Customer A    Customer B    Customer C
+          |            |            |
+    C-VLAN 10    C-VLAN 10    C-VLAN 10
+
+  QinQ adds a namespace, it does not remove the
+  VLAN limits entirely.` },
+              { kind: 'para', h: 'The Cisco dot1q-tunnel implementation', p: 'Cisco switches provide a QinQ-style service with **802.1Q tunneling**, configured with the switchport mode dot1q-tunnel command. That is a Cisco-specific mechanism and it is not the same thing as switchport mode trunk — the tunnel mode is a provider-facing service, not an ordinary trunk.' },
+              { kind: 'code', h: 'A provider-facing customer port', code:
+`  interface GigabitEthernet0/24
+   switchport mode dot1q-tunnel
+   switchport access vlan 10
+
+  The customer port is a tunnel endpoint.
+  The provider adds and removes the S-Tag.` },
+              { kind: 'para', h: 'QinQ is not VLAN hopping', p: 'QinQ is a legitimate service that stacks two tags on purpose. **Double-tagging** is a malicious technique that uses the native VLAN to reach a VLAN it should not. They look similar on the wire and they are the opposite of each other in intent, which is why the exam asks you to separate them.' }
+            ],
+            commands: [
+              { label: 'Configure a Cisco 802.1Q tunnel port', code:
+`interface GigabitEthernet0/24
+ switchport mode dot1q-tunnel
+ switchport access vlan 10` },
+              { label: 'Configure the service VLAN on the provider side', code:
+`interface GigabitEthernet0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 100
+ switchport trunk native vlan 999` },
+              { label: 'Verify the tunnel', code:
+`show interfaces GigabitEthernet0/24 switchport
+show interfaces trunk` },
+              { label: 'Look at the tags on the wire', code:
+`tcpdump -i eth0 -e -n` }
+            ],
+            traps: [
+              'The S-Tag is the outer provider tag and the C-Tag is the inner customer tag. Do not swap them.',
+              'The common S-Tag TPID is 0x88A8 and the common C-Tag TPID is 0x8100.',
+              'QinQ adds 8 bytes of VLAN-tag overhead compared with an untagged Ethernet frame.',
+              'QinQ preserves the customer VLAN numbering. The provider does not normally renumber the customer VLANs.',
+              'switchport mode dot1q-tunnel is a provider service, not another normal trunk mode.',
+              'QinQ is legitimate VLAN stacking. It is not the double-tagging VLAN-hopping attack.',
+              'Do not memorise a fixed QinQ MTU number. Another tag is another 4 bytes on an already tagged frame.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['QinQ', 'VLAN stacking, 802.1Q tunneling'],
+                ['IEEE association', '802.1ad Provider Bridges'],
+                ['C-VLAN', 'The customer VLAN'],
+                ['S-VLAN', 'The provider service VLAN'],
+                ['C-Tag', 'The inner customer tag'],
+                ['S-Tag', 'The outer provider tag'],
+                ['Common S-Tag TPID', '0x88A8'],
+                ['Common C-Tag TPID', '0x8100'],
+                ['Tags', 'Two VLAN tags'],
+                ['Overhead', '8 bytes over untagged Ethernet'],
+                ['Customer VLAN', 'Preserved through the provider service'],
+                ['Cisco feature', 'switchport mode dot1q-tunnel'],
+                ['Provider backbone', 'Carries the S-VLAN and service context'],
+                ['MTU', 'Must accommodate the larger frame'],
+                ['Primary use', 'Provider and Metro Ethernet Layer 2 services'],
+                ['QinQ against VLAN hopping', 'A legitimate service, not an attack']
+              ]
+            },
+            related: [
+              { t: '07. 802.1Q', d: 'the customer tag inside QinQ' },
+              { t: '05. Trunk Port', d: 'the provider backbone' },
+              { t: '06. Native VLAN', d: 'the other place tags matter for security' }
+            ],
+            glossary: ['QinQ', '802.1Q', 'Metro Ethernet', 'VLAN', 'Trunk Port', 'MTU', 'Ethernet Frame']
+          },
+          {
+            id: 't10', num: '10', group: 'routing', title: 'Inter-VLAN Routing',
+            blurb: 'The three designs, the gateway decision, and routed access',
+            overview: '[[Inter-VLAN Routing]] lets devices in different VLANs reach each other by forwarding between their Layer 3 IP subnets. When two VLANs use two subnets, traffic has to pass through a **Layer 3 gateway** — and there are three standard ways to build one.',
+            keyIdea: 'VLAN is the Layer 2 boundary, subnet is the Layer 3 boundary, and the gateway is where the forwarding between them happens.',
+            sections: [
+              { kind: 'code', h: 'Why Layer 3 is needed', code:
+`  VLAN 10 -> 10.1.10.0/24
+  VLAN 20 -> 10.1.20.0/24
+
+  Host A 10.1.10.10 wants to reach Host B 10.1.20.20.
+
+  10.1.20.20 is outside the local subnet, so the
+  packet goes to the default gateway 10.1.10.1.
+
+  Host A          Gateway 10.1.10.1      Gateway 10.1.20.1      Host B
+  10.1.10.10  -->  Layer 3 routing  -->  VLAN 20 gateway  -->  10.1.20.20
+
+  The two Layer 2 broadcast domains stay separate.` },
+              { kind: 'para', h: 'The three designs', p: 'The difference between the designs is where the Layer 3 gateway lives and what the link between devices looks like. Router-on-a-Stick puts the gateway on a router with subinterfaces. SVI routing puts it on a multilayer switch. Routed access removes the Layer 2 link entirely and uses a routed point-to-point uplink.' },
+              { kind: 'table', h: 'The three inter-VLAN routing designs', cols: ['Method', 'Gateway location', 'Main interface type', 'Typical use'], rows: [
+                ['Router-on-a-Stick', 'A router', 'Subinterfaces', 'Small or simple networks'],
+                ['SVI routing', 'A multilayer switch', 'interface VlanX', 'Campus networks'],
+                ['Routed access', 'A Layer 3 switch or router', 'A routed physical interface', 'Modern routed campus designs']
+              ]},
+              { kind: 'para', h: 'Router-on-a-Stick', p: 'One physical router interface connects to the switch over an 802.1Q trunk, and the router creates one subinterface per VLAN. Each subinterface carries the encapsulation dot1Q command for its VLAN and the gateway address for that subnet.' },
+              { kind: 'code', h: 'Router-on-a-Stick on the router', code:
+`  interface GigabitEthernet0/0
+   no ip address
+   no shutdown
+
+  interface GigabitEthernet0/0.10
+   encapsulation dot1Q 10
+   ip address 10.1.10.1 255.255.255.0
+
+  interface GigabitEthernet0/0.20
+   encapsulation dot1Q 20
+   ip address 10.1.20.1 255.255.255.0` },
+              { kind: 'para', h: 'SVI routing', p: 'A **Switch Virtual Interface** is a logical Layer 3 interface associated with a VLAN. On a multilayer switch the SVIs act as the default gateways for the hosts, and forwarding between them happens in hardware rather than in a separate router.' },
+              { kind: 'code', h: 'SVI routing on the switch', code:
+`  ip routing
+
+  interface Vlan10
+   ip address 10.1.10.1 255.255.255.0
+   no shutdown
+
+  interface Vlan20
+   ip address 10.1.20.1 255.255.255.0
+   no shutdown
+
+  The SVI is up only when at least one port in the
+  VLAN is active.` },
+              { kind: 'para', h: 'Routed access', p: 'In a routed access design the access switch does not trunk to the distribution layer at all. Its Layer 3 interface is a routed port, configured with no switchport, and it holds an IP address on a point-to-point link. The Layer 2 domain stays tiny and the routing happens all the way up.' },
+              { kind: 'code', h: 'A routed access port', code:
+`  interface GigabitEthernet1/0/1
+   no switchport
+   ip address 10.255.1.1 255.255.255.252
+
+  This is not a Layer 2 switchport at all.
+  The link is a Layer 3 point-to-point link.` },
+              { kind: 'para', h: 'The native VLAN on a subinterface', p: 'A subinterface that should receive untagged native VLAN traffic needs the native keyword. Without it, the router does not associate the untagged traffic with that subinterface at all.' },
+              { kind: 'code', h: 'Normal and native subinterfaces', code:
+`  interface GigabitEthernet0/0.10
+   encapsulation dot1Q 10            normal tagged VLAN
+
+  interface GigabitEthernet0/0.999
+   encapsulation dot1Q 999 native    untagged native VLAN` },
+              { kind: 'table', h: 'The three designs side by side', cols: ['Feature', 'Router-on-a-Stick', 'SVI routing', 'Routed access'], rows: [
+                ['Layer 3 device', 'A router', 'A multilayer switch', 'A Layer 3 switch or router'],
+                ['Gateway', 'A router subinterface', 'An SVI', 'A Layer 3 interface'],
+                ['Link between devices', 'An 802.1Q trunk', 'Usually Layer 2 depending on the topology', 'A Layer 3 routed link'],
+                ['Trunk required', 'Yes', 'Not inherently', 'No'],
+                ['Scalability', 'Lower', 'High', 'High'],
+                ['Main bottleneck', 'The shared router link', 'Depends on the platform', 'Depends on the routed topology'],
+                ['Common use', 'Small and simple sites', 'Campus', 'Modern routed campus'],
+                ['Hardware forwarding', 'Router dependent', 'Multilayer switch ASICs', 'Layer 3 forwarding']
+              ]},
+              { kind: 'para', h: 'Switching and routing are different decisions', p: 'A host compares the destination address with its own subnet. Same subnet means Layer 2 delivery straight across the switch. Different subnet means the packet goes to the default gateway and the Layer 3 device makes the forwarding decision. VLANs never route themselves.' }
+            ],
+            commands: [
+              { label: 'Enable routing on a multilayer switch and create the SVIs', code:
+`ip routing
+interface Vlan10
+ ip address 10.1.10.1 255.255.255.0
+ no shutdown
+interface Vlan20
+ ip address 10.1.20.1 255.255.255.0
+ no shutdown` },
+              { label: 'Build router-on-a-Stick subinterfaces', code:
+`interface GigabitEthernet0/0
+ no ip address
+ no shutdown
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 10.1.10.1 255.255.255.0` },
+              { label: 'Create a routed access port', code:
+`interface GigabitEthernet1/0/1
+ no switchport
+ ip address 10.255.1.1 255.255.255.252` },
+              { label: 'Verify', code:
+`show ip interface brief
+show ip route
+show interfaces trunk` }
+            ],
+            traps: [
+              'VLANs do not route by themselves. A Layer 2 switch cannot forward between separate IP subnets.',
+              'Every host needs a default gateway for its own subnet, and the gateway address has to be reachable from that subnet.',
+              'Router-on-a-Stick needs the correct 802.1Q encapsulation on each subinterface, or the router does not know which VLAN it represents.',
+              'Creating an SVI does not enable routing. The ip routing command does that, and they are separate steps.',
+              'The native keyword matters on a subinterface. Without it the untagged traffic is not mapped.',
+              'A routed interface uses no switchport. That is not the same thing as a Layer 2 switchport with an address.',
+              'Router-on-a-Stick and SVI routing are different mechanisms. One is router subinterfaces, the other is multilayer switch VLAN interfaces.',
+              'Routing is not switching. Traffic inside one subnet is Layer 2, traffic to another subnet goes through the gateway.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Forwarding traffic between VLANs'],
+                ['Requirement', 'Different IP subnets and a Layer 3 gateway'],
+                ['Design 1', 'Router-on-a-Stick with subinterfaces'],
+                ['Design 2', 'SVI routing on a multilayer switch'],
+                ['Design 3', 'Routed access with no switchport'],
+                ['Gateway', 'An SVI, a subinterface or a routed interface'],
+                ['Native VLAN', 'encapsulation dot1Q <id> native'],
+                ['Enabling routing', 'ip routing'],
+                ['Verify', 'show ip interface brief, show ip route, show interfaces trunk']
+              ]
+            },
+            related: [
+              { t: '11. Router-on-a-Stick', d: 'the subinterface method in detail' },
+              { t: '01. VLAN', d: 'the broadcast domain being routed between' },
+              { t: '04. Access Port', d: 'where the hosts sit' }
+            ],
+            glossary: ['Inter-VLAN Routing', 'VLAN', 'Router-on-a-Stick', 'Access Port', 'Trunk Port', 'ACL', 'Routing Table', 'Encapsulation']
+          },
+          {
+            id: 't11', num: '11', group: 'routing', title: 'Router-on-a-Stick',
+            blurb: 'One physical link, one trunk, many subinterfaces, one gateway per VLAN',
+            overview: '**Router-on-a-Stick (ROAS)** is an inter-VLAN routing design where a **single physical router interface** reaches the switch over an 802.1Q trunk. The router creates **subinterfaces**, one per VLAN, and each one is the Layer 3 gateway for that VLAN.',
+            keyIdea: 'One physical link, one trunk, many subinterfaces, one gateway per VLAN. The subinterface number is not the VLAN ID — the encapsulation command is.',
+            sections: [
+              { kind: 'code', h: 'The shape of the design', code:
+`                 802.1Q Trunk
+   Switch -------------------------- Router
+                                          |
+                                       Gi0/0
+                                          |
+              +-----------------+---------+---------+
+              |                 |                   |
+           Gi0/0.10          Gi0/0.20          Gi0/0.30
+           VLAN 10           VLAN 20           VLAN 30
+           Gateway           Gateway           Gateway
+
+  Gi0/0
+  |
+  +-- Gi0/0.10  ->  VLAN 10  ->  10.1.10.1
+  +-- Gi0/0.20  ->  VLAN 20  ->  10.1.20.1
+  +-- Gi0/0.30  ->  VLAN 30  ->  10.1.30.1` },
+              { kind: 'para', h: 'The physical interface and the subinterfaces', p: 'The parent physical interface carries the trunk traffic and normally has **no IP address**. Each subinterface is a logical interface with its own encapsulation and its own Layer 3 address, and that address is the default gateway for the hosts in that VLAN.' },
+              { kind: 'para', h: 'How the VLAN association works', p: 'The subinterface number has no magic in it. Gi0/0.10 does not automatically mean VLAN 10. The VLAN association comes from the encapsulation dot1Q command, so the following configuration is perfectly valid even though the numbers differ.' },
+              { kind: 'code', h: 'The numbers do not have to match', code:
+`  interface GigabitEthernet0/0.100
+   encapsulation dot1Q 10
+   ip address 10.1.10.1 255.255.255.0
+
+  The subinterface is .100 and the VLAN is 10.
+  That is legal.
+
+  Best practice is to make them match so the
+  configuration is easy to read.` },
+              { kind: 'code', h: 'The full router configuration', code:
+`  interface GigabitEthernet0/0
+   description ROAS-UPLINK
+   no ip address
+   no shutdown
+
+  interface GigabitEthernet0/0.10
+   description VLAN10-GATEWAY
+   encapsulation dot1Q 10
+   ip address 10.1.10.1 255.255.255.0
+
+  interface GigabitEthernet0/0.20
+   description VLAN20-GATEWAY
+   encapsulation dot1Q 20
+   ip address 10.1.20.1 255.255.255.0
+
+  interface GigabitEthernet0/0.30
+   description VLAN30-GATEWAY
+   encapsulation dot1Q 30
+   ip address 10.1.30.1 255.255.255.0` },
+              { kind: 'code', h: 'The switch side', code:
+`  interface GigabitEthernet0/24
+   description ROAS-UPLINK
+   switchport mode trunk
+   switchport trunk allowed vlan 10,20,30
+
+  Both ends must agree on the VLANs being carried.` },
+              { kind: 'table', h: 'The host side', cols: ['VLAN', 'Address', 'Mask', 'Default gateway'], rows: [
+                ['10', '10.1.10.10', '255.255.255.0', '10.1.10.1'],
+                ['20', '10.1.20.20', '255.255.255.0', '10.1.20.1'],
+                ['30', '10.1.30.30', '255.255.255.0', '10.1.30.1']
+              ]},
+              { kind: 'para', h: 'How traffic flows', p: 'The host decides the destination is remote and sends the frame to its default gateway. The switch forwards it across the trunk with the VLAN 20 tag. The router associates the incoming frame with the VLAN 20 subinterface, strips the Layer 2 information, looks up the destination, finds it is directly connected on the VLAN 10 subinterface, and builds a **new** Ethernet frame with the VLAN 10 tag for the switch to deliver.' },
+              { kind: 'code', h: 'The routing step', code:
+`  Incoming:
+    [VLAN 20 tag][IP packet 10.1.10.10 -> 10.1.30.30]
+             |
+             v
+        Layer 3 routing
+             |
+             v
+  Outgoing:
+    [VLAN 30 tag][IP packet 10.1.10.10 -> 10.1.30.30]
+
+  The IP packet is routed.
+  The Layer 2 frame is rebuilt.` },
+              { kind: 'para', h: 'The native VLAN on ROAS', p: 'Native VLAN traffic arrives untagged, so the router needs to be told which subinterface owns it. That is what the native keyword does, and it has to be applied explicitly.' },
+              { kind: 'code', h: 'Mapping the native VLAN', code:
+`  interface GigabitEthernet0/0.999
+   encapsulation dot1Q 999 native
+   ip address 10.1.999.1 255.255.255.0
+
+  Do not assume that Gi0/0.999 is automatically the
+  native VLAN. The encapsulation command says so.` },
+              { kind: 'para', h: 'The scaling problem', p: 'Every VLAN in the site shares one physical trunk and one router interface. That link becomes both a bandwidth bottleneck and a single point of failure. ROAS is simple and cheap, which is exactly why it is used in small sites and labs, and exactly why campus designs move to SVIs or routed access.' },
+              { kind: 'code', h: 'The bottleneck', code:
+`  Many VLANs
+      |
+      v
+  One physical trunk
+      |
+      v
+  One router interface
+
+  Bandwidth and availability both concentrate here.
+  This is the reason to move to SVI routing or
+  routed access as the site grows.` }
+            ],
+            commands: [
+              { label: 'Configure the router side of ROAS', code:
+`interface GigabitEthernet0/0
+ no ip address
+ no shutdown
+interface GigabitEthernet0/0.10
+ encapsulation dot1Q 10
+ ip address 10.1.10.1 255.255.255.0
+interface GigabitEthernet0/0.20
+ encapsulation dot1Q 20
+ ip address 10.1.20.1 255.255.255.0` },
+              { label: 'Configure the switch side of ROAS', code:
+`interface GigabitEthernet0/24
+ description ROAS-UPLINK
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30` },
+              { label: 'Map the native VLAN on a subinterface', code:
+`interface GigabitEthernet0/0.999
+ encapsulation dot1Q 999 native
+ ip address 10.1.999.1 255.255.255.0` },
+              { label: 'Verify', code:
+`show ip interface brief
+show ip route
+show ip arp
+show interfaces trunk` }
+            ],
+            traps: [
+              'The subinterface number is not the VLAN ID. The encapsulation dot1Q command is what associates the VLAN.',
+              'The physical interface normally has no IP address. The addresses live on the subinterfaces.',
+              'Every normal tagged subinterface needs encapsulation dot1Q <vlan-id>, or the router cannot associate the traffic.',
+              'The native VLAN has to be mapped explicitly with encapsulation dot1Q <id> native.',
+              'One link does not mean one VLAN. A single ROAS trunk multiplexes many VLANs.',
+              'The router routes between VLANs, it does not bridge VLAN 10 into VLAN 20 at Layer 2.',
+              'The shared trunk and the single router interface are the classic ROAS bottleneck.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Physical links', 'One'],
+                ['Trunk', 'One 802.1Q trunk'],
+                ['Subinterfaces', 'One per VLAN'],
+                ['Gateway', 'One per VLAN'],
+                ['Parent interface', 'No IP address'],
+                ['Subinterface address', 'The default gateway for its VLAN'],
+                ['VLAN association', 'encapsulation dot1Q <vlan>'],
+                ['Native mapping', 'encapsulation dot1Q <vlan> native'],
+                ['Subinterface number', 'Does not have to match the VLAN ID'],
+                ['Behaviour', 'Routes, it does not bridge VLANs'],
+                ['Main limitation', 'The shared trunk and router interface'],
+                ['Verification', 'show ip interface brief, show ip route, show interfaces trunk']
+              ]
+            },
+            related: [
+              { t: '10. Inter-VLAN Routing', d: 'the three designs compared' },
+              { t: '05. Trunk Port', d: 'the switch side of the trunk' },
+              { t: '07. 802.1Q', d: 'the tag the router reads' }
+            ],
+            glossary: ['Router-on-a-Stick', 'Inter-VLAN Routing', 'Trunk Port', '802.1Q', 'Native VLAN', 'VLAN', 'Encapsulation', 'Access Port']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'concept', label: 'VLAN Concepts', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
+          { key: 'ports', label: 'Port Roles', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'trunking', label: 'Trunking Protocols', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
+          { key: 'routing', label: 'Inter-VLAN Routing', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'VLAN', def: 'A logical Layer 2 broadcast domain created on a switch. Hosts in the same VLAN reach each other directly; hosts in different VLANs need Layer 3 routing.' },
+          { term: 'Voice VLAN', def: 'A dedicated VLAN for IP phone traffic. The phone-facing port stays an access port, the PC sends untagged data traffic and the phone tags its voice traffic.' },
+          { term: 'Private VLAN', def: 'A Layer 2 subdivision of one VLAN into isolated and community secondary VLANs, giving host-to-host isolation while the hosts stay in one IP subnet.' },
+          { term: 'Access Port', def: 'A switch port belonging to one access VLAN, normally carrying untagged endpoint traffic. Configured with switchport mode access.' },
+          { term: 'Trunk Port', def: 'A switch port that carries multiple VLANs over one physical link, normally with 802.1Q tags and one native VLAN sent untagged.' },
+          { term: 'Native VLAN', def: 'The VLAN associated with untagged traffic on an 802.1Q trunk. VLAN 1 is the common default, and both ends of a trunk should agree.' },
+          { term: '802.1Q', def: 'The IEEE standard for VLAN tagging. The tag is 4 bytes: a 16-bit TPID and a 16-bit TCI holding PCP, DEI and the 12-bit VID.' },
+          { term: 'DTP', def: 'Dynamic Trunking Protocol, a Cisco-proprietary protocol that negotiates whether a link becomes a trunk. It does not negotiate VLANs.' },
+          { term: 'QinQ', def: 'VLAN stacking under IEEE 802.1ad, where a provider adds an outer service tag around the customer 802.1Q tag for Layer 2 provider services.' },
+          { term: 'Inter-VLAN Routing', def: 'Forwarding traffic between the Layer 3 subnets of different VLANs, using router subinterfaces, switch SVIs or routed access ports.' },
+          { term: 'Router-on-a-Stick', def: 'A design where one physical router interface reaches the switch over an 802.1Q trunk and one subinterface per VLAN provides the gateway.' },
+          { term: 'Broadcast Domain', def: 'The set of devices that receive a Layer 2 broadcast. A VLAN is exactly one broadcast domain, and a router is where one domain ends.' },
+          { term: 'EtherChannel', def: 'An aggregate of several physical links presented as one logical interface. The bundle is then configured as an access port or a trunk.' },
+          { term: 'MAC Learning', def: 'How a switch builds its forwarding table by learning the source MAC address of each frame against the VLAN it arrived on.' },
+          { term: 'CAM Table', def: 'The content-addressable memory holding the MAC address table, which maps a MAC address and a VLAN to a port and a VLAN to a port.' },
+          { term: 'STP', def: 'Spanning Tree Protocol, which blocks Layer 2 loops by electing a root bridge and putting redundant paths into a blocking state.' },
+          { term: 'PVST+', def: 'Per-VLAN Spanning Tree, the Cisco implementation that runs a separate instance of spanning tree per VLAN.' },
+          { term: 'PortFast', def: 'The edge-port feature that moves an access port straight to the forwarding state. It speeds up convergence but does not disable STP.' },
+          { term: 'BPDU Guard', def: 'An edge-port protection that disables a port when a BPDU is received on it, catching an unauthorised switch being connected.' },
+          { term: 'Port Security', def: 'A per-port control that limits the number of MAC addresses learned on the port and can restrict or shut the port on a violation.' },
+          { term: 'DHCP Snooping', def: 'A Layer 2 control that marks the uplink toward the DHCP server as trusted, so rogue DHCP servers on untrusted ports are ignored.' },
+          { term: 'IP Source Guard', def: 'A per-port control that validates the source IP address of traffic against the DHCP snooping binding database.' },
+          { term: 'Dynamic ARP Inspection', def: 'A per-port control that validates ARP replies against the DHCP snooping binding database, blocking address spoofing.' },
+          { term: 'QoS', def: 'Quality of Service, the set of mechanisms that classify, mark, queue and police traffic so that important traffic is favoured under load.' },
+          { term: 'DSCP', def: 'The 6-bit Differentiated Services Code Point in the IP header, the Layer 3 marking used for QoS classification.' },
+          { term: 'RTP', def: 'Real-time Transport Protocol, which carries voice and video media, and which is sensitive to delay, jitter and packet loss.' },
+          { term: 'SIP', def: 'Session Initiation Protocol, the signalling protocol used to set up, modify and tear down VoIP sessions.' },
+          { term: 'Trust Boundary', def: 'The point in the network where markings or identity from a device are accepted rather than re-marked or discarded.' },
+          { term: 'Metro Ethernet', def: 'The provider Layer 2 service that carries customer traffic across a metropolitan area, often with QinQ or Ethernet VPN technology.' },
+          { term: 'VXLAN', def: 'A Layer 2 overlay that extends segmentation to a 24-bit VNI, giving a far larger namespace than the 12-bit VLAN ID.' },
+          { term: 'ACL', def: 'An access control list, a set of match conditions and actions applied to traffic, typically as a filter on an interface.' },
+          { term: 'Device Hardening', def: 'The practice of removing unnecessary services, disabling unused ports and applying control-plane protection to a network device.' },
+          { term: 'TFTP', def: 'Trivial File Transfer Protocol, a simple file transfer protocol commonly used to deliver phone and device configuration.' },
+          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol, which leases an address and options such as the gateway and DNS server to a client.' },
+          { term: 'MTU', def: 'The largest IP packet an interface can carry in one frame. An 802.1Q tag adds 4 bytes to the Layer 2 frame without changing the IP MTU.' },
+          { term: 'Ethernet Frame', def: 'The Layer 2 unit of Ethernet, with destination and source MAC addresses, a type field, payload and frame check sequence.' },
+          { term: 'Encapsulation', def: 'The way a protocol wraps its data for transmission, such as the 802.1Q encapsulation that binds a router subinterface to a VLAN.' },
+          { term: 'Routing Table', def: 'The control-plane database of known networks and how to reach them: next hop, interface, source protocol, metric and administrative distance.' },
+          { term: 'SD-Access', def: 'The Cisco architecture whose fabric data plane uses VXLAN to carry the overlay segmentation for the access layer.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'At which OSI layer does a VLAN operate?',
+            options: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4'],
+            answer: 1,
+            why: 'A VLAN is a Layer 2 broadcast domain. Layer 3 is where IP subnets and routing live.'
+          },
+          {
+            q: 'What is the difference between a VLAN and an IP subnet?',
+            options: ['They are the same thing', 'A VLAN is Layer 2, a subnet is Layer 3', 'A VLAN is Layer 3, a subnet is Layer 2', 'A subnet is Layer 2, a VLAN is Layer 4'],
+            answer: 1,
+            why: 'A VLAN identifies a broadcast domain. A subnet defines an addressing and routing boundary. One VLAN to one subnet is a design convention, not the definition.'
+          },
+          {
+            q: 'How many VLAN IDs are usable in 802.1Q?',
+            options: ['4096', '4095', '4094', '4093'],
+            answer: 2,
+            why: 'The VID is 12 bits, so 0 to 4095 exist, but 0 and 4095 are reserved. The usable range is 1 to 4094.'
+          },
+          {
+            q: 'What is VLAN ID 0 used for?',
+            options: ['The default VLAN', 'Priority-tagged frames', 'The native VLAN', 'It is a normal VLAN'],
+            answer: 1,
+            why: 'VLAN 0 is reserved and indicates priority tagging rather than a specific VLAN.'
+          },
+          {
+            q: 'Which VLANs are the legacy FDDI and Token Ring VLANs?',
+            options: ['1 to 1001', '1002 to 1005', '1006 to 4094', '999 to 1002'],
+            answer: 1,
+            why: 'VLANs 1002 to 1005 are the legacy Cisco default VLANs associated with FDDI and Token Ring.'
+          },
+          {
+            q: 'On an access port, how is an incoming untagged frame associated with a VLAN?',
+            options: ['The frame must already carry a tag', 'The switch uses the port access VLAN', 'The destination MAC address decides it', 'It is sent to every VLAN in the trunk'],
+            answer: 1,
+            why: 'Access-port endpoint traffic is normally untagged, and the switch associates it internally with the configured access VLAN.'
+          },
+          {
+            q: 'Which traffic on an 802.1Q trunk is normally sent untagged?',
+            options: ['All VLAN traffic', 'The native VLAN', 'VLAN 1 only', 'Tagged traffic only'],
+            answer: 1,
+            why: 'The native VLAN is the exception to tagging. VLAN 1 is only the common default native VLAN.'
+          },
+          {
+            q: 'What does switchport nonegotiate do?',
+            options: ['Converts the port to access mode', 'Disables the trunk', 'Stops DTP negotiation frames being sent', 'Removes the native VLAN'],
+            answer: 2,
+            why: 'It stops DTP frames being sent. The configured mode still decides whether the port is an access port or a trunk.'
+          },
+          {
+            q: 'What is the DTP result for dynamic auto on both ends of a link?',
+            options: ['A trunk forms', 'No trunk forms', 'The native VLAN is negotiated', 'The link goes down'],
+            answer: 1,
+            why: 'Both sides are passive, so auto plus auto never forms a trunk.'
+          },
+          {
+            q: 'Which combination does form a trunk?',
+            options: ['auto and auto', 'access and auto', 'desirable and auto', 'access and desirable'],
+            answer: 2,
+            why: 'The desirable side actively negotiates, so desirable with auto, desirable with desirable and auto with trunk all form a trunk.'
+          },
+          {
+            q: 'DTP is which type of protocol?',
+            options: ['IEEE standard', 'Cisco proprietary', 'An IETF standard', 'A 3GPP standard'],
+            answer: 1,
+            why: 'DTP is Cisco proprietary, so configure trunking explicitly when linking to a non-Cisco device.'
+          },
+          {
+            q: 'What is the TPID value in an IEEE 802.1Q tag?',
+            options: ['0x8100', '0x88A8', '0x0800', '0x8100 for the VID only'],
+            answer: 0,
+            why: 'The TPID is 0x8100 and identifies the VLAN tagging protocol. The VID is a separate 12-bit field.'
+          },
+          {
+            q: 'How many bytes does the complete 802.1Q tag add to an Ethernet frame?',
+            options: ['2', '4', '8', '12'],
+            answer: 1,
+            why: 'TPID is 2 bytes and the TCI is 2 bytes, so the tag is 4 bytes and the maximum tagged frame is 1522 bytes.'
+          },
+          {
+            q: 'What is the PCP field used for?',
+            options: ['The VLAN identifier', 'The Layer 2 priority', 'The MAC address', 'The frame check sequence'],
+            answer: 1,
+            why: 'PCP is the 3-bit 802.1p priority used for Layer 2 classification. It is not the VID and not the DSCP.'
+          },
+          {
+            q: 'Which statement about the IP MTU on a tagged link is correct?',
+            options: ['The IP MTU becomes 1522 bytes', 'The IP MTU stays 1500 bytes while the Layer 2 frame grows to 1522', 'The IP MTU drops to 1496', 'Tags do not affect frame size'],
+            answer: 1,
+            why: 'The extra 4 bytes are Layer 2 overhead. The IP MTU commonly remains 1500 bytes.'
+          },
+          {
+            q: 'Which two tags does QinQ carry, and what are they?',
+            options: ['Two S-Tags', 'An outer S-Tag and an inner C-Tag', 'A PCP and a DEI', 'A native and an access tag'],
+            answer: 1,
+            why: 'The outer service tag identifies the provider context and the inner customer tag identifies the customer VLAN.'
+          },
+          {
+            q: 'What is the common TPID for the QinQ service tag?',
+            options: ['0x8100', '0x88A8', '0x8864', '0x0800'],
+            answer: 1,
+            why: '0x88A8 is the common S-Tag TPID and 0x8100 is the common C-Tag TPID.'
+          },
+          {
+            q: 'How much VLAN-tag overhead does QinQ add over an untagged Ethernet frame?',
+            options: ['4 bytes', '8 bytes', '12 bytes', '2 bytes'],
+            answer: 1,
+            why: 'Two 4-byte tags means 8 bytes of overhead compared with an untagged frame.'
+          },
+          {
+            q: 'Which command maps a router subinterface to the native VLAN?',
+            options: ['encapsulation dot1Q 10', 'encapsulation dot1Q 999 native', 'switchport trunk native vlan 999', 'ip routing'],
+            answer: 1,
+            why: 'The native keyword tells the router that this subinterface owns the untagged traffic of that VLAN.'
+          },
+          {
+            q: 'Does the subinterface number have to match the VLAN ID?',
+            options: ['Yes, always', 'No, the encapsulation command decides the VLAN', 'Only on switches', 'Only for native VLANs'],
+            answer: 1,
+            why: 'Gi0/0.100 with encapsulation dot1Q 10 is valid. Making them match is only a readability practice.'
+          },
+          {
+            q: 'Which port role in a private VLAN can reach every host in every associated secondary VLAN?',
+            options: ['Isolated', 'Community', 'Promiscuous', 'Trunk'],
+            answer: 2,
+            why: 'Promiscuous ports reach all associated secondary VLAN hosts. It is a PVLAN role, not a trunk.'
+          },
+          {
+            q: 'Which ports can an isolated port communicate with?',
+            options: ['Other isolated ports', 'Community ports', 'Promiscuous ports only', 'Every port in the VLAN'],
+            answer: 2,
+            why: 'Isolated ports reach promiscuous ports only, which is how they get to the gateway.'
+          },
+          {
+            q: 'In the common private VLAN design, which VLAN holds the Layer 3 gateway?',
+            options: ['The isolated secondary VLAN', 'The primary VLAN', 'A community VLAN', 'The native VLAN'],
+            answer: 1,
+            why: 'The gateway is normally associated with the primary VLAN, and the promiscuous port maps to the secondary VLANs.'
+          },
+          {
+            q: 'What does switchport protected give you that a private VLAN does not?',
+            options: ['Secondary VLANs', 'Local port-to-port isolation on one switch', 'A Layer 3 gateway', 'Cross-switch isolation'],
+            answer: 1,
+            why: 'Protected ports are a simple local isolation feature. They create no secondary VLANs and do not span switches.'
+          },
+          {
+            q: 'Which port type carries the traffic of a phone on a voice VLAN?',
+            options: ['A trunk', 'An access port with a voice VLAN', 'A routed port', 'A promiscuous port'],
+            answer: 1,
+            why: 'The phone-facing port stays an access port. switchport voice vlan adds the voice association without making it a trunk.'
+          },
+          {
+            q: 'Which DSCP value is commonly used for voice bearer media?',
+            options: ['CS3', 'EF (46)', 'AF11', 'BE'],
+            answer: 1,
+            why: 'DSCP EF (46) marks voice media. Signaling is a separate class and commonly uses CS3.'
+          },
+          {
+            q: 'Which DHCP option is strongly associated with Cisco IP phone provisioning over TFTP?',
+            options: ['Option 66', 'Option 150', 'Option 242', 'Option 43'],
+            answer: 1,
+            why: 'Option 150 carries the TFTP server address for phone provisioning. Option 242 is associated with Avaya.'
+          },
+          {
+            q: 'Which protocol does the switch use to advertise the voice VLAN to a phone?',
+            options: ['DTP', 'CDP or LLDP-MED', 'VTP', 'SNMP'],
+            answer: 1,
+            why: 'CDP and LLDP-MED are the common voice VLAN discovery mechanisms, though a phone can also be configured by other means.'
+          },
+          {
+            q: 'Which access port feature speeds an edge port to forwarding without removing it from STP?',
+            options: ['PortFast', 'BPDU Guard', 'Port security', 'DHCP snooping'],
+            answer: 0,
+            why: 'PortFast removes the normal listening and learning delay. The port still participates in STP.'
+          },
+          {
+            q: 'What does BPDU Guard protect against?',
+            options: ['DHCP rogue servers', 'An unauthorised switch connected to an edge port', 'ARP spoofing', 'MAC flooding'],
+            answer: 1,
+            why: 'BPDU Guard disables a port that receives a BPDU, which is what a connected switch would send.'
+          },
+          {
+            q: 'Which of these is a Layer 3 default gateway for the hosts in a VLAN?',
+            options: ['The access port', 'The native VLAN', 'The SVI of that VLAN', 'The trunk'],
+            answer: 2,
+            why: 'The Switch Virtual Interface for the VLAN holds the gateway address that the hosts use as their default gateway.'
+          },
+          {
+            q: 'Which command enables Layer 3 routing on a multilayer switch?',
+            options: ['ip routing', 'ip cef', 'switchport mode trunk', 'no switchport'],
+            answer: 0,
+            why: 'ip routing turns on routing on the device. Creating the SVIs is a separate step.'
+          },
+          {
+            q: 'What is a routed access port configured with?',
+            options: ['switchport mode trunk', 'no switchport and an IP address', 'switchport access vlan', 'encapsulation dot1Q'],
+            answer: 1,
+            why: 'A routed access port removes the Layer 2 switchport and carries a Layer 3 point-to-point link.'
+          },
+          {
+            q: 'What happens to untagged traffic when the two ends of a trunk have different native VLANs?',
+            options: ['Nothing, tagged traffic is unaffected', 'The two switches classify the untagged frames into different VLANs', 'The trunk goes down', 'The frames are dropped and nothing is reported'],
+            answer: 1,
+            why: 'Each switch infers a different VLAN for the same untagged frame, which misclassifies the traffic. Correctly tagged traffic normally keeps working.'
+          },
+          {
+            q: 'Which is a genuine security benefit of changing the native VLAN?',
+            options: ['It makes the trunk encrypted', 'It removes the untagged exception that double-tagging exploits', 'It blocks all broadcasts', 'It replaces the allowed VLAN list'],
+            answer: 1,
+            why: 'A dedicated unused native VLAN helps against double-tagging, but it is not a substitute for trunk restrictions and Layer 3 policy.'
+          },
+          {
+            q: 'Which of these does DTP negotiate?',
+            options: ['Which VLANs are allowed on the trunk', 'Whether the link becomes a trunk', 'The native VLAN', 'Which VLAN a PC belongs to'],
+            answer: 1,
+            why: 'DTP negotiates trunking only. The allowed list, the native VLAN and VLAN membership are all separate configuration functions.'
+          },
+          {
+            q: 'What does the allowed VLAN list on a trunk control?',
+            options: ['Which VLANs may cross that trunk', 'Which VLANs exist on the switch', 'Which VLANs have traffic right now', 'Which VLAN is native'],
+            answer: 0,
+            why: 'The list limits what may cross the link. The VLAN still exists on the switch, and the list is not a traffic report.'
+          },
+          {
+            q: 'Why is a VLAN not considered a complete security boundary?',
+            options: ['Broadcasts can still be routed', 'Inter-VLAN traffic is still routed and needs access lists or firewall policy', 'A VLAN cannot be identified on a trunk', 'VLANs do not work with routing protocols'],
+            answer: 1,
+            why: 'A VLAN gives Layer 2 segmentation. A host inside a VLAN can still attack its neighbours, and inter-VLAN traffic needs policy.'
+          },
+          {
+            q: 'What is the VXLAN improvement over plain VLAN segmentation?',
+            options: ['A 24-bit VNI instead of a 12-bit VLAN ID', 'Native VLAN tagging on every frame', 'Automatic DTP negotiation', 'Removal of the need for a Layer 3 gateway'],
+            answer: 0,
+            why: 'The 24-bit VNI gives a much larger overlay segmentation namespace than the 12-bit VLAN ID.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'vl.theme', done: 'vl.done', best: 'vl.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>

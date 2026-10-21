@@ -13,6 +13,7 @@ pages/03-osi-tcpip.html
 pages/04-ethernet-switching.html
 pages/05-ipv4.html
 pages/06-ipv6.html
+pages/07-vlan-technologies.html
 vendor/vue.global.prod.js     Vue 3.5.42 — offline fallback copy
 vendor/tailwindcss.js         Tailwind Play CDN 3.4.17 — offline fallback copy
 tools/                        validation scripts + per-page config
@@ -39,8 +40,9 @@ Everything is client-side, so `file://` works. It also works over HTTP
 | 04 | [Ethernet & Switching](pages/04-ethernet-switching.html) | 13 | 32 questions |
 | 05 | [IPv4](pages/05-ipv4.html) | 16 | 33 questions |
 | 06 | [IPv6](pages/06-ipv6.html) | 13 | 36 questions |
+| 07 | [VLAN Technologies](pages/07-vlan-technologies.html) | 11 | 39 questions |
 
-The remaining levels (07–30) are listed on the hub as *planned*. Each one is ported
+The remaining levels (08–30) are listed on the hub as *planned*. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:
 
 > Overview → Core Concepts → Commands → Exam Traps → Quick Review Table → Related Notes → Glossary
@@ -65,8 +67,8 @@ from the matching note set in the CCNP Obsidian vault, keeping the note structur
 
 Progress, theme, and best score are stored in `localStorage` under a per-page prefix
 (`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02, `osi.*` for Level 03,
-`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06) so levels never overwrite
-each other.
+`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06, `vl.*` for Level 07) so
+levels never overwrite each other.
 
 ## Loading Vue and Tailwind
 
