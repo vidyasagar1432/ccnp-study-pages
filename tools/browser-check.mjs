@@ -302,7 +302,9 @@ async function checkPage(pageRel, cfg) {
     await cdp.evaluate(`(() => {
       const items = [...document.querySelectorAll('#quiz ol > li')];
       items.forEach(li => { const b = li.querySelector('button'); if (b) b.click(); });
-      const grade = [...document.querySelectorAll('#quiz button')].find(b => /grade/i.test(b.textContent));
+      // match the button by its own label, not by a word that happens to
+      // appear inside an answer option (for example "carrier-grade")
+      const grade = [...document.querySelectorAll('#quiz button')].find(b => /^\\s*grade\\b/i.test(b.textContent));
       if (grade) grade.click();
     })()`);
     await sleep(400);
@@ -310,11 +312,11 @@ async function checkPage(pageRel, cfg) {
       const txt = document.getElementById('quiz').innerText;
       const m = txt.match(/Score:\\s*(\\d+)\\/(\\d+)/);
       return JSON.stringify({ score: m ? +m[1] : -1, total: m ? +m[2] : -1,
-                              explanations: document.querySelectorAll('#quiz ol > li p').length });
+                              explanations: document.querySelectorAll('#quiz ol > li p > span.font-bold').length });
     })()`);
     const g = JSON.parse(graded);
     g.score >= 0 && g.total === cfg.quiz ? ok(`quiz graded: ${g.score}/${g.total}`) : fail('quiz grading failed: ' + graded);
-    g.explanations >= 18 ? ok('explanations revealed after grading') : fail('explanations missing: ' + graded);
+    g.explanations === cfg.quiz ? ok(`explanations revealed for all ${g.explanations} questions`) : fail('explanations missing: ' + graded);
 
     const perfect = await cdp.evaluate(`(() => {
       // Learn the correct option index per question from the graded state
@@ -322,14 +324,14 @@ async function checkPage(pageRel, cfg) {
         const opts = [...li.querySelectorAll('button')];
         return opts.findIndex(o => o.className.includes('border-emerald-500'));
       });
-      const reset = [...document.querySelectorAll('#quiz button')].find(b => /reset/i.test(b.textContent));
+      const reset = [...document.querySelectorAll('#quiz button')].find(b => /^\\s*reset\\b/i.test(b.textContent));
       if (reset) reset.click();
       return new Promise(r => setTimeout(() => {
         [...document.querySelectorAll('#quiz ol > li')].forEach((li, i) => {
           const opts = [...li.querySelectorAll('button')];
           if (opts[correct[i]]) opts[correct[i]].click();
         });
-        const grade = [...document.querySelectorAll('#quiz button')].find(b => /grade/i.test(b.textContent));
+        const grade = [...document.querySelectorAll('#quiz button')].find(b => /^\\s*grade\\b/i.test(b.textContent));
         if (grade) grade.click();
         setTimeout(() => {
           const m = document.getElementById('quiz').innerText.match(/Score:\\s*(\\d+)\\/(\\d+)/);

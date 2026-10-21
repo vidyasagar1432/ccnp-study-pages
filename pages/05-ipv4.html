@@ -1,0 +1,2563 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPv4 — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 05 IPv4: address structure, binary and decimal conversion, address classes, public, private and special-purpose ranges, CIDR, VLSM, FLSM, summarisation, supernetting and route aggregation.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">IPv4 — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[13px] font-black tracking-tight text-white">IP4</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">IPv4</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 05</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 05</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">16 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 05 &mdash; IPv4</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The complete IPv4 addressing picture: how a 32-bit address is split into network and host bits, which ranges are special, and how the prefix length drives subnetting and route aggregation.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        IPv4 &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 05 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `The whole of IPv4 addressing: a **[[IPv4]]** address is 32 bits split into network and host bits by a prefix, the special-purpose ranges are carved out of that space, and the prefix length drives **[[CIDR]]**, **[[VLSM]]**, **[[FLSM]]**, [[Summarization]] and [[Supernetting]].`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'addr', title: 'IPv4 Address Structure',
+            blurb: 'The 32-bit address, network versus host bits, masks, network and broadcast addresses',
+            overview: 'An IPv4 address is **32 bits**, written as four octets in dotted-decimal. A prefix length such as %%/24%% cuts those 32 bits into a **network portion** (shared by every host in the segment) and a **host portion** (unique per interface). Everything else in this level — subnetting, summarisation, the special-purpose ranges — is a consequence of where that cut falls.',
+            keyIdea: 'The prefix length is the only thing that defines the network. The address itself says nothing without the mask.',
+            sections: [
+              { kind: 'para', p: 'The address is written in four octets. Each octet is 8 bits, so four octets make 32 bits and the whole space holds 2^32 = 4,294,967,296 addresses. Each octet can hold 0 to 255.' },
+              { kind: 'code', h: 'An address in binary and in decimal', code:
+`  192.168.1.10
+  11000000 . 10101000 . 00000001 . 00001010
+   192     |  168    |   1      |   10
+
+  4 octets x 8 bits = 32 bits` },
+              { kind: 'table', h: 'Common octet values in binary', cols: ['Decimal', 'Binary', 'Meaning'], rows: [
+                ['0', '00000000', 'This host on this network'],
+                ['1', '00000001', 'The lowest host address in a subnet'],
+                ['127', '01111111', 'Loopback range'],
+                ['128', '10000000', 'Start of the old 128-191 range'],
+                ['192', '11000000', 'Start of the old 192-223 range'],
+                ['224', '11100000', 'Start of the multicast range'],
+                ['255', '11111111', 'Broadcast inside a subnet, or an all-ones mask']
+              ]},
+              { kind: 'para', p: 'A **subnet mask** marks which bits are network and which are host. The mask is written as a contiguous run of ones followed by zeros, and the same cut can be written as a prefix length: 255.255.255.0 is the same cut as %%/24%%.' },
+              { kind: 'table', h: 'Common prefix lengths and masks', cols: ['Prefix', 'Mask', 'Block size', 'Usable hosts'], rows: [
+                ['/24', '255.255.255.0', '256', '254'],
+                ['/25', '255.255.255.128', '128', '126'],
+                ['/26', '255.255.255.192', '64', '62'],
+                ['/27', '255.255.255.224', '32', '30'],
+                ['/28', '255.255.255.240', '16', '14'],
+                ['/29', '255.255.255.248', '8', '6'],
+                ['/30', '255.255.255.252', '4', '2']
+              ]},
+              { kind: 'para', p: 'With that cut in place, four addresses are meaningful in every subnet: the **network address** (all host bits zero), the **first usable host**, the **last usable host**, and the **broadcast address** (all host bits one).' },
+              { kind: 'code', h: 'The four special addresses in 10.1.1.0/24', code:
+`  Network address   10.1.1.0     <- all host bits zero
+  First usable host 10.1.1.1
+  Last usable host  10.1.1.254
+  Broadcast address 10.1.1.255   <- all host bits one
+
+  10.1.1.0/26 has its own set:
+  Network   10.1.1.0    Broadcast   10.1.1.63
+  Hosts     10.1.1.1 .. 10.1.1.62` },
+              { kind: 'para', p: 'The **wildcard mask** is the inverse of the subnet mask: a zero means "must match", a one means "do not care". A subnet mask has a run of ones then zeros; a wildcard mask has a run of zeros then ones. This is the single most confused pair in the exam.' },
+              { kind: 'list', h: 'Subnet mask versus wildcard mask', items: [
+                { t: 'Subnet mask', d: '255.255.255.0 — a one means network bit, a zero means host bit. Used on an interface to define the network.' },
+                { t: 'Wildcard mask', d: '0.0.0.255 — a zero means "must match", a one means "do not care". Used in ACLs, OSPF network statements and static routes.' },
+                { t: 'Do not mix them', d: '255.255.255.0 and 0.0.0.255 are not interchangeable. A wildcard is the bitwise NOT of the subnet mask.' }
+              ]},
+              { kind: 'code', h: 'Computing a wildcard mask', code:
+`  Wildcard = 255.255.255.255 - subnet mask
+
+  Subnet mask 255.255.255.0    ->  Wildcard 0.0.0.255
+  Subnet mask 255.255.255.192  ->  Wildcard 0.0.0.63
+  Subnet mask 255.255.255.255  ->  Wildcard 0.0.0.0   (match exactly one host)` }
+            ],
+            commands: [
+              { label: 'Configure an IPv4 address and mask on an interface', code:
+`interface GigabitEthernet0/1
+ ip address 192.168.10.10 255.255.255.0
+ no shutdown` },
+              { label: 'Check the interface summary', code:
+`show ip interface brief` },
+              { label: 'Check the full addressing detail', code:
+`show ip interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              'An IP address without its mask is incomplete. 192.168.1.10/24 and 192.168.1.10/25 are two different addresses on two different networks.',
+              'The network address is not a usable host address. 10.1.1.0/24 identifies the segment; you cannot configure it on a host.',
+              'The broadcast address is not a usable host address either. 10.1.1.255/24 is the directed broadcast for that subnet.',
+              'A /24 does not mean 24 hosts. It means 24 network bits, 8 host bits, 256 addresses and 254 usable hosts.',
+              '255.255.255.255 is the limited broadcast and reaches the local link only. It is not a host address and not a subnet broadcast.',
+              'A /31 gives two addresses with no usable hosts in the traditional sense. RFC 3021 uses it for point-to-point links where both addresses are usable.',
+              'A /32 is exactly one IPv4 address. It is used for a loopback interface, a host route, or a traffic policer filter.',
+              'A private address is still a valid IPv4 address — private just means it is not routed on the public Internet.',
+              'The subnet mask and the wildcard mask are opposites. 255.255.255.0 and 0.0.0.255 describe the same 24-bit match but mean different things.'
+            ],
+            table: {
+              cols: ['Concept', 'Value', 'Note'],
+              rows: [
+                ['Address length', '32 bits (4 octets)', '2^32 = 4,294,967,296 addresses'],
+                ['Network bits', 'Leading ones in the mask', 'Shared by every host in the segment'],
+                ['Host bits', 'Trailing zeros in the mask', 'Unique per interface'],
+                ['Total addresses', '2^host bits', '/24 gives 256'],
+                ['Usable hosts', '2^host bits - 2', '/24 gives 254'],
+                ['Subnet mask', '255.255.255.0', 'One means network bit'],
+                ['Wildcard mask', '0.0.0.255', 'Zero means must match']
+              ]
+            },
+            related: [
+              { t: '02. Binary', d: 'the octet-by-octet conversion' },
+              { t: '03. Decimal', d: 'dotted-decimal and block sizes' },
+              { t: '11. CIDR', d: 'the prefix notation that replaces classes' }
+            ],
+            glossary: ['IPv4', 'CIDR', 'Private IP', 'IPv4 Broadcast']
+          },
+          {
+            id: 't02', num: '02', group: 'addr', title: 'Binary',
+            blurb: 'Bit weights, conversions in both directions, and the magic number method',
+            overview: 'Subnetting is a binary exercise. Every octet is a sum of powers of two, and the **bit weights** 128, 64, 32, 16, 8, 4, 2, 1 are the whole toolkit. Learn the conversion cold in both directions and the subnetting maths becomes arithmetic rather than guesswork.',
+            keyIdea: 'Learn the bit weights, not the individual conversions. Every octet you will ever need is a subset of those eight numbers.',
+            sections: [
+              { kind: 'para', p: 'Each bit in an octet has a fixed value. If the bit is set, its weight is added to the decimal value. That is the entire rule.' },
+              { kind: 'code', h: 'Bit weights and one worked octet', code:
+`  128  64  32  16   8   4   2   1
+   1    1   0    0   0   0   0   0
+   |    |
+   +----+--> 128 + 64 = 192
+
+  11000000 = 192
+  10101000 = 128 + 32 + 8 = 168` },
+              { kind: 'para', p: '**Decimal to binary** works the other way: find the largest weight that fits, subtract it, and keep going. **Binary to decimal** is simply the sum of the set weights.' },
+              { kind: 'code', h: 'Decimal 200 in binary', code:
+`  200 - 128 = 72   (128 is set)
+   72 -  64 =  8   (64 is set)
+    8 -   8 =  0   (8 is set)
+
+  200 = 11001000` },
+              { kind: 'table', h: 'Values worth memorising', cols: ['Decimal', 'Binary', 'Decimal', 'Binary'], rows: [
+                ['0', '00000000', '128', '10000000'],
+                ['1', '00000001', '192', '11000000'],
+                ['2', '00000010', '224', '11100000'],
+                ['4', '00000100', '240', '11110000'],
+                ['8', '00001000', '248', '11111000'],
+                ['16', '00010000', '252', '11111100'],
+                ['32', '00100000', '254', '11111110'],
+                ['64', '01000000', '255', '11111111'],
+                ['127', '01111111', '—', '—']
+              ]},
+              { kind: 'para', p: 'The **magic number** (block size) is the value of the lowest set bit in the mask. It is the number of addresses in each block, and it is the size of the jump between one subnet boundary and the next.' },
+              { kind: 'code', h: 'The magic number method', code:
+`  Block size = 256 - interesting octet
+
+  /25  mask 255.255.255.128  ->  256 - 128 = 128 addresses per block
+  /26  mask 255.255.255.192  ->  256 - 192 = 64  addresses per block
+  /27  mask 255.255.255.224  ->  256 - 224 = 32  addresses per block
+
+  Block boundaries for /26 are 0, 64, 128, 192` },
+              { kind: 'para', p: 'To find the network address, take the address and set every host bit to zero. To find the broadcast, set every host bit to one. To find the first and last usable hosts, set the host bits to one and zero respectively, leaving the last and first bits clear.' },
+              { kind: 'code', h: 'Network and broadcast in binary', code:
+`  192.168.1.130/26
+
+  11000000.10101000.00000001.10000010
+  11111111.11111111.11111111.11000000   <- /26 mask
+                       ^^^^^^
+                       6 host bits
+
+  Network   = 192.168.1.128
+  Broadcast = 192.168.1.191
+  Hosts     = 192.168.1.129 .. 192.168.1.190` },
+              { kind: 'para', p: 'The **bitwise AND** of an address and its mask gives the network address, because a one in the mask keeps the address bit and a zero forces it to zero. This is exactly what the router does when it installs a connected route.' },
+              { kind: 'code', h: 'AND rules', code:
+`  1 AND 1 = 1     1 AND 0 = 0
+  0 AND 1 = 0     0 AND 0 = 0
+
+  Address  11000000.10101000.00000001.10000010
+  Mask     11111111.11111111.11111111.11000000
+  AND      11000000.10101000.00000001.10000000  =  192.168.1.128` }
+            ],
+            commands: [
+              { label: 'See the address in binary', code:
+`show ip interface GigabitEthernet0/1` },
+              { label: 'Check the connected routes', code:
+`show ip route connected` }
+            ],
+            traps: [
+              'Bit order matters. 128 is the leftmost bit of an octet and 1 is the rightmost — the weights run right to left, not left to right.',
+              'The block size is not the number of usable hosts. A /26 has a block size of 64 but only 62 usable hosts.',
+              'The "interesting octet" is the first octet from the left where the mask is not all ones and not all zeros. For 10.1.1.0/26 the interesting octet is the last one.',
+              'A /24 is not the prefix for a Class C address today. The prefix length comes from the mask, never from the first octet.',
+              'The network address is address AND mask, not the address with the last octet zeroed. That shortcut only works for /24.',
+              'The broadcast address is address OR (host bits set), not address with the last octet set to 255. That shortcut only works for /24.',
+              'A /31 is not automatically two usable hosts. On point-to-point links RFC 3021 allows both addresses to be used, but a traditional Ethernet /31 has none.',
+              'A /32 is a single address — a host route, a loopback, or a filter, not a subnet.',
+              'Binary and decimal arithmetic are different operations. Never add in binary unless you are deliberately counting bits.'
+            ],
+            table: {
+              cols: ['Task', 'Method', 'Example'],
+              rows: [
+                ['Binary to decimal', 'Sum the set bit weights', '11000000 = 192'],
+                ['Decimal to binary', 'Subtract the largest fitting weight', '200 = 11001000'],
+                ['Block size', '256 - interesting octet', '/26 = 64'],
+                ['Network address', 'Address AND mask', '192.168.1.130/26 = 192.168.1.128'],
+                ['Broadcast address', 'Address AND mask, host bits set', '192.168.1.130/26 = 192.168.1.191'],
+                ['First usable host', 'Network + 1', '192.168.1.129'],
+                ['Last usable host', 'Broadcast - 1', '192.168.1.190']
+              ]
+            },
+            related: [
+              { t: '01. IPv4 Address Structure', d: 'where the mask comes from' },
+              { t: '03. Decimal', d: 'the dotted-decimal view' },
+              { t: '13. FLSM', d: 'fixed-length subnetting maths' }
+            ],
+            glossary: ['IPv4', 'CIDR', 'FLSM']
+          },
+          {
+            id: 't03', num: '03', group: 'addr', title: 'Decimal',
+            blurb: 'Dotted-decimal notation, valid octets, masks and block sizes in decimal',
+            overview: 'Everything on a Cisco device is shown in dotted-decimal, so decimal fluency is the practical skill. The octet values 0 to 255 are fixed, subnet-mask octets must be a contiguous run of ones, and the **block size** turns any prefix length into a number you can add and subtract with.',
+            keyIdea: 'A subnet-mask octet is only valid if it is a run of ones followed by zeros. 255, 254, 252, 248, 240, 224, 192, 128, 0 are the only legal values.',
+            sections: [
+              { kind: 'para', p: 'Dotted-decimal is just the four octets written in base 10 with dots between them. The device stores 32 bits; the dotted form is a display convention that every configuration command accepts.' },
+              { kind: 'code', h: 'The dotted-decimal bridge', code:
+`  192.168.1.10  =  11000000.10101000.00000001.00001010
+                   \\_____________/
+                    32 bits, four octets, each 0-255` },
+              { kind: 'para', p: 'Subnet-mask octets are constrained. Because the mask must be a contiguous run of ones followed by zeros, only nine octet values are legal: 0, 128, 192, 224, 240, 248, 252, 254 and 255. A mask like 255.0.255.0 is invalid because the ones are not contiguous.' },
+              { kind: 'table', h: 'Legal subnet-mask octets', cols: ['Octet', 'Binary', 'Meaning'], rows: [
+                ['0', '00000000', '8 host bits'],
+                ['128', '10000000', '1 network bit'],
+                ['192', '11000000', '2 network bits'],
+                ['224', '11100000', '3 network bits'],
+                ['240', '11110000', '4 network bits'],
+                ['248', '11111000', '5 network bits'],
+                ['252', '11111100', '6 network bits'],
+                ['254', '11111110', '7 network bits'],
+                ['255', '11111111', '8 network bits']
+              ]},
+              { kind: 'para', p: 'The **block size** is the number of addresses in one subnet. Subtract the interesting octet from 256 and you have it. The block size also tells you the subnet boundaries, because each boundary is a multiple of the block size.' },
+              { kind: 'code', h: 'Block size and boundaries', code:
+`  Prefix /28 ->  mask 255.255.255.240  ->  block size = 256 - 240 = 16
+  Prefix /26 ->  mask 255.255.255.192  ->  block size = 256 - 192 = 64
+
+  /28 boundaries in the last octet:  0, 16, 32, 48, 64, 80, 96, 112,
+                                     128, 144, 160, 176, 192, 208, 224, 240` },
+              { kind: 'table', h: 'Prefix, mask, block size and usable hosts', cols: ['Prefix', 'Mask', 'Block size', 'Usable hosts', 'Total'], rows: [
+                ['/24', '255.255.255.0', '256', '254', '256'],
+                ['/25', '255.255.255.128', '128', '126', '128'],
+                ['/26', '255.255.255.192', '64', '62', '64'],
+                ['/27', '255.255.255.224', '32', '30', '32'],
+                ['/28', '255.255.255.240', '16', '14', '16'],
+                ['/29', '255.255.255.248', '8', '6', '8'],
+                ['/30', '255.255.255.252', '4', '2', '4']
+              ]},
+              { kind: 'para', p: 'Cisco shows addresses in dotted-decimal everywhere: in the routing table, in interface output and in show commands. The one place it shows a prefix is the bracket notation on a route, such as %%192.168.1.0/24%%.' },
+              { kind: 'list', h: 'Special decimal values you will see in output', items: [
+                { t: '0.0.0.0/0', d: 'The default route — the catch-all when nothing more specific matches.' },
+                { t: '255.255.255.255', d: 'The limited broadcast address — this link only, never routed.' },
+                { t: '127.0.0.0/8', d: 'The loopback range — traffic to it never leaves the host.' },
+                { t: '169.254.0.0/16', d: 'IPv4 link-local — the self-assigned address when DHCP fails.' }
+              ]},
+              { kind: 'code', h: 'Wildcard masks in decimal', code:
+`  Subnet mask 255.255.255.0    ->  Wildcard 0.0.0.255
+  Subnet mask 255.255.255.252  ->  Wildcard 0.0.0.3
+  Subnet mask 255.255.255.255  ->  Wildcard 0.0.0.0` }
+            ],
+            commands: [
+              { label: 'Look at the routing table in decimal', code:
+`show ip route` },
+              { label: 'Look at one connected route', code:
+`show ip route 10.1.1.0` }
+            ],
+            traps: [
+              'An octet cannot go above 255 and cannot go below 0. 192.168.1.256 is not an address.',
+              'A subnet mask with non-contiguous ones is invalid. 255.0.255.0 is rejected by IOS.',
+              'Block size is not usable hosts. A /26 block size is 64, usable hosts are 62.',
+              'The network address and the broadcast address are both addresses, but neither is normally assigned to a host.',
+              'IPv4 notation always has exactly four octets. 10.1.1 is shorthand that IOS rejects on an interface.',
+              '0.0.0.0 means different things in different contexts: the default route, the unspecified source address in some protocols, and the 0.0.0.0 host route.',
+              '255.255.255.255 is the limited broadcast and is confined to the local link. It is not the broadcast of any subnet.'
+            ],
+            table: {
+              cols: ['Idea', 'Value', 'Note'],
+              rows: [
+                ['Valid octet', '0 to 255', 'Base 10, one octet'],
+                ['Legal mask octets', '0, 128, 192, 224, 240, 248, 252, 254, 255', 'Contiguous ones then zeros'],
+                ['Block size', '256 - interesting octet', '/27 = 32'],
+                ['Usable hosts', 'Block size - 2', '/27 = 30'],
+                ['Default route', '0.0.0.0/0', 'Lowest priority match'],
+                ['Limited broadcast', '255.255.255.255', 'Local link only']
+              ]
+            },
+            related: [
+              { t: '02. Binary', d: 'the arithmetic behind the decimal' },
+              { t: '04. IPv4 Classes', d: 'the old class boundaries' },
+              { t: '13. FLSM', d: 'using block sizes' }
+            ],
+            glossary: ['IPv4', 'CIDR', 'Default Route']
+          },
+          {
+            id: 't04', num: '04', group: 'addr', title: 'IPv4 Classes',
+            blurb: 'Classful history, class ranges, classful versus classless routing',
+            overview: '[[IPv4 Classes]] split the address space by the **first octet** into A, B and C with fixed masks, plus D for multicast and E for reserved. The allocation model is dead — every real network uses [[CIDR]] — but the class ranges are still exam arithmetic and still appear in the first octet of every address question.',
+            keyIdea: 'The class is decided by the first octet alone. It tells you the historical default mask, not the mask you should actually use.',
+            sections: [
+              { kind: 'table', h: 'The class table', cols: ['Class', 'First octet', 'Default mask', 'Address range'], rows: [
+                ['A', '1-126', '/8', '1.0.0.0 - 126.255.255.255'],
+                ['B', '128-191', '/16', '128.0.0.0 - 191.255.255.255'],
+                ['C', '192-223', '/24', '192.0.0.0 - 223.255.255.255'],
+                ['D (multicast)', '224-239', '—', '224.0.0.0 - 239.255.255.255'],
+                ['E (reserved)', '240-255', '—', '240.0.0.0 - 255.255.255.255']
+              ]},
+              { kind: 'para', p: 'The class also tells you the historical **default mask**, which is how classful routing worked: a router read the first octet and applied the fixed mask, advertising classful network prefixes without carrying a mask through the routing protocol.' },
+              { kind: 'code', h: 'Classful in action', code:
+`  10.1.2.3     ->  first octet 10   ->  Class A  ->  default /8   ->  10.0.0.0
+  172.16.1.1   ->  first octet 172 ->  Class B  ->  default /16  ->  172.16.0.0
+  192.168.1.1  ->  first octet 192 ->  Class C  ->  default /24  ->  192.168.1.0` },
+              { kind: 'para', p: 'Two routing protocol families follow the same split. **Classful** protocols (RIPv1, IGRP) carry no mask and only summarise at a class boundary. **Classless** protocols (RIPv2, OSPF, EIGRP, BGP) carry the mask with every prefix and summarise at any boundary.' },
+              { kind: 'list', h: 'Classful versus classless routing protocols', items: [
+                { t: 'Classful', d: 'RIPv1, IGRP. No mask in the update. A subnet must be contiguous inside its class or it is not advertised.' },
+                { t: 'Classless', d: 'RIPv2, EIGRP, OSPF, IS-IS, BGP. The mask travels with every prefix, so any size network works and summaries can be placed anywhere.' }
+              ]},
+              { kind: 'para', p: 'The special ranges still matter and still line up with the class boundaries: loopback sits inside Class A at 127/8, link-local is 169.254/16 inside Class B, multicast is the whole of Class D, and the limited broadcast is the top of Class E.' },
+              { kind: 'code', h: 'Special ranges against the class boundaries', code:
+`  0.0.0.0/0          default route
+  10.0.0.0/8         RFC 1918 private     (Class A space)
+  127.0.0.0/8        loopback             (inside Class A)
+  169.254.0.0/16     IPv4 link-local      (inside Class B)
+  172.16.0.0/12      RFC 1918 private     (Class B space)
+  192.168.0.0/16     RFC 1918 private     (Class C space)
+  224.0.0.0/4        multicast            (all of Class D)
+  255.255.255.255    limited broadcast    (top of Class E)` }
+            ],
+            commands: [
+              { label: 'See the classful network of a connected route', code:
+`show ip route 10.1.1.0` },
+              { label: 'Show the protocols in use', code:
+`show ip protocols` }
+            ],
+            traps: [
+              'The first octet decides the class — always. 172.16.5.1 is Class B even though the second octet is 16.',
+              '127 is Class A historically, but 127.0.0.0/8 is reserved for loopback and is never a normal unicast network.',
+              '172 does not automatically mean private. RFC 1918 private space in Class B is only 172.16.0.0 through 172.31.255.255.',
+              'A Class C address does not mean /24 today. The mask decides, and modern networks freely use /23 or /25 inside any class range.',
+              'Class D has no network or host split at all — the whole of 224.0.0.0/4 is group address space.',
+              'Class E is reserved for experimentation and is not normal unicast space.',
+              'Private ranges sit inside the class boundaries: 10/8 in Class A, 172.16/12 in Class B, 192.168/16 in Class C.'
+            ],
+            table: {
+              cols: ['Class', 'First octet', 'Default mask', 'Purpose'],
+              rows: [
+                ['A', '1-126', '/8', 'Very large networks'],
+                ['B', '128-191', '/16', 'Medium networks'],
+                ['C', '192-223', '/24', 'Small networks'],
+                ['D', '224-239', '—', 'Multicast groups'],
+                ['E', '240-255', '—', 'Reserved / experimental']
+              ]
+            },
+            related: [
+              { t: '11. CIDR', d: 'the classless replacement' },
+              { t: '10. IPv4 Multicast', d: 'the whole of Class D' },
+              { t: '06. Private IP', d: 'private space inside the classes' }
+            ],
+            glossary: ['IPv4 Classes', 'IPv4', 'CIDR', 'Private IP', 'IPv4 Multicast']
+          },
+          {
+            id: 't05', num: '05', group: 'addr', title: 'Public IP',
+            blurb: 'Global unicast space, who assigns it, NAT and anycast',
+            overview: 'A [[Public IP]] is globally unique and routable on the Internet. Assignment runs IANA to the RIRs to ISPs to the customer, and because the IPv4 pool is exhausted almost every enterprise edge translates with [[NAT]] and [[PAT]] rather than holding public addresses internally.',
+            keyIdea: 'Public means globally routable and globally unique. It does not mean the address is reachable — filtering and routing still apply.',
+            sections: [
+              { kind: 'code', h: 'The delegation chain', code:
+`  IANA
+    |
+    v
+  RIR  (ARIN, RIPE NCC, APNIC, LACNIC, AFRINIC)
+    |
+    v
+  ISP / hosting provider
+    |
+    v
+  You` },
+              { kind: 'list', h: 'The five RIRs', items: [
+                { t: 'ARIN', d: 'North America' },
+                { t: 'RIPE NCC', d: 'Europe, the Middle East and parts of Central Asia' },
+                { t: 'APNIC', d: 'Asia-Pacific' },
+                { t: 'LACNIC', d: 'Latin America and the Caribbean' },
+                { t: 'AFRINIC', d: 'Africa' }
+              ]},
+              { kind: 'para', p: 'An address is public when it is outside every reserved range — the three [[Private IP]] blocks, loopback, link-local, multicast, and the documentation ranges. Anything left over in the global unicast space is public space.' },
+              { kind: 'code', h: 'Public versus special-purpose space', code:
+`  PUBLIC (globally routable, globally unique)
+    everything that is not listed below
+
+  SPECIAL PURPOSE (not public)
+    0.0.0.0/0          default route
+    10.0.0.0/8         RFC 1918 private
+    100.64.0.0/10      shared address space (CGNAT)
+    127.0.0.0/8        loopback
+    169.254.0.0/16     IPv4 link-local
+    172.16.0.0/12      RFC 1918 private
+    192.0.2.0/24       documentation (TEST-NET-1)
+    192.168.0.0/16     RFC 1918 private
+    198.18.0.0/15      benchmarking
+    224.0.0.0/4        multicast
+    240.0.0.0/4        reserved
+    255.255.255.255    limited broadcast` },
+              { kind: 'para', p: 'Because public IPv4 is scarce, the edge of the network runs **NAT** to translate private inside addresses into a public outside address, and **PAT** to reuse the outside address by also translating the port. The public address count is therefore a licensing decision, not a design one.' },
+              { kind: 'code', h: 'NAT and PAT in one diagram', code:
+`  Inside host            Public edge
+  10.0.0.10:50001  --->  203.0.113.1:50001
+  10.0.0.11:50002  --->  203.0.113.1:50002
+  10.0.0.12:50003  --->  203.0.113.1:50003
+
+  One public address, many private hosts, unique by port.` },
+              { kind: 'para', p: '[[Anycast]] is the exception worth knowing: the same address is assigned to multiple devices and the network delivers to the nearest one. IPv4 uses it in practice for DNS resolvers and CDNs even though it has no dedicated block, while IPv6 made it a first-class part of the protocol.' },
+              { kind: 'list', h: 'What public IPv4 does not guarantee', items: [
+                { t: 'Reachability', d: 'A public address can still be filtered by an ACL, a firewall or a route that does not exist.' },
+                { t: 'Privacy', d: 'A public address identifies a location and an organisation. It is not anonymous.' },
+                { t: 'Stability', d: 'Provider-assigned public addresses change. That is why dynamic external addresses pair with DDNS.' }
+              ]}
+            ],
+            commands: [
+              { label: 'Configure the public-facing WAN interface', code:
+`interface GigabitEthernet0/0
+ description WAN-UPLINK
+ ip address 203.0.113.2 255.255.255.252
+ ip nat outside` },
+              { label: 'Translate private source addresses to the public address', code:
+`ip nat inside source list 1 interface GigabitEthernet0/0 overload
+ip access-list 1 permit 10.0.0.0 0.255.255.255` }
+            ],
+            traps: [
+              'Public does not mean anything outside RFC 1918. Loopback, link-local, multicast and the documentation ranges are all non-public.',
+              'Public does not mean automatically reachable. Reachability still depends on routing, ACLs and the absence of inbound filtering.',
+              'NAT is one-to-one address translation; PAT is NAT with port translation. "NAT overload" is PAT.',
+              'Documentation addresses such as 192.0.2.0/24 and 203.0.113.0/24 are not public and never appear on the Internet.',
+              '8.8.8.8 is a public address in use as a public DNS resolver, not a reserved range.',
+              'Private addresses are not routable on the public Internet — that is exactly why an edge needs NAT.',
+              'Anycast means many devices share one address and the nearest one answers; it is not a range of addresses reserved for it.'
+            ],
+            table: {
+              cols: ['Concept', 'Meaning', 'Note'],
+              rows: [
+                ['Public IP', 'Globally unique and globally routable', 'Routed on the Internet'],
+                ['Private IP', 'Reusable inside one organisation', 'Never routed on the Internet'],
+                ['NAT', 'Translate addresses one to one', 'Needs as many public addresses as hosts'],
+                ['PAT', 'Translate addresses and ports', 'Many hosts behind one public address'],
+                ['Anycast', 'One address on many devices', 'Nearest device answers'],
+                ['CGNAT', 'Carrier-side PAT', '100.64.0.0/10 shared space']
+              ]
+            },
+            related: [
+              { t: '06. Private IP', d: 'the other half of the address plan' },
+              { t: '07. APIPA', d: 'what you get when nothing answers' },
+              { t: '15. NAT', d: 'the translation layer that hides them' }
+            ],
+            glossary: ['Public IP', 'NAT', 'PAT', 'Anycast', 'Private IP']
+          },
+          {
+            id: 't06', num: '06', group: 'addr', title: 'Private IP',
+            blurb: 'RFC 1918 space, NAT, reuse across sites and address planning',
+            overview: '[[Private IP]] space is reserved so that any organisation may reuse the same addresses internally without asking anyone. The three ranges are small, memorised, and never routed on the public Internet — which is exactly why the edge needs [[NAT]].',
+            keyIdea: 'Three ranges only: 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16. The Class B one stops at 172.31.255.255.',
+            sections: [
+              { kind: 'table', h: 'The three RFC 1918 ranges', cols: ['Range', 'Prefix', 'Size', 'Typical use'], rows: [
+                ['10.0.0.0 - 10.255.255.255', '10.0.0.0/8', '16,777,216 addresses', 'Large organisations, data centres'],
+                ['172.16.0.0 - 172.31.255.255', '172.16.0.0/12', '1,048,576 addresses', 'Enterprise campus'],
+                ['192.168.0.0 - 192.168.255.255', '192.168.0.0/16', '65,536 addresses', 'Small sites, labs, home']
+              ]},
+              { kind: 'para', p: 'The Class B range is the one that trips people up. It covers 172.16.x.x through 172.31.x.x — sixteen second octets, not the whole of 172. Anything from 172.32.0.0 upwards is **not** private.' },
+              { kind: 'code', h: 'The 172 boundary', code:
+`  172.15.0.0   NOT private  <- ends just before the range
+  172.16.0.0   private      <- first private 172.x address
+  172.20.1.1   private      <- inside
+  172.31.255.255 private   <- last private 172.x address
+  172.32.0.0   NOT private  <- immediately after the range` },
+              { kind: 'list', h: 'The three properties of private space', items: [
+                { t: 'Reusable', d: 'Every organisation may use the same addresses simultaneously. There is no need to coordinate.' },
+                { t: 'Not globally routed', d: 'Routers on the public Internet do not forward packets with a private source or destination.' },
+                { t: 'Private does not mean unroutable', d: 'Private addresses are routed freely inside your own network and across VPNs — they are only unroutable on the Internet.' }
+              ]},
+              { kind: 'para', p: '[[NAT]] is the translation layer that lets private space reach the Internet. The router rewrites the source address on the way out and keeps a table so the reply can be rewritten back. [[PAT]] extends this by translating the port too, so one public address can carry thousands of sessions.' },
+              { kind: 'code', h: 'Why organisations use private space', code:
+`  1. Conservation      public IPv4 is exhausted, private space is free
+  2. Reuse            the same plan works at every site
+  3. Structure        private space lets you design clean subnets
+  4. Change           renumbering inside is free, public space is not` },
+              { kind: 'para', p: 'Address planning matters more than it looks. Overlapping private ranges across two sites collide the moment a VPN connects them, because both sides claim the same prefix. A common plan gives each site a unique slice of 10.0.0.0/8.' },
+              { kind: 'code', h: 'Site-unique private addressing', code:
+`  HQ     10.10.0.0/16
+  Branch 10.20.0.0/16
+  DC     10.30.0.0/16
+  Campus 10.40.0.0/16
+
+  No overlap, so a VPN can connect them without NAT.` },
+              { kind: 'para', p: 'Three other ranges behave like private space but are not RFC 1918, and the exam distinguishes them carefully.' },
+              { kind: 'table', h: 'Special-purpose space that is not RFC 1918', cols: ['Range', 'Name', 'Behaviour'], rows: [
+                ['169.254.0.0/16', 'IPv4 link-local', 'Self-assigned when DHCP fails; never routed off the link'],
+                ['100.64.0.0/10', 'Shared address space (CGNAT)', 'Carrier-grade NAT space; not private, not globally routable'],
+                ['127.0.0.0/8', 'Loopback', 'Never leaves the host']
+              ]}
+            ],
+            commands: [
+              { label: 'Find the private interfaces on a router', code:
+`show ip interface brief` },
+              { label: 'Look at the NAT translation table', code:
+`show ip nat translations` }
+            ],
+            traps: [
+              '172 does not automatically mean private. Only 172.16.0.0 through 172.31.255.255 are RFC 1918.',
+              '100.64.0.0/10 is shared address space for carrier-grade NAT. It is not RFC 1918 private space.',
+              'Private does not mean unroutable. Private addresses route fine inside your network and over VPNs.',
+              'NAT is not a security control. It hides addresses but it does not inspect, filter or prevent anything by itself.',
+              'Reserved is not the same as private. Loopback, link-local and multicast are reserved; private space is reused.',
+              'Private space is a per-interface concept. The same private address can exist at hundreds of sites at once.',
+              'Overlapping private space across connected sites causes real routing problems, not just theory.'
+            ],
+            table: {
+              cols: ['Range', 'Prefix', 'Private?', 'Routable on the Internet?'],
+              rows: [
+                ['10.0.0.0/8', '10/8', 'Yes', 'No'],
+                ['172.16.0.0/12', '172.16-31', 'Yes', 'No'],
+                ['192.168.0.0/16', '192.168/16', 'Yes', 'No'],
+                ['100.64.0.0/10', '100.64-127', 'No — shared space', 'No'],
+                ['169.254.0.0/16', 'link-local', 'No', 'No'],
+                ['127.0.0.0/8', 'loopback', 'No', 'No']
+              ]
+            },
+            related: [
+              { t: '05. Public IP', d: 'the other half of the plan' },
+              { t: '15. NAT', d: 'how private space reaches the Internet' },
+              { t: '07. APIPA', d: 'the self-assigned fallback' }
+            ],
+            glossary: ['Private IP', 'NAT', 'PAT', 'Public IP', 'APIPA']
+          },
+          {
+            id: 't07', num: '07', group: 'addr', title: 'APIPA',
+            blurb: '169.254.0.0/16, duplicate detection and why a host ends up there',
+            overview: '[[APIPA]] is the automatic fallback a DHCP client uses when no server answers. The host grabs an address from 169.254.0.0/16, probes for duplicates, installs no default gateway, and keeps retrying DHCP in the background. Seeing a 169.254 address on a host is a diagnostic, not a configuration.',
+            keyIdea: 'A 169.254.x.x address means DHCP failed. Look at the server, the VLAN, or DHCP snooping — not at the address.',
+            sections: [
+              { kind: 'para', p: 'The host broadcasts a DHCP Discover, waits, and repeats. After a number of attempts with no Offer it selects a random address from 169.254.0.0/16 and checks for conflicts before claiming it.' },
+              { kind: 'code', h: 'The APIPA sequence', code:
+`  host boots
+    -> DHCP Discover (broadcast)   no answer
+    -> DHCP Discover               no answer
+    -> DHCP Discover               no answer
+    -> self-assign 169.254.x.x
+       -> ARP probe for duplicates
+       -> install address, NO default gateway
+       -> keep retrying DHCP in the background` },
+              { kind: 'para', p: '**Duplicate address detection** is an ARP probe: the host sends an ARP request for the address it wants, before using it. If anyone answers, the address is in use and the host picks another one. It protects the link, and it is why two hosts rarely collide on 169.254 space.' },
+              { kind: 'code', h: 'How the three private spaces differ', code:
+`  RFC 1918 private    10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16
+                       configured by an administrator, has a gateway
+
+  IPv4 link-local     169.254.0.0/16
+                       self-assigned by the host, no gateway, link only
+
+  Public              everything else
+                       globally routable, assigned by an authority` },
+              { kind: 'para', p: 'The most common causes of an APIPA address are a DHCP server that is down or unreachable, the host being in the wrong VLAN, a relay that is missing or broken, and DHCP snooping dropping the request because the port is untrusted.' },
+              { kind: 'list', h: 'What to check when you see 169.254.x.x', items: [
+                { t: 'Is the DHCP server up?', d: 'Check the scope, the pool and the server interface.' },
+                { t: 'Is the host in the right VLAN?', d: 'A wrong VLAN means the Discover never reaches the server or its relay.' },
+                { t: 'Does the relay point at the right server?', d: 'The ip helper-address must match the DHCP server address.' },
+                { t: 'Is DHCP snooping blocking it?', d: 'On an untrusted port, snooping rate-limits or discards Discover packets.' }
+              ]},
+              { kind: 'para', h: 'The IPv6 contrast', p: 'IPv6 makes the equivalent feature normal rather than a fallback. Every IPv6 host has a link-local address as part of the protocol design, used for neighbour discovery and always available. The IPv4 behaviour is the odd one out.' }
+            ],
+            commands: [
+              { label: 'Windows — see the APIPA address', code:
+`ipconfig /all` },
+              { label: 'Windows — release and renew the lease', code:
+`ipconfig /release
+ipconfig /renew` },
+              { label: 'Cisco IOS — configure the DHCP helper address', code:
+`interface Vlan10
+ ip address 192.168.10.1 255.255.255.0
+ ip helper-address 192.168.10.50` }
+            ],
+            traps: [
+              'APIPA gives no default gateway. The host can talk to its own link and nowhere else.',
+              '169.254.0.0/16 is not RFC 1918 private space. It is link-local and it is never routed.',
+              'APIPA is a symptom, not a design. It means DHCP failed — do not configure 169.254 by hand.',
+              'The host keeps retrying DHCP, so it can recover on its own once the server comes back.',
+              'Duplicate detection uses ARP probes before the address is used, so collisions on 169.254 space are rare.',
+              'In IPv6 link-local addressing is a normal part of the protocol, not a failure indicator.'
+            ],
+            table: {
+              cols: ['Range', 'Name', 'How it is obtained', 'Default gateway?'],
+              rows: [
+                ['10/8, 172.16/12, 192.168/16', 'RFC 1918 private', 'Configured by an administrator', 'Yes'],
+                ['169.254.0.0/16', 'IPv4 link-local (APIPA)', 'Self-assigned after DHCP fails', 'No'],
+                ['127.0.0.0/8', 'Loopback', 'Built in', 'No'],
+                ['Global unicast', 'Public', 'Assigned by an authority', 'Yes']
+              ]
+            },
+            related: [
+              { t: '16. Network Services', d: 'where DHCP lives' },
+              { t: '06. Private IP', d: 'the address the host should have had' },
+              { t: '10. IPv4 Multicast', d: 'the other special-purpose space' }
+            ],
+            glossary: ['APIPA', 'DHCP', 'Private IP', 'IPv4']
+          },
+          {
+            id: 't08', num: '08', group: 'addr', title: 'Loopback',
+            blurb: '127.0.0.0/8, loopback interfaces, OSPF router IDs and source addresses',
+            overview: 'Loopback has two meanings that the exam keeps apart. **127.0.0.0/8** is the host talking to itself and never leaves the machine. A **loopback interface** is a virtual interface on a router that stays up as long as the router does — which is why it is the standard source address and [[OSPF Router ID]] choice.',
+            keyIdea: '127/8 is an address space. A loopback interface is a device. Using the right one as the OSPF router ID is a design habit worth having.',
+            sections: [
+              { kind: 'code', h: 'The two senses of loopback', code:
+`  127.0.0.0/8            host loopback
+  127.0.0.1               "this host" - traffic never leaves the box
+
+  interface Loopback0    router loopback interface
+  ip address 1.1.1.1/32  a permanent address on the router itself` },
+              { kind: 'table', h: 'Host loopback versus router loopback interface', cols: ['', '127.0.0.0/8', 'Loopback interface'], rows: [
+                ['What it is', 'A reserved address range', 'A virtual interface on a device'],
+                ['Purpose', 'Test the local IP stack', 'Stable identity, management, source address'],
+                ['Traffic', 'Never leaves the host', 'Terminated on the device itself'],
+                ['Availability', 'Always present', 'Up whenever the device is up'],
+                ['Use it for', '%%ping 127.0.0.1%%', 'Router ID, iBGP source, service reachability']
+              ]},
+              { kind: 'para', p: 'Routers use loopback interfaces for three reasons: the address never changes even when a physical link flaps, it is a **/32** so it consumes no address space, and it gives the device a single stable identity for every protocol that needs one.' },
+              { kind: 'code', h: 'Why routers use loopbacks', code:
+`  1. Stability   the address survives an interface or link failure
+  2. Identity    one address for the OSPF router ID
+  3. Source      a predictable source address for originated traffic
+  4. Reachability a service or management address on every prefix` },
+              { kind: 'para', p: 'The **OSPF router ID** is chosen at start-up: manually if configured, otherwise the highest IP on a loopback, otherwise the highest IP on an active physical interface. Choosing it manually removes the surprise of it changing.' },
+              { kind: 'code', h: 'Configuring a loopback and pinning the router ID', code:
+`interface Loopback0
+ description OSPF-ROUTER-ID
+ ip address 1.1.1.1 255.255.255.255
+
+router ospf 1
+ router-id 1.1.1.1` },
+              { kind: 'para', h: 'Using the loopback address', p: 'A /32 on a loopback still appears in the routing table as a connected host route, and it can be used as a **source interface** for traffic the device originates, which is what keeps management and telemetry traffic on a predictable address.' }
+            ],
+            commands: [
+              { label: 'Create the loopback interface', code:
+`interface Loopback0
+ ip address 1.1.1.1 255.255.255.255` },
+              { label: 'Check the loopback interface', code:
+`show ip interface brief | include Loopback` },
+              { label: 'Check the OSPF router ID', code:
+`show ip ospf` },
+              { label: 'Test the local IP stack', code:
+`ping 127.0.0.1` }
+            ],
+            traps: [
+              '127.0.0.1 is a host address. It never leaves the device and is not a management IP for other hosts.',
+              'A loopback interface address is usually a /32. It takes no space from any subnet.',
+              'The loopback interface stays up while the device is up, even with every physical interface down.',
+              'An unmanaged OSPF router ID can change on reload and break adjacencies. Pin it explicitly.',
+              'A loopback address is not reachable from the local segment unless a routing protocol advertises it.',
+              'IPv6 has its own loopback, ::1, and its own link-local range. The concepts line up but the values do not.'
+            ],
+            table: {
+              cols: ['Concept', 'Value', 'Note'],
+              rows: [
+                ['Host loopback', '127.0.0.0/8', 'Never leaves the host'],
+                ['This host', '127.0.0.1', 'The address you ping to test the stack'],
+                ['Router loopback', 'interface Loopback0', 'Virtual, always up'],
+                ['Loopback prefix', '/32', 'Consumes no subnet space'],
+                ['OSPF router ID', '32-bit identifier', 'Manual is safest'],
+                ['IPv6 loopback', '::1', 'The IPv6 equivalent']
+              ]
+            },
+            related: [
+              { t: '04. IPv4 Classes', d: 'why 127 sits inside Class A' },
+              { t: '10. OSPF', d: 'where the router ID matters' },
+              { t: '01. IPv4 Address Structure', d: 'the /32 prefix' }
+            ],
+            glossary: ['Loopback Address', 'OSPF Router ID', 'IPv4', 'IPv6']
+          },
+          {
+            id: 't09', num: '09', group: 'addr', title: 'IPv4 Broadcast',
+            blurb: 'Limited and directed broadcast, broadcast domains and storm control',
+            overview: 'An [[IPv4 Broadcast]] reaches every host in a [[Broadcast Domain]]. There are exactly two forms: the **limited broadcast** 255.255.255.255, which never leaves the local link, and the **directed broadcast**, which is the all-ones host address of a specific subnet and may be forwarded by routers if you let them.',
+            keyIdea: 'Limited broadcast stays on the link. Directed broadcast is a subnet broadcast that routers forward only when ip directed-broadcast is enabled.',
+            sections: [
+              { kind: 'table', h: 'The two broadcast forms', cols: ['', 'Limited broadcast', 'Directed broadcast'], rows: [
+                ['Address', '255.255.255.255', 'All-ones host address of a subnet'],
+                ['Example', 'Always the same', '10.1.1.255 for 10.1.1.0/24'],
+                ['Scope', 'The local link only', 'The target subnet'],
+                ['Routers forward it?', 'Never', 'Only with ip directed-broadcast'],
+                ['Layer 2 destination', 'FF:FF:FF:FF:FF:FF', 'FF:FF:FF:FF:FF:FF inside the VLAN']
+              ]},
+              { kind: 'para', p: 'A broadcast is a Layer 3 concept that rides on a Layer 2 broadcast. The sender puts the broadcast MAC in the frame and the subnet broadcast address in the IP header. Routers stop it at the boundary of the broadcast domain.' },
+              { kind: 'code', h: 'Broadcast and the Layer 2 domain', code:
+`        VLAN 10 / Broadcast Domain
+  +-------------------------------------------+
+  |  PC1 ---+                      +--- PC2    |
+  |         |                      |           |
+  |      Switch ---- Router ---- Other switch   |
+  |                                           |
+  |  The router is the boundary. A broadcast    |
+  |  does not cross it.                        |
+  +-------------------------------------------+` },
+              { kind: 'para', p: 'The traffic you will actually see on a broadcast domain is small and well-known: ARP requests, DHCP discover and offer, RIPv1 updates, and IP directed broadcasts. RIPv2 and OSPF use multicast instead, so they do not add to the flood.' },
+              { kind: 'table', h: 'Common broadcast traffic', cols: ['Protocol', 'Address', 'Layer 2 destination'], rows: [
+                ['ARP request', '— (no IP header)', 'FF:FF:FF:FF:FF:FF'],
+                ['DHCP Discover', '255.255.255.255', 'FF:FF:FF:FF:FF:FF'],
+                ['RIPv1 update', '255.255.255.255', 'FF:FF:FF:FF:FF:FF'],
+                ['RIPv2 update', '224.0.0.9', '01:00:5E:00:00:09'],
+                ['OSPF hello', '224.0.0.5', '01:00:5E:00:00:05']
+              ]},
+              { kind: 'para', p: 'The directed broadcast is computed by taking the subnet network address and setting every host bit to one. For 10.1.10.64/26 the network is 10.1.10.64 and the broadcast is 10.1.10.127.' },
+              { kind: 'code', h: 'Directed broadcast calculation', code:
+`  10.1.1.0/24
+    24 network bits, 8 host bits
+    all host bits set  ->  10.1.1.255
+
+  10.1.10.64/26
+    26 network bits, 6 host bits
+    network 10.1.10.64
+    all host bits set  ->  10.1.10.127` },
+              { kind: 'para', h: 'Broadcast storms', p: 'A **broadcast storm** happens when frames loop in a Layer 2 loop, multiplying the broadcast until the link collapses. Storm control and loop protection exist to break that cycle, and a broadcast domain that is too large makes even normal traffic expensive.' }
+            ],
+            commands: [
+              { label: 'Disable directed-broadcast forwarding on an interface', code:
+`interface GigabitEthernet0/1
+ no ip directed-broadcast` },
+              { label: 'Look at broadcast-related interface counters', code:
+`show interfaces GigabitEthernet0/1 | include broadcast` },
+              { label: 'Configure broadcast storm control', code:
+`interface GigabitEthernet0/1
+ storm-control broadcast level pps 500 200` }
+            ],
+            traps: [
+              '255.255.255.255 is the limited broadcast and stays on the local link. It is not a subnet broadcast.',
+              'A directed broadcast is the all-ones host address of a subnet and routers forward it only when ip directed-broadcast is on.',
+              'The broadcast address of 10.1.1.0/26 is 10.1.1.63, not 10.1.1.255. The /24 shortcut only works for /24.',
+              'Routers do not forward broadcasts by default. That is what makes a router a broadcast domain boundary.',
+              'ARP is a Layer 2 broadcast with no IP header. IPv6 uses neighbour discovery over multicast instead.',
+              'RIPv1 uses broadcast; RIPv2 uses multicast 224.0.0.9. Same protocol, different transport.',
+              'Host bits set to one is the broadcast. Host bits set to zero is the network address. Neither is a usable host.'
+            ],
+            table: {
+              cols: ['Term', 'Value', 'Note'],
+              rows: [
+                ['Limited broadcast', '255.255.255.255', 'Local link only'],
+                ['Directed broadcast', '10.1.1.255 for 10.1.1.0/24', 'Forwarded only if enabled'],
+                ['Broadcast MAC', 'FF:FF:FF:FF:FF:FF', 'The Layer 2 destination'],
+                ['Broadcast domain', 'The set of devices that receive it', 'Ended by a router or a VLAN boundary'],
+                ['Network address', 'All host bits zero', 'Not a host'],
+                ['Broadcast address', 'All host bits one', 'Not a host']
+              ]
+            },
+            related: [
+              { t: '08. Ethernet & Switching', d: 'broadcast domains and flooding' },
+              { t: '10. IPv4 Multicast', d: 'the one-to-many alternative' },
+              { t: '01. IPv4 Address Structure', d: 'network and broadcast addresses' }
+            ],
+            glossary: ['IPv4 Broadcast', 'Broadcast Domain', 'IPv4 Multicast', 'ARP']
+          },
+          {
+            id: 't10', num: '10', group: 'addr', title: 'IPv4 Multicast',
+            blurb: '224.0.0.0/4, IGMP, PIM, Layer 2 mapping and IGMP snooping',
+            overview: '[[IPv4 Multicast]] sends one stream to a group of receivers. The whole of Class D (224.0.0.0/4) is group address space with no network or host split. Hosts ask to join with [[IGMP]], routers build the delivery tree with [[PIM]], and switches learn which ports care with [[IGMP Snooping]].',
+            keyIdea: 'Multicast is one-to-many, not one-to-all. The receiver decides, the sender never knows who is listening, and the tree is built backwards from the receivers.',
+            sections: [
+              { kind: 'table', h: 'Multicast ranges worth memorising', cols: ['Range', 'Name', 'Scope'], rows: [
+                ['224.0.0.0/24', 'Local network control', 'Never forwarded off the link'],
+                ['224.0.0.5', 'OSPF all routers', 'Link-local'],
+                ['224.0.0.6', 'OSPF designated routers', 'Link-local'],
+                ['224.0.0.9', 'RIP v2 routers', 'Link-local'],
+                ['224.0.0.10', 'EIGRP routers', 'Link-local'],
+                ['224.0.1.0/24', 'Internetwork control', 'Routable, not just the link'],
+                ['233.0.0.0/8', 'Administratively scoped', 'Private, organisation-wide'],
+                ['239.0.0.0/8', 'Administratively scoped', 'Private, organisation-wide']
+              ]},
+              { kind: 'para', p: 'The delivery process has three steps. A receiver sends an IGMP join. Multicast routing builds a distribution tree, using the unicast routing table for the reverse path forwarding check. Routers then replicate the traffic only where receivers exist, instead of copying it to every branch.' },
+              { kind: 'code', h: 'How multicast delivery works', code:
+`  1. Receiver joins the group
+       Host  -> IGMP Membership Report -> local router
+
+  2. Multicast routing builds the tree
+       PIM consults the UNICAST routing table (RPF check)
+       tree grows backwards from the receivers
+
+  3. Routers replicate only where needed
+       one copy inbound, copies only toward receivers` },
+              { kind: 'para', p: 'At Layer 2, IPv4 multicast maps onto the MAC range 01:00:5E:00:00:00 through 01:00:5E:7F:FF:FF. The mapping takes the low 23 bits of the group address, so **many IPv4 group addresses share one MAC address**. That is normal, not a bug, and it is why a switch must use IGMP snooping rather than plain MAC learning.' },
+              { kind: 'code', h: 'The IPv4 to Ethernet mapping', code:
+`  IPv4  224.0.0.9   ->  01:00:5E:00:00:09
+  IPv4  224.0.0.10  ->  01:00:5E:00:00:0A
+
+  Only the low 23 bits are used, so:
+  224.0.0.9   and  225.0.0.9   both map to 01:00:5E:00:00:09
+  239.1.1.1   and  224.1.1.1   both map to 01:00:5E:01:01:01` },
+              { kind: 'para', p: 'Without [[IGMP Snooping]] a switch treats a multicast frame like a broadcast and floods it to every port in the VLAN. Snooping listens to the IGMP joins and leaves, and builds a multicast forwarding table so traffic only exits ports that asked for the group.' },
+              { kind: 'table', h: 'Unicast versus broadcast versus multicast', cols: ['', 'Unicast', 'Broadcast', 'Multicast'], rows: [
+                ['Receivers', 'Exactly one', 'Everyone in the domain', 'Only the group members'],
+                ['Address', 'One host address', 'Subnet or limited broadcast', 'Class D group address'],
+                ['Copies on the wire', 'One', 'One frame, many listeners', 'One frame, copied per branch'],
+                ['Controlled by', 'The sender', 'The sender', 'The receivers'],
+                ['Uses bandwidth', 'Least', 'Most', 'Between the two']
+              ]},
+              { kind: 'para', p: 'Three multicast routing flavours matter. **PIM-DM** floods to the whole network and prunes back. **PIM-SM** uses a rendezvous point and builds the tree only where receivers exist. **PIM-SSM** removes the rendezvous point entirely by having receivers join a specific source, which is the modern model.' },
+              { kind: 'table', h: 'PIM modes', cols: ['Mode', 'Tree', 'Rendezvous point?', 'Use'], rows: [
+                ['PIM-DM', 'Source tree, flooded then pruned', 'No', 'Small, flat networks'],
+                ['PIM-SM', 'Shared tree, joined at an RP', 'Yes', 'General purpose'],
+                ['PIM-SSM', 'Source tree built by the receiver', 'No', 'Modern, avoids the RP']
+              ]}
+            ],
+            commands: [
+              { label: 'Enable IPv4 multicast routing', code:
+`ip multicast-routing` },
+              { label: 'Enable PIM on an interface', code:
+`interface GigabitEthernet0/1
+ ip pim sparse-dense-mode` },
+              { label: 'Configure the IGMP version on an interface', code:
+`interface Vlan10
+ ip igmp version 3` },
+              { label: 'Verify multicast routing and group membership', code:
+`show ip mroute
+show ip igmp groups` }
+            ],
+            traps: [
+              'Multicast is not broadcast. Broadcast reaches everyone whether they want it or not; multicast reaches only those who joined.',
+              'Class D has no network or host split. All of 224.0.0.0/4 is group space.',
+              'The IPv4 to Ethernet mapping uses only 23 bits, so several group addresses collide onto one MAC. That is expected.',
+              'IGMP is host-to-router membership management. It does not route multicast between routers.',
+              'SSM does not need a rendezvous point. The receiver names the source.',
+              '224.0.0.0/24 is link-local control traffic and is never forwarded off the link.',
+              'IGMP snooping is a switch feature. Without it, a switch floods multicast like a broadcast.',
+              'Multicast MAC collisions are normal. Do not treat them as a duplicate or a loop.'
+            ],
+            table: {
+              cols: ['Concept', 'Value', 'Note'],
+              rows: [
+                ['Multicast range', '224.0.0.0/4', 'All of Class D'],
+                ['Link-local control', '224.0.0.0/24', 'Never routed'],
+                ['OSPF routers', '224.0.0.5', 'All OSPF routers'],
+                ['RIP v2 routers', '224.0.0.9', 'RIP v2'],
+                ['Multicast MAC range', '01:00:5E:00:00:00 - 01:00:5E:7F:FF:FF', '23 bits of the group address'],
+                ['IGMP', 'Host-to-router membership', 'v3 enables SSM'],
+                ['PIM', 'Router-to-router multicast routing', 'Uses the unicast table for RPF']
+              ]
+            },
+            related: [
+              { t: '19. Multicast', d: 'the full multicast design' },
+              { t: '09. IPv4 Broadcast', d: 'the one-to-all alternative' },
+              { t: '04. IPv4 Classes', d: 'Class D in context' }
+            ],
+            glossary: ['IPv4 Multicast', 'IGMP', 'IGMP Snooping', 'PIM', 'IPv4 Classes']
+          },
+          {
+            id: 't11', num: '11', group: 'subnet', title: 'CIDR',
+            blurb: 'Prefix lengths, longest-prefix match, /31 and /32, and route summarisation',
+            overview: '[[CIDR]] replaced classful addressing by writing any address as IP/prefix. The prefix length is the single source of truth for the network boundary, which unlocks arbitrary network sizes, [[VLSM]], and route summarisation at any alignment.',
+            keyIdea: 'Write the address with its prefix and everything else follows: network, broadcast, host count, and whether a summary is legal.',
+            sections: [
+              { kind: 'para', p: 'The notation is IP/prefix-length, where the prefix length counts the network bits from the left. The same cut can be written as a subnet mask, and the two are interchangeable in every Cisco command that takes a prefix.' },
+              { kind: 'code', h: 'The same network, written three ways', code:
+`  192.168.10.0/24
+  192.168.10.0 255.255.255.0
+  192.168.10.0/255.255.255.0
+
+  /24  ->  24 network bits, 8 host bits
+  24 - 32 = -8  ->  2^8 = 256 addresses, 254 usable` },
+              { kind: 'para', p: 'Everything CIDR enables comes from the prefix being explicit in every advertisement. RIPv2, OSPF, EIGRP and BGP all carry the mask, so a network can be any size and a summary can be placed on any boundary that the addresses actually support.' },
+              { kind: 'table', h: 'Classful versus classless', cols: ['', 'Classful', 'Classless'], rows: [
+                ['Mask', 'Fixed by the first octet', 'Explicit on every prefix'],
+                ['Subnet sizes', 'One size per class', 'Any size'],
+                ['Summarisation', 'At class boundaries only', 'At any aligned boundary'],
+                ['Protocols', 'RIPv1, IGRP', 'RIPv2, OSPF, EIGRP, BGP']
+              ]},
+              { kind: 'para', p: '**Longest-prefix match** is the rule that makes classless routing work. When several routes match a destination, the one with the longest prefix wins — and a specific route always beats a summary that covers it.' },
+              { kind: 'code', h: 'Longest-prefix match in the routing table', code:
+`  Routing table for 10.1.4.0:
+
+    0.0.0.0/0        ->  ISP              (default)
+   10.0.0.0/8       ->  ISP              (summary)
+  10.1.4.0/24       ->  Serial0         (specific)   <-- WINS
+  10.1.4.32/28      ->  Ethernet1       (more specific) <-- WINS over /24
+
+  Most specific prefix always wins, whatever the administrative distance
+  or the metric of the less specific routes.` },
+              { kind: 'para', p: 'Two prefixes get special treatment. **/31** gives exactly two addresses and, under RFC 3021, both are usable on a point-to-point link. **/32** gives exactly one address and is used for a loopback interface, a host route, or a traffic filter.' },
+              { kind: 'table', h: 'Special prefixes', cols: ['Prefix', 'Addresses', 'Usable', 'Typical use'], rows: [
+                ['/31', '2', '2 on a point-to-point link', 'Router-to-router links'],
+                ['/32', '1', '1', 'Loopbacks, host routes, filters'],
+                ['/0', 'All', 'All', 'The default route']
+              ]},
+              { kind: 'para', p: 'A summary must be **aligned**: the summary prefix has to start on a boundary that the address space actually supports. Four contiguous /24s can be summarised into a /22 only when they share the top 22 bits, which means the first of them must be a multiple of four in its third octet.' },
+              { kind: 'code', h: 'Aligned and misaligned summaries', code:
+`  ALIGNED
+    192.168.0.0/24
+    192.168.1.0/24
+    192.168.2.0/24
+    192.168.3.0/24     ->  192.168.0.0/22   (valid)
+
+  MISALIGNED
+    192.168.1.0/24
+    192.168.2.0/24
+    192.168.3.0/24
+    192.168.4.0/24     ->  192.168.0.0/22   (invalid, would also cover .0/24)` }
+            ],
+            commands: [
+              { label: 'Configure an interface with a prefix', code:
+`interface GigabitEthernet0/1
+ ip address 192.168.10.10/24` },
+              { label: 'Configure a summarised static route', code:
+`ip route 192.168.0.0 255.255.255.192 10.1.1.1` },
+              { label: 'Verify the routing table and its prefixes', code:
+`show ip route
+show ip route 192.168.10.10` }
+            ],
+            traps: [
+              'The prefix length comes from the mask, never from the class of the address.',
+              'A /31 gives two addresses. Under RFC 3021 both are usable on a point-to-point link, which is why router links use it.',
+              'A /32 is a single address. It is a host route or a loopback, not a subnet with one host.',
+              'Longest-prefix match wins over every other factor, including administrative distance and metric.',
+              'A summary must be aligned. Four /24s only become a /22 when the first octet boundary is a multiple of four.',
+              'The default route 0.0.0.0/0 is a /0. It is the last route consulted, not the first.',
+              'CIDR is not a protocol. It is an addressing and advertisement convention that protocols carry.'
+            ],
+            table: {
+              cols: ['Concept', 'Value', 'Note'],
+              rows: [
+                ['Notation', 'IP/prefix', 'Prefix counts network bits'],
+                ['Mask equivalent', '255.255.255.0 for /24', 'Ones then zeros'],
+                ['Classful vs classless', 'Mask implied vs mask carried', 'CIDR is classless'],
+                ['Longest-prefix match', 'Most specific wins', 'Always beats a summary'],
+                ['/31', '2 addresses', 'Both usable point-to-point'],
+                ['/32', '1 address', 'Host route or loopback'],
+                ['/0', 'Default route', 'Catch-all']
+              ]
+            },
+            related: [
+              { t: '04. IPv4 Classes', d: 'the model CIDR replaced' },
+              { t: '12. VLSM', d: 'variable-size subnets' },
+              { t: '14. Summarization', d: 'the aggregation CIDR enables' }
+            ],
+            glossary: ['CIDR', 'VLSM', 'FLSM', 'Summarization', 'Routing Table']
+          },
+          {
+            id: 't12', num: '12', group: 'subnet', title: 'VLSM',
+            blurb: 'Variable-length subnets, sizing rules, alignment and the planning procedure',
+            overview: '[[VLSM]] gives every subnet inside a network exactly the size it needs. A /30 for a point-to-point link, a /26 for a fifty-host floor. The rule is simple — size from largest to smallest, add two for network and broadcast, and allocate on a boundary — but it is the single most tested calculation on the exam.',
+            keyIdea: 'Sort the requirements largest first, add two addresses to each, and allocate in that order. Allocating small subnets first is the classic mistake.',
+            sections: [
+              { kind: 'para', p: 'The difference from [[FLSM]] is that the mask is allowed to change between subnets. VLSM needs a classless network and a protocol that carries the mask, because the neighbours must be told a different mask for each prefix.' },
+              { kind: 'table', h: 'FLSM versus VLSM', cols: ['', 'FLSM', 'VLSM'], rows: [
+                ['Mask', 'The same in every subnet', 'Different per subnet'],
+                ['Address waste', 'High', 'Low'],
+                ['Best for', 'Uniform, small networks', 'Real enterprise networks'],
+                ['Needs', 'Any prefix length', 'A classless network and mask-carrying protocols']
+              ]},
+              { kind: 'para', p: 'Sizing is one rule: the number of addresses in a subnet is 2 raised to the host bits, and the **traditional usable host count is that number minus two**. The two are the network address and the broadcast address.' },
+              { kind: 'code', h: 'The sizing rule', code:
+`  hosts needed = H
+  addresses needed = H + 2
+  host bits = smallest n where 2^n >= H + 2
+  prefix = 32 - n
+
+  H = 50   ->  52 needed  ->  2^6 = 64   ->  /26
+  H = 25   ->  27 needed  ->  2^5 = 32   ->  /27
+  H = 2    ->   4 needed  ->  2^2 =  4   ->  /30
+  H = 30   ->  32 needed  ->  2^5 = 32   ->  /27   (exactly)
+  H = 31   ->  33 needed  ->  2^6 = 64   ->  /26   (not /27!)` },
+              { kind: 'para', p: 'The "+2" is where most errors happen, and so is the exact-fit case. Thirty hosts need thirty-two addresses, which is a /27 — but thirty-one hosts need thirty-three, so they need a /26.' },
+              { kind: 'para', p: '**Alignment** is the second rule. Each subnet must start on a multiple of its size. A /26 has a block size of 64, so after allocating 10.1.1.0/26 the next subnet starts at 10.1.1.64, not 10.1.1.32.' },
+              { kind: 'code', h: 'Allocation on a boundary', code:
+`  Block size for /26 = 64
+
+  10.1.1.0/26    ->  occupies .0  - .63
+  10.1.1.64/26  ->  next aligned start
+  10.1.1.32/26  ->  NOT aligned, overlaps the first subnet` },
+              { kind: 'code', h: 'A worked VLSM plan', code:
+`  Requirement:  10.1.1.0/24 must serve
+                 60 hosts      -> /26  (62 usable)
+                 30 hosts      -> /27  (30 usable)
+                 10 hosts      -> /28  (14 usable)
+                  2 hosts      -> /30  ( 2 usable)
+
+  Allocate largest first:
+    10.1.1.0/26    60 hosts   .0   - .63    broadcast .63
+    10.1.1.64/27   30 hosts   .64  - .95    broadcast .95
+    10.1.1.96/28   10 hosts   .96  - .111   broadcast .111
+    10.1.1.112/30   2 hosts   .112 - .115   broadcast .115
+
+  Total consumed: 116 of 256 addresses` },
+              { kind: 'para', p: 'The planning procedure is worth memorising as a checklist, because the exam gives you a requirements table and expects the allocation table back.' },
+              { kind: 'list', h: 'The VLSM planning procedure', items: [
+                { t: '1. Identify the address space', d: 'The network and prefix you are given.' },
+                { t: '2. List every host requirement', d: 'Include the routers on each link — they use addresses too.' },
+                { t: '3. Sort largest to smallest', d: 'This guarantees the boundaries line up.' },
+                { t: '4. Size each subnet', d: 'Add two, find the next power of two, derive the prefix.' },
+                { t: '5. Allocate sequentially', d: 'Each new subnet starts at the next aligned boundary.' },
+                { t: '6. Verify', d: 'No overlaps, no gaps inside a subnet, and the total fits.' }
+              ]},
+              { kind: 'para', h: 'VLSM and summarisation', p: 'VLSM and summarisation are complementary. If the plan is designed so that related subnets are adjacent, they can be collapsed into one summary and the routing table stays small.' }
+            ],
+            commands: [
+              { label: 'Configure a VLSM address on an interface', code:
+`interface GigabitEthernet0/1
+ ip address 10.1.1.1 255.255.255.192` },
+              { label: 'Add a summary route for the whole plan', code:
+`ip route 10.1.1.0 255.255.255.0 10.1.1.1` },
+              { label: 'Check the connected routes', code:
+`show ip route connected` }
+            ],
+            traps: [
+              'Allocate the largest subnet first. Allocating small subnets first is what produces overlapping plans.',
+              'Do not forget the +2. Every traditional subnet loses two addresses to the network and broadcast.',
+              'Thirty-one hosts need a /26, not a /27. The fit must be exact before it is tight.',
+              'A subnet must start on its own boundary. A /26 cannot start at .32 inside a /24.',
+              'Overlapping subnets are a design failure, not a rounding issue.',
+              'RIPv1 cannot carry a VLSM design. It has no mask in its updates and only summarises at class boundaries.',
+              'A /30 is not the only point-to-point option. /31 works too and wastes no further addresses.'
+            ],
+            table: {
+              cols: ['Hosts needed', 'Addresses needed', 'Host bits', 'Prefix', 'Usable'],
+              rows: [
+                ['2', '4', '2', '/30', '2'],
+                ['10', '12', '4', '/28', '14'],
+                ['25', '27', '5', '/27', '30'],
+                ['30', '32', '5', '/27', '30'],
+                ['31', '33', '6', '/26', '62'],
+                ['50', '52', '6', '/26', '62'],
+                ['60', '62', '6', '/26', '62'],
+                ['100', '102', '7', '/25', '126'],
+                ['250', '252', '8', '/24', '254']
+              ]
+            },
+            related: [
+              { t: '13. FLSM', d: 'the fixed-size alternative' },
+              { t: '11. CIDR', d: 'the notation VLSM relies on' },
+              { t: '14. Summarization', d: 'collapsing a VLSM plan back down' }
+            ],
+            glossary: ['VLSM', 'FLSM', 'CIDR', 'Summarization']
+          },
+          {
+            id: 't13', num: '13', group: 'subnet', title: 'FLSM',
+            blurb: 'Fixed-length subnets, the wasted-address problem, and the subnetting table',
+            overview: '[[FLSM]] splits a network into equal-sized subnets. It is simple, predictable and easy to administer, and it is what most people picture when they hear "subnetting" — but it wastes addresses badly whenever the needs are uneven.',
+            keyIdea: 'Same mask everywhere means the biggest subnet sets the size for all of them. That is the whole trade-off.',
+            sections: [
+              { kind: 'para', p: 'In FLSM you borrow a fixed number of bits from the original prefix and use the same prefix in every subnet. The number of subnets and the hosts per subnet are therefore fixed for the whole network.' },
+              { kind: 'code', h: 'The FLSM formulas', code:
+`  borrowed bits = b
+  subnets       = 2^b
+  new prefix    = p + b          (p = the original prefix)
+  hosts/subnet  = 2^(32 - new prefix) - 2
+
+  Example: 192.168.10.0/24 split into /27
+    b = 27 - 24 = 3
+    subnets = 2^3 = 8
+    hosts per subnet = 2^(32-27) - 2 = 32 - 2 = 30` },
+              { kind: 'table', h: 'The standard FLSM table from a /24', cols: ['Borrowed', 'Prefix', 'Subnets', 'Usable hosts', 'Total addresses'], rows: [
+                ['0', '/24', '1', '254', '256'],
+                ['1', '/25', '2', '126', '128'],
+                ['2', '/26', '4', '62', '64'],
+                ['3', '/27', '8', '30', '32'],
+                ['4', '/28', '16', '14', '16'],
+                ['5', '/29', '32', '6', '8'],
+                ['6', '/30', '64', '2', '4']
+              ]},
+              { kind: 'para', p: 'The waste shows up immediately. If a /24 becomes four /26 subnets and one of them only needs two hosts, thirty of its sixty-two addresses are dead — and the other three subnets cannot use them because a subnet boundary is a hard edge.' },
+              { kind: 'code', h: 'Why FLSM wastes addresses', code:
+`  192.168.10.0/24 split into four /26 subnets
+
+    10.0   .0   - .63    62 usable   but you need 2   ->  60 wasted
+    10.0   .64  - .127   62 usable   but you need 2   ->  60 wasted
+    10.0   .128 - .191   62 usable   but you need 2   ->  60 wasted
+    10.0   .192 - .255   62 usable   but you need 2   ->  60 wasted
+
+  240 of 256 addresses unusable.
+  VLSM would give: /30, /30, /28, /24 and use 116.` },
+              { kind: 'para', h: 'Where FLSM still makes sense', p: 'FLSM has one genuine advantage: predictability. Every subnet is the same size, so documentation is trivial and a mistake is obvious. That is why it still appears on the exam and still appears in small, uniform networks.' },
+              { kind: 'para', h: 'FLSM in Cisco IOS', p: 'In Cisco IOS the term appears in two more places. The %%ip subnet-zero%% command controls whether the all-zeroes subnet is usable on some platforms, and older curricula used FLSM as the model for how a classful routing protocol summarises.' }
+            ],
+            commands: [
+              { label: 'Configure an interface with an FLSM prefix', code:
+`interface GigabitEthernet0/1
+ ip address 192.168.10.1 255.255.255.224` },
+              { label: 'Allow the all-zeroes subnet where required', code:
+`ip subnet-zero` },
+              { label: 'Show the connected subnets and their masks', code:
+`show ip route connected` }
+            ],
+            traps: [
+              'Same mask everywhere is the definition of FLSM. If one subnet differs, it is VLSM.',
+              'Eight /27 subnets fit inside a /24. Check the arithmetic before you answer.',
+              'FLSM wastes addresses when needs are uneven. That is the reason VLSM replaced it in practice.',
+              'FLSM is a design method, not a Cisco command. No command turns a network into FLSM.',
+              'FLSM was the model for classful routing. Modern protocols all carry the mask and use VLSM.',
+              'Subnet-zero is a platform behaviour about the all-zeroes subnet, not a subnetting method.'
+            ],
+            table: {
+              cols: ['Prefix', 'Subnets from a /24', 'Usable per subnet', 'Total addresses'],
+              rows: [
+                ['/25', '2', '126', '128'],
+                ['/26', '4', '62', '64'],
+                ['/27', '8', '30', '32'],
+                ['/28', '16', '14', '16'],
+                ['/29', '32', '6', '8'],
+                ['/30', '64', '2', '4']
+              ]
+            },
+            related: [
+              { t: '12. VLSM', d: 'the efficient alternative' },
+              { t: '02. Binary', d: 'the arithmetic behind the table' },
+              { t: '16. Route Aggregation', d: 'collapsing fixed subnets back down' }
+            ],
+            glossary: ['FLSM', 'VLSM', 'CIDR', 'IPv4']
+          },
+          {
+            id: 't14', num: '14', group: 'agg', title: 'Summarization',
+            blurb: 'Collapsing contiguous prefixes, alignment, black holes and longest-prefix match',
+            overview: 'Route [[Summarization]] replaces several contiguous prefixes with one shorter prefix, so a neighbour carries one route instead of many. The summary is the network and mask of the **lowest common prefix** — which means alignment is not optional, it is the whole calculation.',
+            keyIdea: 'Find the bits that every contributing prefix shares. The summary is those bits plus zeros, and it must land on a real boundary.',
+            sections: [
+              { kind: 'para', p: 'A summary works because the routing protocols that carry it are classless. Every contributing prefix must be contiguous, must share the leading bits, and must fit inside the summary exactly.' },
+              { kind: 'code', h: 'How a summary is found', code:
+`  192.168.0.0/24   11000000.10101000.00000000
+  192.168.1.0/24   11000000.10101000.00000001
+  192.168.2.0/24   11000000.10101000.00000010
+  192.168.3.0/24   11000000.10101000.00000011
+                  ^^^^^^^^^^^^^^^^^^^^^^^^ common bits
+
+  22 common bits + 2 borrowed  ->  /22
+  Summary = 192.168.0.0/22  (192.168.0.0 - 192.168.3.255)` },
+              { kind: 'para', p: 'The calculation has three steps: write the contributing networks in binary, count the identical leading bits, and set the remaining bits to zero. The count is the summary prefix.' },
+              { kind: 'code', h: 'Counting the common bits', code:
+`  Step 1: write every network in binary
+  Step 2: find the first bit where they differ
+  Step 3: the summary prefix is the number of identical leading bits
+
+  10.0.0.0/24   00001010.00000000.00000000.xxxxxxxx
+  10.0.1.0/24   00001010.00000000.00000001.xxxxxxxx
+                 ^^^^^^^^^^^^^^^^^^^^^^  24 common bits -> /24, one subnet only
+
+  10.0.0.0/24 + 10.0.1.0/24 + 10.0.2.0/24 + 10.0.3.0/24
+                 ^^^^^^^^^^^^^^^^^^^^^^  22 common bits -> /22` },
+              { kind: 'para', p: '**Alignment** decides whether a summary is legal. The summary address must be the start of the block it covers. Four /24s form a /22 only if they are numbered 0, 1, 2 and 3 — a set starting at 1 is not a /22 and cannot be summarised as one.' },
+              { kind: 'code', h: 'Aligned and misaligned', code:
+`  ALIGNED  192.168.0.0/24 .. 192.168.3.0/24  ->  192.168.0.0/22
+
+  MISALIGNED  192.168.1.0/24 .. 192.168.4.0/24
+               ->  192.168.0.0/22 would also cover 192.168.0.0/24
+               ->  not a valid summary of exactly these four` },
+              { kind: 'para', p: 'A summary always covers space, and that space may be unused. That is usually fine and often deliberate — it is how you advertise a single prefix for a whole site. It becomes a problem when the summary hides a prefix you actually need to route somewhere else.' },
+              { kind: 'list', h: 'Where summarisation is used', items: [
+                { t: 'Distribution to core', d: 'The access layer advertises one summary instead of every VLAN prefix.' },
+                { t: 'OSPF', d: 'The area range command summarises prefixes between areas.' },
+                { t: 'EIGRP', d: 'The summary-address command summarises on an interface.' },
+                { t: 'BGP', d: 'The aggregate-address command creates the aggregate route.' }
+              ]},
+              { kind: 'para', h: 'The black-hole risk', p: 'The classic risk is a **black hole**: traffic is sent to the summary, but the summary router has no more specific route to send it on. The mitigation is to keep the more specific route alongside the summary, or to install a null route that blackholes exactly the unused space.' }
+            ],
+            commands: [
+              { label: 'Summarise an EIGRP prefix on an interface', code:
+`interface GigabitEthernet0/1
+ ip summary-address eigrp 10 192.168.0.0 255.255.252.0` },
+              { label: 'Summarise between OSPF areas', code:
+`router ospf 1
+ area 1 range 192.168.0.0 255.255.252.0` },
+              { label: 'Create a BGP aggregate route', code:
+`router bgp 65001
+ aggregate-address 192.168.0.0 255.255.252.0` }
+            ],
+            traps: [
+              'Three /24s do not automatically become a /22. A /22 covers four, and the set must be aligned.',
+              'Alignment matters. A set starting at 192.168.1.0 is not summarisable as 192.168.0.0/22.',
+              'A summary can cover address space that does not exist. That is normal, but it can black-hole traffic.',
+              'A more specific route always wins over a summary, whatever the administrative distance of the summary.',
+              'The OSPF area range command summarises intra-area routes only. It does not apply to external routes.',
+              'The EIGRP summary is interface-based: the prefix must be configured on the interface that advertises it.',
+              'Summarisation and supernetting are the same arithmetic. Supernetting is the historical name for it.'
+            ],
+            table: {
+              cols: ['Prefixes', 'Common bits', 'Summary', 'Covers'],
+              rows: [
+                ['2 x /24', '23', '192.168.0.0/23', '192.168.0.0 - 192.168.1.255'],
+                ['4 x /24', '22', '192.168.0.0/22', '192.168.0.0 - 192.168.3.255'],
+                ['8 x /24', '21', '192.168.0.0/21', '192.168.0.0 - 192.168.7.255'],
+                ['16 x /24', '20', '192.168.0.0/20', '192.168.0.0 - 192.168.15.255'],
+                ['2 x /23', '22', '192.168.0.0/22', '192.168.0.0 - 192.168.3.255'],
+                ['4 x /22', '20', '192.168.0.0/20', '192.168.0.0 - 192.168.15.255']
+              ]
+            },
+            related: [
+              { t: '15. Supernetting', d: 'the same arithmetic, historically' },
+              { t: '16. Route Aggregation', d: 'the router-side act' },
+              { t: '11. CIDR', d: 'why summaries are possible at all' }
+            ],
+            glossary: ['Summarization', 'Supernetting', 'Route Aggregation', 'CIDR', 'Routing Table']
+          },
+          {
+            id: 't15', num: '15', group: 'agg', title: 'Supernetting',
+            blurb: 'Combining smaller networks into one larger prefix, and the alignment rule',
+            overview: '[[Supernetting]] is [[Summarization]] applied to classful blocks: several smaller networks are presented as one larger network with a **shorter** prefix than the originals. It is the technique behind the CIDR-driven collapse of the Internet routing table in the 1990s.',
+            keyIdea: 'A supernet has a shorter prefix than its parts, and it must be contiguous and aligned. Two conditions, both mandatory.',
+            sections: [
+              { kind: 'para', p: 'Subnetting makes one network into several smaller ones; supernetting does the opposite. The prefix gets shorter, the block gets bigger, and the number of addresses in the block goes up by a power of two for every bit given back.' },
+              { kind: 'table', h: 'Subnetting versus supernetting', cols: ['', 'Subnetting', 'Supernetting'], rows: [
+                ['Direction', 'One network into many', 'Many networks into one'],
+                ['Prefix', 'Gets longer', 'Gets shorter'],
+                ['Typical use', 'Divide an allocation', 'Advertise an aggregate'],
+                ['Requires', 'Any prefix length', 'Contiguous and aligned members']
+              ]},
+              { kind: 'code', h: 'How a supernet is calculated', code:
+`  Step 1: count the networks      n
+  Step 2: bits needed              log2(n)
+  Step 3: new prefix               original prefix - log2(n)
+  Step 4: check alignment           first address must be a multiple of n
+
+  4 class-C /24s  ->  n = 4  ->  2 bits  ->  24 - 2 = /22` },
+              { kind: 'para', p: '**Alignment** is the critical rule. The block must start on its own boundary, which means the first address must be a multiple of the number of addresses in the supernet.' },
+              { kind: 'code', h: 'A valid supernet', code:
+`  Members:  192.168.0.0/24
+             192.168.1.0/24
+             192.168.2.0/24
+             192.168.3.0/24
+
+  4 x 256 = 1024 addresses
+  1024 divides evenly into 192.168.0.0
+  Supermarket: 192.168.0.0/22   VALID` },
+              { kind: 'code', h: 'An invalid alignment', code:
+`  Members:  192.168.1.0/24
+             192.168.2.0/24
+             192.168.3.0/24
+             192.168.4.0/24
+
+  4 x 256 = 1024 addresses
+  192.168.1.0 is NOT a multiple of 1024
+  Supermarket: 192.168.0.0/22   INVALID - it would also cover .0/24` },
+              { kind: 'para', p: '**Contiguity** is the other condition. The members must be neighbouring blocks with no gaps. Four blocks with a hole in the middle cannot be expressed as one simple prefix — the router would need two aggregates.' },
+              { kind: 'para', p: 'Supernetting is what keeps the global routing table survivable. One aggregate replaces many specifics, the BGP table stays small, and a flapping prefix does not destabilise the Internet.' },
+              { kind: 'list', h: 'Why supernetting exists', items: [
+                { t: 'Smaller routing tables', d: 'Fewer prefixes to store, look up and advertise.' },
+                { t: 'BGP scalability', d: 'The number of global IPv4 prefixes is only survivable because of aggregation.' },
+                { t: 'Hierarchical design', d: 'Aggregate at the edge of a site, advertise the aggregate upstream.' },
+                { t: 'Stability', d: 'A flap behind the aggregate does not ripple into the global table.' }
+              ]},
+              { kind: 'code', h: 'Supernetting in Cisco configuration', code:
+`  ! Advertise the aggregate in BGP
+  router bgp 65001
+   aggregate-address 192.168.0.0 255.255.252.0
+
+  ! Or install it as a static aggregate
+  ip route 192.168.0.0 255.255.252.0 Null0` }
+            ],
+            commands: [
+              { label: 'Create a BGP aggregate route', code:
+`router bgp 65001
+ aggregate-address 192.168.0.0 255.255.252.0` },
+              { label: 'Install a static aggregate', code:
+`ip route 192.168.0.0 255.255.252.0 Null0` }
+            ],
+            traps: [
+              'A supernet has a shorter prefix than the networks it contains. Four /24s become a /22, not a /26.',
+              'Alignment is mandatory. The first address must be a multiple of the size of the supernet.',
+              'Contiguity is required for a simple exact supernet. Gaps mean two aggregates, not one.',
+              'Supernetting does not require classful networking. CIDR made it general, and it applies to any prefixes.',
+              'A supernet covers space you may not own. That is expected, and it is why a null route is often installed alongside it.',
+              'Summarisation and supernetting are the same arithmetic under two names. Supernetting is the older one.'
+            ],
+            table: {
+              cols: ['Members', 'Count', 'Supernet', 'Valid?'],
+              rows: [
+                ['4 x /24 aligned', '4', '192.168.0.0/22', 'Yes'],
+                ['4 x /24 misaligned', '4', '192.168.0.0/22', 'No'],
+                ['8 x /24 aligned', '8', '192.168.0.0/21', 'Yes'],
+                ['16 x /24 aligned', '16', '192.168.0.0/20', 'Yes'],
+                ['2 x /23 aligned', '2', '192.168.0.0/22', 'Yes'],
+                ['4 x /22 aligned', '4', '192.168.0.0/20', 'Yes']
+              ]
+            },
+            related: [
+              { t: '14. Summarization', d: 'the same arithmetic in modern dress' },
+              { t: '16. Route Aggregation', d: 'the router-side act' },
+              { t: '11. CIDR', d: 'why the Internet could aggregate at all' }
+            ],
+            glossary: ['Supernetting', 'Summarization', 'Route Aggregation', 'CIDR']
+          },
+          {
+            id: 't16', num: '16', group: 'agg', title: 'Route Aggregation',
+            blurb: 'Advertising one route instead of many, Null0, BGP attributes and route leaking',
+            overview: '[[Route Aggregation]] is the router-side act of advertising one aggregate route instead of many specifics. Done at the routing protocol level it shrinks tables, reduces protocol churn and hides flaps — but it also reduces path visibility, and in BGP it interacts with path selection in ways that have their own traps.',
+            keyIdea: 'Aggregation replaces specifics with one prefix. Longest-prefix match still prefers any more specific route that survives, so keep the specifics where you need them.',
+            sections: [
+              { kind: 'table', h: 'The three words compared', cols: ['Term', 'Where it happens', 'What it means'], rows: [
+                ['Summarization', 'In your head, on paper', 'Working out the aggregate prefix'],
+                ['Supernetting', 'In your head, on paper', 'The same arithmetic with the historical name'],
+                ['Route aggregation', 'In the router configuration', 'Actually advertising one route instead of many']
+              ]},
+              { kind: 'para', p: 'Aggregation is done at three points in the network. At the **distribution layer** it collapses every access VLAN into one prefix for the core. In the **IGP** it is an area range or a summary address. In **BGP** it is an aggregate address, and it has its own attribute behaviour.' },
+              { kind: 'code', h: 'The aggregate plus Null0 pattern', code:
+`  ! The aggregate route points at Null0 so it never black-holes traffic
+  ip route 192.168.0.0 255.255.252.0 Null0
+
+  ! and the real path to the aggregate is installed by the protocol
+  router ospf 1
+   area 1 range 192.168.0.0 255.255.252.0
+
+  Why Null0?
+    The summary always covers space you do not own.
+    Without Null0, that space would point at a real next hop and
+    black-hole. Null0 makes the unused space drop cleanly instead.` },
+              { kind: 'para', p: 'In BGP an aggregate has attributes of its own. It is created with the aggregate-address command, and by default the more specific routes are **not** withdrawn — they continue to be advertised alongside it.' },
+              { kind: 'code', h: 'BGP aggregation with and without summary-only', code:
+`  router bgp 65001
+   aggregate-address 192.168.0.0 255.255.252.0
+       -> aggregate is created, specifics are STILL advertised
+
+  router bgp 65001
+   aggregate-address 192.168.0.0 255.255.252.0 summary-only
+       -> aggregate is created, specifics are WITHDRAWN` },
+              { kind: 'list', h: 'BGP attributes that matter when you aggregate', items: [
+                { t: 'AS_PATH', d: 'An aggregate has no AS path of its own unless you set one with the as-set command.' },
+                { t: 'ORIGIN', d: 'An incomplete aggregate inherits the origin of the contributing routes.' },
+                { t: 'COMMUNITIES', d: 'Community attributes are not automatically carried into the aggregate.' },
+                { t: 'NEXT_HOP', d: 'The aggregate inherits the next hop of the contributing routes.' }
+              ]},
+              { kind: 'para', p: 'Aggregation interacts badly with **route leaking**. If you aggregate a prefix at your edge and then leak only the aggregate to a partner, the partner loses the ability to see the individual prefixes, and any policy that depends on that detail stops working.' },
+              { kind: 'para', p: 'It also interacts with loops. If a prefix is summarised away at one point and the more specific route reappears further back, traffic can be sent in a circle. The safe pattern is to aggregate only at a genuine boundary and to keep the more specific route in the IGP.' },
+              { kind: 'list', h: 'Aggregation and the IGP', items: [
+                { t: 'OSPF', d: 'The area range command summarises intra-area routes between areas. External routes need a different mechanism.' },
+                { t: 'EIGRP', d: 'The summary-address command summarises on an interface. The prefix must be configured where it is advertised.' },
+                { t: 'Static', d: 'A static route to Null0 plus a dynamic route to the real destination is the classic fallback pattern.' }
+              ]}
+            ],
+            commands: [
+              { label: 'EIGRP — summarise on an interface', code:
+`interface GigabitEthernet0/1
+ ip summary-address eigrp 10 192.168.0.0 255.255.252.0` },
+              { label: 'OSPF — summarise between areas', code:
+`router ospf 1
+ area 1 range 192.168.0.0 255.255.252.0` },
+              { label: 'BGP — create an aggregate', code:
+`router bgp 65001
+ aggregate-address 192.168.0.0 255.255.252.0
+ aggregate-address 192.168.0.0 255.255.252.0 summary-only` },
+              { label: 'Install the null0 safety route', code:
+`ip route 192.168.0.0 255.255.252.0 Null0` },
+              { label: 'Verify what is advertised', code:
+`show ip bgp
+show ip bgp aggregate` }
+            ],
+            traps: [
+              'Longest-prefix match is not aggregation. LPM chooses between routes that exist; aggregation decides which routes exist.',
+              'Null0 is not always mandatory. It is a safety net against black-holing the unused part of the summary.',
+              'Alignment still applies. An aggregate that is not aligned to its members covers more than you think.',
+              'The BGP summary-only keyword withdraws the more specific routes. Without it, both are advertised.',
+              'Aggregation does not make the specifics disappear everywhere. Locally they may still be in the table and still win by LPM.',
+              'Aggregation reduces path visibility. A partner receiving only the aggregate cannot select a different exit path for a specific prefix.',
+              'A summary that hides a needed prefix causes a black hole. Keep the specific route reachable.'
+            ],
+            table: {
+              cols: ['Mechanism', 'Command', 'Scope'],
+              rows: [
+                ['OSPF area range', 'area 1 range', 'Intra-area routes between areas'],
+                ['EIGRP summary', 'ip summary-address eigrp', 'Interface-based'],
+                ['BGP aggregate', 'aggregate-address', 'BGP advertisements'],
+                ['Static aggregate', 'ip route ... Null0', 'Static fallback path'],
+                ['Longest-prefix match', 'The FIB rule', 'Chooses between existing routes']
+              ]
+            },
+            related: [
+              { t: '14. Summarization', d: 'the calculation' },
+              { t: '15. Supernetting', d: 'the same calculation, historically' },
+              { t: '09. Routing Fundamentals', d: 'the routing table it shrinks' }
+            ],
+            glossary: ['Route Aggregation', 'Summarization', 'Supernetting', 'BGP Aggregation', 'Routing Table']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'addr', label: 'Addressing Fundamentals', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
+          { key: 'subnet', label: 'Subnetting', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'agg', label: 'Aggregation', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'IPv4', def: 'The network-layer protocol that gives every interface a 32-bit address in four octets, used for end-to-end delivery across routed networks.' },
+          { term: 'IPv4 Classes', def: 'The historical classful split of the address space by first octet: A, B and C with fixed masks, D for multicast and E reserved. Obsolete in practice but still exam arithmetic.' },
+          { term: 'Public IP', def: 'A globally unique, globally routable address assigned through IANA, the RIRs and an ISP. Not routed on the Internet: private, loopback, link-local, multicast and the documentation ranges.' },
+          { term: 'Private IP', def: 'RFC 1918 address space — 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16 — reusable inside any organisation and never routed on the public Internet.' },
+          { term: 'APIPA', def: 'Automatic Private IP Addressing: the self-assigned 169.254.0.0/16 address a DHCP client takes when no server answers. A diagnostic, not a configuration.' },
+          { term: 'Loopback Address', def: '127.0.0.0/8 — the address a host uses to reach itself. The word also names the virtual router interface used for a stable router ID and source address.' },
+          { term: 'IPv4 Broadcast', def: 'A packet addressed to every host in a broadcast domain: limited (255.255.255.255, local link only) or directed (the all-ones host address of a subnet).' },
+          { term: 'IPv4 Multicast', def: 'One-to-many delivery using Class D addresses 224.0.0.0/4, with receivers joining via IGMP and routers building the tree with PIM.' },
+          { term: 'CIDR', def: 'Classless Inter-Domain Routing — writing any address as IP/prefix-length so the mask is explicit, decoupling the network boundary from the class and enabling VLSM and summarisation.' },
+          { term: 'VLSM', def: 'Variable Length Subnet Masking — different prefix lengths inside one network so each subnet is exactly the size it needs.' },
+          { term: 'FLSM', def: 'Fixed Length Subnet Masking — every subnet gets the same prefix length. Simple and predictable, wasteful when requirements vary.' },
+          { term: 'Summarization', def: 'Collapsing several contiguous prefixes into one shorter prefix, found by identifying the bits that all of them share.' },
+          { term: 'Supernetting', def: 'Combining several smaller networks into one larger prefix with a shorter mask. The historical name for the same arithmetic as summarisation.' },
+          { term: 'Route Aggregation', def: 'The router-side act of advertising one aggregate route instead of many specifics, shrinking tables and hiding flaps.' },
+          { term: 'BGP Aggregation', def: 'BGP summarisation — combining more specific prefixes into one shorter prefix before advertising, optionally withdrawing the specifics with summary-only.' },
+          { term: 'NAT', def: 'Network Address Translation — rewriting addresses as traffic crosses a boundary, so private inside addresses can use a public outside address.' },
+          { term: 'PAT', def: 'Port Address Translation, also called NAT overload — translating the Layer 4 port as well so many inside hosts share one public address.' },
+          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol — the automatic lease of an address, mask, gateway and DNS server to a host on a segment.' },
+          { term: 'IGMP', def: 'Internet Group Management Protocol — the host-to-router membership protocol that tells the local router which multicast groups a receiver wants to join.' },
+          { term: 'IGMP Snooping', def: 'The switch feature that listens to IGMP joins and leaves and builds a Layer 2 multicast forwarding table, so multicast stops behaving like a flood.' },
+          { term: 'PIM', def: 'Protocol Independent Multicast — the router-to-router multicast routing protocol, which builds the tree using the existing unicast routing table for the RPF check.' },
+          { term: 'ARP', def: 'Address Resolution Protocol — maps an IPv4 address to a MAC address on the local segment. The IPv6 equivalent is neighbour discovery.' },
+          { term: 'Anycast', def: 'An addressing model where one address is assigned to many devices and the network delivers to the nearest of them.' },
+          { term: 'OSPF Router ID', def: 'A 32-bit identifier that uniquely names a router in an OSPF domain. Chosen manually or from the highest loopback IP.' },
+          { term: 'Default Route', def: '0.0.0.0/0 — the catch-all route consulted when nothing more specific matches. Longest-prefix match makes it the last route tried.' },
+          { term: 'Routing Table', def: 'The control-plane database of known networks and how to reach them: next hop, interface, source protocol, metric and administrative distance.' },
+          { term: 'Broadcast Domain', def: 'The set of Layer 2 devices and interfaces that receive a Layer 2 broadcast. Routers and VLAN boundaries stop it.' },
+          { term: 'IPv6', def: 'The 128-bit successor to IPv4, with link-local and unique-local addressing built into the protocol, neighbour discovery instead of ARP, and no broadcast.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'How many bits is an IPv4 address, and how many addresses does that give?',
+            options: ['16 bits, 65,536 addresses', '32 bits, 4,294,967,296 addresses', '64 bits, a very large number', '128 bits, unlimited in practice'],
+            answer: 1,
+            why: 'IPv4 is 32 bits — four octets of 8 bits — for a total of 2^32 = 4,294,967,296 addresses. 128 bits is IPv6.'
+          },
+          {
+            q: 'A host has the address 10.1.1.130 with mask 255.255.255.192. What is the broadcast address?',
+            options: ['10.1.1.255', '10.1.1.191', '10.1.1.127', '10.1.1.63'],
+            answer: 1,
+            why: '255.255.255.192 is /26, so the last octet block size is 64. The network is 10.1.1.128 and the broadcast is 10.1.1.191.'
+          },
+          {
+            q: 'How many usable host addresses does a /26 subnet have?',
+            options: ['62', '64', '126', '254'],
+            answer: 0,
+            why: 'A /26 leaves 6 host bits, so 2^6 = 64 addresses, minus the network and broadcast addresses, gives 62 usable hosts.'
+          },
+          {
+            q: 'Which of these is a private address per RFC 1918?',
+            options: ['172.32.5.1', '172.16.5.1', '169.254.5.1', '8.8.8.8'],
+            answer: 1,
+            why: 'RFC 1918 private space in the Class B range is 172.16.0.0/12, which stops at 172.31.255.255. 172.32.x.x is public, 169.254 is link-local, and 8.8.8.8 is a public resolver.'
+          },
+          {
+            q: 'A PC shows the address 169.254.12.34. What has happened?',
+            options: ['The PC was configured with a link-local address by an administrator', 'DHCP failed and the host self-assigned the address', 'The PC is using a private address from the 10.0.0.0/8 range', 'The PC received a public address from the ISP'],
+            answer: 1,
+            why: 'APIPA kicks in after DHCP fails. The host picks 169.254.x.x itself, with no default gateway, and keeps retrying DHCP in the background.'
+          },
+          {
+            q: 'What is the wildcard mask for the subnet mask 255.255.255.252?',
+            options: ['0.0.0.3', '0.0.0.252', '0.0.3.255', '255.255.255.3'],
+            answer: 0,
+            why: 'The wildcard mask is the bitwise NOT of the subnet mask. NOT 255.255.255.252 is 0.0.0.3.'
+          },
+          {
+            q: 'Which prefix length gives exactly one address?',
+            options: ['/31', '/30', '/32', '/24'],
+            answer: 2,
+            why: 'A /32 leaves zero host bits, so it is exactly one IPv4 address — used for a loopback interface, a host route or a filter.'
+          },
+          {
+            q: 'Why do router-to-router links commonly use a /31?',
+            options: ['Because /31 gives more usable hosts than a /30', 'Because RFC 3021 allows both addresses on a point-to-point link', 'Because /31 is required by the IGP', 'Because a /31 broadcasts fewer packets'],
+            answer: 1,
+            why: 'A /31 gives two addresses. Under RFC 3021 both are usable on a point-to-point link, so a /30 wastes two addresses per link.'
+          },
+          {
+            q: 'Four contiguous /24s are 192.168.0.0/24 through 192.168.3.0/24. What single prefix summarises them?',
+            options: ['192.168.0.0/21', '192.168.0.0/22', '192.168.0.0/23', '192.168.0.0/24'],
+            answer: 1,
+            why: 'Four /24s share 22 leading bits, so the summary is 192.168.0.0/22, which covers 192.168.0.0 to 192.168.3.255.'
+          },
+          {
+            q: 'Which range is the IPv4 link-local range?',
+            options: ['10.0.0.0/8', '172.16.0.0/12', '169.254.0.0/16', '224.0.0.0/4'],
+            answer: 2,
+            why: '169.254.0.0/16 is link-local. It is what APIPA hands out when DHCP fails, and it is never routed off the link.'
+          },
+          {
+            q: 'Which statement about multicast is correct?',
+            options: ['It reaches every host in the broadcast domain', 'Receivers join the group and the tree is built backwards from them', 'It uses 255.255.255.255 as its group address', 'Class D addresses are split into network and host portions'],
+            answer: 1,
+            why: 'Multicast is one-to-many. Receivers send IGMP joins and the delivery tree is built backwards from the receivers, unlike broadcast which reaches everyone.'
+          },
+          {
+            q: 'What is the first octet of the IPv4 multicast range?',
+            options: ['192', '224', '240', '172'],
+            answer: 1,
+            why: 'Multicast is all of Class D: 224.0.0.0/4, which is first octets 224 to 239.'
+          },
+          {
+            q: 'You need a subnet for 31 hosts. Which prefix is correct?',
+            options: ['/27', '/26', '/25', '/24'],
+            answer: 1,
+            why: '31 hosts need 33 addresses once the network and broadcast addresses are counted. 2^6 = 64 fits, so it is a /26, not a /27.'
+          },
+          {
+            q: 'What does longest-prefix match do in the routing table?',
+            options: ['It picks the route with the lowest administrative distance', 'It picks the route with the lowest metric', 'It picks the most specific matching prefix', 'It picks the route learned from the most reliable protocol'],
+            answer: 2,
+            why: 'Longest-prefix match picks the most specific matching prefix, regardless of administrative distance or metric. A specific route always beats a summary that covers it.'
+          },
+          {
+            q: 'Which command summarises OSPF intra-area routes between areas?',
+            options: ['ip summary-address ospf', 'area range', 'aggregate-address', 'ip route ... Null0'],
+            answer: 1,
+            why: 'The area range command under router ospf summarises intra-area prefixes between areas. aggregate-address is BGP, ip summary-address is EIGRP.'
+          },
+          {
+            q: 'In BGP, what does the summary-only keyword do on an aggregate?',
+            options: ['It withdraws the more specific routes from the advertisement', 'It prevents the aggregate from being created', 'It sets the next hop of the aggregate', 'It forces the aggregate into the IGP'],
+            answer: 0,
+            why: 'Without summary-only, the aggregate and the more specifics are both advertised. With it, only the aggregate goes out.'
+          },
+          {
+            q: 'Why is a route to Null0 often installed alongside a summary route?',
+            options: ['To advertise the summary to BGP', 'To prevent the unused part of the summary black-holing traffic', 'To increase the administrative distance of the summary', 'To mark the summary as a default route'],
+            answer: 1,
+            why: 'A summary always covers address space you do not own. Pointing that space at Null0 makes it drop cleanly instead of being sent to a next hop that cannot carry it.'
+          },
+          {
+            q: 'What is the wildcard mask for the subnet mask 255.255.255.0?',
+            options: ['0.0.0.255', '255.0.0.0', '0.255.255.255', '255.255.255.0'],
+            answer: 0,
+            why: 'The wildcard is the bitwise NOT of the subnet mask. NOT 255.255.255.0 is 0.0.0.255, which means "ignore the last octet".'
+          },
+          {
+            q: 'A /24 is split into eight equal subnets. What prefix is each subnet?',
+            options: ['/25', '/26', '/27', '/28'],
+            answer: 2,
+            why: 'Eight subnets need three borrowed bits, so 24 + 3 = /27, giving 30 usable hosts in each.'
+          },
+          {
+            q: 'Which address is the limited broadcast address?',
+            options: ['255.255.255.255', '0.0.0.0', '224.0.0.255', '127.255.255.255'],
+            answer: 0,
+            why: '255.255.255.255 is the limited broadcast and never leaves the local link. A subnet broadcast such as 10.1.1.255 is a directed broadcast.'
+          },
+          {
+            q: 'What does 100.64.0.0/10 represent?',
+            options: ['RFC 1918 private space', 'Carrier-grade NAT shared address space', 'The IPv4 multicast range', 'The IPv4 link-local range'],
+            answer: 1,
+            why: '100.64.0.0/10 is shared address space used by carriers doing CGNAT. It is not RFC 1918 private space and it is not globally routable.'
+          },
+          {
+            q: 'Why do routers use loopback interfaces?',
+            options: ['To provide a spare Layer 2 address for spanning tree', 'To give the device a stable identity that survives a link failure', 'To reduce the number of IP addresses needed on physical links', 'To broadcast advertisements to every VLAN'],
+            answer: 1,
+            why: 'A loopback interface stays up as long as the device does, which makes it the standard choice for the OSPF router ID, an iBGP source address and management reachability.'
+          },
+          {
+            q: 'Which routing protocol is classful?',
+            options: ['OSPF', 'EIGRP', 'BGP', 'RIPv1'],
+            answer: 3,
+            why: 'RIPv1 does not carry a mask in its updates and only summarises at class boundaries. RIPv2, OSPF, EIGRP and BGP all carry the mask.'
+          },
+          {
+            q: 'An engineer wants 60 hosts in one subnet, 30 in another and 2 on a link, all inside a /24. Which technique fits?',
+            options: ['FLSM with a /26 everywhere', 'VLSM with a /26, a /27 and a /30', 'FLSM with a /24 everywhere', 'Classful addressing with a /16'],
+            answer: 1,
+            why: 'Different requirements mean different sizes. VLSM gives /26 for 60 hosts, /27 for 30 hosts and /30 for the link, allocating largest first.'
+          },
+          {
+            q: 'Which address is the network address of 10.5.7.99/26?',
+            options: ['10.5.7.0', '10.5.7.64', '10.5.7.96', '10.5.7.32'],
+            answer: 1,
+            why: 'A /26 has a block size of 64 in the last octet. 99 falls in the 64 to 127 block, so the network address is 10.5.7.64.'
+          },
+          {
+            q: 'What is the smallest prefix that gives at least 100 usable hosts?',
+            options: ['/24', '/25', '/26', '/27'],
+            answer: 1,
+            why: 'A /25 gives 128 addresses and 126 usable hosts, which is the first prefix that covers 100 hosts.'
+          },
+          {
+            q: 'Which statement about IGMP is correct?',
+            options: ['It routes multicast between routers', 'It is a host-to-router membership protocol', 'It replaces PIM in sparse mode', 'It is carried in a unicast IP packet'],
+            answer: 1,
+            why: 'IGMP is host-to-router membership management — receivers tell the local router which groups they want. PIM does the router-to-router work.'
+          },
+          {
+            q: 'Without IGMP snooping, what does a switch do with a multicast frame?',
+            options: ['It drops it', 'It floods it like a broadcast', 'It sends it only to the router port', 'It translates it to unicast'],
+            answer: 1,
+            why: 'Without snooping the switch has no multicast forwarding table, so it treats the frame like a broadcast and floods it to every port in the VLAN.'
+          },
+          {
+            q: 'A summary route advertises 192.168.0.0/22, but 192.168.1.0/24 also has a specific route in the table. Which one is used for 192.168.1.10?',
+            options: ['The /22 summary, because summaries always win', 'The /24, because longest-prefix match picks the most specific route', 'Both, split across the interfaces', 'Neither, until the summary is removed'],
+            answer: 1,
+            why: 'Longest-prefix match selects the /24. The summary is only the fallback for addresses no more specific route covers.'
+          },
+          {
+            q: 'How many host bits does a /24 leave, and how many usable hosts does that give?',
+            options: ['8 host bits, 254 usable hosts', '8 host bits, 256 usable hosts', '24 host bits, 254 usable hosts', '6 host bits, 62 usable hosts'],
+            answer: 0,
+            why: '32 minus 24 leaves 8 host bits, so 2^8 = 256 addresses, minus the network and broadcast addresses, gives 254 usable hosts.'
+          },
+          {
+            q: 'Which of these is NOT a valid subnet mask octet?',
+            options: ['248', '252', '255', '192'],
+            answer: 0,
+            why: 'All four are legal — 0, 128, 192, 224, 240, 248, 252, 254 and 255 are the only valid mask octets, because the ones must be contiguous. A value such as 255.0.255.0 would be invalid.'
+          },
+          {
+            q: 'What does the mask 255.255.255.255 describe?',
+            options: ['A whole class C network', 'A single host address', 'A /31 point-to-point link', 'The default route'],
+            answer: 1,
+            why: 'All ones in the mask means all 32 bits are network bits and none are host bits — exactly one address, written as /32.'
+          },
+          {
+            q: 'What is the block size of a /28 subnet?',
+            options: ['8', '16', '32', '64'],
+            answer: 1,
+            why: 'Block size equals 256 minus the interesting octet. 256 - 240 = 16, so a /28 has 16 addresses per block and 14 usable hosts.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'ip4.theme', done: 'ip4.done', best: 'ip4.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
