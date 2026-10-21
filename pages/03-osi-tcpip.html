@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSI &amp; TCP/IP — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 03 OSI and TCP/IP: the seven-layer OSI model, the four-layer TCP/IP model, encapsulation and decapsulation, protocol data units, and end-to-end data flow.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">OSI &amp; TCP/IP — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[13px] font-black tracking-tight text-white">OSI</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">OSI &amp; TCP/IP</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 03</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 03</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">6 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 03 &mdash; OSI &amp; TCP/IP</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The layering that every later level assumes: which layer owns addressing, which owns ports, which owns the PDU name, and how a frame is built, carried and stripped on the way to its destination.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        OSI &amp; TCP/IP &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 03 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `Explains the layered stack every protocol sits on: the seven-layer [[OSI Model|OSI model]], the four-layer [[TCP-IP Model|TCP/IP model]] that Cisco actually runs, how data is [[Encapsulation|encapsulated]] and [[Decapsulation|decapsulated]] as it crosses the stack, the [[PDU]] names at each layer, and the end-to-end data flow of a packet from an application to its destination.`;
+
+        const topics = [
+          {
+            id: 't01',
+            num: '01',
+            group: 'models',
+            title: 'OSI Model',
+            blurb: 'Seven layers, their functions, PDUs and devices',
+            overview: `The **[[OSI Model|Open Systems Interconnection]]** (ISO/IEC 7498) describes networking in **seven layers**, each with a distinct function. It is the vocabulary for discussing protocols, for troubleshooting ("is this Layer 2 or Layer 3?"), and for matching real protocols to functions.`,
+            keyIdea: `**Key idea:** OSI is a reference, not an implementation. Its real exam value is the mapping — which layer owns addressing, which owns ports, which owns the PDU name, and which device operates there.`,
+            sections: [
+              {
+                h: 'The seven layers and their PDUs', kind: 'table',
+                cols: ['Layer', 'Name', 'Function', 'Real-world protocol or device', 'PDU'],
+                rows: [
+                  ['7', 'Application', 'User services, APIs', 'HTTP, DNS, FTP, SMTP, DHCP', 'Data'],
+                  ['6', 'Presentation', 'Encoding, encryption, compression', 'TLS (sometimes); SSL is more OSI', 'Data'],
+                  ['5', 'Session', 'Connection state, sessions', 'NetBIOS, RPC; the TCP session logic', 'Data'],
+                  ['4', 'Transport', 'End-to-end delivery, ports, reliability', '**TCP, UDP**', '**Segment**'],
+                  ['3', 'Network', 'Addressing, routing, path selection', '**IP**, ICMP; **routers**', '**Packet**'],
+                  ['2', 'Data Link', 'MAC addressing, framing, media access', '**Ethernet**, 802.11; **switches**', '**Frame**'],
+                  ['1', 'Physical', 'Bits, signals, connectors', 'UTP, fiber; **hubs, transceivers**', '**Bits**']
+                ]
+              },
+              {
+                h: 'Layer responsibilities in depth', kind: 'list', items: [
+                  { t: 'L7 Application', d: 'Interfaces applications to network services — DNS names, file transfer, email.' },
+                  { t: 'L6 Presentation', d: 'Data format, character encoding, encryption.' },
+                  { t: 'L5 Session', d: 'Establishes and tears down sessions, with checkpointing and resume.' },
+                  { t: 'L4 Transport', d: '**Segmentation**, **reliability (TCP)**, port multiplexing, and error recovery through acknowledgements.' },
+                  { t: 'L3 Network', d: '**Logical addressing (IP)**, best-path selection (routing), and fragmentation.' },
+                  { t: 'L2 Data Link', d: 'Frame assembly, **MAC addresses**, and error detection with the FCS; it splits into the LLC and MAC sublayers.' },
+                  { t: 'L1 Physical', d: 'Bits on the wire as electrical, optical, or RF signals, plus the topology and connectors.' }
+                ]
+              },
+              {
+                h: 'Mnemonic', kind: 'para',
+                p: `**All People Seem To Need Data Processing** is the top-down mnemonic. For bottom-up (L1 to L7) use **Please Do Not Throw Sausage Pizza Away**.`
+              },
+              {
+                h: 'Two useful sub-concepts', kind: 'list', items: [
+                  { t: 'LLC (Logical Link Control)', d: 'The 802.2 half of Layer 2 — it multiplexes upper-layer protocols using the EtherType field.' },
+                  { t: 'MAC sublayer', d: 'Handles media access (CSMA/CD history, backoff) and MAC addressing.' }
+                ]
+              },
+              {
+                h: 'Troubleshooting value — the biggest exam use', kind: 'list', items: [
+                  { t: 'Layer-by-layer isolation', d: 'Physical (link lights, errors) to data link (MAC, VLAN, STP) to network (IP route) to transport (ports) to application.' },
+                  { t: 'Works for some but not others', d: 'Usually a Layer 2 or Layer 3 issue — a broadcast domain, a VLAN, or a route.' },
+                  { t: 'Ping works but telnet fails', d: 'That is a Layer 4 port problem, not a Layer 3 problem.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'The layer-isolation toolkit on a Cisco device',
+                code: `# The test used to isolate layers:
+ping <ip>            # If OK -> L1-L3 are fine (ICMP is L3).
+telnet <ip> <port>   # L4 port reachability.
+curl http://<host>   # L7 verification for end-user services.
+
+# In a network device:
+show interfaces | include (Duplex|Speed|Error|CRC)   # L1 health
+show mac address-table                                # L2 learning
+show ip route                                        # L3 table`
+              }
+            ],
+            traps: [
+              '**PDU names are the number-one trap** — frame versus packet versus segment. Learn them cold.',
+              '**"Layer 4 equals application port logic"** — NAT sits at the L3/L4 boundary, ACLs at L3 plus L4, and firewalls work across L4 to L7.',
+              '**Encryption lives at L6 Presentation in OSI** — but TLS is often described at L4 or L7 in practice. The OSI-wise answer is L6; know both viewpoints without mixing them.',
+              '**Device mapping trap** — switch is L2, router is L3, hub is L1, firewall and load balancer are L4 to L7.',
+              '**MAC is L2, IP is L3, port is L4.** Everything else in the exam hangs off those three facts.'
+            ],
+            table: {
+              cols: ['Layer', 'PDU', 'Protocol landmark', 'Device'],
+              rows: [
+                ['7 App', 'Data', 'HTTP, DNS', 'Apps'],
+                ['6 Pres', 'Data', 'TLS, codecs', '—'],
+                ['5 Sess', 'Data', 'NetBIOS, sessions', '—'],
+                ['4 Trans', '**Segment**', 'TCP, UDP', 'LB, firewall'],
+                ['3 Net', '**Packet**', 'IP, ICMP', 'Router'],
+                ['2 DLL', '**Frame**', 'Ethernet, 802.11', 'Switch'],
+                ['1 Phys', '**Bit**', 'UTP, fiber', 'Hub']
+              ]
+            },
+            related: [
+              { t: '02. TCP IP Model', d: 'the practical counterpart' },
+              { t: '03. Encapsulation', d: 'down the stack' },
+              { t: '05. PDUs', d: 'data units per layer' }
+            ],
+            glossary: ['OSI Model', 'TCP-IP Model', 'Encapsulation', 'Decapsulation', 'PDU', 'Ethernet']
+          },
+          {
+            id: 't02',
+            num: '02',
+            group: 'models',
+            title: 'TCP/IP Model',
+            blurb: 'The four layers Cisco actually implements',
+            overview: `The **[[TCP-IP Model|TCP/IP model]]** (the DoD/Internet model) describes the protocol stack actually developed for the Internet. It has **four layers** that map onto the [[OSI Model|OSI]] seven, and it is what Cisco IOS speaks natively.`,
+            keyIdea: `**Key idea:** TCP/IP merged the OSI top three layers into one, because that is how the real Internet was built. Every "which layer" question about a live network is answered in TCP/IP terms — and then translated into OSI for the exam.`,
+            sections: [
+              {
+                h: 'Four layers versus OSI seven', kind: 'table',
+                cols: ['TCP/IP layer', 'Covers OSI layers', 'Protocols'],
+                rows: [
+                  ['**Application**', '7 + 6 + 5', 'HTTP, FTP, SMTP, DNS, DHCP, Telnet, SSH, SNMP'],
+                  ['**Transport**', '4', 'TCP, UDP (and others)'],
+                  ['**Internet (Network)**', '3', 'IP, ICMP, ICMPv6, IGMP'],
+                  ['**Network Access (Link)**', '2 + 1', 'Ethernet, 802.11, PPP, and the physical layer']
+                ]
+              },
+              {
+                h: 'Layer jobs in TCP/IP terms', kind: 'list', items: [
+                  { t: 'Application', d: 'Everything above ports — protocols, data formats, and sessions all merged into one layer. That merge is why OSI layers 5, 6 and 7 barely appear in real networks.' },
+                  { t: 'Transport', d: '**TCP** (reliable, connection-oriented, with flow and congestion control) or **UDP** (best-effort, connectionless). It adds the **ports** — source and destination.' },
+                  { t: 'Internet', d: '**IP** (addressing and best-effort delivery), **ICMP** (errors and diagnosis), **IGMP** (multicast group membership).' },
+                  { t: 'Network Access', d: 'Puts IP packets into **Ethernet frames**, resolves IP to MAC via **ARP**, and transmits the bits.' }
+                ]
+              },
+              {
+                h: 'The correspondence rule', kind: 'table',
+                cols: ['OSI', 'TCP/IP'],
+                rows: [
+                  ['7, 6, 5', '4. Application'],
+                  ['4', '3. Transport'],
+                  ['3', '2. Internet'],
+                  ['1, 2', '1. Network Access']
+                ]
+              },
+              {
+                h: 'Why TCP/IP won over pure OSI', kind: 'list', items: [
+                  { t: 'OSI is reference-only', d: 'TCP/IP shipped working software; IP is the internetwork protocol everything else was built on.' },
+                  { t: 'Operators think in TCP/IP', d: '"Ping works so Layer 3 is up; try port 443 with telnet for Layer 4" is the real troubleshooting flow.' },
+                  { t: 'The layers merge naturally', d: 'Application, presentation, and session functions rarely need separate implementations in a real stack.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'Network-layer configuration — the TCP/IP stack you actually configure',
+                code: `# On a Cisco router, "network layer" config is what TCP/IP users see:
+interface GigabitEthernet0/0
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+
+# The stack relies on the TCP/IP protocol family only:
+show ip protocols
+show ip route`
+              }
+            ],
+            traps: [
+              '**Four versus five layer TCP/IP variants** — Cisco teaches **four**; some texts split the link layer into two. Answer per the model the question names.',
+              '**ARP lives in the Network Access layer** in TCP/IP (it maps IP to MAC) — many exams place it at Layer 3 or "between layers", so know both statements contextually.',
+              '**ICMP belongs to the Internet layer** — it is Layer 3, never "forum-less" or an application protocol.',
+              '**Only TCP and UDP are usually asked** — SCTP and DCCP are beyond scope.',
+              '**Best-effort principle** — IP, ICMP and UDP are unreliable; reliability is added by TCP or by the application.'
+            ],
+            table: {
+              cols: ['TCP/IP layer', 'Equals OSI', 'Protocols'],
+              rows: [
+                ['4 Application', '7, 6, 5', 'HTTP, DNS, DHCP, SMTP'],
+                ['3 Transport', '4', 'TCP, UDP'],
+                ['2 Internet', '3', 'IP, ICMP'],
+                ['1 Network Access', '2, 1', 'Ethernet, ARP, PPP, 802.11'],
+                ['Reliability', '—', 'Only TCP adds it']
+              ]
+            },
+            related: [
+              { t: '01. OSI Model', d: 'the contrasting model' },
+              { t: '06. Data Flow', d: 'end-to-end flow' },
+              { t: '03. Encapsulation', d: 'headers per layer' }
+            ],
+            glossary: ['TCP-IP Model', 'OSI Model', 'Encapsulation', 'PDU', 'ARP', 'IPv4']
+          },
+          {
+            id: 't03',
+            num: '03',
+            group: 'data',
+            title: 'Encapsulation',
+            blurb: 'Adding headers as data moves down the stack',
+            overview: `**[[Encapsulation]]** is the process of adding **headers (and trailers)** as data is passed down the protocol stack from application to transport, then network, then link. Each layer wraps the previous layer's data in its own envelope before handing it to the layer below — payload plus header equals the next layer's PDU.`,
+            keyIdea: `**Key idea:** Encapsulation always happens **down** the source stack. The payload never changes; only the wrapping grows — and every intermediate device re-writes only the Layer 2 envelope, never the Layer 3 or Layer 4 one.`,
+            sections: [
+              {
+                h: 'The envelope chain (an HTTP request)', kind: 'code',
+                code: `[HTTP request ................]                     <- Application data (L7)
+[TCP hdr ][HTTP data ........]   = Segment         <- src/dst ports, seq, flags
+[IP hdr ][TCP hdr][HTTP data ]   = Packet          <- src/dst IP, TTL, protocol
+[Eth hdr][IP ][TCP][HTTP][FCS ]   = Frame          <- MAC, EtherType, FCS`
+              },
+              {
+                h: 'Why one header per layer', kind: 'list', items: [
+                  { t: 'Each layer offers its own service', d: 'Ports at L4, addressing and routing at L3, framing and error checking at L2 — so each layer needs its own private context in the header.' },
+                  { t: 'Peer communication', d: 'Each layer only reads the header it understands and ignores the rest.' },
+                  { t: 'Multiplexing', d: 'The EtherType field at L2, the protocol field at L3, and the port numbers at L4 tell the receiver exactly which higher layer to hand the data to.' }
+                ]
+              },
+              {
+                h: 'Headers and trailers per layer', kind: 'table',
+                cols: ['Layer', 'Header or trailer', 'Key fields'],
+                rows: [
+                  ['L4 (TCP)', '20 to 60 byte header', 'ports, seq/ack, flags, window, checksum'],
+                  ['L4 (UDP)', '8 byte header', 'ports, length, checksum'],
+                  ['L3 (IPv4)', '20+ byte header', 'version, IHL, TTL, protocol, src/dst IP, checksum'],
+                  ['L3 (IPv6)', '40 byte fixed header', 'flow label, hop limit, src/dst 128-bit'],
+                  ['L2 (Ethernet)', '14 byte header + 4 byte FCS trailer', 'dst/src MAC, EtherType or length, FCS'],
+                  ['L2 (802.1Q)', 'plus a 4 byte VLAN tag inside the header', 'TPID, PCP, VID']
+                ]
+              },
+              {
+                h: 'Encapsulation for special frames', kind: 'list', items: [
+                  { t: 'VLAN trunk', d: 'An extra 802.1Q tag is inserted — the frame gets "harder" (see Level 07).' },
+                  { t: 'Tunnels (GRE, IPsec, VXLAN)', d: 'The outer protocol encapsulates the whole original IP packet as its payload, so you get double addressing and the MTU must shrink (Level 01).' },
+                  { t: 'MPLS', d: 'A label shim is shoved between L2 and L3, with the Layer 3 header still intact underneath (Level 20).' }
+                ]
+              },
+              {
+                h: 'Encapsulation runs into the MTU', kind: 'list', items: [
+                  { t: 'Headers push the frame toward the maximum frame size', d: 'Standard Ethernet carries a 1500 byte IP packet plus roughly 18 bytes of Layer 2 overhead.' },
+                  { t: 'Oversize means fragment or drop', d: 'IPv4 fragments when it must, IPv6 does not fragment at the router — the source must respect the path MTU.' },
+                  { t: 'Tunnels shrink the usable MTU', d: 'Every extra encapsulation layer takes bytes from the payload, which is why tunnel MTUs are set below 1500.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'Watching encapsulation on the wire, and sizing a tunnel MTU',
+                code: `# Ping and watch the headers build up going down the stack
+debug ip packet
+show interfaces | include MTU
+
+# Tunnels add another encapsulation layer - the MTU must shrink
+interface Tunnel0
+ ip mtu 1476`
+              }
+            ],
+            traps: [
+              '**"Which header exists in a packet?"** — a segment carries L4 fields; a frame carries Layer 2 plus everything above it.',
+              '**Direction** — encapsulation goes **down** the source stack (adding); decapsulation goes **up** at the destination (removing). Never flip these.',
+              '**Every hop does Layer 2 re-encapsulation** — a new Ethernet header per link, while the Layer 3 and Layer 4 headers only change at the endpoints.',
+              '**Tunnels mean double IP headers** — the outer header routes, the inner one is payload.',
+              '**Checksums** — IPv4 has a header checksum, **IPv6 has no header checksum**, and TCP and UDP checksums are end-to-end.'
+            ],
+            table: {
+              cols: ['Layer', 'Add', 'Becomes', 'Peer reads'],
+              rows: [
+                ['7 Apps', '—', 'Data', 'payload'],
+                ['4 TCP', 'ports, seq, flags', '**Segment**', 'receiver L4'],
+                ['3 IP', 'src/dst IP, TTL', '**Packet**', 'each router (L3)'],
+                ['2 Eth', 'MAC, EtherType, FCS', '**Frame**', 'each switch (L2)'],
+                ['1 Phys', 'electrical', 'Bits', '—'],
+                ['Tunnel', 'extra IP or GRE', 'inner packet is payload', 'only the endpoints'],
+                ['Rule', 'headers only added', 'data unchanged', 'down means add']
+              ]
+            },
+            related: [
+              { t: '04. Decapsulation', d: 'the reverse process' },
+              { t: '05. PDUs', d: 'the data units change' },
+              { t: '01. VLAN', d: 'Layer 2 encapsulation' }
+            ],
+            glossary: ['Encapsulation', 'Decapsulation', 'PDU', 'OSI Model', 'MTU', 'IPv4', 'IPv6', 'Ethernet', 'VLAN']
+          },
+          {
+            id: 't04',
+            num: '04',
+            group: 'data',
+            title: 'Decapsulation',
+            blurb: 'Stripping and validating headers on the receive side',
+            overview: `**[[Decapsulation]]** is the reverse of [[Encapsulation|encapsulation]]: at the receiver each layer **strips its own header or trailer**, validates it, and passes the payload up to the next higher layer until the application receives the original data.`,
+            keyIdea: `**Key idea:** Decapsulation is bottom-up, and a device only ever removes the headers it owns. A router removes the Layer 2 header and rebuilds a new one per link — it never touches the Layer 3 or Layer 4 header except the TTL.`,
+            sections: [
+              {
+                h: 'The receive process', kind: 'code',
+                code: `On the wire:      [Eth ][ IP ][TCP][HTTP data][FCS]
+L2 removes:  ->   [ IP ][TCP][HTTP data]      (check FCS -> drop if bad)
+L3 removes:  ->      [TCP][HTTP data]         (checksum, TTL ok?)
+L4 removes:  ->         [HTTP data]           (deliver by port)
+L7 receives:            application data`
+              },
+              {
+                h: 'Where decapsulation happens — hop versus endpoint', kind: 'table',
+                cols: ['Device', 'Decapsulates', 'Keeps'],
+                rows: [
+                  ['Switch (L2)', 'Ethernet header and FCS', 'Re-encapsulates the same frame out another port; it never reads IP or TCP'],
+                  ['Router (L3)', 'Ethernet header, **reads IP**, rewrites Layer 2', 'Forwards the IP datagram; it adds no Layer 4 information'],
+                  ['Target host', 'All layers', 'Delivers the data to the application'],
+                  ['Tunnel endpoint', 'Outer headers (IP plus GRE or IPsec)', 'The inner packet is passed on or decrypted']
+                ]
+              },
+              {
+                h: 'What each layer validates', kind: 'list', items: [
+                  { t: 'L2', d: 'The FCS (CRC) — a mismatch means the frame is dropped, and the interface CRC counters climb (Level 29).' },
+                  { t: 'L3', d: 'The IPv4 header checksum and the TTL — a TTL of zero produces an ICMP TTL exceeded message and the packet is dropped. IPv6 has only the hop limit to check.' },
+                  { t: 'L4', d: 'The TCP or UDP checksum plus port matching; TCP adds its ACK and sequence logic.' },
+                  { t: 'Application', d: 'The data format and the session context.' }
+                ]
+              },
+              {
+                h: 'The IPv4 checksum is recomputed every hop', kind: 'list', items: [
+                  { t: 'The TTL changes on every routed hop', d: 'Because the header changed, the IPv4 header checksum must be recalculated at each router.' },
+                  { t: 'IPv6 removed the header checksum entirely', d: 'It relies on the link and transport checksums plus ICMPv6, so there is nothing to recompute.' },
+                  { t: 'Transport checksums stay end-to-end', d: 'The TCP and UDP checksum covers the payload, so routers never touch it.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'Seeing the encapsulation boundary on the wire',
+                code: `# Packet capture: choose an interface, filter the frame, then expand
+# the headers layer by layer.
+
+# Router-level view:
+debug ip icmp
+debug ip packet detail
+show interfaces counters errors   # CRC and framing errors from a bad FCS`
+              }
+            ],
+            traps: [
+              '**Direction trap** — the source encapsulates going down, the destination decapsulates going up. Do not flip them.',
+              '**A router does not decapsulate on behalf of the host** — it removes Layer 2, reads Layer 3, then **re-encapsulates a brand-new Layer 2 header**; the MAC addresses change every hop.',
+              '**The FCS check is Layer 2** — CRC errors are reported on switch interfaces, not as routing problems.',
+              '**Tunnels** — an intermediate tunnel endpoint decapsulates the **outer** header only; the inner packet stays untouched.',
+              '**IPv6** — there is no header checksum to check, only the hop limit at Layer 3.'
+            ],
+            table: {
+              cols: ['Layer', 'Check during decap', 'Result if bad'],
+              rows: [
+                ['L2 / FCS', 'CRC match', 'Drop, and the CRC counter climbs'],
+                ['L3 IPv4', 'Checksum, TTL', 'Drop, or ICMP TTL exceeded'],
+                ['L3 IPv6', 'Hop limit only', 'Drop (there is no header checksum)'],
+                ['L4 TCP/UDP', 'Checksum, port', 'Drop, or a reset'],
+                ['App', 'Format, session', 'Application error'],
+                ['Hop devices', 'Layer 2 reswap only', 'MAC fields change'],
+                ['Endpoints', 'Full chain', 'Data delivered']
+              ]
+            },
+            related: [
+              { t: '03. Encapsulation', d: 'the reverse process' },
+              { t: '05. PDUs', d: 'unwrapping units' },
+              { t: '06. Data Flow', d: 'the whole journey' }
+            ],
+            glossary: ['Decapsulation', 'Encapsulation', 'PDU', 'OSI Model', 'IPv4', 'IPv6', 'ARP']
+          },
+          {
+            id: 't05',
+            num: '05',
+            group: 'data',
+            title: 'PDUs',
+            blurb: 'Protocol data units and the names at each layer',
+            overview: `A **[[PDU|Protocol Data Unit]]** is the unit of data at a given layer of the stack: that layer's header (plus trailer) together with the payload it carries from the layer above. Each layer has its own PDU name — **data, segment, packet, frame, bits** — and a PDU becomes the payload of the next lower PDU.`,
+            keyIdea: `**Key idea:** The PDU name tells you which layer you are talking about. Segment equals TCP, packet equals IP, frame equals Ethernet, bits equals physical — and a PDU includes its own header, so a segment is the TCP header plus data, not the data alone.`,
+            sections: [
+              {
+                h: 'PDU names by layer', kind: 'table',
+                cols: ['Layer', 'PDU name'],
+                rows: [
+                  ['Application (7/6/5)', '**Data** (sometimes called a message)'],
+                  ['Transport (4)', '**Segment** (TCP) or **Datagram** (UDP)'],
+                  ['Network (3)', '**Packet** (RFC 791 calls the IPv4 unit a datagram)'],
+                  ['Data Link (2)', '**Frame**'],
+                  ['Physical (1)', '**Bits** (physically, symbols and codewords)']
+                ]
+              },
+              {
+                h: 'How the PDU chain is built', kind: 'code',
+                code: `DATA    ->(L4 header)->   SEGMENT   ->(L3 header)->   PACKET
+                                                   ->(L2 header + FCS)->   FRAME   ->(L1)->   BITS
+
+The segment is the payload of the packet, and the packet is the payload of the frame.
+The PDU of layer N is the SDU (service data unit) from layer N plus a header, and
+that PDU becomes the SDU for layer N-1.`
+              },
+              {
+                h: 'Official IP terminology', kind: 'list', items: [
+                  { t: 'RFC 791 calls the IPv4 unit a datagram', d: 'Cisco exams usually say "packet" for Layer 3 and IPv6, and may say "datagram" for UDP and IP. Be ready for both words.' },
+                  { t: 'The two-datagram trap', d: 'A UDP datagram is the Layer 4 PDU; an IP datagram is the Layer 3 PDU. They are different units, and the exam uses both.' },
+                  { t: 'Do not call a frame a packet', d: 'A packet becomes a frame once the Layer 2 header and FCS are added — the names describe different units.' }
+                ]
+              },
+              {
+                h: 'Size context', kind: 'list', items: [
+                  { t: 'MSS controls segment size, MTU controls packet size', d: 'The frame must fit inside the link MTU — 1500 bytes of IP payload on standard Ethernet (Level 01).' },
+                  { t: 'PDU sizes include the header', d: 'A segment is the TCP header plus the data, so a 1460 byte MSS produces a 1500 byte IP packet.' },
+                  { t: 'Over the MTU means drop or fragment', d: 'IPv4 fragments when allowed; IPv6 routers never fragment, so the source has to fit the path MTU.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'Relating PDU sizes to the MTU',
+                code: `ip mtu 1500            # interface L3 packet max
+
+# Verify with:
+show ip interface      # MTU reported
+ping 10.0.0.2 size 1472 df-bit   # 1472 payload + 20 IP + 8 ICMP = 1500`
+              }
+            ],
+            traps: [
+              '**The single most-asked PDU fact** — segment equals TCP, packet equals IP, frame equals Ethernet.',
+              '**UDP datagram and IP datagram** — the two-datagram trap; they are different layers.',
+              '**A packet becomes a frame** once the Layer 2 header is added — never call a frame a packet.',
+              '**Bits at Layer 1** — physically they are symbols and codewords, but the exam says "bits".',
+              '**Encapsulation math** — "what is the frame size?" is the MTU plus 18 bytes (or 22 with a VLAN tag).'
+            ],
+            table: {
+              cols: ['Layer', 'PDU', 'Added by'],
+              rows: [
+                ['7-5', 'Data', 'the applications'],
+                ['4 TCP', 'Segment', 'TCP header'],
+                ['4 UDP', 'Datagram', 'UDP header'],
+                ['3', 'Packet (datagram for IP)', 'IP header'],
+                ['2', 'Frame', 'Ethernet header + FCS'],
+                ['1', 'Bits', 'physical encoding'],
+                ['Chain rule', 'PDU_n is the payload of PDU_(n-1)', 'encapsulation']
+              ]
+            },
+            related: [
+              { t: '03. Encapsulation', d: 'produces the PDUs' },
+              { t: '06. Data Flow', d: 'PDU movement' },
+              { t: '02. Ethernet Frame', d: 'a Layer 2 PDU' }
+            ],
+            glossary: ['PDU', 'Encapsulation', 'Decapsulation', 'OSI Model', 'TCP-IP Model', 'MTU', 'Ethernet']
+          },
+          {
+            id: 't06',
+            num: '06',
+            group: 'data',
+            title: 'Data Flow',
+            blurb: 'The end-to-end journey of a unit of data',
+            overview: `**Data flow** is the lifecycle of a unit of data from a source application to a destination application across a network: **[[Encapsulation|encapsulation]] down** the source stack, transmission across intermediate devices, and **decapsulation up** the destination — plus the peer-to-peer and directional concepts (unicast, broadcast, multicast) that frame each journey.`,
+            keyIdea: `**Key idea:** The Layer 2 header is rewritten at every link while the Layer 3 and Layer 4 headers stay constant end to end. That single fact explains MAC churn, routing behaviour, and why NAT is visible at the boundary.`,
+            sections: [
+              {
+                h: 'The end-to-end journey', kind: 'list', items: [
+                  { t: '1. The application generates data', d: 'Layer 7 — an HTTP request, a DNS query, a file transfer.' },
+                  { t: '2. The stack builds the units on the way down', d: 'Transport adds ports to make a **segment**; network adds IP to make a **packet**; link adds Ethernet to make a **frame**; physical sends **bits**.' },
+                  { t: '3. Each switch works at Layer 2', d: 'It receives the frame, checks the FCS, forwards on the destination MAC, and re-encapsulates a new Layer 2 header on egress.' },
+                  { t: '4. Each router works at Layer 3', d: 'It strips the Ethernet header, checks the TTL and checksum, looks up the destination route in CEF, then rewrites a new Layer 2 header and sends it out the next media.' },
+                  { t: '5. Special devices act mid-path', d: 'NAT, tunnels, and firewalls add or replace addresses, or encrypt, while the data is in flight.' },
+                  { t: '6. The destination strips everything back off', d: 'The frame becomes a packet, the packet becomes a segment, and the segment becomes application data.' },
+                  { t: '7. The reply runs the same path in reverse', d: 'Which is why the session is full duplex — each direction builds its own headers.' }
+                ]
+              },
+              {
+                h: 'Peer-to-peer communication', kind: 'list', items: [
+                  { t: 'Logical layer to logical layer', d: 'TCP at one end understands TCP at the other; OSPF on a router talks to OSPF on its neighbour, even though the wire carries frames.' },
+                  { t: 'Adjacent layers also talk', d: 'The same layer talks to its peer, and each layer talks to the layer directly above and below through its service interface.' },
+                  { t: 'The mapping is the point of the model', d: 'That is exactly what the OSI model is designed to describe — a clean separation of concerns.' }
+                ]
+              },
+              {
+                h: 'Direction classes of data flow', kind: 'table',
+                cols: ['Type', 'Definition', 'Example'],
+                rows: [
+                  ['**Unicast**', 'One source to one destination', 'Normal HTTP, an SSH download'],
+                  ['**Broadcast**', 'One source to everyone on the segment', 'ARP request, DHCP discover'],
+                  ['**Multicast**', 'One source to the subscribed group members only', 'Video feed, OSPF and VRRP hellos'],
+                  ['**Anycast** (IPv6 and BGP)', 'One address to the nearest of several instances', 'DNS anycast, an anycast gateway']
+                ]
+              },
+              {
+                h: 'Where data flow gets controlled', kind: 'list', items: [
+                  { t: 'Switches', d: 'Filter and forward using the MAC address table (Level 04).' },
+                  { t: 'Routers', d: 'Choose the next hop by longest-prefix match (Level 09).' },
+                  { t: 'ACLs and firewalls', d: 'Accept or drop by the 5-tuple; **QoS** marks and queues the flow (Level 21).' },
+                  { t: 'Load balancers', d: 'Distribute flows across the members of a server pool.' },
+                  { t: 'NetFlow', d: 'Exports the 5-tuple records of every conversation for analysis (Level 26).' }
+                ]
+              },
+              {
+                h: 'Flow identity and session semantics', kind: 'list', items: [
+                  { t: 'A TCP flow is a 5-tuple', d: 'Source IP, destination IP, source port, destination port, and protocol — the key used by ACLs, firewalls and NetFlow to identify a conversation.' },
+                  { t: 'Real-time UDP uses the same idea', d: 'RTP voice and video are classified for QoS with exactly the same 5-tuple.' },
+                  { t: 'Direction matters', d: 'A conversation is two unidirectional flows, and the reverse tuple is what the return path is keyed on.' }
+                ]
+              }
+            ],
+            commands: [
+              {
+                label: 'Observing the flow journey and exporting flow records',
+                code: `traceroute 10.9.9.9        # shows each L3 hop (ICMP or UDP)
+ping <host>                # round trip across the path
+show ip fib                # CEF next hop for the flow
+
+# Flow records (NetFlow) capture the 5-tuple:
+ip flow-export destination 10.1.1.10 2055`
+              }
+            ],
+            traps: [
+              '**"The packet hops Layer 2 but the MAC changes"** — the destination MAC changes per link, while the source and destination IP stay constant (NAT excepted).',
+              '**Do not say "the frame travels across the router"** — routers strip Layer 2 and route the IP packet, recreating Layer 2 per link.',
+              '**Peer-to-peer here means layer peer, not file sharing** — keep the two apart (see the Level 00 note).',
+              '**Anycast versus multicast** — a distinction that is frequently tested at Layer 3 and in IPv6.',
+              '**The TTL decreases per router hop** — it always goes down on an Layer 3 forward.'
+            ],
+            table: {
+              cols: ['Stage', 'Device', 'Header it reads'],
+              rows: [
+                ['Send down', 'Source', 'builds them all'],
+                ['L2 transit', 'Switch', 'Ethernet'],
+                ['L3 transit', 'Router', 'IP (and rewrites Ethernet)'],
+                ['Tunnels and NAT', 'Special devices', 'outer or translated'],
+                ['Receive up', 'Destination', 'strips them all'],
+                ['Peer talk', 'Logical', 'same layer at both ends'],
+                ['Direction', 'uni, bcast, mcast, anycast', 'defines delivery to whom'],
+                ['Flow identity', '5-tuple', 'src/dst IP plus port plus protocol']
+              ]
+            },
+            related: [
+              { t: '05. PDUs', d: 'the units that are flowing' },
+              { t: '03. Encapsulation', d: 'framing within the flow' },
+              { t: '01. Routing Table', d: 'the path of the data' }
+            ],
+            glossary: ['Encapsulation', 'Decapsulation', 'PDU', 'OSI Model', 'ARP', 'NetFlow', 'MTU']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'models', label: 'Reference Models', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
+          { key: 'data', label: 'Data Handling', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'OSI Model', def: 'The ISO/IEC 7498 reference model describing networking in seven layers. It is the vocabulary for troubleshooting and protocol discussion, not the stack that was actually implemented.' },
+          { term: 'TCP-IP Model', def: 'The DoD/Internet model describing the stack really used on the Internet — four layers that map onto the OSI seven, and the model Cisco IOS speaks natively.' },
+          { term: 'Encapsulation', def: 'Adding headers and trailers as data travels down the protocol stack: application to transport to network to link. Each layer wraps the previous output in its own envelope.' },
+          { term: 'Decapsulation', def: 'The receiving side of encapsulation: bottom-up, each layer strips and validates its own header and trailer, then hands the payload to the layer above.' },
+          { term: 'PDU', def: 'Protocol Data Unit — the unit of data at a given layer: that layer header plus trailer plus the payload from the layer above. Each layer has its own name: data, segment, packet, frame, bits.' },
+          { term: 'MTU', def: 'Maximum Transmission Unit — the largest IP packet an interface can send in one frame. 1500 bytes on standard Ethernet, which adds roughly 18 bytes of Layer 2 overhead.' },
+          { term: 'ARP', def: 'Address Resolution Protocol — maps an IPv4 address to a MAC address on the local Layer 2 segment. The IPv6 equivalent is NDP, carried over ICMPv6.' },
+          { term: 'IPv4', def: 'Internet Protocol version 4 — the network-layer protocol giving every interface a 32-bit address, defining addressing, fragmentation and the packet header.' },
+          { term: 'IPv6', def: 'The 128-bit-address network-layer protocol replacing IPv4: no broadcast, mandatory security and auto-configuration, and a different header format. A different protocol, not a bigger IPv4.' },
+          { term: 'Ethernet', def: 'IEEE 802.3, the dominant LAN standard: a family of frame formats, signalling, speeds and media from shared 10 Mbps hubs to 400 Gbps fabrics.' },
+          { term: 'VLAN', def: 'A logical Layer 2 segmentation of a switch — ports in the same VLAN form one broadcast domain regardless of physical location, giving security, efficiency and broadcast control.' },
+          { term: 'NetFlow', def: 'Exports flow records — metadata about conversations, not packets — to a collector. A flow is a unidirectional sequence keyed on the source and destination IP, port, protocol, ToS and input interface.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'Which PDU name belongs to the TCP layer?',
+            options: ['Frame', 'Segment', 'Packet', 'Datagram'],
+            answer: 1,
+            why: 'TCP produces a segment. A frame is Layer 2, a packet is Layer 3, and datagram is the UDP Layer 4 name (also used for IP in RFC 791).'
+          },
+          {
+            q: 'Which OSI layer is the "smart" layer that enforces policy in a three-tier campus?',
+            options: ['Core', 'Distribution', 'Access', 'Physical'],
+            answer: 1,
+            why: 'That is a design question, not an OSI one — but the layering idea is the same: the core is fast and dumb transport, and policy lives in the layer above it.'
+          },
+          {
+            q: 'Which layer does a router operate at?',
+            options: ['Layer 1', 'Layer 2', 'Layer 3', 'Layer 4'],
+            answer: 2,
+            why: 'A router makes forwarding decisions on the IP header, so it is a Layer 3 device. A switch is Layer 2 and a hub is Layer 1.'
+          },
+          {
+            q: 'In the TCP/IP model, which OSI layers are merged into the Application layer?',
+            options: ['7 only', '7 and 6', '7, 6 and 5', '5, 6 and 7 and 4'],
+            answer: 2,
+            why: 'The TCP/IP Application layer covers OSI layers 7, 6 and 5 — applications, presentation and session functions are implemented as one layer.'
+          },
+          {
+            q: 'Which protocol sits in the TCP/IP Internet layer?',
+            options: ['TCP', 'UDP', 'IP', 'Ethernet'],
+            answer: 2,
+            why: 'IP is the Internet layer protocol, alongside ICMP and IGMP. TCP and UDP are Transport, and Ethernet is Network Access.'
+          },
+          {
+            q: 'Data is moving down the source stack. What is happening?',
+            options: ['Decapsulation', 'Encapsulation', 'Routing', 'Forwarding'],
+            answer: 1,
+            why: 'Encapsulation is the down-stack direction — each layer adds its own header. Decapsulation is the up-stack direction at the receiver.'
+          },
+          {
+            q: 'A packet crosses three routers. How many times is the Ethernet header rebuilt?',
+            options: ['Once, at the source', 'Three times, once per link', 'Never, the header stays the same', 'Six times, once in each direction'],
+            answer: 1,
+            why: 'Every Layer 2 hop strips the old Ethernet header and re-encapsulates a new one, so the MAC addresses change on every link while the IP header stays put.'
+          },
+          {
+            q: 'Which header does a router modify when forwarding a packet?',
+            options: ['The Ethernet header and the IP TTL', 'Only the TCP checksum', 'The MAC addresses and the source port', 'Nothing at all'],
+            answer: 0,
+            why: 'A router rewrites the Layer 2 header for the outgoing link and decrements the TTL (and recomputes the IPv4 header checksum as a result).'
+          },
+          {
+            q: 'What does the FCS protect?',
+            options: ['The transport payload', 'The IP header', 'The Layer 2 frame', 'The TCP segment'],
+            answer: 2,
+            why: 'The Frame Check Sequence is the Layer 2 error check over the frame. A CRC mismatch means the frame is dropped and the interface CRC counters climb.'
+          },
+          {
+            q: 'Which of these is true of IPv6 headers?',
+            options: [
+              'They have a header checksum that is recomputed at every hop',
+              'They have no header checksum at all',
+              'They are variable length only, with no fixed part',
+              'They always carry an IPv4-style options field'
+            ],
+            answer: 1,
+            why: 'IPv6 dropped the header checksum entirely and has a fixed 40-byte base header, so there is nothing to recompute per hop.'
+          },
+          {
+            q: 'Which statement about ARP is correct?',
+            options: [
+              'It maps a MAC address to an IPv4 address',
+              'It maps an IPv4 address to a MAC address on the local segment',
+              'It resolves a hostname to an IPv4 address',
+              'It advertises routes between autonomous systems'
+            ],
+            answer: 1,
+            why: 'ARP resolves IPv4 to MAC on the local Layer 2 segment. DNS resolves hostnames, and BGP advertises routes between autonomous systems.'
+          },
+          {
+            q: 'A tunnel interface needs a smaller MTU than 1500. Why?',
+            options: [
+              'Because the outer encapsulation headers take bytes away from the payload',
+              'Because tunnels are always point-to-point',
+              'Because a tunnel always carries small packets',
+              'Because encapsulation removes the FCS'
+            ],
+            answer: 0,
+            why: 'The outer IP and GRE or IPsec headers are added on top of the original packet, so the payload must shrink to keep the frame inside the link MTU.'
+          },
+          {
+            q: 'Which is the correct 5-tuple that identifies a TCP flow?',
+            options: [
+              'Source IP, destination IP, source port, destination port, protocol',
+              'Source MAC, destination MAC, source IP, destination IP, VLAN ID',
+              'Source IP, destination IP, TTL, protocol, checksum',
+              'Source port, destination port, window, sequence number, flags'
+            ],
+            answer: 0,
+            why: 'The 5-tuple is source and destination IP, source and destination port, plus protocol. That is the key used by ACLs, firewalls and NetFlow.'
+          },
+          {
+            q: 'Which layer carries the UDP port numbers?',
+            options: ['Network Access', 'Internet', 'Transport', 'Application'],
+            answer: 2,
+            why: 'Transport is the OSI Layer 4 — TCP/IP layer 3. Ports live there, and the EtherType and protocol fields below them exist to deliver the data to the right port.'
+          },
+          {
+            q: 'An ARP request is sent by a host that does not know the MAC address of its gateway. What type of traffic is it?',
+            options: ['Unicast', 'Broadcast', 'Multicast', 'Anycast'],
+            answer: 1,
+            why: 'ARP request is a Layer 2 broadcast to the broadcast address, asking every host on the segment for the gateway MAC address.'
+          },
+          {
+            q: 'In which direction does the TTL change when a router forwards a packet?',
+            options: ['It is incremented', 'It is decremented', 'It is unchanged', 'It is set to 255'],
+            answer: 1,
+            why: 'The TTL goes down by one on every router hop. When it reaches zero the router drops the packet and sends an ICMP TTL exceeded message back.'
+          },
+          {
+            q: 'Which statement about the OSI model is correct?',
+            options: [
+              'It is the protocol stack Cisco IOS runs',
+              'It is a seven-layer reference model used as a troubleshooting vocabulary',
+              'It has five layers, merged from OSI',
+              'It defines the PDU as a frame at layer 3'
+            ],
+            answer: 1,
+            why: 'OSI is a reference model for describing and troubleshooting. The stack that was actually implemented is TCP/IP, and the Layer 3 PDU is a packet.'
+          },
+          {
+            q: 'What does a switch do with the Layer 3 header of a frame it forwards?',
+            options: [
+              'It reads it to choose the egress port',
+              'It rewrites the source and destination IP addresses',
+              'It ignores it entirely and forwards on the Layer 2 destination MAC',
+              'It removes it and replaces it with a new IP header'
+            ],
+            answer: 2,
+            why: 'A Layer 2 switch makes its forwarding decision from the MAC table. It never reads the IP header, and it certainly does not rewrite it.'
+          },
+          {
+            q: 'Which PDU is the correct answer for "a unit of data at the Transport layer when the protocol is UDP"?',
+            options: ['Frame', 'Packet', 'Datagram', 'Segment'],
+            answer: 2,
+            why: 'The UDP Transport-layer PDU is a datagram. Segment is the TCP name, packet is Layer 3, and frame is Layer 2.'
+          },
+          {
+            q: 'Which TCP/IP layer holds Ethernet and the physical layer?',
+            options: ['Network Access', 'Internet', 'Transport', 'Application'],
+            answer: 0,
+            why: 'The Network Access layer covers OSI layers 2 and 1 — Ethernet framing, ARP, and the physical signalling underneath.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'osi.theme', done: 'osi.done', best: 'osi.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview, t.keyIdea].concat(t.sections.map(s => s.h));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>

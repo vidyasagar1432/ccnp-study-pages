@@ -8,7 +8,10 @@ dependencies — open a page in a browser and it works, including offline.
 index.html                    the level hub (all 31 levels, links to the published ones)
 pages/00-networking-basics.html
 pages/01-physical-layer.html
+pages/02-network-topologies.html
+pages/03-osi-tcpip.html
 vendor/vue.global.prod.js     Vue 3.5.42 — offline fallback copy
+vendor/tailwindcss.js         Tailwind Play CDN 3.4.17 — offline fallback copy
 tools/                        validation scripts + per-page config
 ```
 
@@ -29,8 +32,9 @@ Everything is client-side, so `file://` works. It also works over HTTP
 | 00 | [Networking Basics](pages/00-networking-basics.html) | 7 | 18 questions |
 | 01 | [Physical Layer](pages/01-physical-layer.html) | 12 | 21 questions |
 | 02 | [Network Topologies](pages/02-network-topologies.html) | 9 | 20 questions |
+| 03 | [OSI & TCP/IP](pages/03-osi-tcpip.html) | 6 | 20 questions |
 
-The remaining levels (03–30) are listed on the hub as *planned*. Each one is ported
+The remaining levels (04–30) are listed on the hub as *planned*. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:
 
 > Overview → Core Concepts → Commands → Exam Traps → Quick Review Table → Related Notes → Glossary
@@ -54,21 +58,33 @@ from the matching note set in the CCNP Obsidian vault, keeping the note structur
 - **Keyboard shortcuts** — `/` search, `t` theme, `e` expand/collapse all, `Esc` clear
 
 Progress, theme, and best score are stored in `localStorage` under a per-page prefix
-(`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02) so levels never
-overwrite each other.
+(`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02, `osi.*` for Level 03) so
+levels never overwrite each other.
 
-## Loading Vue
+## Loading Vue and Tailwind
 
-Vue 3 is loaded from a CDN with a fallback chain:
+Both libraries load from a CDN with a fallback chain, and every source gets a 6 second
+timeout so a slow host can never stall the page:
+
+**Vue 3**
 
 1. `cdn.jsdelivr.net`
 2. `unpkg.com` (mirror)
 3. `../vendor/vue.global.prod.js` (the copy in this repo, so it works offline)
 
-If all three fail, the page shows a plain-HTML message instead of a blank screen.
-Tailwind comes from `cdn.tailwindcss.com` (the Play CDN), so the first load needs a
-network connection; it is cached by the browser afterwards. `index.html` has no
-dependencies at all — it is plain CSS and works offline.
+**Tailwind CSS** (the Play CDN)
+
+1. `cdn.tailwindcss.com`
+2. `../vendor/tailwindcss.js` (the copy in this repo)
+
+If Vue cannot be loaded at all, the page shows a plain-HTML message instead of a blank
+screen. With the network off, a page still renders **fully styled** — the vendored
+copies of both libraries are used, and the browser check verifies this by blocking every
+CDN and asserting that the page is still styled. `index.html` has no dependencies at all
+— it is plain CSS and works offline.
+
+Tailwind's config (`darkMode: 'class'`, the font stack) is set *before* the loader
+runs, so it applies to whichever copy of Tailwind ends up loading.
 
 ## Validating
 
@@ -104,7 +120,7 @@ bindings) and the total level count.
 ## Adding a level
 
 1. Copy the closest existing page in `pages/` and replace its content block — the
-   `const heroIntro`, `const topics`, `const groups`, `const glossary` and `const quiz`
+   `const heroIntro`, `const topics`, `const GROUPS`, `const glossary` and `const quiz`
    definitions inside `setup()`. Everything else (layout, search, quiz, progress,
    theme, deep links) is shared.
 2. Give the page a `localStorage` prefix of your own (e.g. `pl2.*`) so it does not
@@ -118,6 +134,32 @@ The `KEYS` constant near the top of `setup()` is where the storage prefix lives:
 const KEYS = { theme: 'pl.theme', done: 'pl.done', best: 'pl.quizbest' };
 ```
 
+Each topic in `topics[]` looks like this — the field names are fixed by the shared
+template:
+
+```js
+{
+  id: 't01', num: '01', group: 'models', title: 'OSI Model',
+  blurb: 'Seven layers, their functions, PDUs and devices',
+  overview: '…',            // rendered with md()
+  keyIdea: '…',             // rendered with md()
+  sections: [ … ],          // { h, kind: 'list' | 'para' | 'table' | 'code', … }
+  commands: [ { label, code } ],
+  traps: [ '…' ],
+  table: { cols, rows },    // the quick review table
+  related: [ { t, d } ],
+  glossary: [ 'OSI Model' ] // must exist in the page glossary
+}
+```
+
+`md()` supports `**bold**`, ``%%inline code%%`` and `[[Term]]` / `[[Term|label]]`
+wiki-link chips (the chips are decorative; only a topic's `glossary:` array is
+clickable and it must match the page glossary exactly). Keep chip labels short — long
+ones force the chip to wrap on a phone.
+
+The `code` section kind renders a plain monospace block and is used for the ASCII
+diagrams in the notes.
+
 ## Source
 
 Content is ported from the CCNP Enterprise study notes in the `CCNP` Obsidian vault
@@ -128,4 +170,5 @@ here.
 ## License
 
 The page content follows the study notes. Vue is MIT licensed (see the header of
-`vendor/vue.global.prod.js`).
+`vendor/vue.global.prod.js`) and the Tailwind Play CDN is MIT licensed (see the header
+of `vendor/tailwindcss.js`).

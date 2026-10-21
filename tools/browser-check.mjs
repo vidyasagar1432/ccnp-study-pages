@@ -443,7 +443,7 @@ async function checkPage(pageRel, cfg) {
   /* ---------------- pass 9: offline, CDN blocked ---------------- */
   section('9. Offline fallback (CDNs blocked)');
   const offline = await launch([
-    '--host-resolver-rules=MAP cdn.jsdelivr.net 127.0.0.1:1,MAP unpkg.com 127.0.0.1:1'
+    '--host-resolver-rules=MAP cdn.jsdelivr.net 127.0.0.1:1,MAP unpkg.com 127.0.0.1:1,MAP cdn.tailwindcss.com 127.0.0.1:1'
   ]);
   try {
     const cdp = await openPage(pageUrl, offline.port);
@@ -452,6 +452,21 @@ async function checkPage(pageRel, cfg) {
             : fail('app did not mount with the CDNs blocked');
     const vendor = await cdp.evaluate(`document.querySelectorAll('section[id^="t"]').length`);
     vendor === cfg.topics ? ok(`all ${cfg.topics} topics rendered offline`) : fail('offline render incomplete: ' + vendor);
+    // The page must also still be styled: Tailwind comes from the vendored copy.
+    const styled = await cdp.evaluate(`(() => {
+      const card = document.querySelector('main .card-hover') || document.querySelector('main section');
+      if (!card) return JSON.stringify({ styled: false });
+      const cs = getComputedStyle(card);
+      const body = getComputedStyle(document.body);
+      return JSON.stringify({
+        styled: cs.borderRadius !== '0px' && cs.boxShadow !== 'none',
+        radius: cs.borderRadius,
+        font: body.fontFamily.slice(0, 24)
+      });
+    })()`);
+    const st = JSON.parse(styled);
+    st.styled ? ok(`offline page is still styled (${st.radius} radius, ${st.font})`)
+              : fail('offline page lost its styling: ' + styled);
   } finally {
     offline.proc.kill('SIGKILL');
     rmSync(offline.profile, { recursive: true, force: true });
