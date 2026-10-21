@@ -1,0 +1,3186 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSPF — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 10 OSPF: OSPFv2 and OSPFv3, the Router ID election, the neighbour state machine, DR and BDR election, every LSA type and its flood scope, the SPF algorithm, area design with stub, totally stubby and NSSA areas, virtual links, authentication, summarization and troubleshooting.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">OSPF — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[11px] font-black tracking-tight text-white">OSPF</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">OSPF</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 10</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 10</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">15 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 10 &mdash; OSPF</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The link-state protocol end to end: OSPFv2 and OSPFv3, the neighbour state machine and DR/BDR election, every LSA type and where it floods, then the area design choices that decide what stays in your database.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        OSPF &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 10 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[OSPF]]** is the open-standard link-state IGP: routers flood **[[LSA]]s**, build a shared **[[Link State Database|LSDB]]**, and each one independently runs Dijkstra's **[[SPF Algorithm|SPF]]**. This level walks the whole protocol — OSPFv2 and **[[OSPFv3]]**, the neighbour state machine, **[[DR BDR|DR/BDR]]** election, the LSA types and their flood scope, then **[[OSPF Area|area]]** design with stub, totally stubby and NSSA areas, virtual links, authentication, summarization and troubleshooting.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'basics', title: 'OSPFv2',
+            blurb: 'The IPv4 protocol: hello and dead intervals, the two multicast groups, wildcard masks and cost',
+            overview: '**[[OSPF]] (Open Shortest Path First, RFC 2328)** is an **open-standard, [[Control Plane|link-state]] IGP** for IPv4. Routers exchange **[[LSA|LSAs]]** to build a shared **[[Link State Database|LSDB]]**, then each one runs **Dijkstra\'s [[SPF Algorithm|SPF]]** independently. Its [[Administrative Distance|AD]] is **110**.',
+            keyIdea: 'Every router holds the same full map and computes its own tree, which is why OSPF converges fast and is loop-free by construction.',
+            sections: [
+              { kind: 'table', h: 'The protocol at a glance', cols: ['Item', 'Value'], rows: [
+                ['Standard', 'RFC 2328, open standard'],
+                ['Family', 'Link state, an IGP'],
+                ['Address family', 'IPv4 — OSPFv2'],
+                ['Administrative Distance', '110'],
+                ['Metric', 'Cost, reference bandwidth divided by interface bandwidth'],
+                ['Classic reference bandwidth', '100 Mbit/s'],
+                ['Database', 'The LSDB, built from LSAs'],
+                ['Algorithm', 'Dijkstra’s SPF'],
+                ['Hello, broadcast and point-to-point', '10 seconds'],
+                ['Dead, broadcast and point-to-point', '40 seconds'],
+                ['Hello, NBMA and point-to-multipoint', '30 seconds'],
+                ['Dead, NBMA and point-to-multipoint', '120 seconds'],
+                ['All-routers multicast', '224.0.0.5'],
+                ['DR and BDR multicast', '224.0.0.6']
+              ]},
+              { kind: 'code', h: 'The two multicast groups', code:
+`  224.0.0.5   ALLSPFRouters
+              sent to every OSPF router on the segment
+
+  224.0.0.6   ALLDRouters
+              sent to the DR and BDR only
+
+  Routers send Hellos to 224.0.0.5.
+  DROthers send updates to 224.0.0.6.` },
+              { kind: 'code', h: 'The timer pairs', code:
+`  Broadcast / Point-to-point    Hello 10s   Dead 40s
+  NBMA / Point-to-multipoint    Hello 30s   Dead 120s
+
+  Dead = 4 x Hello.  Not 2x, not 3x.` },
+              { kind: 'para', h: 'Hello and dead intervals must match', p: 'Two routers only become neighbours if their hello and dead intervals agree. This is one of the standard adjacency failures, and it presents as a neighbour stuck at Init or staying Down.' },
+              { kind: 'code', h: 'What has to match', code:
+`  Hello interval
+  Dead interval
+  Area ID
+  Authentication type and key
+  MTU
+  Network type
+  Subnet mask (on broadcast and NBMA)
+
+  Any mismatch and the adjacency fails.` },
+              { kind: 'para', h: 'The network command uses a wildcard mask', p: '%%ip ospf 1 area 0%% is the interface-level form and is unambiguous. The older %%network%% form matches interfaces by address, and its mask is an **inverted wildcard mask**, not a subnet mask.' },
+              { kind: 'code', h: 'Wildcard against subnet mask', code:
+`  Subnet mask 255.255.255.0
+  Wildcard    0.0.0.255
+
+  ! interface level: no wildcard at all
+  interface GigabitEthernet0/0
+   ip ospf 1 area 0
+
+  ! classic network statement, wildcard
+  router ospf 1
+   network 10.0.0.0 0.0.0.255 area 0
+   network 10.1.0.0 0.0.0.3 area 0` },
+              { kind: 'para', h: 'The cost formula', p: 'OSPF cost is **reference bandwidth divided by interface bandwidth**. With the classic 100 Mbit/s reference a 100 Mbit/s link is cost 1 — and so is a 1 Gbit/s link and a 10 Gbit/s link, which is why the reference is raised on any modern network.' },
+              { kind: 'code', h: 'Cost against link speed', code:
+`  Cost = reference bandwidth / interface bandwidth
+
+  Reference = 100 Mbit/s
+
+    100 Mbit/s  ->  1
+      1 Gbit/s  ->  1
+     10 Gbit/s  ->  1
+
+  Everything fast looks the same.` },
+              { kind: 'code', h: 'Raising the reference', code:
+`  router ospf 1
+   auto-cost reference-bandwidth 100000
+
+  100000 Mbit/s:
+    1 Gbit/s   -> 100
+    10 Gbit/s  -> 10
+    100 Gbit/s -> 1` },
+              { kind: 'code', h: 'Basic configuration', code:
+`  ! interface level, unambiguous
+  interface GigabitEthernet0/0
+   ip address 10.0.0.1 255.255.255.0
+   ip ospf 1 area 0
+
+  ! or the classic network statements
+  router ospf 1
+   router-id 1.1.1.1
+   network 10.0.0.0 0.0.0.255 area 0` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf neighbor
+  show ip ospf interface GigabitEthernet0/0
+  show ip ospf database
+  show ip protocols
+  show ip route ospf` }
+            ],
+            commands: [
+              { label: 'Enable OSPF on an interface', code:
+`interface GigabitEthernet0/0
+ ip address 10.0.0.1 255.255.255.0
+ ip ospf 1 area 0` },
+              { label: 'Or use network statements', code:
+`router ospf 1
+ router-id 1.1.1.1
+ network 10.0.0.0 0.0.0.255 area 0` },
+              { label: 'Verify', code:
+`show ip ospf
+show ip ospf neighbor
+show ip ospf interface GigabitEthernet0/0
+show ip ospf database` }
+            ],
+            traps: [
+              'Hello 10 and dead 40 on broadcast and point-to-point links. NBMA and point-to-multipoint use 30 and 120.',
+              'AD is 110 — against EIGRP at 90 and RIP at 120.',
+              '%%224.0.0.5%% is all routers and %%224.0.0.6%% is the DR and BDR only.',
+              'An MTU mismatch is the classic cause of a neighbour stuck in ExStart.',
+              'The cost reference defaults to 100 Mbit/s, so two fast links are both cost 1 unless you tune it.',
+              '%%network%% takes a **wildcard mask**, which is the inverted subnet mask.',
+              'OSPFv2 is IPv4 and OSPFv3 is IPv6. The two are separate protocols that share ideas, not one protocol with two address families.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Open Shortest Path First'],
+                ['Standard', 'RFC 2328'],
+                ['Type', 'Open standard, link-state IGP'],
+                ['IPv4 or IPv6', 'OSPFv2 is IPv4'],
+                ['AD', '110'],
+                ['Metric', 'Cost'],
+                ['Cost formula', 'Reference bandwidth divided by interface bandwidth'],
+                ['Default reference', '100 Mbit/s'],
+                ['Hello on broadcast and P2P', '10 seconds'],
+                ['Dead on broadcast and P2P', '40 seconds'],
+                ['Hello on NBMA and P2MP', '30 seconds'],
+                ['Dead on NBMA and P2MP', '120 seconds'],
+                ['Dead rule', 'Four times the hello'],
+                ['All-routers group', '224.0.0.5'],
+                ['DR and BDR group', '224.0.0.6'],
+                ['network mask', 'A wildcard, the inverted subnet mask'],
+                ['Database', 'The LSDB'],
+                ['Algorithm', 'Dijkstra’s SPF']
+              ]
+            },
+            related: [
+              { t: '02. OSPFv3', d: 'the IPv6 half of the same protocol' },
+              { t: '07. SPF Algorithm', d: 'what computes the routes' },
+              { t: '15. Troubleshooting', d: 'when the adjacency will not come up' }
+            ],
+            glossary: ['OSPF', 'LSA', 'Link State Database', 'SPF Algorithm', 'Administrative Distance', 'Multicast', 'MTU', 'Control Plane', 'OSPF Cost', 'OSPF Area']
+          },
+          {
+            id: 't02', num: '02', group: 'basics', title: 'OSPFv3',
+            blurb: 'OSPF for IPv6: addresses as prefix options, a 32-bit RID regardless, and no OSPF-level authentication',
+            overview: '**[[OSPFv3]] (RFC 5340)** is OSPF for **[[IPv6]]**. It keeps the same core ideas — **[[LSA]]s**, **[[Link State Database|LSDB]]**, **[[SPF Algorithm|SPF]]**, **[[OSPF Area|areas]]** and **[[DR BDR|DR/BDR]]** — but it decouples protocol logic from the addresses.',
+            keyIdea: 'Addresses are carried as prefix options inside LSAs rather than being encoded in the LSA header, which is what makes the protocol address-family independent.',
+            sections: [
+              { kind: 'para', h: 'The design change', p: 'In OSPFv2 the address is part of what the LSA describes. In OSPFv3 the **router and network LSAs describe topology only**, and the prefixes ride along as **TLV prefix options**. That split is the whole architectural difference and it is what the exam means by address-family independence.' },
+              { kind: 'code', h: 'Where the addresses live', code:
+`  OSPFv2
+    LSA describes links AND their IPv4 addresses
+
+  OSPFv3
+    LSA describes topology
+    prefixes ride as TLV prefix options
+
+  Result: multiple IPv6 prefixes per link,
+  and room for other address families later.` },
+              { kind: 'table', h: 'OSPFv2 against OSPFv3', cols: ['', 'OSPFv2', 'OSPFv3'], rows: [
+                ['Address family', 'IPv4 only', 'Address-family independent'],
+                ['Standard', 'RFC 2328', 'RFC 5340'],
+                ['Address in the LSA header', 'Yes', 'No — carried as prefix options'],
+                ['Prefixes per link', 'One', 'Multiple'],
+                ['Router ID', '32-bit', 'Still a 32-bit number'],
+                ['Authentication', 'OSPF-level: null, plaintext, message digest', 'No OSPF-level authentication'],
+                ['Authentication mechanism', 'In the OSPF packet', 'IPv6 AH and ESP, that is IPsec'],
+                ['Adjacency', 'Same state machine', 'Same state machine'],
+                ['Timers and DR/BDR', 'Same', 'Same']
+              ]},
+              { kind: 'para', h: 'The Router ID is still 32-bit', p: 'OSPFv3 identifies routers with a 32-bit number in the same format as OSPFv2, and **a router needs one even in a pure IPv6 network with no IPv4 addresses at all**. In practice it is set explicitly, or taken from an IPv4 address if one exists.' },
+              { kind: 'code', h: 'RID without any IPv4', code:
+`  ipv6 router ospf 1
+   router-id 1.1.1.1
+
+  The RID is a 32-bit identifier, NOT an address
+  that has to exist in the routing table.
+  A pure IPv6 network still needs one.` },
+              { kind: 'para', h: 'No OSPF-level authentication', p: 'OSPFv3 removed its own authentication. **[[OSPF Authentication]]** is left to **IPv6 AH and ESP**, that is IPsec. An adjacency can therefore fail for a security reason that OSPF itself cannot report.' },
+              { kind: 'code', h: 'Securing it', code:
+`  OSPFv2  ->  OSPF-level auth (null, plaintext, MD5)
+  OSPFv3  ->  no OSPF-level auth
+              IPv6 AH / ESP, that is IPsec` },
+              { kind: 'para', h: 'It has to be enabled globally', p: 'IPv6 routing has to be turned on before anything else works. %%ipv6 unicast-routing%% is the global switch, and without it the OSPFv3 process runs while forwarding stays off.' },
+              { kind: 'code', h: 'Enabling it', code:
+`  ! nothing works without this
+  ipv6 unicast-routing
+
+  ! the modern form
+  router ospfv3 1
+   address-family ipv6 unicast
+    router-id 1.1.1.1
+   exit-address-family
+
+  ! the legacy interface form
+  interface GigabitEthernet0/0
+   ipv6 ospf 1 area 0` },
+              { kind: 'para', h: 'LSA types are renumbered', p: 'The roles carry over but the numbering changes. OSPFv3 Type 3 and Type 4 are **inter-area prefix** and **inter-area router** rather than summary and ASBR-summary, and it added a **Type 8 link-local** LSA that OSPFv2 does not have.' },
+              { kind: 'table', h: 'The OSPFv3 LSA numbering', cols: ['Type', 'Name'], rows: [
+                ['1', 'Router LSA'],
+                ['2', 'Network LSA'],
+                ['3', 'Inter-Area Prefix LSA'],
+                ['4', 'Inter-Area Router LSA'],
+                ['5', 'AS-External LSA'],
+                ['7', 'NSSA-External LSA'],
+                ['8', 'Link-Local LSA, new in v3'],
+                ['9, 10, 11', 'Opaque LSAs']
+              ]},
+              { kind: 'code', h: 'What is unchanged', code:
+`  Same neighbour state machine
+  Same DR / BDR election
+  Same hello and dead intervals
+  Same areas and the same area rules
+  Same SPF computation
+
+  Do not re-learn these for v3.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ipv6 ospf
+  show ipv6 ospf neighbor
+  show ipv6 ospf database
+  show ipv6 ospf interface GigabitEthernet0/0
+  show ipv6 protocols` }
+            ],
+            commands: [
+              { label: 'Enable IPv6 routing and OSPFv3', code:
+`ipv6 unicast-routing
+router ospfv3 1
+ address-family ipv6 unicast
+  router-id 1.1.1.1
+ exit-address-family` },
+              { label: 'Or the legacy interface form', code:
+`interface GigabitEthernet0/0
+ ipv6 address 2001:db8::1/64
+ ipv6 ospf 1 area 0` },
+              { label: 'Verify', code:
+`show ipv6 ospf neighbor
+show ipv6 ospf database` }
+            ],
+            traps: [
+              'OSPFv3 is not simply a set of LSA changes for IPv6. It is an address-family-independent payload design.',
+              'The Router ID is still a 32-bit number, and OSPFv3 needs one **even on an IPv6-only network**.',
+              'There is no OSPF-native authentication in v3. It relies on IPv6 AH and ESP, that is IPsec.',
+              '%%ipv6 unicast-routing%% has to be enabled globally or nothing works.',
+              'Hello and dead intervals, DR/BDR, areas and SPF are all the same as v2 — questions routinely reuse them.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'OSPF for IPv6'],
+                ['Standard', 'RFC 5340'],
+                ['Address family', 'Address-family independent'],
+                ['Addresses', 'Carried as TLV prefix options'],
+                ['Prefixes per link', 'Multiple'],
+                ['Router ID', 'Still 32-bit, still required'],
+                ['Authentication', 'No OSPF-level auth'],
+                ['Security', 'IPv6 AH and ESP, that is IPsec'],
+                ['Global prerequisite', 'ipv6 unicast-routing'],
+                ['State machine', 'The same as v2'],
+                ['DR/BDR and timers', 'The same as v2'],
+                ['Type 3 and Type 4', 'Inter-area prefix and inter-area router'],
+                ['Type 8', 'Link-local LSA, new in v3'],
+                ['Verification', 'show ipv6 ospf neighbor']
+              ]
+            },
+            related: [
+              { t: '01. OSPFv2', d: 'the IPv4 half' },
+              { t: '06. LSA Types', d: 'the types that got renumbered' },
+              { t: '13. Authentication', d: 'where v3 hands the job to IPsec' }
+            ],
+            glossary: ['OSPFv3', 'IPv6', 'OSPF', 'LSA', 'Link State Database', 'SPF Algorithm', 'OSPF Area', 'DR BDR', 'OSPF Router ID', 'OSPF Authentication']
+          },
+          {
+            id: 't03', num: '03', group: 'basics', title: 'Router ID',
+            blurb: 'The 32-bit identifier, the election order that reverses the instinct, and why a change needs a process reset',
+            overview: 'The **[[OSPF Router ID|Router ID (RID)]]** is a **32-bit number** identifying an OSPF router inside the domain. It appears in **[[LSA]] headers**, in **Hellos**, and in the **[[DR BDR|DR/BDR]]** election.',
+            keyIdea: 'It is an identifier, not an address — it does not have to exist in the routing table, but it does have to be unique and it does have to be stable.',
+            sections: [
+              { kind: 'table', h: 'The election order', cols: ['Priority', 'Source'], rows: [
+                ['1', 'The explicitly configured Router ID'],
+                ['2', 'The highest loopback address'],
+                ['3', 'The highest active physical IPv4 address']
+              ]},
+              { kind: 'code', h: 'The order, in context', code:
+`  Explicitly configured  ->  wins, always
+       |
+  Highest loopback       ->  next
+       |
+  Highest physical IPv4  ->  last resort
+
+
+  Highest, not lowest.` },
+              { kind: 'para', h: 'Highest, not lowest', p: 'Most of OSPF picks the lowest value — lowest cost, lowest RID in an LSA comparison. Router ID election is the exception that catches people: the **highest** address wins. The same reversal applies to DR/BDR priority.' },
+              { kind: 'code', h: 'The reversal', code:
+`  Cost             ->  lowest wins
+  Area ID          ->  lowest wins, in a virtual link
+  Router ID        ->  HIGHEST wins
+  DR priority      ->  HIGHEST wins
+  DR tie-break     ->  HIGHEST Router ID
+
+  Do not carry the lowest-wins habit into RID.` },
+              { kind: 'para', h: 'Configuring it explicitly', p: 'Setting the RID is not optional in a careful design. An auto-chosen RID from a physical address changes if that interface is removed or renumbered, and every LSA in the domain is then re-originated.' },
+              { kind: 'code', h: 'Setting it', code:
+`  router ospf 1
+   router-id 1.1.1.1
+
+
+  OSPFv3:
+  ipv6 router ospf 1
+   router-id 1.1.1.1` },
+              { kind: 'para', h: 'A change needs a process reset', p: 'The RID is fixed once OSPF is running. Configuring a new one will **not** take effect until the process is restarted with %%clear ip ospf process%% or a reload. This is the classic "I changed it and nothing happened" trap.' },
+              { kind: 'code', h: 'Making it take effect', code:
+`  router ospf 1
+   router-id 2.2.2.2
+
+  ! nothing happens yet
+
+  clear ip ospf process
+  yes
+
+  NOW the new RID is used.` },
+              { kind: 'para', h: 'It appears everywhere', p: 'The RID is in every LSA header, in every Hello, and it is the tie-break in the DR/BDR election after priority. A duplicate RID in one domain produces two routers claiming to be the same node, and the LSDB becomes inconsistent.' },
+              { kind: 'code', h: 'Where it shows up', code:
+`  LSA header        ->  the originating router
+  Hello packet      ->  the sender
+  DR / BDR election ->  priority first, RID to break a tie
+  show ip ospf neighbor
+       Router ID field
+
+
+  Duplicate RID = duplicate-router confusion.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf neighbor
+  show ip protocols
+  show run | section router ospf` }
+            ],
+            commands: [
+              { label: 'Set the Router ID', code:
+`router ospf 1
+ router-id 1.1.1.1` },
+              { label: 'Make a change take effect', code:
+`clear ip ospf process
+yes` },
+              { label: 'Verify', code:
+`show ip ospf
+show ip ospf neighbor` }
+            ],
+            traps: [
+              'The election order is explicit, then the highest loopback, then the highest physical IPv4.',
+              '**Highest**, not lowest. This reverses the OSPF instinct.',
+              '%%clear ip ospf process%% is required after a RID change — configuring it alone does nothing.',
+              'The RID is the DR/BDR tie-break, and priority is compared first.',
+              'OSPFv3 still needs a 32-bit RID, even on a network with no IPv4 at all.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Router ID'],
+                ['Format', '32-bit, shown dotted-quad'],
+                ['Explicit', 'Wins over every automatic choice'],
+                ['Loopback', 'The highest loopback address'],
+                ['Physical', 'The highest active physical IPv4'],
+                ['Direction', 'Highest wins, not lowest'],
+                ['Is it an address', 'No — an identifier, not necessarily routable'],
+                ['Must be unique', 'Yes, within the OSPF domain'],
+                ['Change it', 'Requires clear ip ospf process or a reload'],
+                ['Appears in', 'LSA headers, Hellos, DR/BDR election'],
+                ['OSPFv3', 'Still required, still 32-bit'],
+                ['Verification', 'show ip ospf']
+              ]
+            },
+            related: [
+              { t: '05. DR BDR', d: 'where it breaks the election tie' },
+              { t: '04. Neighbor States', d: 'the sessions it identifies' },
+              { t: '12. Virtual Links', d: 'the ABR peer is named by RID' }
+            ],
+            glossary: ['OSPF Router ID', 'OSPF', 'LSA', 'DR BDR', 'Loopback Address', 'OSPFv3', 'Link State Database']
+          },
+          {
+            id: 't04', num: '04', group: 'basics', title: 'Neighbor States',
+            blurb: 'Down through Full, why 2-Way between DROthers is normal, and what each stuck state tells you',
+            overview: 'OSPF neighbours progress through a **[[OSPF Neighbor States|state machine]]** as they discover each other, negotiate, and synchronise their **[[Link State Database|LSDB]]s**. The stable states are **2-Way** on a multi-access segment between DROthers and **Full** where an adjacency exists.',
+            keyIdea: 'A neighbour is any OSPF router reached at 2-Way. An adjacency is a synchronised LSDB at Full — and only Full installs routes.',
+            sections: [
+              { kind: 'table', h: 'The state progression', cols: ['State', 'What happens'], rows: [
+                ['Down', 'No hellos have been received'],
+                ['Attempt', 'Actively contacting the neighbour. NBMA networks only'],
+                ['Init', 'A hello was received, but this router is not in it'],
+                ['2-Way', 'Both routers see each other in hellos'],
+                ['ExStart', 'Primary and secondary master are elected, database description begins'],
+                ['Exchange', 'Database description packets are exchanged'],
+                ['Loading', 'LSAs are requested and received'],
+                ['Full', 'The LSDBs are identical. The adjacency is formed']
+              ]},
+              { kind: 'code', h: 'The three phases', code:
+`  Discovery
+    Down -> Init -> 2-Way
+    Hellos prove mutual visibility
+
+  Synchronization
+    ExStart -> Exchange -> Loading
+    DBDs compare the databases, then requests fill gaps
+
+  Established
+    Full
+    Databases match, SPF can run` },
+              { kind: 'para', h: '2-Way is not broken', p: 'On a broadcast or NBMA segment every router forms a full adjacency with the **DR and BDR only**. DROthers see each other at **2-Way and stay there**, which is correct. Treating that as a fault is one of the most common OSPF mistakes.' },
+              { kind: 'code', h: 'What is normal on broadcast', code:
+`  DR    <-> DROther     Full
+  BDR   <-> DROther     Full
+  DROther <-> DROther   2-Way     <- normal, not a fault
+
+  Point-to-point: no DR, everyone goes to Full.` },
+              { kind: 'table', h: 'Stuck states and their causes', cols: ['Stuck state', 'Most likely cause'], rows: [
+                ['Init', 'One-way connectivity, an ACL, or multicast filtered'],
+                ['2-Way, stuck', 'The DR/BDR election is not completing'],
+                ['ExStart', '**MTU mismatch** — the classic one'],
+                ['Exchange', 'Database description negotiation problems, often MTU'],
+                ['Loading', 'An LSA request is never fulfilled']
+              ]},
+              { kind: 'code', h: 'The ExStart diagnosis', code:
+`  show ip ospf neighbor
+
+       FULL/  -     00:00:00    ...
+       EXSTART/  -  00:04:11    ...
+
+  Stuck in EXSTART  ->  MTU mismatch
+
+  Fix the MTU on both sides, or
+  ip ospf mtu-ignore on the interface.` },
+              { kind: 'para', h: 'Dead is four times hello', p: 'The dead interval is **four times** the hello, not two or three. No hello within the dead interval drops the neighbour to Down and withdraws its routes.' },
+              { kind: 'code', h: 'The ratio', code:
+`  Dead = 4 x Hello
+
+  Hello 10s  ->  Dead 40s
+  Hello 30s  ->  Dead 120s
+
+  Not 2x. Not 3x.` },
+              { kind: 'para', h: 'Attempt only on NBMA', p: '**Attempt** exists on NBMA networks where the neighbours are configured statically and hellos are not automatically multicast. It never appears on a broadcast or point-to-point segment.' },
+              { kind: 'code', h: 'Where Attempt lives', code:
+`  NBMA             ->  Attempt is possible
+  Broadcast        ->  never
+  Point-to-point   ->  never
+  Point-to-multipoint  ->  never` },
+              { kind: 'para', h: 'Neighbor against adjacency', p: 'These two words are different. A **neighbour** is any OSPF router on the segment, reached at 2-Way. An **adjacency** is a synchronised LSDB, reached at Full — and SPF only runs against adjacencies.' },
+              { kind: 'table', h: 'The distinction', cols: ['', 'Neighbor', 'Adjacency'], rows: [
+                ['State', '2-Way', 'Full'],
+                ['LSDB', 'Not synchronised', 'Identical'],
+                ['SPF runs', 'No', 'Yes'],
+                ['Routes installed', 'No', 'Yes'],
+                ['On broadcast', 'DROthers to each other', 'DR and BDR to everyone']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf neighbor
+  show ip ospf neighbor detail
+  show ip ospf neighbor 10.0.0.1
+  show ip ospf interface GigabitEthernet0/1
+  show ip ospf database` }
+            ],
+            commands: [
+              { label: 'Read the neighbours', code:
+`show ip ospf neighbor
+show ip ospf neighbor detail` },
+              { label: 'Check the interface parameters', code:
+`show ip ospf interface GigabitEthernet0/1` },
+              { label: 'Fix the classic ExStart cause', code:
+`interface GigabitEthernet0/1
+ mtu 1500
+! or
+ ip ospf mtu-ignore` }
+            ],
+            traps: [
+              '**2-Way between DROthers is normal**. It is not a fault and should not be "fixed".',
+              'A neighbour stuck in ExStart is almost always an **MTU mismatch**. That is the number-one tested cause.',
+              'Full is only required where an adjacency is expected. On broadcast, only the DR and BDR reach Full.',
+              'The dead interval is **four times** the hello, not twice.',
+              'On point-to-point there is no DR, so every neighbour goes straight to Full.',
+              'The **Attempt** state exists only on NBMA networks.',
+              'A hello and dead mismatch presents as stuck in Init or staying Down, never Full.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Down', 'No hellos received'],
+                ['Attempt', 'NBMA networks only'],
+                ['Init', 'Hello received, this router not in it'],
+                ['2-Way', 'Mutual visibility'],
+                ['ExStart', 'Master election, database description begins'],
+                ['Exchange', 'Database description packets'],
+                ['Loading', 'LSA requests and responses'],
+                ['Full', 'The LSDBs are identical'],
+                ['Neighbor', 'Reached at 2-Way'],
+                ['Adjacency', 'Reached at Full'],
+                ['Routes installed', 'Only at Full'],
+                ['Dead interval', 'Four times the hello'],
+                ['Stuck in Init', 'One-way link, ACL or multicast blocked'],
+                ['Stuck in ExStart', 'MTU mismatch'],
+                ['Stuck in Loading', 'An LSA request is never fulfilled'],
+                ['DROther pair', '2-Way, and that is normal']
+              ]
+            },
+            related: [
+              { t: '05. DR BDR', d: 'why most routers stop at 2-Way' },
+              { t: '15. Troubleshooting', d: 'reading these states as a fault diagnosis' },
+              { t: '13. Authentication', d: 'one of the reasons neighbours never form' }
+            ],
+            glossary: ['OSPF Neighbor States', 'OSPF', 'Link State Database', 'DR BDR', 'MTU', 'OSPF Area', 'Multicast', 'Control Plane']
+          },
+          {
+            id: 't05', num: '05', group: 'basics', title: 'DR BDR',
+            blurb: 'Why N times N minus one over two becomes N, priority then highest RID, and the non-preemptive rule',
+            overview: 'On **multi-access** networks — broadcast and NBMA — OSPF elects a **[[DR BDR|Designated Router (DR)]]** and a **Backup Designated Router (BDR)** so that each router forms a full adjacency with only those two instead of with every other router.',
+            keyIdea: 'The election is highest priority first and highest Router ID to break a tie, and it is non-preemptive — a better router joining does not take over.',
+            sections: [
+              { kind: 'code', h: 'The adjacency count', code:
+`  Without a DR:   N x (N - 1) / 2 adjacencies
+
+    10 routers  ->  45 adjacencies
+
+  With a DR:      N adjacencies
+
+    10 routers  ->  10 adjacencies` },
+              { kind: 'para', h: 'What the DR actually does', p: 'The DR is the point where **[[LSA]] flooding on the segment is collected and relayed**. Routers describe the segment to the DR, and the DR originates the Type 2 Network LSA that describes it. Without a DR every router would have to exchange database descriptions with every other one.' },
+              { kind: 'table', h: 'The election', cols: ['Step', 'Rule'], rows: [
+                ['1', 'The highest OSPF priority'],
+                ['2', 'Ties broken by the highest Router ID'],
+                ['Default priority', '1'],
+                ['Priority 0', 'Never becomes a DR or BDR'],
+                ['Direction', 'Highest wins, not lowest']
+              ]},
+              { kind: 'code', h: 'Priority and the tie-break', code:
+`  Highest priority  ->  wins
+       |
+  Tied?             ->  highest Router ID
+
+
+  Default priority is 1.
+  Priority 0 means "I will never be DR or BDR".` },
+              { kind: 'code', h: 'Making a router stay out', code:
+`  interface GigabitEthernet0/0
+   ip ospf priority 0
+
+
+  This router is never DR or BDR.
+  It will always be a DROther.` },
+              { kind: 'para', h: 'It is non-preemptive', p: 'If a router with a higher priority joins the segment after the election has settled, it does **not** take over. The existing DR and BDR keep their roles until the process is cleared or the segment is reset.' },
+              { kind: 'code', h: 'A better router arrives', code:
+`  Election complete: DR = R1 (priority 100)
+
+  R2 joins with priority 255
+       |
+  Nothing changes.
+  R1 stays DR.
+
+
+  To force a re-election:
+    clear ip ospf process` },
+              { kind: 'code', h: 'No DR on point-to-point', code:
+`  Point-to-point        ->  no DR / BDR
+  Point-to-multipoint   ->  no DR / BDR
+  Broadcast             ->  DR / BDR
+  NBMA                  ->  DR / BDR
+
+
+  P2P goes straight to Full with every neighbour.` },
+              { kind: 'table', h: 'The two multicast groups again', cols: ['Address', 'Audience'], rows: [
+                ['224.0.0.5', 'Every OSPF router on the segment'],
+                ['224.0.0.6', 'The DR and BDR only']
+              ]},
+              { kind: 'code', h: 'How traffic actually flows', code:
+`  DROther
+     |
+     |  updates to 224.0.0.6  (DR and BDR only)
+     v
+  DR  -- floods to 224.0.0.5 -->  every router on the segment` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf neighbor
+  show ip ospf interface GigabitEthernet0/0
+  show ip ospf interface GigabitEthernet0/0 | include DR` }
+            ],
+            commands: [
+              { label: 'Set the priority', code:
+`interface GigabitEthernet0/0
+ ip ospf priority 0` },
+              { label: 'Check who won', code:
+`show ip ospf neighbor
+show ip ospf interface GigabitEthernet0/0` },
+              { label: 'Force a re-election', code:
+`clear ip ospf process` }
+            ],
+            traps: [
+              'The election is the **highest** priority, then the **highest** Router ID. Both are highest — do not invert them.',
+              '**Priority 0** means the router is never a DR or BDR.',
+              'The election is **non-preemptive**. A better router joining does not take over until the process is cleared.',
+              'Point-to-point networks have **no DR or BDR** and go straight to Full.',
+              'DROthers staying at 2-Way with each other is normal, not a fault.',
+              '%%224.0.0.6%% is the DR and BDR multicast group; %%224.0.0.5%% is every OSPF router.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Applies to', 'Broadcast and NBMA multi-access networks'],
+                ['Adjacencies without', 'N times N minus one, over two'],
+                ['Adjacencies with', 'N'],
+                ['Election 1', 'Highest priority'],
+                ['Election 2', 'Highest Router ID'],
+                ['Default priority', '1'],
+                ['Priority 0', 'Never DR or BDR'],
+                ['Direction', 'Highest wins'],
+                ['Preemption', 'None'],
+                ['Re-election', 'clear ip ospf process'],
+                ['DR job', 'Collect and relay LSA flooding on the segment'],
+                ['Type 2 originator', 'The DR'],
+                ['224.0.0.5', 'All OSPF routers'],
+                ['224.0.0.6', 'DR and BDR only'],
+                ['Point-to-point', 'No DR or BDR'],
+                ['DROther pair', '2-Way, normal']
+              ]
+            },
+            related: [
+              { t: '04. Neighbor States', d: 'why most neighbours stop at 2-Way' },
+              { t: '06. LSA Types', d: 'the Type 2 the DR originates' },
+              { t: '03. Router ID', d: 'the tie-break' }
+            ],
+            glossary: ['DR BDR', 'OSPF', 'LSA', 'OSPF Neighbor States', 'OSPF Router ID', 'Multicast', 'Link State Database']
+          }
+        ,
+          {
+            id: 't06', num: '06', group: 'lsdb', title: 'LSA Types',
+            blurb: 'Who originates each type, where it floods, and the route code every type produces',
+            overview: '**[[LSA|LSAs]] (Link State Advertisements)** are the building blocks of the **[[Link State Database|LSDB]]**. Each type describes a different part of the topology or of reachability, and the exam wants **who originates which type and where it is allowed to flood**.',
+            keyIdea: 'Types 1 and 2 stay inside the area, 3 and 4 cross between areas, 5 goes domain-wide, and 7 never leaves the NSSA until the ABR turns it into a 5.',
+            sections: [
+              { kind: 'table', h: 'The LSA types', cols: ['Type', 'Name', 'Originator', 'What it describes'], rows: [
+                ['1', 'Router LSA', 'Every router', 'Its own links, inside one area'],
+                ['2', 'Network LSA', '**The DR**', 'A broadcast or NBMA segment and the routers on it'],
+                ['3', 'Summary LSA', 'The ABR', 'Routes from other areas, into this area'],
+                ['4', 'ASBR-Summary LSA', 'The ABR', 'How to reach an ASBR'],
+                ['5', 'AS-External LSA', 'The ASBR', 'Routes redistributed from outside OSPF'],
+                ['6', 'Group-membership LSA', 'MOSPF', 'Obsolete. Not examined'],
+                ['7', 'NSSA-External LSA', 'An ASBR inside an NSSA', 'External routes, inside the NSSA only'],
+                ['8', 'Link-local LSA', 'OSPFv3', 'Link-local reachability, new in v3'],
+                ['9, 10, 11', 'Opaque LSA', 'Varies', 'Traffic engineering, graceful restart and extensions']
+              ]},
+              { kind: 'para', h: 'The DR originates Type 2', p: 'A **Type 2 is originated by the DR, not by every router on the segment**. Every router still originates its own Type 1, but the description of the segment itself belongs to one router — the DR.' },
+              { kind: 'code', h: 'One segment, two origins', code:
+`  R1 --- R2 --- R3   (one broadcast segment, DR = R2)
+
+  Type 1 from R1   ->  "here are my links"
+  Type 1 from R2   ->  "here are my links"
+  Type 1 from R3   ->  "here are my links"
+  Type 2 from R2   ->  "here is THE SEGMENT"
+
+
+  Type 2 is the DR's, singular.` },
+              { kind: 'table', h: 'Flood scope', cols: ['LSA', 'Flooded within'], rows: [
+                ['Type 1 and 2', 'The area only'],
+                ['Type 3 and 4', 'Generated by an ABR, flooded between areas'],
+                ['Type 5', 'The whole OSPF domain, except stub areas'],
+                ['Type 7', 'The NSSA only, converted to Type 5 by the ABR at exit']
+              ]},
+              { kind: 'para', h: 'Type 4 tells you how to find the ASBR', p: 'Type 4 exists to describe **how to reach an [[ASBR]]**. It is needed where an external route\'s forwarding address is not directly reachable, so a router somewhere else in the domain has to be told where the ASBR lives.' },
+              { kind: 'code', h: 'Why Type 4 exists', code:
+`  An external route originated by ASBR R7.
+  A router in another area wants to use it
+  but has no idea where R7 is.
+
+
+  Type 4 (from the ABR) -> "R7 is reachable via me"
+
+
+  Needed only when the forwarding address
+  is not directly reachable.` },
+              { kind: 'para', h: 'Type 7 to Type 5 translation happens at the ABR', p: 'An ASBR inside an **[[NSSA]]** originates external routes as **Type 7**, which stay inside the NSSA. At the exit the **ABR translates them to Type 5** for the rest of the domain, and only one ABR does the translating.' },
+              { kind: 'code', h: 'Where the translation happens', code:
+`  ASBR inside the NSSA
+       |
+       |  Type 7, NSSA external
+       v
+  ABR  ---->  Type 5, AS-external
+              domain-wide
+
+
+  Translation is the ABR's job.
+  NOT the ASBR's.` },
+              { kind: 'table', h: 'The route code each type produces', cols: ['LSA', 'Route code'], rows: [
+                ['Type 1 and 2', 'O, intra-area'],
+                ['Type 3', 'O IA, inter-area'],
+                ['Type 5', 'O E1 or O E2'],
+                ['Type 7', 'O N1 or O N2']
+              ]},
+              { kind: 'para', h: 'E1 against E2', p: '**E2 is the default** and carries the external metric advertised by the ASBR. **E1 adds the cost of reaching the ASBR**, so an E1 route is compared on the total cost. The same distinction applies to N1 and N2.' },
+              { kind: 'code', h: 'E1 against E2', code:
+`  E2  ->  the ASBR's advertised external metric (default)
+  E1  ->  external metric + the cost of reaching the ASBR
+
+  Same idea for N1 and N2.` },
+              { kind: 'code', h: 'Reading the database', code:
+`  show ip ospf database
+  show ip ospf database router          ! Type 1
+  show ip ospf database network         ! Type 2
+  show ip ospf database summary         ! Type 3
+  show ip ospf database asbr-summary    ! Type 4
+  show ip ospf database external        ! Type 5
+  show ip ospf database nssa-external   ! Type 7` }
+            ],
+            commands: [
+              { label: 'Read the whole database', code:
+`show ip ospf database` },
+              { label: 'Read one type', code:
+`show ip ospf database router
+show ip ospf database network
+show ip ospf database summary
+show ip ospf database external
+show ip ospf database nssa-external` }
+            ],
+            traps: [
+              'Type 2 is originated by the **DR**, not by every router on the segment.',
+              'Type 4 tells you **how to reach the ASBR**. It is needed when the external route\'s forwarding address is not directly reachable.',
+              'Type 5 is domain-wide but **blocked in stub areas**, which is exactly why the Type 7 NSSA exists.',
+              'Type 7 to Type 5 translation happens at the **ABR**, not at the ASBR.',
+              'Route codes: O for Type 1 and 2, **O IA** for Type 3, **O E1 or O E2** for Type 5, **O N1 or O N2** for Type 7.',
+              '**E2 is the default** and carries only the external metric. E1 includes the cost of reaching the ASBR.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Type 1', 'Router LSA, every router, its links, the area only'],
+                ['Type 2', 'Network LSA, originated by the DR'],
+                ['Type 3', 'Summary LSA, from the ABR, inter-area'],
+                ['Type 4', 'ASBR-Summary, how to reach an ASBR'],
+                ['Type 5', 'AS-External, from the ASBR, domain-wide'],
+                ['Type 6', 'MOSPF, obsolete'],
+                ['Type 7', 'NSSA-External, inside the NSSA only'],
+                ['Type 8', 'Link-local, new in OSPFv3'],
+                ['Types 9 to 11', 'Opaque, traffic engineering and extensions'],
+                ['Type 1 and 2 scope', 'The area'],
+                ['Type 3 and 4 scope', 'Between areas'],
+                ['Type 5 scope', 'The domain, except stub areas'],
+                ['Type 7 scope', 'The NSSA'],
+                ['Translation', 'At the ABR, Type 7 to Type 5'],
+                ['O', 'Intra-area, Type 1 and 2'],
+                ['O IA', 'Inter-area, Type 3'],
+                ['O E1 and O E2', 'External, Type 5'],
+                ['O N1 and O N2', 'NSSA external, Type 7']
+              ]
+            },
+            related: [
+              { t: '07. SPF Algorithm', d: 'what runs over the LSDB' },
+              { t: '09. Stub', d: 'the areas that filter these types' },
+              { t: '11. NSSA', d: 'where Type 7 comes from' }
+            ],
+            glossary: ['LSA', 'Link State Database', 'ABR', 'ASBR', 'NSSA', 'Stub Area', 'DR BDR', 'OSPF Area', 'OSPF']
+          },
+          {
+            id: 't07', num: '07', group: 'lsdb', title: 'SPF Algorithm',
+            blurb: 'Dijkstra rooted at itself, per-area runs, and why flooding is not the same thing as SPF',
+            overview: 'OSPF computes routes with **Dijkstra\'s [[SPF Algorithm|shortest-path-first algorithm]]**. Each router runs SPF over its **[[Link State Database|LSDB]]** to build a shortest-path tree to every destination, **rooted at itself**.',
+            keyIdea: 'Because every router holds an identical LSDB, each one derives the same view and loop-free shortest paths deterministically.',
+            sections: [
+              { kind: 'code', h: 'The sequence', code:
+`  Discover neighbors
+       |
+  Learn link information
+       |
+  Exchange link-state information
+       |
+  Build the LSDB
+       |
+  Run SPF, Dijkstra
+       |
+  Calculate the best paths
+       |
+  Install routes in the RIB` },
+              { kind: 'para', h: 'Flooding is not SPF', p: 'These are two separate things that students routinely merge. **Flooding shares the LSDB** between routers. **SPF computes the tree** from that database. Flooding can complete while SPF has not run at all.' },
+              { kind: 'table', h: 'Flooding against SPF', cols: ['', 'Flooding', 'SPF'], rows: [
+                ['Job', 'Distribute the LSAs', 'Compute the shortest-path tree'],
+                ['Who', 'Every router relaying', 'Each router independently'],
+                ['Result', 'An identical LSDB everywhere', 'Routes in the RIB'],
+                ['When', 'On every topology change', 'After the database settles, on a throttle timer']
+              ]},
+              { kind: 'para', h: 'SPF runs per area', p: 'A change in one area triggers SPF **only for that area**. This is the main reason areas exist at all — they bound the SPF computation, and it is also why inter-area routes change when an area\'s summary changes.' },
+              { kind: 'code', h: 'One area, one run', code:
+`  Area 0 topology changes
+       |
+  Area 0 SPF runs
+  Area 1 SPF does NOT run
+
+  unless inter-area summaries change too.` },
+              { kind: 'para', h: 'What SPF minimises', p: 'SPF minimises the **cumulative cost** of the path. It does not count hops. A route over two expensive links can lose to a route over three cheap ones.' },
+              { kind: 'code', h: 'Cost against hops', code:
+`  Path A:  3 links, total cost 30
+  Path B:  2 links, total cost 45
+
+  SPF picks Path A.
+  It minimises cost, NOT hop count.` },
+              { kind: 'para', h: 'Making it converge faster', p: 'Two mechanisms matter here. **%%timers throttle spf%%** sets the initial delay, the hold between runs and the maximum delay. **ISPF**, incremental SPF, recomputes only the part of the tree a change actually affects rather than the whole tree.' },
+              { kind: 'code', h: 'The throttle timers', code:
+`  router ospf 1
+   timers throttle spf 5000 10000 10000
+
+                        initial  hold   maximum
+                          delay   delay    delay
+                           ms      ms      ms
+
+  Defaults are 5000, 10000, 10000.` },
+              { kind: 'code', h: 'What the output looks like', code:
+`  show ip route ospf
+
+  O        10.20.0.0/16 [110/20] via 192.0.2.6
+  O IA     10.30.0.0/16 [110/30] via 192.0.2.10
+
+  O     comes from the SPF tree itself
+  O IA  comes from a Type 3 arriving at the tree's edge` },
+              { kind: 'para', h: 'Each router is independent', p: 'No router tells another what the best path is. Every router runs SPF on its own copy of the LSDB, which is what makes the result loop-free by construction rather than by agreement.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf statistics
+  show ip ospf route
+  show ip ospf database
+  show ip route ospf` }
+            ],
+            commands: [
+              { label: 'Watch SPF run', code:
+`debug ip ospf events
+show ip ospf statistics` },
+              { label: 'Set the SPF throttle', code:
+`router ospf 1
+ timers throttle spf 5000 10000 10000` },
+              { label: 'See the result', code:
+`show ip route ospf
+show ip ospf route` }
+            ],
+            traps: [
+              'SPF is **Dijkstra\'s algorithm** and each router computes independently.',
+              'SPF runs **per area**. A change in one area does not recompute the others, unless inter-area summaries change.',
+              '**Flooding is not SPF.** Flooding shares the LSDB; SPF computes the tree.',
+              'SPF minimises the **cumulative cost**, not the hop count.',
+              '%%timers throttle spf%% and **ISPF** are the fast-convergence answers.',
+              'The SPF output is the %%O%% route code, and **O IA** comes from a Type 3 arriving at the tree\'s edge.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Algorithm', 'Dijkstra’s shortest path first'],
+                ['Rooted at', 'The router itself'],
+                ['Input', 'The LSDB'],
+                ['Output', 'A shortest-path tree, and routes in the RIB'],
+                ['Deterministic', 'Yes — identical LSDBs give identical views'],
+                ['Loop-free', 'By construction'],
+                ['Minimises', 'Cumulative cost, not hops'],
+                ['Scope', 'Per area'],
+                ['Against flooding', 'Flooding distributes, SPF computes'],
+                ['Throttle timers', 'Initial delay, hold, maximum delay'],
+                ['Defaults', '5000, 10000, 10000 milliseconds'],
+                ['ISPF', 'Incremental SPF, recomputes only what changed'],
+                ['Route code', 'O for intra-area, O IA for inter-area']
+              ]
+            },
+            related: [
+              { t: '06. LSA Types', d: 'what the LSDB is built from' },
+              { t: '08. Areas', d: 'what bounds the computation' },
+              { t: '14. Summarization', d: 'what keeps the tree small' }
+            ],
+            glossary: ['SPF Algorithm', 'Link State Database', 'LSA', 'OSPF', 'OSPF Area', 'OSPF Cost', 'Routing Table', 'Routing Loop', 'Control Plane']
+          },
+          {
+            id: 't08', num: '08', group: 'areas', title: 'Areas',
+            blurb: 'Why Area 0 is mandatory, the exact ABR definition, and which routers sit where',
+            overview: '**[[OSPF Area|OSPF areas]]** partition the domain so that flooding and **[[SPF Algorithm|SPF]]** computation are bounded. Every area keeps its own **[[Link State Database|LSDB]]**, and **Area 0, the backbone, is mandatory** — every other area has to reach it, directly or through a [[Virtual Link|virtual link]].',
+            keyIdea: 'An ABR has interfaces in at least two areas and one of them must be Area 0. Inter-area traffic always transits the backbone.',
+            sections: [
+              { kind: 'code', h: 'The hierarchy', code:
+`           +------------------+
+           |      Area 0      |   backbone, mandatory
+           |     (core)       |
+           +---+----------+---+
+               |          |
+        +------+------+  +------+------+
+        |    Area 1   |  |   Area 2    |
+        +-------------+  +-------------+
+
+  Every area touches the backbone.
+  Inter-area traffic transits Area 0.` },
+              { kind: 'para', h: 'Why areas exist', p: 'A single flat area means every router floods every LSA and runs SPF over the entire topology. Splitting into areas means a change inside one area only triggers SPF there, and the summaries at the border hide the details from everyone else.' },
+              { kind: 'code', h: 'What an area bounds', code:
+`  Inside area 1
+    Type 1 and Type 2 flooding stops here
+    SPF runs here on a change
+
+  Across the border
+    Only Type 3 summaries leave
+    The rest of the domain never sees area 1's detail` },
+              { kind: 'table', h: 'The router roles', cols: ['Role', 'Definition'], rows: [
+                ['ABR', 'Has interfaces in **at least two areas**, one of which is Area 0. Originates Type 3 summaries'],
+                ['ASBR', '**Redistributes** routes from outside OSPF into the domain. Originates Type 5'],
+                ['Internal router', 'All its interfaces are in one area'],
+                ['Backbone router', 'Has at least one interface in Area 0']
+              ]},
+              { kind: 'para', h: 'The ABR definition is exact', p: 'The exam definition is **an interface in two or more areas, at least one of them Area 0**. "It is between two areas" is not precise enough — both halves of the definition are tested.' },
+              { kind: 'code', h: 'ABR against ASBR', code:
+`  ABR    ->  between areas.  Type 3 summaries.
+             Needs an interface in Area 0.
+
+  ASBR   ->  between OSPF and the outside.
+             Type 5 externals.
+             Can be anywhere, including an ABR.` },
+              { kind: 'para', h: 'Every router in an area must agree', p: 'The area type — standard, stub, totally stubby, NSSA — has to match on **every router in that area**. A half-configured area does not degrade gracefully; the adjacencies simply fail.' },
+              { kind: 'code', h: 'All or nothing', code:
+`  Router A:  area 1 stub
+  Router B:  area 1          <- mismatch
+
+  Adjacency fails.
+  The area type must match on every router.` },
+              { kind: 'para', h: 'Area 0 has its own limits', p: 'Area 0 is the transit area for everything, so it cannot itself be a stub, a totally stubby area or an NSSA, and it cannot be the transit area of a virtual link.' },
+              { kind: 'code', h: 'Configuring areas', code:
+`  router ospf 1
+   network 10.0.0.0 0.0.0.255 area 0
+   network 10.1.0.0 0.0.0.255 area 1
+
+  ! or on the interface, unambiguous
+  interface GigabitEthernet0/1
+   ip ospf 1 area 1` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf border-routers
+  show ip ospf database
+  show ip route ospf` }
+            ],
+            commands: [
+              { label: 'Assign interfaces to areas', code:
+`router ospf 1
+ network 10.0.0.0 0.0.0.255 area 0
+ network 10.1.0.0 0.0.0.255 area 1` },
+              { label: 'See the border routers', code:
+`show ip ospf border-routers
+show ip ospf` },
+              { label: 'Check what was installed', code:
+`show ip route ospf` }
+            ],
+            traps: [
+              'Every area must touch Area 0, directly or through a virtual link.',
+              'The ABR definition is an interface in **two or more areas with at least one in Area 0**.',
+              'Area 0 is the mandatory transit for inter-area traffic.',
+              'Areas bound Type 1 and Type 2 flooding and the SPF run. Type 5 is domain-wide unless the area is stub.',
+              'ABR summarization is the **area range** tool — it is not configurable inside an area.',
+              'The area type must **match on every router** in the area, or the adjacencies fail.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Bound flooding and SPF computation'],
+                ['Backbone', 'Area 0, mandatory'],
+                ['Connectivity', 'Every area reaches the backbone'],
+                ['Repair option', 'A virtual link through a transit area'],
+                ['ABR', 'Two or more areas, one of them Area 0'],
+                ['ABR produces', 'Type 3 summaries'],
+                ['ASBR', 'Redistributes outside routes'],
+                ['ASBR produces', 'Type 5 externals'],
+                ['Internal router', 'All interfaces in one area'],
+                ['Backbone router', 'At least one interface in Area 0'],
+                ['Bounded', 'Type 1, Type 2 and the SPF run'],
+                ['Area type', 'Must match on every router'],
+                ['Area 0 restrictions', 'Cannot be stub, totally stubby, NSSA or a virtual-link transit']
+              ]
+            },
+            related: [
+              { t: '14. Summarization', d: 'what the ABR does with the routes' },
+              { t: '12. Virtual Links', d: 'the repair when an area cannot reach 0' },
+              { t: '09. Stub', d: 'the restricted area types' }
+            ],
+            glossary: ['OSPF Area', 'ABR', 'ASBR', 'Link State Database', 'SPF Algorithm', 'OSPF', 'Virtual Link', 'LSA']
+          },
+          {
+            id: 't09', num: '09', group: 'areas', title: 'Stub Area',
+            blurb: 'Blocks Type 5 and Type 4, injects a Type 3 default, and refuses to hold an ASBR',
+            overview: 'A **[[Stub Area|stub area]]** is a non-backbone area that **blocks Type 5 [[LSA]]s from entering**. Routers inside see no external routes, and the **[[ABR]] injects a default route, as a Type 3**, so outbound traffic still works.',
+            keyIdea: 'The area gives up external detail in exchange for a smaller LSDB, and buys its reachability back with one default route.',
+            sections: [
+              { kind: 'table', h: 'What a stub area allows', cols: ['LSA', 'Allowed in a stub'], rows: [
+                ['Type 1', 'Yes — intra-area topology'],
+                ['Type 2', 'Yes — the DR\'s segment description'],
+                ['Type 3', 'Yes, plus the ABR\'s injected default'],
+                ['Type 4', '**Blocked**'],
+                ['Type 5', '**Blocked**'],
+                ['Type 7', 'Not applicable']
+              ]},
+              { kind: 'code', h: 'What gets filtered', code:
+`  Type 1 and 2   ->  kept, intra-area topology
+  Type 3         ->  kept, inter-area routes
+  Type 4         ->  BLOCKED
+  Type 5         ->  BLOCKED
+  Default route  ->  injected by the ABR as a Type 3` },
+              { kind: 'para', h: 'The default route is the trade', p: 'Once Type 5s are blocked the outside world has no specifics, so the ABR has to offer a way out. It injects a **default route as a Type 3**, and every router inside the area uses it for anything outside.' },
+              { kind: 'code', h: 'One route replaces them all', code:
+`  Before:  hundreds of O E2 externals
+
+  After:   one default route
+
+  0.0.0.0/0 via the ABR
+
+  Smaller LSDB. Fewer SPF runs. Same reachability.` },
+              { kind: 'para', h: 'No ASBR inside a stub', p: 'A stub area **cannot contain an [[ASBR]]**, because an ASBR would originate external routes and the whole point of the area type is to keep them out. The answer to "can I redistribute here?" in a stub area is no — that is what [[NSSA]] is for.' },
+              { kind: 'code', h: 'The restriction', code:
+`  Stub area + redistribution  ->  NO
+
+  An ASBR would originate Type 5.
+  A stub blocks Type 5.
+  Contradiction.
+
+
+  Use an NSSA when you need both.` },
+              { kind: 'para', h: 'Other restrictions', p: 'A stub area cannot be **Area 0**, and it cannot be the transit area of a [[Virtual Link|virtual link]]. Both are consequences of the same rule — a stub is deliberately not a transit.' },
+              { kind: 'table', h: 'The restrictions', cols: ['Restriction', 'Why'], rows: [
+                ['No ASBR permitted', 'External routes are exactly what it filters'],
+                ['Cannot be Area 0', 'The backbone carries everything'],
+                ['Cannot transit a virtual link', 'A stub is not a transit area'],
+                ['Every router must be stub', 'A half-configured area breaks adjacencies']
+              ]},
+              { kind: 'code', h: 'Configuring it', code:
+`  ! on EVERY router in the area
+  router ospf 1
+   area 1 stub
+
+  ! the ABR can advertise the default with a cost
+  router ospf 1
+   area 1 stub default-cost 20` },
+              { kind: 'para', h: 'External reach is a default only', p: 'A stub router never sees the specifics of the outside world. That is a deliberate simplification and it is also the limitation to name when the question asks what a stub area loses.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf database
+  show ip route ospf
+  show ip ospf neighbor` }
+            ],
+            commands: [
+              { label: 'Make the area stub', code:
+`router ospf 1
+ area 1 stub` },
+              { label: 'Set the default cost on the ABR', code:
+`router ospf 1
+ area 1 stub default-cost 20` },
+              { label: 'Verify', code:
+`show ip ospf database
+show ip route ospf` }
+            ],
+            traps: [
+              'A stub area **blocks Type 5 and Type 4** and injects a default route as a **Type 3**.',
+              '**No ASBR is permitted** inside a stub area. Redistribution there is not possible.',
+              'It cannot be Area 0, and it cannot transit a virtual link.',
+              '**Every router in the area must be configured stub.** Half-and-half breaks the adjacencies.',
+              'External reachability comes from the **default route** only — a stub never sees outside specifics.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Reduce LSDB size and flooding by filtering externals'],
+                ['Blocks', 'Type 4 and Type 5'],
+                ['Allows', 'Type 1, Type 2 and Type 3'],
+                ['Injects', 'A default route, as a Type 3'],
+                ['Originator of the default', 'The ABR'],
+                ['Cost of the default', 'Set with stub default-cost'],
+                ['ASBR', 'Not permitted'],
+                ['Cannot be', 'Area 0'],
+                ['Cannot transit', 'A virtual link'],
+                ['Configuration', 'area X stub on every router'],
+                ['External visibility', 'The default route only'],
+                ['Alternative for redistribution', 'NSSA']
+              ]
+            },
+            related: [
+              { t: '10. Totally Stubby', d: 'the more restrictive variant' },
+              { t: '11. NSSA', d: 'what to use when you must redistribute' },
+              { t: '06. LSA Types', d: 'the types it filters' }
+            ],
+            glossary: ['Stub Area', 'LSA', 'ABR', 'ASBR', 'NSSA', 'OSPF Area', 'Default Route', 'Link State Database']
+          },
+          {
+            id: 't10', num: '10', group: 'areas', title: 'Totally Stubby',
+            blurb: 'stub no-summary on the ABR only, and the smallest practical LSDB an area can have',
+            overview: 'A **[[Totally Stubby Area|totally stubby area]]** is a **[[Stub Area|stub area]] that also blocks Type 3 inter-area summary [[LSA|LSAs]]**. Inside it there are only intra-area routes and the **[[ABR]]\'s injected default route**.',
+            keyIdea: 'no-summary goes on the ABR only. The internal routers still use the plain stub command.',
+            sections: [
+              { kind: 'table', h: 'What survives', cols: ['LSA', 'In a totally stubby area'], rows: [
+                ['Type 1', 'Yes — intra-area topology'],
+                ['Type 2', 'Yes — the DR\'s segment description'],
+                ['Type 3', '**Blocked**, except the injected default'],
+                ['Type 4', '**Blocked**'],
+                ['Type 5', '**Blocked**']
+              ]},
+              { kind: 'code', h: 'The difference from plain stub', code:
+`  Stub          blocks 4 and 5
+  Totally stubby blocks 3, 4 and 5
+
+  What is left:
+    intra-area routes (Type 1 and 2)
+    plus ONE default route (Type 3)` },
+              { kind: 'para', h: 'no-summary goes on the ABR', p: 'The %%no-summary%% keyword is configured **on the ABR only**. The routers inside the area are configured with the ordinary %%area X stub%%, exactly as they would be for a plain stub.' },
+              { kind: 'code', h: 'The two halves of the config', code:
+`  ! on the ABR
+  router ospf 1
+   area 1 stub no-summary
+
+  ! on every INTERNAL router in area 1
+  router ospf 1
+   area 1 stub
+
+
+  no-summary on the ABR only.` },
+              { kind: 'para', h: 'The route code of the injected default', p: 'The default route the ABR injects shows up as **%%O*IA%%** — an OSPF inter-area route that is also the default. That code is the fingerprint of the mechanism.' },
+              { kind: 'code', h: 'What you see in the table', code:
+`  show ip route ospf
+
+  O        10.10.0.0/16 [110/20] via ...   ! intra-area
+  O*IA     0.0.0.0/0    [110/1] via ...    ! the injected default
+
+
+  O*IA = inter-area, and it is the default.` },
+              { kind: 'para', h: 'It inherits every stub restriction', p: 'No [[ASBR]], cannot be Area 0, cannot transit a [[Virtual Link|virtual link]], and every router in the area has to agree on the type. Nothing about the extra restriction relaxes any of the original constraints.' },
+              { kind: 'code', h: 'The same constraints', code:
+`  No ASBR              ->  same
+  Not Area 0           ->  same
+  No virtual-link transit ->  same
+  All routers must match ->  same` },
+              { kind: 'para', h: 'It is the smallest practical area', p: 'For a question asking which area type has the smallest LSDB, the answer is **totally stubby** — intra-area topology plus one default route is the least OSPF can carry and still be a working area.' },
+              { kind: 'code', h: 'Size, ranked', code:
+`  Standard area      largest
+       |
+  Stub                Type 5 blocked
+       |
+  Totally stubby      Type 3, 4 and 5 blocked   <- smallest
+       |
+  NSSA                stub-sized, plus local Type 7` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf database
+  show ip route ospf
+  show ip ospf database summary` }
+            ],
+            commands: [
+              { label: 'The ABR side', code:
+`router ospf 1
+ area 1 stub no-summary` },
+              { label: 'The internal routers', code:
+`router ospf 1
+ area 1 stub` },
+              { label: 'Verify', code:
+`show ip ospf database
+show ip route ospf` }
+            ],
+            traps: [
+              '%%stub no-summary%% goes **only on the ABR**. Internal routers use plain %%stub%%.',
+              'It blocks **Type 3, 4 and 5**, leaving only the injected default and intra-area routes.',
+              'It inherits every stub constraint: **no ASBR, not Area 0, no virtual-link transit**, and all routers must match.',
+              'The injected default appears as **%%O*IA%%**.',
+              '"Which area type has the smallest LSDB?" → **totally stubby**.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Totally stubby area'],
+                ['Cisco syntax', 'area X stub no-summary'],
+                ['Where no-summary goes', 'The ABR only'],
+                ['Internal routers', 'Plain area X stub'],
+                ['Blocks', 'Type 3, 4 and 5'],
+                ['Allows', 'Type 1, Type 2, plus the injected default'],
+                ['Injected default code', 'O*IA'],
+                ['LSDB size', 'The smallest practical'],
+                ['ASBR', 'Not permitted'],
+                ['Cannot be', 'Area 0'],
+                ['Cannot transit', 'A virtual link'],
+                ['All routers must match', 'Yes']
+              ]
+            },
+            related: [
+              { t: '09. Stub', d: 'the variant it extends' },
+              { t: '11. NSSA', d: 'the stub variant that allows an ASBR' },
+              { t: '06. LSA Types', d: 'the Type 3 it blocks' }
+            ],
+            glossary: ['Totally Stubby Area', 'Stub Area', 'LSA', 'ABR', 'Default Route', 'OSPF Area', 'Virtual Link', 'ASBR']
+          }
+        ,
+          {
+            id: 't11', num: '11', group: 'areas', title: 'NSSA',
+            blurb: 'Stub that allows a local ASBR: Type 7 inside, translated to Type 5 at the ABR',
+            overview: 'A **[[NSSA|Not-So-Stubby Area]]** is a **[[Stub Area|stub area]] that permits an [[ASBR]]**. External routes are injected as **Type 7 [[LSA|LSAs]]** that stay inside the area, and the **[[ABR]] translates them to Type 5** as they leave.',
+            keyIdea: 'It solves the stub paradox: a small LSDB with local redistribution still allowed. Type 5 stays blocked from entering, and the default route is optional rather than automatic.',
+            sections: [
+              { kind: 'code', h: 'The paradox it solves', code:
+`  Stub area
+    small LSDB
+    no ASBR
+    -> "I cannot redistribute my local routes"
+
+  NSSA
+    small LSDB
+    ASBR permitted
+    -> redistribution inside, filtered outside` },
+              { kind: 'para', h: 'Type 7 inside, Type 5 outside', p: 'The ASBR inside the NSSA originates **Type 7**. Those LSAs flood only within the area. At the exit the **ABR translates them to Type 5** so the rest of the domain can see the routes — and **only one ABR does the translating**.' },
+              { kind: 'code', h: 'The translation', code:
+`  ASBR inside NSSA area 1
+       |
+       |  Type 7
+       |  floods inside area 1 only
+       v
+  ABR  -- translate -->  Type 5
+       |
+       v
+  Area 0 and the rest of the domain
+
+
+  Translation is the ABR's job.
+  Only one ABR translates.` },
+              { kind: 'table', h: 'What an NSSA filters', cols: ['LSA', 'In an NSSA'], rows: [
+                ['Type 1', 'Yes, intra-area'],
+                ['Type 2', 'Yes, the DR\'s segment description'],
+                ['Type 3', 'Yes, inter-area routes'],
+                ['Type 4', 'Blocked'],
+                ['Type 5', '**Blocked from entering**'],
+                ['Type 7', 'Yes, originated by the local ASBR']
+              ]},
+              { kind: 'para', h: 'Type 5 is still blocked inbound', p: 'NSSA does not open the door to external routes from the rest of the domain. Type 5 is still filtered on the way in, which is what keeps the LSDB small. The only externals it carries are the ones it created itself.' },
+              { kind: 'code', h: 'Direction matters', code:
+`  Type 5 heading IN to the NSSA   ->  blocked
+  Type 7 originating inside       ->  kept
+  Type 7 leaving, as Type 5       ->  advertised out` },
+              { kind: 'para', h: 'The default route is optional', p: 'In a plain stub area the ABR injects a default automatically. In an **NSSA the default route is optional** and must be asked for. That is one of the concrete differences between the two.' },
+              { kind: 'code', h: 'Optional, not automatic', code:
+`  Stub           ->  default injected automatically
+  Totally stubby ->  default injected automatically
+  NSSA           ->  default is OPTIONAL
+
+
+  Ask for it:
+    area 1 nssa default-information-originate` },
+              { kind: 'code', h: 'Configuring it', code:
+`  ! on every router in the area
+  router ospf 1
+   area 1 nssa
+
+  ! optionally, on the ABR, to inject a default
+  router ospf 1
+   area 1 nssa default-information-originate
+
+  ! the totally NSSA variant, on the ABR
+  router ospf 1
+   area 1 nssa no-summary` },
+              { kind: 'table', h: 'Route codes', cols: ['Code', 'Meaning'], rows: [
+                ['O N1', 'NSSA external, cost includes the path to the ASBR'],
+                ['O N2', 'NSSA external, the advertised metric only. The default'],
+                ['O E1 and O E2', 'Ordinary external codes, from a Type 5']
+              ]},
+              { kind: 'code', h: 'N1 against N2', code:
+`  N2  ->  the ASBR's advertised metric          (default)
+  N1  ->  external metric + the cost to the ASBR
+
+
+  Same relationship as E1 and E2.` },
+              { kind: 'para', h: 'Totally NSSA', p: 'Adding **%%no-summary%%** to the NSSA command blocks the Type 3 inter-area summaries as well, leaving intra-area routes, local Type 7s and the injected default. The %%no-summary%% keyword still goes on the **[[ABR]]** only.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip ospf database
+  show ip ospf database nssa-external
+  show ip route ospf` }
+            ],
+            commands: [
+              { label: 'Make the area an NSSA', code:
+`router ospf 1
+ area 1 nssa` },
+              { label: 'Optionally inject a default', code:
+`router ospf 1
+ area 1 nssa default-information-originate` },
+              { label: 'Verify', code:
+`show ip ospf database nssa-external
+show ip route ospf` }
+            ],
+            traps: [
+              'An NSSA is a **stub area that allows a local ASBR**. That is the whole difference.',
+              'Type 7 is originated by the **ASBR inside the NSSA**, and the **ABR** translates it to Type 5.',
+              'The **ABR** does the translation, not the ASBR, and only one ABR translates.',
+              'Type 5 is still **blocked from entering** the NSSA.',
+              'The default route is **optional** in an NSSA, unlike the automatic injection in a stub.',
+              'Route codes are **O N1** and **O N2**, the NSSA equivalents of E1 and E2.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Not-So-Stubby Area'],
+                ['What it adds to stub', 'A permitted ASBR'],
+                ['Local externals', 'Type 7, inside the area only'],
+                ['Translation', 'Type 7 to Type 5, at the ABR'],
+                ['Who translates', 'One ABR'],
+                ['Type 5 inbound', 'Blocked'],
+                ['Default route', 'Optional, requested explicitly'],
+                ['Request it', 'area X nssa default-information-originate'],
+                ['Totally NSSA', 'area X nssa no-summary, on the ABR'],
+                ['Route codes', 'O N1 and O N2'],
+                ['N2', 'The advertised metric only, the default'],
+                ['N1', 'Includes the cost of reaching the ASBR'],
+                ['Cannot be', 'Area 0'],
+                ['All routers must match', 'Yes']
+              ]
+            },
+            related: [
+              { t: '09. Stub', d: 'the area type it is based on' },
+              { t: '06. LSA Types', d: 'where Type 7 fits' },
+              { t: '10. Totally Stubby', d: 'the no-summary variant' }
+            ],
+            glossary: ['NSSA', 'Stub Area', 'LSA', 'ASBR', 'ABR', 'Default Route', 'OSPF Area', 'Totally Stubby Area']
+          },
+          {
+            id: 't12', num: '12', group: 'areas', title: 'Virtual Links',
+            blurb: 'The last-resort repair: a transit area that must be standard, and Area 0 cannot be it',
+            overview: 'A **[[Virtual Link|virtual link]]** is a logical OSPF adjacency that connects an area to **Area 0 through a transit area**, or patches a **discontiguous backbone**. It is a **repair mechanism, not a design tool**.',
+            keyIdea: 'The transit area must be a standard area, Area 0 cannot be the transit area, and it is configured on both ABRs using their Router IDs.',
+            sections: [
+              { kind: 'code', h: 'The two problems it solves', code:
+`  Problem 1: an area with no path to Area 0
+
+       Area 1 --- Area 2 (transit) --- Area 0
+                  ^
+                  virtual link through Area 2
+
+
+  Problem 2: a backbone split in two
+
+       Area 0a --- Area 2 (transit) --- Area 0b
+                  ^
+                  virtual link repairs Area 0` },
+              { kind: 'para', h: 'The transit area must be standard', p: 'The transit area has to be a **standard area** — it cannot be stub, totally stubby or an NSSA. A restricted area filters the very LSAs the virtual link depends on to stay up.' },
+              { kind: 'table', h: 'The constraints', cols: ['Constraint', 'Rule'], rows: [
+                ['Transit area', 'Must be a standard area, not stub, totally stubby or NSSA'],
+                ['Area 0 as transit', '**Not allowed**'],
+                ['Configured on', 'Both ABRs at either end'],
+                ['Named by', 'The peer Router ID'],
+                ['Status check', '%%show ip ospf virtual-links%%'],
+                ['Role', 'A repair, not a design tool']
+              ]},
+              { kind: 'para', h: 'Configured on both ends by Router ID', p: 'Each end names the **[[OSPF Router ID|Router ID]]** of the ABR at the other end. Getting the two Router IDs reversed is the classic configuration mistake, and the link simply never comes up.' },
+              { kind: 'code', h: 'Both ends, mirrored', code:
+`  ! on ABR-1, naming ABR-2's RID
+  router ospf 1
+   area 2 virtual-link 2.2.2.2
+
+  ! on ABR-2, naming ABR-1's RID
+  router ospf 1
+   area 2 virtual-link 1.1.1.1
+
+
+  Area 2 is the TRANSIT area on both sides.
+  The RID named is the PEER at the other end.` },
+              { kind: 'para', h: 'Area 0 cannot be the transit area', p: 'A virtual link exists to reach the backbone, so using the backbone as its own transit is circular and is rejected. The transit area has to be a non-backbone, standard area.' },
+              { kind: 'code', h: 'The circularity', code:
+`  area 0 virtual-link 2.2.2.2
+
+  This makes no sense.
+  Area 0 is what the virtual link is trying to reach.` },
+              { kind: 'para', h: 'It is a repair, not a design', p: 'A virtual link masks a topology that should have been fixed — usually an area that was attached in the wrong place, or a backbone that was never made contiguous. It adds SPF complexity and a new failure mode, so a design answer should avoid it unless the question explicitly asks how to repair a break.' },
+              { kind: 'code', h: 'What it costs', code:
+`  Extra SPF complexity
+  A dependency on the transit area staying standard
+  Another adjacency that can fail
+  A topology that is harder to reason about
+
+  Fix the physical topology when you can.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf virtual-links
+  show ip ospf neighbor
+  show ip ospf
+  show ip ospf database` }
+            ],
+            commands: [
+              { label: 'Configure both ends', code:
+`router ospf 1
+ area 2 virtual-link 2.2.2.2
+
+router ospf 1
+ area 2 virtual-link 1.1.1.1` },
+              { label: 'Check the state', code:
+`show ip ospf virtual-links
+show ip ospf neighbor` }
+            ],
+            traps: [
+              'The **transit area must be a standard area** — not stub, not totally stubby, not NSSA.',
+              '**Area 0 cannot be the transit area.**',
+              'It is configured on **both ABRs**, each naming the **peer Router ID**.',
+              'It connects an isolated area to Area 0 **or** repairs a discontiguous backbone.',
+              'It is a **repair mechanism**. A design answer should avoid it unless asked to fix a break.',
+              '%%show ip ospf virtual-links%% is the state check.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'OSPF virtual link'],
+                ['Purpose', 'Connect an area to the backbone, or patch a split Area 0'],
+                ['Physical', 'No — a logical adjacency'],
+                ['Transit area', 'A standard area only'],
+                ['Area 0 as transit', 'Not allowed'],
+                ['Configured on', 'Both ABRs'],
+                ['Named by', 'The peer Router ID'],
+                ['Restrictions it inherits', 'The transit area must carry the LSAs'],
+                ['Role', 'A repair, not a design'],
+                ['Cost', 'SPF complexity and another failure point'],
+                ['Verification', 'show ip ospf virtual-links']
+              ]
+            },
+            related: [
+              { t: '08. Areas', d: 'the rule it exists to work around' },
+              { t: '03. Router ID', d: 'what each end is named by' },
+              { t: '09. Stub', d: 'area types it cannot use as transit' }
+            ],
+            glossary: ['Virtual Link', 'OSPF Area', 'ABR', 'OSPF Router ID', 'Stub Area', 'NSSA', 'Link State Database']
+          },
+          {
+            id: 't13', num: '13', group: 'ops', title: 'Authentication',
+            blurb: 'Plaintext against message digest, why a mismatch stalls at Init, and what OSPFv3 does instead',
+            overview: '**[[OSPF Authentication]]** validates the origin of **Hello** and **[[LSA]]** packets so that a rogue router cannot join the domain or inject routes. OSPFv2 supports **null, plaintext and message-digest** authentication carried in the packet.',
+            keyIdea: 'A mismatch presents as a neighbour stuck in Init. OSPFv3 has no OSPF-level authentication at all and hands the job to IPv6 AH and ESP.',
+            sections: [
+              { kind: 'table', h: 'The OSPFv2 types', cols: ['Type', 'Name', 'Security'], rows: [
+                ['0', 'Null, no authentication', 'None'],
+                ['1', 'Plaintext password', 'Weak — the key crosses the wire in clear'],
+                ['2', 'Message digest, MD5', 'Strong — the key is never sent'],
+                ['3 to 5', 'SHA variants', 'Stronger still']
+              ]},
+              { kind: 'code', h: 'Plaintext against message digest', code:
+`  Plaintext (Type 1)
+    the password is IN the packet
+    anyone on the wire can read it
+
+  Message digest (Type 2)
+    a hash is sent, the key is NOT
+    the shared key proves the sender` },
+              { kind: 'para', h: 'A mismatch stalls at Init', p: 'When the authentication type or the key disagrees between two routers, the Hellos arrive but are rejected, so the neighbour never makes it past **Init**. That state is the diagnostic clue.' },
+              { kind: 'code', h: 'The symptom', code:
+`  show ip ospf neighbor
+
+  2.2.2.2    INIT     -   -   ...
+
+
+  Stuck in INIT
+       |
+       +-- authentication type or key mismatch
+       +-- or one-way connectivity / multicast blocked` },
+              { kind: 'para', h: 'Per interface or per area', p: 'Authentication can be configured **on an interface** or **across a whole area**. The area form applies to every interface in that area, and the interface form is the more granular of the two.' },
+              { kind: 'code', h: 'Both forms', code:
+`  ! per interface
+  interface GigabitEthernet0/0
+   ip ospf authentication message-digest
+   ip ospf message-digest-key 1 md5 SECRET
+
+  ! per area
+  router ospf 1
+   area 0 authentication message-digest
+  interface GigabitEthernet0/0
+   ip ospf message-digest-key 1 md5 SECRET` },
+              { kind: 'para', h: 'Virtual links need their own configuration', p: 'A **[[Virtual Link|virtual link]]** is a logical interface, and it does not inherit the authentication of the interfaces it runs over. It needs its own authentication line, configured under the %%virtual-link%% command.' },
+              { kind: 'code', h: 'The virtual-link form', code:
+`  router ospf 1
+   area 2 virtual-link 2.2.2.2 authentication message-digest
+   area 2 virtual-link 2.2.2.2 message-digest-key 1 md5 SECRET` },
+              { kind: 'para', h: 'Key rotation', p: 'Keys are rotated with a **sequence number and a key ID**, and **multiple keys are allowed at once**. That is what makes a rolling change possible: both keys exist on both routers for the duration of the roll.' },
+              { kind: 'code', h: 'Rolling two keys', code:
+`  interface GigabitEthernet0/0
+   ip ospf message-digest-key 1 md5 OLDKEY
+   ip ospf message-digest-key 2 md5 NEWKEY
+
+
+  Both routers carry both keys for the duration.` },
+              { kind: 'para', h: 'OSPFv3 hands it to IPsec', p: 'OSPFv3 removed OSPF-level authentication entirely. The equivalent protection comes from **IPv6 AH and ESP**, that is IPsec, which is configured outside OSPF.' },
+              { kind: 'code', h: 'v2 against v3', code:
+`  OSPFv2  ->  OSPF-level: null, plaintext, MD5, SHA
+  OSPFv3  ->  no OSPF-level auth
+              IPv6 AH / ESP, that is IPsec` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf interface GigabitEthernet0/0
+  show ip ospf neighbor
+  show running-config | section router ospf
+  show key chain` }
+            ],
+            commands: [
+              { label: 'Per-interface message digest', code:
+`interface GigabitEthernet0/0
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 SECRET` },
+              { label: 'Per-area message digest', code:
+`router ospf 1
+ area 0 authentication message-digest` },
+              { label: 'On a virtual link', code:
+`router ospf 1
+ area 2 virtual-link 2.2.2.2 authentication message-digest
+ area 2 virtual-link 2.2.2.2 message-digest-key 1 md5 SECRET` },
+              { label: 'Verify', code:
+`show ip ospf interface GigabitEthernet0/0
+show ip ospf neighbor` }
+            ],
+            traps: [
+              '**Type 2, message digest, is the strong one**. Plaintext Type 1 is legacy and exposes the key.',
+              'An authentication mismatch presents as a neighbour **stuck in Init**.',
+              'It can be configured **per interface or per area**, and the area form applies to all its interfaces.',
+              'A **virtual link needs its own authentication configuration** — it does not inherit it.',
+              '**OSPFv3 has no native authentication.** It relies on IPv6 AH and ESP, that is IPsec.',
+              'Key rotation uses a **sequence number and a key ID**, and multiple keys may exist at the same time.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Validate the origin of Hello and LSA packets'],
+                ['OSPFv2 types', 'Null, plaintext, message digest'],
+                ['Type 0', 'Null'],
+                ['Type 1', 'Plaintext password, weak'],
+                ['Type 2', 'MD5 message digest, strong'],
+                ['SHA', 'Types 3 to 5, stronger still'],
+                ['Mismatch symptom', 'Stuck in Init'],
+                ['Scope', 'Per interface or per area'],
+                ['Area form', 'Applies to every interface in the area'],
+                ['Virtual links', 'Need their own authentication line'],
+                ['Rotation', 'Sequence number plus key ID'],
+                ['Multiple keys', 'Allowed, which makes a rolling change possible'],
+                ['OSPFv3', 'No OSPF-level authentication'],
+                ['OSPFv3 security', 'IPv6 AH and ESP, that is IPsec']
+              ]
+            },
+            related: [
+              { t: '15. Troubleshooting', d: 'reading the Init symptom' },
+              { t: '02. OSPFv3', d: 'where the OSPF-level feature was removed' },
+              { t: '04. Neighbor States', d: 'the state it fails in' }
+            ],
+            glossary: ['OSPF Authentication', 'OSPF', 'OSPFv3', 'LSA', 'OSPF Neighbor States', 'Virtual Link', 'MTU']
+          },
+          {
+            id: 't14', num: '14', group: 'ops', title: 'Summarization',
+            blurb: 'area range on the ABR, summary-address on the ASBR, and why inside an area it is impossible',
+            overview: 'OSPF summarises routes **only at the [[ABR]]**, with %%area X range%% for **inter-area** routes, and at the **[[ASBR]]** with %%summary-address%% for **[[Summarization|external]]** routes.',
+            keyIdea: 'OSPF cannot summarise inside an area. Intra-area LSAs are always exact, which is the opposite of the classful auto-summary behaviour students expect from other protocols.',
+            sections: [
+              { kind: 'table', h: 'The two commands', cols: ['', 'area X range', 'summary-address'], rows: [
+                ['Configured on', 'The ABR', 'The ASBR'],
+                ['Summarises', 'Inter-area routes', 'External, redistributed routes'],
+                ['LSA involved', 'Type 3', 'Type 5'],
+                ['Cisco keyword', 'area range', 'summary-address']
+              ]},
+              { kind: 'para', h: 'Not inside an area', p: 'Every router in an area holds an identical **[[Link State Database|LSDB]]**, so intra-area LSAs are always exact. Summarization can only happen **between** areas, at the border — which is why there is no command that summarises inside one.' },
+              { kind: 'code', h: 'Where it can and cannot happen', code:
+`  Inside area 1          ->  NO summarization
+  ABR, area 1 <-> area 0 ->  area 0 range
+  ASBR                   ->  summary-address
+
+
+  Intra-area LSAs are exact.` },
+              { kind: 'code', h: 'The two commands in place', code:
+`  ! ABR: inter-area routes, Type 3
+  router ospf 1
+   area 1 range 10.1.0.0 255.255.252.0
+
+  ! ASBR: external routes, Type 5
+  router ospf 1
+   summary-address 172.16.0.0 255.255.0.0` },
+              { kind: 'para', h: 'not-advertise and discard-route', p: '%%not-advertise%% **suppresses** the summary entirely. %%discard-route%% installs a route to Null0 for the summarised range, which stops traffic for a subnet inside the summary from looping back toward the originator.' },
+              { kind: 'code', h: 'The two modifiers', code:
+`  area 1 range 10.1.0.0 255.255.252.0 not-advertise
+       |
+       +-- the summary is suppressed
+
+  area 1 range 10.1.0.0 255.255.252.0 discard-route
+       |
+       +-- Null0 route for the summarised range
+       +-- prevents a loop for uncovered subnets` },
+              { kind: 'code', h: 'Why discard-route exists', code:
+`  Summary 10.1.0.0/22 points back toward area 1
+  More-specific 10.1.1.0/24 is missing
+
+  Without a discard route:
+    traffic matches the /16, goes back, comes back again
+
+  With one:
+    the /22 attracts it, the /24 is missing,
+    Null0 drops it -> no loop` },
+              { kind: 'para', h: 'It applies to Type 7 as well', p: 'Summarization also applies to **NSSA external routes** at the translating ABR, because once the Type 7 has become a Type 5 it is an ordinary external route and the same tool governs it.' },
+              { kind: 'code', h: 'Type 7 after translation', code:
+`  Type 7 inside the NSSA
+       |
+  translated at the ABR to Type 5
+       |
+  summary-address can summarise it here` },
+              { kind: 'para', h: 'There is no classful auto-summary', p: 'OSPF does not do classful automatic summarization. Any summary is explicit and deliberate, and it has to be an aligned CIDR block.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ospf
+  show ip route ospf
+  show ip ospf database summary
+  show ip protocols` }
+            ],
+            commands: [
+              { label: 'Summarise inter-area routes', code:
+`router ospf 1
+ area 1 range 10.1.0.0 255.255.252.0` },
+              { label: 'Summarise external routes', code:
+`router ospf 1
+ summary-address 172.16.0.0 255.255.0.0` },
+              { label: 'Suppress or discard', code:
+`router ospf 1
+ area 1 range 10.1.0.0 255.255.252.0 not-advertise
+ area 1 range 10.1.0.0 255.255.252.0 discard-route` }
+            ],
+            traps: [
+              'OSPF **cannot summarise inside an area**. Intra-area LSAs are always exact.',
+              '%%area X range%% is **ABR-only** and handles inter-area routes. %%summary-address%% is **ASBR-only** and handles external routes.',
+              '%%not-advertise%% suppresses the summary. %%discard-route%% installs a Null0 route for the summarised range.',
+              'Summarization also applies to **Type 7 NSSA externals** at the translating ABR.',
+              'There is no classful auto-summarization in OSPF. Every summary is explicit.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['ABR command', 'area X range'],
+                ['ABR summarises', 'Inter-area routes, Type 3'],
+                ['ASBR command', 'summary-address'],
+                ['ASBR summarises', 'External routes, Type 5'],
+                ['Inside an area', 'Not possible'],
+                ['Why', 'Every router in an area holds an identical LSDB'],
+                ['not-advertise', 'Suppresses the summary'],
+                ['discard-route', 'Installs a Null0 route for the range'],
+                ['Null0 purpose', 'Prevents a loop for uncovered subnets'],
+                ['NSSA externals', 'Also summarised, at the translating ABR'],
+                ['Auto-summarization', 'None, every summary is explicit'],
+                ['Verification', 'show ip route ospf']
+              ]
+            },
+            related: [
+              { t: '08. Areas', d: 'where the borders are' },
+              { t: '06. LSA Types', d: 'the Type 3 and Type 5 it produces' },
+              { t: '09. Stub', d: 'the areas that filter what is left' }
+            ],
+            glossary: ['Summarization', 'ABR', 'ASBR', 'LSA', 'Link State Database', 'OSPF Area', 'Routing Loop', 'NSSA']
+          },
+          {
+            id: 't15', num: '15', group: 'ops', title: 'Troubleshooting',
+            blurb: 'The layer model, the stuck-state to cause map, and a show-command progression that isolates the fault',
+            overview: 'OSPF troubleshooting follows the **layer model**: neighbour adjacency, then **[[Link State Database|LSDB]]** synchronisation, then **[[SPF Algorithm|SPF]]**, then route installation, then **[[Data Plane|traffic forwarding]]**.',
+            keyIdea: 'Most exam scenarios hang on neighbour-state faults — MTU, hello and dead intervals, area, network type or authentication — or on an area type mismatch.',
+            sections: [
+              { kind: 'code', h: 'The layer model', code:
+`  1. Neighbor adjacency
+  2. LSDB synchronization
+  3. SPF computation
+  4. Route installation
+  5. Traffic forwarding
+
+
+  Start at the bottom layer and work up.
+  Never jump to traffic first.` },
+              { kind: 'table', h: 'The stuck-state map', cols: ['Symptom', 'Most likely cause'], rows: [
+                ['Stuck in **Init**', 'One-way connectivity, an ACL, multicast filtered, or an **authentication mismatch**'],
+                ['Stuck in **2-Way**', 'The DR/BDR election is not completing'],
+                ['Stuck in **ExStart**', '**MTU mismatch** — the classic one'],
+                ['Stuck in **Exchange**', 'Database description problems, often MTU'],
+                ['Stuck in **Loading**', 'An LSA request is never fulfilled'],
+                ['Stays **Down**', 'Hello and dead intervals do not match, or the area does not match']
+              ]},
+              { kind: 'para', h: 'The MTU case', p: '**MTU mismatch is the single most tested OSPF fault.** The two routers see each other and begin database description exchange, then stall at ExStart because one side offers a larger packet than the other will accept.' },
+              { kind: 'code', h: 'Diagnosing and fixing it', code:
+`  show ip ospf neighbor
+
+  2.2.2.2   EXSTART  -  00:04:11 ...
+
+
+  interface GigabitEthernet0/0
+   mtu 1500                 ! match both sides
+
+  ! or, less desirable, ignore the check
+  interface GigabitEthernet0/0
+   ip ospf mtu-ignore` },
+              { kind: 'para', h: 'The area type has to match', p: 'Standard, stub, totally stubby and NSSA must be **configured identically on every router in the area**. A mismatch does not degrade the area — it stops the adjacency from forming at all.' },
+              { kind: 'code', h: 'The area checks', code:
+`  Area ID matches          ?
+  Area TYPE matches        ?   stub / nssa / no-summary
+  Authentication matches   ?   type and key
+  MTU matches              ?
+  Network type matches     ?   broadcast / p2p / p2mp / nbma
+  Hello and dead match     ?
+  Subnet mask matches      ?   broadcast and NBMA` },
+              { kind: 'para', h: '2-Way between DROthers is normal', p: 'Do not "fix" it. On a broadcast segment only the DR and BDR reach Full with every other router, and DROthers stay at 2-Way with each other by design.' },
+              { kind: 'code', h: 'What is not a fault', code:
+`  DROther <-> DROther    2-Way     <- NORMAL
+  DR     <-> DROther     Full
+  BDR    <-> DROther     Full
+
+
+  No adjacency is missing here.` },
+              { kind: 'para', h: 'clear ip ospf process is not a fix', p: 'Clearing the process reconverges OSPF, which makes it a **maintenance and diagnostic action**, not a configuration fix. Doing it repeatedly without changing anything just produces repeated reconvergence.' },
+              { kind: 'code', h: 'The progression', code:
+`  show ip ospf neighbor          ! adjacency state
+  show ip ospf interface         ! area, type, hello, dead, MTU
+  show ip ospf database          ! LSDB synchronisation
+  show ip route ospf             ! routes installed
+  show ip cef                    ! forwarding
+  show ip ospf border-routers    ! ABR and ASBR roles` },
+              { kind: 'table', h: 'The progression and what it answers', cols: ['Command', 'Question it answers'], rows: [
+                ['show ip ospf neighbor', 'Did the adjacency form, and in what state'],
+                ['show ip ospf interface', 'Area, network type, timers, MTU and authentication'],
+                ['show ip ospf database', 'Are the LSDBs synchronised'],
+                ['show ip route ospf', 'Did SPF install anything'],
+                ['show ip ospf border-routers', 'Which routers are the ABR and ASBR'],
+                ['show ip cef', 'Is forwarding using what the RIB installed']
+              ]},
+              { kind: 'para', h: 'A checklist worth memorising', p: 'When an adjacency will not come up, the answer is almost always in this list. Going through it in order takes a few seconds and covers nearly every exam scenario.' },
+              { kind: 'code', h: 'The adjacency checklist', code:
+`  MTU                    the ExStart cause
+  Hello interval         must match
+  Dead interval          must match, and is 4 x hello
+  Area ID                must match
+  Area type              must match
+  Authentication         type and key must match
+  Network type           must match
+  Subnet mask            must match on broadcast and NBMA
+  Multicast reachability 224.0.0.5 must get through` }
+            ],
+            commands: [
+              { label: 'The diagnostic progression', code:
+`show ip ospf neighbor
+show ip ospf interface GigabitEthernet0/0
+show ip ospf database
+show ip route ospf
+show ip cef` },
+              { label: 'Fix the classic ExStart fault', code:
+`interface GigabitEthernet0/0
+ mtu 1500` },
+              { label: 'Reconverge, for maintenance', code:
+`clear ip ospf process` }
+            ],
+            traps: [
+              '**MTU mismatch is the most-tested OSPF fault**, and it presents as stuck in ExStart.',
+              'Stub and NSSA area flags **must match on every router** in the area, or the adjacency fails.',
+              'A hello or dead mismatch presents as stuck in Init or staying Down — never Full.',
+              'An **authentication mismatch presents as stuck in Init**.',
+              'DR/BDR problems live on **broadcast** networks. Point-to-point bypasses them entirely.',
+              '%%clear ip ospf process%% **reconverges**. It is a maintenance action, not a configuration fix.',
+              '**2-Way between DROthers is normal.** Do not "fix" it.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Model', 'Adjacency, LSDB, SPF, routes, traffic'],
+                ['Stuck in Init', 'One-way link, ACL, multicast, or auth mismatch'],
+                ['Stuck in 2-Way', 'The DR/BDR election is not completing'],
+                ['Stuck in ExStart', 'MTU mismatch'],
+                ['Stuck in Exchange', 'Database description problems'],
+                ['Stuck in Loading', 'An unfulfilled LSA request'],
+                ['Stays Down', 'Hello, dead or area do not match'],
+                ['MTU fix', 'Match MTU on both sides, or ip ospf mtu-ignore'],
+                ['Area type', 'Must match on every router'],
+                ['Network type', 'Must match on both ends'],
+                ['Subnet mask', 'Must match on broadcast and NBMA'],
+                ['2-Way between DROthers', 'Normal, not a fault'],
+                ['clear ip ospf process', 'Reconverges, a maintenance action'],
+                ['First command', 'show ip ospf neighbor']
+              ]
+            },
+            related: [
+              { t: '04. Neighbor States', d: 'the states being read' },
+              { t: '05. DR BDR', d: 'the 2-Way case that is not a fault' },
+              { t: '13. Authentication', d: 'one of the Init causes' }
+            ],
+            glossary: ['OSPF Neighbor States', 'MTU', 'Link State Database', 'SPF Algorithm', 'OSPF Area', 'Stub Area', 'NSSA', 'OSPF Authentication', 'DR BDR', 'OSPF', 'Data Plane', 'Control Plane']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'basics', label: 'Protocol Basics', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'lsdb', label: 'LSDB & SPF', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'areas', label: 'Areas', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
+          { key: 'ops', label: 'Operations', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'OSPF', def: 'Open Shortest Path First — the open-standard link-state IGP, RFC 2328 for IPv4, using cost as its metric and running Dijkstra SPF on a shared LSDB. AD 110.' },
+          { term: 'OSPFv3', def: 'RFC 5340, OSPF for IPv6. Addresses ride as prefix options rather than living in the LSA header, so the protocol is address-family independent and still needs a 32-bit Router ID.' },
+          { term: 'OSPF Area', def: 'A group of routers sharing one identical LSDB. The primary scaling mechanism: flooding and SPF are bounded to the area. Area 0, the backbone, is mandatory.' },
+          { term: 'Stub Area', def: 'An area that blocks Type 5 external LSAs and gets a default route injected by the ABR instead. No ASBR permitted, cannot be Area 0.' },
+          { term: 'Totally Stubby Area', def: 'A stub area that also blocks Type 3 inter-area summaries. Cisco’s stub no-summary, configured on the ABR only. The smallest practical LSDB.' },
+          { term: 'NSSA', def: 'Not-So-Stubby Area — a stub area that permits a local ASBR. Externals are Type 7 inside, translated to Type 5 by the ABR at the exit. The default route is optional.' },
+          { term: 'Virtual Link', def: 'A logical adjacency that connects an area to Area 0 through a standard transit area, or repairs a discontiguous backbone. A repair, not a design tool.' },
+          { term: 'OSPF Authentication', def: 'Validation that OSPF packets come from trusted neighbours. Null, plaintext or message digest in v2; OSPFv3 hands the job to IPv6 AH and ESP.' },
+          { term: 'LSA', def: 'Link State Advertisement — OSPF’s unit of topology information, flooded to build the LSDB. Types 1 to 7 and the opaque 9, 10 and 11.' },
+          { term: 'Link State Database', def: 'The collection of every LSA a router has received — its map of the area. SPF runs on the LSDB, and every router in an area holds an identical one.' },
+          { term: 'SPF Algorithm', def: 'Dijkstra’s shortest-path-first algorithm. Each router runs it on its own LSDB, rooted at itself, minimising cumulative cost rather than hop count.' },
+          { term: 'OSPF Router ID', def: 'A 32-bit identifier, unique in the domain, appearing in LSA headers, Hellos and the DR/BDR election. Explicit, then highest loopback, then highest physical. A change needs a process reset.' },
+          { term: 'OSPF Neighbor States', def: 'The neighbour lifecycle: Down, Attempt on NBMA, Init, 2-Way, ExStart, Exchange, Loading and Full. 2-Way is a neighbour, Full is an adjacency.' },
+          { term: 'DR BDR', def: 'Designated and Backup Designated Router, elected on broadcast and NBMA segments so each router adjacencies with only two others. Highest priority, then highest RID, non-preemptive.' },
+          { term: 'ABR', def: 'Area Border Router — interfaces in two or more areas with at least one in Area 0. Originates Type 3 summaries and does NSSA Type 7 to Type 5 translation.' },
+          { term: 'ASBR', def: 'Autonomous System Boundary Router — redistributes routes from outside OSPF and originates Type 5 externals, or Type 7 inside an NSSA.' },
+          { term: 'OSPF Cost', def: 'The OSPF metric: reference bandwidth divided by interface bandwidth, accumulated along the path. The classic reference is 100 Mbit/s.' },
+          { term: 'Routing Table', def: 'The RIB, where SPF’s output lands as O, O IA, O E1, O E2, O N1 and O N2 entries.' },
+          { term: 'Control Plane', def: 'Where Hellos, LSAs and SPF run. OSPF is control-plane work entirely — BPDUs and LSAs are not user traffic.' },
+          { term: 'Data Plane', def: 'Where packets are actually forwarded, using what SPF installed. A healthy LSDB does not by itself mean traffic flows.' },
+          { term: 'Loopback Address', def: 'A software interface that stays up as long as the router does. The usual source of an OSPF Router ID.' },
+          { term: 'Administrative Distance', def: 'The 0–255 trust ranking between route sources. OSPF sits at 110, between EIGRP at 90 and RIP at 120.' },
+          { term: 'Routing Loop', def: 'Traffic circulating because routes disagree. A summary pointing back at its own area is the classic OSPF case, and discard-route is the defence.' },
+          { term: 'Summarization', def: 'Representing many prefixes with one aligned block. In OSPF it is only possible at an ABR or an ASBR, never inside an area.' },
+          { term: 'MTU', def: 'The largest packet an interface can send in one frame. A mismatch between OSPF neighbours is the classic cause of a stall in ExStart.' },
+          { term: 'Multicast', def: 'One-to-many delivery. OSPF uses 224.0.0.5 for all routers and 224.0.0.6 for the DR and BDR.' },
+          { term: 'IPv6', def: 'The 128-bit successor to IPv4, which OSPFv3 carries while keeping the same state machine, areas, timers and SPF.' },
+          { term: 'Default Route', def: 'The catch-all a stub, totally stubby or NSSA area relies on once external and inter-area specifics are filtered out.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'What are the default OSPF hello and dead intervals on a broadcast network?',
+            options: ['Hello 10 s, dead 40 s', 'Hello 30 s, dead 120 s', 'Hello 10 s, dead 20 s', 'Hello 5 s, dead 20 s'],
+            answer: 0,
+            why: 'Hello 10 and dead 40 on broadcast and point-to-point. NBMA and point-to-multipoint use 30 and 120.'
+          },
+          {
+            q: 'What is the correct relationship between the OSPF hello and dead intervals?',
+            options: ['Dead is twice hello', 'Dead is three times hello', 'Dead is four times hello', 'They are equal'],
+            answer: 2,
+            why: 'The dead interval is always four times the hello — 10 and 40 by default.'
+          },
+          {
+            q: 'Which multicast group is used to send OSPF updates to the DR and BDR only?',
+            options: ['224.0.0.5', '224.0.0.6', '224.0.0.9', '239.255.255.2'],
+            answer: 1,
+            why: '224.0.0.6 is ALLDRouters. 224.0.0.5 is every OSPF router on the segment.'
+          },
+          {
+            q: 'What mask does the OSPF network command take?',
+            options: ['A subnet mask', 'A wildcard mask', 'A prefix length', 'A network mask, inverted on demand'],
+            answer: 1,
+            why: 'network takes a wildcard mask, which is the inverted subnet mask — 0.0.0.255 for a /24.'
+          },
+          {
+            q: 'With the classic 100 Mbit/s reference bandwidth, what cost does a 1 Gbit/s OSPF link get?',
+            options: ['1', '10', '100', '1000'],
+            answer: 0,
+            why: '100 divided by 1000 rounds up to 1 — the same as a 10 Gbit/s link, which is why the reference is raised.'
+          },
+          {
+            q: 'What is the Administrative Distance of OSPF?',
+            options: ['90', '100', '110', '120'],
+            answer: 2,
+            why: 'OSPF is 110, sitting between EIGRP internal at 90 and RIP at 120.'
+          },
+          {
+            q: 'What must be enabled globally before OSPFv3 will do anything useful?',
+            options: ['ipv6 unicast-routing', 'ipv6 ospf enable', 'ip ipv6 routing', 'ipv6 address-family'],
+            answer: 0,
+            why: 'ipv6 unicast-routing is the global switch. Without it the process runs but forwarding stays off.'
+          },
+          {
+            q: 'How does OSPFv3 carry IPv6 addresses?',
+            options: [
+              'Encoded in the LSA header, as in OSPFv2',
+              'As TLV prefix options inside the LSA',
+              'In a separate database',
+              'In the Hello packet only'
+            ],
+            answer: 1,
+            why: 'Addresses ride as TLV prefix options, which is what makes the protocol address-family independent.'
+          },
+          {
+            q: 'How does OSPFv3 authenticate its packets?',
+            options: [
+              'With MD5 message digest, as in v2',
+              'With plaintext passwords',
+              'It has no OSPF-level authentication — it uses IPv6 AH and ESP',
+              'With SHA-256 in the OSPF header'
+            ],
+            answer: 2,
+            why: 'OSPFv3 removed OSPF-level authentication and leaves it to IPsec.'
+          },
+          {
+            q: 'Does OSPFv3 still need a Router ID on a network with no IPv4 at all?',
+            options: ['No, it uses the IPv6 address', 'Yes, it is still a required 32-bit number', 'Only if DR/BDR is used', 'Only on point-to-point links'],
+            answer: 1,
+            why: 'The Router ID remains a required 32-bit identifier regardless of the address family.'
+          },
+          {
+            q: 'What is the OSPF Router ID election order?',
+            options: [
+              'Highest physical, then highest loopback, then explicit',
+              'Explicit, then the highest loopback, then the highest physical IPv4',
+              'The lowest physical address available',
+              'The first interface that is up'
+            ],
+            answer: 1,
+            why: 'Explicit configuration wins, then the highest loopback, then the highest active physical IPv4.'
+          },
+          {
+            q: 'In OSPF Router ID selection, does the highest or lowest value win?',
+            options: ['Lowest', 'Highest', 'Either, if unique', 'The one closest to 1.1.1.1'],
+            answer: 1,
+            why: 'Highest — which reverses the usual OSPF instinct where the lowest cost wins.'
+          },
+          {
+            q: 'You configure a new Router ID. When does it take effect?',
+            options: [
+              'Immediately',
+              'After the dead interval expires',
+              'After clear ip ospf process or a reload',
+              'After the next SPF run'
+            ],
+            answer: 2,
+            why: 'The Router ID is fixed once the process is running, so the process has to be reset.'
+          },
+          {
+            q: 'In which OSPF state is a neighbour stuck when there is an MTU mismatch?',
+            options: ['Init', '2-Way', 'ExStart', 'Loading'],
+            answer: 2,
+            why: 'ExStart is the classic MTU mismatch symptom — they see each other, then stall in database description.'
+          },
+          {
+            q: 'What is normal between two DROthers on a broadcast segment?',
+            options: ['Full', '2-Way', 'ExStart', 'Init'],
+            answer: 1,
+            why: 'DROthers stay at 2-Way with each other. Only the DR and BDR reach Full.'
+          },
+          {
+            q: 'Which OSPF state exists only on NBMA networks?',
+            options: ['Attempt', 'Init', '2-Way', 'Exchange'],
+            answer: 0,
+            why: 'Attempt is where neighbours are contacted statically. It never appears on broadcast or point-to-point.'
+          },
+          {
+            q: 'What is the correct DR/BDR election order?',
+            options: [
+              'Lowest priority, then lowest Router ID',
+              'Highest priority, then highest Router ID',
+              'Highest Router ID only',
+              'Lowest priority, then highest Router ID'
+            ],
+            answer: 1,
+            why: 'Highest priority first, with the highest Router ID breaking a tie. Both are highest.'
+          },
+          {
+            q: 'What does a priority of 0 mean in the DR election?',
+            options: ['It is always the BDR', 'It never becomes a DR or BDR', 'It is elected last', 'It has the lowest cost'],
+            answer: 1,
+            why: 'Priority 0 removes the router from DR and BDR eligibility entirely.'
+          },
+          {
+            q: 'What happens when a router with a higher priority joins a segment after the election?',
+            options: [
+              'It takes over as DR immediately',
+              'Nothing changes — the election is non-preemptive',
+              'It becomes the BDR',
+              'The whole segment reconverges'
+            ],
+            answer: 1,
+            why: 'OSPF DR election is non-preemptive. clear ip ospf process is needed to force a re-election.'
+          },
+          {
+            q: 'Which network types elect a DR and BDR?',
+            options: ['Point-to-point and broadcast', 'Broadcast and NBMA', 'Point-to-point and point-to-multipoint', 'All of them'],
+            answer: 1,
+            why: 'Only broadcast and NBMA. Point-to-point and point-to-multipoint elect nothing and go straight to Full.'
+          },
+          {
+            q: 'How many adjacencies does a ten-router broadcast segment need with a DR?',
+            options: ['10', '45', '20', '90'],
+            answer: 0,
+            why: 'N adjacencies with a DR — ten. Without one it would be N times N minus one over two, which is 45.'
+          },
+          {
+            q: 'Which router originates the Type 2 Network LSA?',
+            options: ['Every router on the segment', 'The DR', 'The BDR', 'The ABR'],
+            answer: 1,
+            why: 'The DR originates the Type 2. Every router still originates its own Type 1.'
+          },
+          {
+            q: 'Which LSA type tells a router how to reach an ASBR?',
+            options: ['Type 3', 'Type 4', 'Type 5', 'Type 7'],
+            answer: 1,
+            why: 'Type 4, the ASBR-Summary LSA, originated by an ABR.'
+          },
+          {
+            q: 'Which LSA types are flooded within their area only?',
+            options: ['Type 3 and 4', 'Type 1 and 2', 'Type 5', 'Type 7'],
+            answer: 1,
+            why: 'Type 1 and Type 2 stay inside the area. Type 3 and 4 cross between areas and Type 5 is domain-wide.'
+          },
+          {
+            q: 'In which direction does a Type 7 to Type 5 translation happen?',
+            options: ['At the ASBR, into the NSSA', 'At the ABR, out of the NSSA', 'At the backbone router', 'Nowhere — Type 7 is never translated'],
+            answer: 1,
+            why: 'The ABR translates Type 7 to Type 5 as the route leaves the NSSA, and only one ABR does it.'
+          },
+          {
+            q: 'What route code does a Type 5 external produce?',
+            options: ['O IA', 'O E1 or O E2', 'O N1 or O N2', 'O'],
+            answer: 1,
+            why: 'Type 5 gives O E1 or O E2. O IA is a Type 3 and O N1 or O N2 is a Type 7.'
+          },
+          {
+            q: 'What is the difference between E1 and E2?',
+            options: [
+              'E1 is preferred and E2 is a backup',
+              'E2 carries the advertised external metric only; E1 adds the cost of reaching the ASBR',
+              'E1 is used by EIGRP and E2 by OSPF',
+              'They are the same metric with different names'
+            ],
+            answer: 1,
+            why: 'E2 is the default and uses the advertised metric alone. E1 includes the path cost to the ASBR.'
+          },
+          {
+            q: 'Which external type is the OSPF default?',
+            options: ['E1', 'E2', 'N1', 'N2'],
+            answer: 1,
+            why: 'E2 is the default external type.'
+          },
+          {
+            q: 'What does the OSPF SPF algorithm minimise?',
+            options: ['Hop count', 'Cumulative cost', 'Latency', 'Administrative Distance'],
+            answer: 1,
+            why: 'SPF minimises cumulative cost, so a three-link cheap path can beat a two-link expensive one.'
+          },
+          {
+            q: 'SPF runs in which scope?',
+            options: ['Domain-wide', 'Per area', 'Per link', 'Per neighbour'],
+            answer: 1,
+            why: 'SPF runs per area, which is the main reason areas exist.'
+          },
+          {
+            q: 'What is the difference between flooding and SPF?',
+            options: [
+              'They are the same process',
+              'Flooding distributes the LSAs; SPF computes the tree',
+              'SPF distributes the LSAs; flooding computes the tree',
+              'Flooding is used in v2 and SPF in v3'
+            ],
+            answer: 1,
+            why: 'Flooding builds an identical LSDB everywhere. SPF then computes routes from that database.'
+          },
+          {
+            q: 'What are the default OSPF SPF throttle timer values?',
+            options: ['1000, 2000, 5000 ms', '5000, 10000, 10000 ms', '5000, 5000, 5000 ms', '10000, 20000, 40000 ms'],
+            answer: 1,
+            why: 'Initial delay 5000, hold 10000, maximum 10000 milliseconds.'
+          },
+          {
+            q: 'Which command changes the OSPF cost reference bandwidth?',
+            options: ['ip ospf cost', 'auto-cost reference-bandwidth', 'ospf reference-bandwidth', 'ip ospf bandwidth'],
+            answer: 1,
+            why: 'auto-cost reference-bandwidth sets it in Mbit/s, and it has to match across an area.'
+          },
+          {
+            q: 'What is the exact definition of an OSPF ABR?',
+            options: [
+              'Any router running OSPF in more than one area',
+              'A router with interfaces in two or more areas, at least one of them Area 0',
+              'Any router originating a Type 3 LSA',
+              'A router between the backbone and a stub area'
+            ],
+            answer: 1,
+            why: 'Both halves matter — two or more areas, and one of them has to be Area 0.'
+          },
+          {
+            q: 'What does an ABR originate?',
+            options: ['Type 1 and Type 2', 'Type 3 summaries', 'Type 5 externals', 'Type 7 NSSA externals'],
+            answer: 1,
+            why: 'An ABR originates Type 3 summaries. Type 5 and 7 come from an ASBR.'
+          },
+          {
+            q: 'Which LSA types are filtered by a stub area?',
+            options: ['Type 3 and 4', 'Type 4 and 5', 'Type 1 and 2', 'Type 5 and 7'],
+            answer: 1,
+            why: 'A stub blocks Type 4 and Type 5, and gets a default route injected instead.'
+          },
+          {
+            q: 'How does a stub area regain reachability to the outside world?',
+            options: [
+              'A redistributed default route',
+              'The ABR injects a default route as a Type 3',
+              'Type 5 LSAs are allowed selectively',
+              'A static default on every router'
+            ],
+            answer: 1,
+            why: 'The ABR injects a default route as a Type 3, which replaces all the filtered specifics.'
+          },
+          {
+            q: 'Can a stub area contain an ASBR?',
+            options: ['Yes, on the ABR', 'Yes, on any router', 'No — use an NSSA instead', 'Only in Area 0'],
+            answer: 2,
+            why: 'A stub area cannot hold an ASBR, because the ASBR would originate exactly what the area filters.'
+          },
+          {
+            q: 'Where is the no-summary keyword configured for a totally stubby area?',
+            options: ['On every router in the area', 'On the ABR only', 'On the ASBR', 'On the backbone router'],
+            answer: 1,
+            why: 'no-summary goes on the ABR only. The internal routers still use the plain stub command.'
+          },
+          {
+            q: 'What route code does a totally stubby area show for its injected default?',
+            options: ['O', 'O IA', 'O*IA', 'O E2'],
+            answer: 2,
+            why: 'O*IA — an inter-area route that is also the default.'
+          },
+          {
+            q: 'Which area type has the smallest LSDB?',
+            options: ['Standard', 'Stub', 'Totally stubby', 'NSSA'],
+            answer: 2,
+            why: 'Totally stubby keeps only intra-area routes plus one default route.'
+          },
+          {
+            q: 'How does an NSSA differ from a stub area?',
+            options: [
+              'It allows an ASBR and carries Type 7 externals',
+              'It allows Type 5 LSAs to enter',
+              'It can be Area 0',
+              'It does not need a default route'
+            ],
+            answer: 0,
+            why: 'An NSSA permits a local ASBR and carries its externals as Type 7, translated to Type 5 at the exit.'
+          },
+          {
+            q: 'Is the default route in an NSSA injected automatically?',
+            options: ['Yes, always', 'No — it is optional and requested explicitly', 'Only on the ABR', 'Only if the area is totally stubby'],
+            answer: 1,
+            why: 'In an NSSA the default is optional, unlike the automatic injection in a plain stub area.'
+          },
+          {
+            q: 'What route code identifies an NSSA external?',
+            options: ['O E1 or O E2', 'O N1 or O N2', 'O IA', 'O'],
+            answer: 1,
+            why: 'O N1 and O N2, the NSSA equivalents of E1 and E2.'
+          },
+          {
+            q: 'Which area types can serve as the transit area of a virtual link?',
+            options: ['Any area', 'Only a standard area', 'Only stub areas', 'Only NSSA areas'],
+            answer: 1,
+            why: 'The transit area must be standard — a restricted area filters the LSAs the virtual link depends on.'
+          },
+          {
+            q: 'Can Area 0 be the transit area of a virtual link?',
+            options: ['Yes, always', 'Yes, with no-summary', 'No', 'Only to repair a split backbone'],
+            answer: 2,
+            why: 'No. The virtual link exists to reach the backbone, so the backbone cannot be its own transit.'
+          },
+          {
+            q: 'How is a virtual link configured?',
+            options: [
+              'On one ABR, naming the transit area',
+              'On both ABRs, each naming the peer Router ID',
+              'On every router in the transit area',
+              'On the ASBR, naming the backbone'
+            ],
+            answer: 1,
+            why: 'Both ends are configured, and each names the Router ID of the ABR at the other end.'
+          },
+          {
+            q: 'Which neighbour state does an authentication mismatch produce?',
+            options: ['Down', 'Init', 'ExStart', 'Loading'],
+            answer: 1,
+            why: 'Hellos arrive but are rejected, so the neighbour never gets past Init.'
+          },
+          {
+            q: 'Which OSPFv2 authentication type is considered strong?',
+            options: ['Type 0, null', 'Type 1, plaintext', 'Type 2, message digest', 'All are equally strong'],
+            answer: 2,
+            why: 'Type 2 message digest hashes the packet without sending the key. Plaintext Type 1 exposes it.'
+          },
+          {
+            q: 'On a virtual link, where is authentication configured?',
+            options: [
+              'It is inherited from the transit area interfaces',
+              'On the virtual-link line itself',
+              'On the ABR loopback only',
+              'It is not supported on virtual links'
+            ],
+            answer: 1,
+            why: 'A virtual link is a logical interface and needs its own authentication configuration.'
+          },
+          {
+            q: 'Which OSPF summarization command is used on an ASBR?',
+            options: ['area X range', 'summary-address', 'aggregate-address', 'ip summary-address'],
+            answer: 1,
+            why: 'summary-address is the ASBR form for external routes. area X range is the ABR form for inter-area routes.'
+          },
+          {
+            q: 'Where is OSPF route summarization possible?',
+            options: [
+              'Inside any area',
+              'Only at an ABR or an ASBR',
+              'On every router',
+              'Anywhere, if the block is aligned'
+            ],
+            answer: 1,
+            why: 'Only at the borders. Intra-area LSAs are always exact because every router holds an identical LSDB.'
+          },
+          {
+            q: 'What does the discard-route modifier do?',
+            options: [
+              'Suppresses the summary entirely',
+              'Installs a Null0 route for the summarised range to prevent a loop',
+              'Advertises the summary to one neighbour only',
+              'Removes the specific routes from the RIB'
+            ],
+            answer: 1,
+            why: 'It drops traffic that matches only the summary, which stops a loop when a covered subnet is missing.'
+          },
+          {
+            q: 'What is the first command in a sensible OSPF troubleshooting progression?',
+            options: ['show ip cef', 'show ip ospf neighbor', 'show ip route', 'debug ip packet'],
+            answer: 1,
+            why: 'Start at the adjacency layer and work up — neighbour, interface, database, routes, then forwarding.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'os.theme', done: 'os.done', best: 'os.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
