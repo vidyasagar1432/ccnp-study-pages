@@ -392,6 +392,50 @@ async function checkPage(pageRel, cfg) {
     rmSync(profile, { recursive: true, force: true });
   }
 
+  /* ---------------- pass 7: mobile layout ---------------- */
+  section('7. Mobile layout (390 x 844)');
+  {
+    const { proc: p7, profile: pr7, port: p7port } = await launch();
+    try {
+      const cdp = await openPage(pageUrl, p7port);
+      const mounted = await waitFor(cdp, MOUNTED);
+      mounted ? ok('app mounted on a phone-sized viewport')
+              : fail('app did not mount on a phone-sized viewport');
+      await cdp.send('Emulation.setDeviceMetricsOverride', {
+        width: 390, height: 844, deviceScaleFactor: 2, mobile: true
+      });
+      await sleep(1200);
+      const mob = JSON.parse(await cdp.evaluate(`JSON.stringify({
+        scrollWidth: document.documentElement.scrollWidth,
+        clientWidth: document.documentElement.clientWidth,
+        bodyScroll: document.body.scrollWidth,
+        offenders: [...document.querySelectorAll('main *')]
+          .filter(el => {
+            const r = el.getBoundingClientRect();
+            if (!(r.width > 0 && r.right > document.documentElement.clientWidth + 1)) return false;
+            // ignore content inside a deliberately scrollable container
+            for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+              const ox = getComputedStyle(p).overflowX;
+              if (ox === 'auto' || ox === 'scroll' || ox === 'hidden') return false;
+            }
+            return true;
+          })
+          .slice(0, 6)
+          .map(el => el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ').slice(0, 3).join('.'))
+      })`));
+      const overflow = mob.scrollWidth - mob.clientWidth;
+      overflow <= 0
+        ? ok('no horizontal overflow on a phone')
+        : fail(`page overflows sideways by ${overflow}px: ` + mob.offenders.join(' | '));
+      mob.bodyScroll <= mob.clientWidth + 1
+        ? ok('body does not exceed the viewport width')
+        : fail('body is wider than the viewport: ' + mob.bodyScroll + ' > ' + mob.clientWidth);
+    } finally {
+      p7.kill('SIGKILL');
+      rmSync(pr7, { recursive: true, force: true });
+    }
+  }
+
   /* ---------------- pass 8: deep links + keyboard shortcuts ---------------- */
   section('8. Deep links and keyboard shortcuts');
   {
