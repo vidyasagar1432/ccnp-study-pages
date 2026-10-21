@@ -19,6 +19,7 @@ pages/09-routing-fundamentals.html
 pages/10-ospf.html
 pages/11-eigrp.html
 pages/12-bgp.html
+pages/13-route-redistribution.html
 vendor/vue.global.prod.js     Vue 3.5.42 — offline fallback copy
 vendor/tailwindcss.js         Tailwind Play CDN 3.4.17 — offline fallback copy
 tools/                        validation scripts + per-page config
@@ -51,8 +52,9 @@ Everything is client-side, so `file://` works. It also works over HTTP
 | 10 | [OSPF](pages/10-ospf.html) | 15 | 54 questions |
 | 11 | [EIGRP](pages/11-eigrp.html) | 11 | 46 questions |
 | 12 | [BGP](pages/12-bgp.html) | 14 | 56 questions |
+| 13 | [Route Redistribution](pages/13-route-redistribution.html) | 8 | 24 questions |
 
-The remaining levels (13–30) are listed on the hub as *planned*. Each one is ported
+The remaining levels (14–30) are listed on the hub as *planned*. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:
 
 > Overview → Core Concepts → Commands → Exam Traps → Quick Review Table → Related Notes → Glossary
@@ -77,7 +79,7 @@ from the matching note set in the CCNP Obsidian vault, keeping the note structur
 
 Progress, theme, and best score are stored in `localStorage` under a per-page prefix
 (`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02, `osi.*` for Level 03,
-`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06, `vl.*` for Level 07, `stp.*` for Level 08, `rf.*` for Level 09, `os.*` for Level 10, `ei.*` for Level 11, `bg.*` for Level 12) so
+`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06, `vl.*` for Level 07, `stp.*` for Level 08, `rf.*` for Level 09, `os.*` for Level 10, `ei.*` for Level 11, `bg.*` for Level 12, `rd.*` for Level 13) so
 levels never overwrite each other.
 
 ## Loading Vue and Tailwind

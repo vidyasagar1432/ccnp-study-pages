@@ -1,0 +1,1740 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Route Redistribution — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 13 Route Redistribution: OSPF to EIGRP, OSPF to BGP, EIGRP to BGP, seed metrics, administrative distance, route tags, filtering and loop prevention.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Route Redistribution — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">RED</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Route Redistribution</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 13</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 13</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">8 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 13 &mdash; Route Redistribution</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Moving routes between protocols safely: seed metrics, administrative distance, route tags and filtering, and the loop-prevention techniques needed when multiple boundaries redistribute.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Route Redistribution &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 13 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[Route Redistribution]]** moves routes between different routing domains. The exam expects you to know **where metrics come from** (the **[[Seed Metric|seed metric]]**), **who wins when prefixes collide** (**[[Administrative Distance]]**), and **how to stop traffic looping** between domains using **[[Route Tag|tags]]**, **[[Route Filtering|filters]]** and careful design.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'scen', title: 'OSPF to EIGRP',
+            blurb: 'EIGRP needs a seed metric; OSPF cost does not convert automatically',
+            overview: '**Redistributing [[OSPF]] into [[EIGRP]]** takes OSPF-learned and OSPF-connected routes into the EIGRP domain. The critical rule: **EIGRP requires a seed metric**. Without one, redistributed routes are **not advertised**. The OSPF COST does not map to EIGRP’s composite metric, so you must supply bandwidth/delay/reliability/load/MTU.',
+            keyIdea: 'No seed metric = no routes. Use default-metric or a route-map on the redistribute command.',
+            sections: [
+              { kind: 'code', h: 'The problem', code:
+`  OSPF uses COST
+  EIGRP uses composite metric (BW, delay, rel, load, MTU)
+
+  There is NO automatic conversion.
+  You MUST supply a seed metric.` },
+              { kind: 'table', h: 'What you must supply', cols: ['Method', 'Notes'], rows: [
+                ['%%default-metric%%', 'Simple global default for this redistribution'],
+                ['%%redistribute ... route-map%% with %%set metric%%', 'Per-prefix control, preferred'],
+                ['Both', 'Route-map wins if both used']
+              ]},
+              { kind: 'code', h: 'Basic configuration', code:
+`  router eigrp 100
+   redistribute ospf 1 metric 10000 100 255 1 1500
+   !                    BW    DLY REL   LOAD MTU
+   default-metric 10000 100 255 1 1500
+   network 10.0.0.0` },
+              { kind: 'code', h: 'With a route-map for control', code:
+`  route-map OSPF-TO-EIGRP permit 10
+   match ip address prefix-list OSPF-ONLY
+   set metric 1544 100 255 1 1500
+   set tag 100
+
+  router eigrp 100
+   redistribute ospf 1 route-map OSPF-TO-EIGRP` },
+              { kind: 'para', h: 'OSPF specifics', p: 'Use the **%%subnets%%** keyword in the redistribute command if you want to include **all** subnets. Without it, only **classful** networks are redistributed.' },
+              { kind: 'code', h: 'The subnets keyword', code:
+`  router eigrp 100
+   redistribute ospf 1 metric 10000 100 255 1 1500 subnets` },
+              { kind: 'para', h: 'Where it shows up', p: 'Redistributed routes appear as **external** in EIGRP. AD for external EIGRP is **170** (internal is **90**), which matters when comparing against another protocol.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route eigrp
+  show ip eigrp topology
+  show running-config | section router` }
+            ],
+            commands: [
+              { label: 'Redistribute OSPF into EIGRP', code:
+`router eigrp 100
+ redistribute ospf 1 metric 10000 100 255 1 1500 subnets` },
+              { label: 'Filter with a route-map', code:
+`route-map OSPF-TO-EIGRP permit 10
+ match ip address prefix-list ALLOWED
+ set metric 10000 100 255 1 1500
+router eigrp 100
+ redistribute ospf 1 route-map OSPF-TO-EIGRP subnets` },
+              { label: 'Verify', code:
+`show ip route eigrp
+show ip eigrp topology` }
+            ],
+            traps: [
+              '**EIGRP refuses redistributed routes with no seed metric.**',
+              'OSPF COST does **not** convert to the EIGRP composite metric.',
+              'Use **%%subnets%%** to redistribute all subnets, not just classful.',
+              'EIGRP metric order is **bandwidth, delay, reliability, load, MTU**.',
+              'Redistributed routes are **external** to EIGRP (AD 170).'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Direction', 'OSPF -> EIGRP'],
+                ['Seed metric required', 'Yes'],
+                ['Automatic conversion', 'No'],
+                ['Ways to provide', 'default-metric or set metric in a route-map'],
+                ['Include subnets', 'Use the subnets keyword'],
+                ['EIGRP external AD', '170'],
+                ['Metric tuple', 'BW, delay, reliability, load, MTU'],
+                ['Redistributed type', 'External EIGRP']
+              ]
+            },
+            related: [
+              { t: '04. Seed Metrics', d: 'the details of what to supply' },
+              { t: '08. Loop Prevention', d: 'why tagging matters here' },
+              { t: '07. Filtering', d: 'how to keep it safe' }
+            ],
+            glossary: ['Route Redistribution', 'OSPF', 'EIGRP', 'Seed Metric', 'EIGRP Metric', 'Administrative Distance']
+          },
+          {
+            id: 't02', num: '02', group: 'scen', title: 'OSPF to BGP',
+            blurb: 'Network statements vs redistribute; origin becomes ?; MED can inherit',
+            overview: 'Injecting **OSPF** routes into **[[BGP]]** advertises internal networks to providers. Two approaches exist: **%%network%%** statements (clean, only prefixes already in the BGP table) and **%%redistribute ospf%%** (bulk). When using **redistribute**, BGP sets the **origin** to **?** (incomplete). If **MED** is not set explicitly, it can inherit the **OSPF metric**.',
+            keyIdea: 'network gives origin i and is precise; redistribute gives origin ? and is bulk — and filter external OSPF routes.',
+            sections: [
+              { kind: 'table', h: 'network vs redistribute', cols: ['', 'network', 'redistribute'], rows: [
+                ['Prefix must exist', 'Yes, in the routing table / eligible', 'Any matched by the process'],
+                ['Origin', '**i** (IGP)', '**?** (incomplete)'],
+                ['MED', 'Not automatic from OSPF', 'Can inherit the OSPF metric'],
+                ['Control', 'Very precise', 'Needs route-maps/prefix-lists'],
+                ['Typical use', 'Advertise specific prefixes', 'Bulk redistribution']
+              ]},
+              { kind: 'code', h: 'Using network', code:
+`  router bgp 65000
+   network 10.1.0.0 mask 255.255.255.0
+
+  ! Only works if the route exists in the RIB.` },
+              { kind: 'code', h: 'Using redistribute', code:
+`  router bgp 65000
+   redistribute ospf 1 route-map OSPF-TO-BGP
+
+  route-map OSPF-TO-BGP permit 10
+   match route-type internal
+   set metric 100` },
+              { kind: 'para', h: 'Origin matters', p: 'BGP path selection considers **origin** at a later step, but the exam loves this difference: **%%redistribute%% produces origin ?**, **%%network%% produces origin i**.' },
+              { kind: 'code', h: 'External OSPF routes', code:
+`  Be careful redistributing EXTERNAL OSPF routes
+  into BGP. They are often filtered with a route-map
+  matching route-type internal, or by prefix.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip bgp
+  show ip bgp <prefix>` }
+            ],
+            commands: [
+              { label: 'Precise advertisement', code:
+`router bgp 65000
+ network 10.1.0.0 mask 255.255.255.0` },
+              { label: 'Redistribute with control', code:
+`route-map OSPF-TO-BGP permit 10
+ match route-type internal
+router bgp 65000
+ redistribute ospf 1 route-map OSPF-TO-BGP` },
+              { label: 'Verify', code:
+`show ip bgp` }
+            ],
+            traps: [
+              '**redistribute → origin ?; network → origin i.**',
+              'MED can inherit the **OSPF metric** when redistributing.',
+              'Filter **external** OSPF routes unless you explicitly want them.',
+              '**network requires the route to already exist** in the routing table.',
+              'Use route-maps/prefix-lists to avoid redistributing everything.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Direction', 'OSPF -> BGP'],
+                ['Preferred', 'network (precise) or controlled redistribute'],
+                ['redistribute origin', '? (incomplete)'],
+                ['network origin', 'i (IGP)'],
+                ['MED', 'Can inherit OSPF cost'],
+                ['Watch out for', 'Redistributing OSPF external routes'],
+                ['Route must exist', 'Yes for network']
+              ]
+            },
+            related: [
+              { t: '03. EIGRP to BGP', d: 'the sister case' },
+              { t: '06. Route Tags', d: 'to avoid leaking back' },
+              { t: '07. Filtering', d: 'the safe way' }
+            ],
+            glossary: ['Route Redistribution', 'OSPF', 'BGP', 'MED', 'Route Filtering']
+          },
+          {
+            id: 't03', num: '03', group: 'scen', title: 'EIGRP to BGP',
+            blurb: 'No seed metric required; MED can default to 0; origin depends on method',
+            overview: 'Injecting **EIGRP** routes into **[[BGP]]** advertises internal networks to a provider. Unlike **OSPF→EIGRP**, **BGP has no EIGRP seed-metric requirement** when redistributing. If no **MED** is set, it often defaults to **0**. Again, **%%redistribute eigrp%% gives origin ?**, while **%%network%% gives origin i**.',
+            keyIdea: 'No mandatory EIGRP seed metric into BGP; set MED deliberately if you want it to influence the neighbor.',
+            sections: [
+              { kind: 'table', h: 'Comparison with OSPF→EIGRP', cols: ['', 'EIGRP→BGP', 'OSPF→EIGRP'], rows: [
+                ['Seed metric required', '**No**', '**Yes**'],
+                ['Metric into BGP', 'MED (often 0 by default)', 'Becomes EIGRP composite'],
+                ['Method', 'network or redistribute', 'redistribute (with metric)']
+              ]},
+              { kind: 'code', h: 'Redistribute EIGRP into BGP', code:
+`  router bgp 65000
+   redistribute eigrp 100 route-map EIGRP-TO-BGP
+
+  route-map EIGRP-TO-BGP permit 10
+   match ip address prefix-list EIGRP-ROUTES
+   set metric 200` },
+              { kind: 'code', h: 'Network statement', code:
+`  router bgp 65000
+   network 10.2.0.0 mask 255.255.255.0` },
+              { kind: 'para', h: 'Filter external EIGRP', p: 'EIGRP-external routes can be redistributed too — filter them if you only want internal routes to go to the provider.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip bgp
+  show ip bgp <prefix>` }
+            ],
+            commands: [
+              { label: 'Redistribute controlled', code:
+`route-map EIGRP-TO-BGP permit 10
+ set metric 150
+router bgp 65000
+ redistribute eigrp 100 route-map EIGRP-TO-BGP` },
+              { label: 'Verify', code:
+`show ip bgp` }
+            ],
+            traps: [
+              '**No seed metric required** for EIGRP→BGP.',
+              'MED often defaults to **0** if not set explicitly.',
+              '**redistribute → origin ?; network → origin i.**',
+              'Filter **external** EIGRP routes before sending to BGP.',
+              'MED is interpreted by the neighbor AS — set it if you want to influence inbound traffic.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Direction', 'EIGRP -> BGP'],
+                ['Seed metric required', 'No'],
+                ['redistribute origin', '? (incomplete)'],
+                ['network origin', 'i (IGP)'],
+                ['MED', 'Often 0 by default — set if needed'],
+                ['Filter', 'Consider EIGRP external routes']
+              ]
+            },
+            related: [
+              { t: '02. OSPF to BGP', d: 'the parallel case' },
+              { t: '04. Seed Metrics', d: 'what differs' },
+              { t: '07. Filtering', d: 'safety' }
+            ],
+            glossary: ['Route Redistribution', 'EIGRP', 'BGP', 'MED', 'Route Filtering']
+          },
+          {
+            id: 't04', num: '04', group: 'mech', title: 'Seed Metrics',
+            blurb: 'What each protocol needs at the boundary to accept redistributed routes',
+            overview: 'A **[[Seed Metric|seed metric]]** is the initial metric assigned to a route when it is redistributed. **EIGRP** has **no default** and will not advertise redistributed routes without one. **OSPF** needs **%%subnets%%** and a metric (often via **%%default-metric%%**). **BGP** uses **MED** rather than a native internal metric when redistributing, and often defaults to **0**.',
+            keyIdea: 'Know the defaults: EIGRP needs one, OSPF needs subnets, BGP looks at MED.',
+            sections: [
+              { kind: 'table', h: 'Seed metric requirements', cols: ['Protocol', 'Required?', 'Notes'], rows: [
+                ['EIGRP', '**Yes, must supply**', 'No default; use default-metric or set metric in route-map (BW, delay, rel, load, MTU)'],
+                ['OSPF', '**Usually yes if not defaulted**', 'Use subnets to include all; default-metric or metric in redistribute'],
+                ['BGP', '**Not the same**', 'Uses MED; often 0 by default']
+              ]},
+              { kind: 'code', h: 'EIGRP seed', code:
+`  router eigrp 100
+   default-metric 10000 100 255 1 1500
+   redistribute ospf 1 subnets` },
+              { kind: 'code', h: 'OSPF seed', code:
+`  router ospf 1
+   redistribute eigrp 100 subnets metric 10 metric-type 2
+   ! E2 is default; E1 adds internal cost` },
+              { kind: 'table', h: 'OSPF metric types', cols: ['Type', 'Behaviour'], rows: [
+                ['E2 (default)', 'Cost is fixed to the seed metric; internal OSPF cost not added'],
+                ['E1', 'Seed metric + internal OSPF path cost added']
+              ]},
+              { kind: 'code', h: 'BGP MED', code:
+`  router bgp 65000
+   redistribute ospf 1 route-map SET-MED
+  route-map SET-MED permit 10
+   set metric 50  ! sets MED` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip bgp
+  show ip eigrp topology` }
+            ],
+            commands: [
+              { label: 'Set EIGRP seed', code:
+`router eigrp 100
+ default-metric 10000 100 255 1 1500
+ redistribute ospf 1 subnets` },
+              { label: 'Set OSPF seed', code:
+`router ospf 1
+ redistribute eigrp 100 subnets metric 20 metric-type 1` },
+              { label: 'Set BGP MED', code:
+`route-map BGP-MET permit 10
+ set metric 100
+router bgp 65000
+ redistribute ospf 1 route-map BGP-MET` }
+            ],
+            traps: [
+              '**EIGRP has no default seed metric** — routes are not advertised without one.',
+              'OSPF needs **%%subnets%%** to redistribute all prefixes.',
+              '**E2 ignores internal cost; E1 accumulates it.**',
+              'BGP MED default is often **0** — set a value to influence the neighbor.',
+              'The EIGRP seed metric order is **BW, delay, reliability, load, MTU**.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Seed metric', 'Initial metric for redistributed routes'],
+                ['EIGRP', 'Required, no default (BW/delay/rel/load/MTU)'],
+                ['OSPF', 'Use metric-type (E1/E2) and subnets'],
+                ['BGP', 'Uses MED (default often 0)'],
+                ['E2 vs E1', 'E2 fixed, E1 adds internal cost'],
+                ['Default-metric', 'Convenient global default']
+              ]
+            },
+            related: [
+              { t: '01. OSPF to EIGRP', d: 'where this bites hardest' },
+              { t: '02. OSPF to BGP', d: 'MED inheritance' },
+              { t: '03. EIGRP to BGP', d: 'the exception' }
+            ],
+            glossary: ['Seed Metric', 'EIGRP Metric', 'OSPF', 'EIGRP', 'BGP', 'MED']
+          },
+          {
+            id: 't05', num: '05', group: 'mech', title: 'Administrative Distance',
+            blurb: 'AD beats metric when the same prefix is learned by different protocols',
+            overview: 'When two routing protocols learn the **same prefix**, the router compares **[[Administrative Distance]]** first. The lower AD wins, **regardless of metric**. Redistribution creates these conflicts constantly: an **EIGRP internal** route (AD 90) will beat an **OSPF external** route (AD 110), and **eBGP** (20) almost always wins. If the wrong source wins, traffic goes the wrong way or loops.',
+            keyIdea: 'AD beats metric. Always. If both protocols know the same prefix, look at AD first.',
+            sections: [
+              { kind: 'table', h: 'Key AD values', cols: ['Source', 'AD'], rows: [
+                ['Connected', '0'],
+                ['Static', '1'],
+                ['eBGP', '**20**'],
+                ['EIGRP internal', '**90**'],
+                ['OSPF', '**110**'],
+                ['IS-IS', '115'],
+                ['RIP', '120'],
+                ['EIGRP external', '**170**'],
+                ['iBGP', '**200**'],
+                ['Unknown', '255 (not installed)']
+              ]},
+              { kind: 'code', h: 'AD beats metric', code:
+`  Prefix 10.1.1.0/24
+    learned via OSPF, metric 10 (AD 110)
+    learned via EIGRP external, metric 1 (AD 170)
+
+  Winner: OSPF, because 110 < 170
+  Even though the EIGRP metric looks better.` },
+              { kind: 'para', h: 'The redistribution trap', p: 'Redistributing OSPF into EIGRP makes those routes **EIGRP external** (AD 170). If the same prefix still exists natively as an OSPF route, **AD 110 beats 170** and OSPF wins — unless you change things.' },
+              { kind: 'code', h: 'Changing AD per prefix', code:
+`  router eigrp 100
+   distance 200 10.1.0.0 0.0.255.255
+
+  ! Give lower preference to these EIGRP routes
+  ! (or raise it as appropriate)` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route 10.1.1.0
+  show ip protocols` }
+            ],
+            commands: [
+              { label: 'Inspect the choice', code:
+`show ip route 10.1.1.0/24` },
+              { label: 'Tune AD', code:
+`router eigrp 100
+ distance 200 10.0.0.0 0.255.255.255` },
+              { label: 'Verify', code:
+`show ip protocols` }
+            ],
+            traps: [
+              '**AD beats metric. Always.**',
+              '**EIGRP internal 90 beats EIGRP external 170.**',
+              '**OSPF 110 beats EIGRP external 170.**',
+              '**eBGP 20** usually beats internal IGP routes.',
+              '**iBGP 200** loses to almost everything.',
+              'Use **%%distance%%** when both protocols know the same prefix.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Rule', 'Lower AD wins, regardless of metric'],
+                ['Connected/Static', '0 / 1'],
+                ['eBGP', '20'],
+                ['EIGRP internal', '90'],
+                ['OSPF', '110'],
+                ['EIGRP external', '170'],
+                ['iBGP', '200'],
+                ['Redistribution issue', 'External routes get higher AD'],
+                ['Fix', 'distance command per source/prefix']
+              ]
+            },
+            related: [
+              { t: '01. OSPF to EIGRP', d: 'external AD matters' },
+              { t: '08. Loop Prevention', d: 'AD is a loop-prevention tool too' },
+              { t: '03. EIGRP to BGP', d: 'cross-protocol comparisons' }
+            ],
+            glossary: ['Administrative Distance', 'EIGRP', 'OSPF', 'BGP', 'Route Redistribution']
+          }
+        ,
+          {
+            id: 't06', num: '06', group: 'mech', title: 'Route Tags',
+            blurb: 'Mark routes at the boundary so they can be identified and filtered later',
+            overview: '**[[Route Tag|Route tags]]** label routes as they cross a redistribution boundary, letting downstream routers identify origin and apply policy consistently. Tags survive redistribution and are the backbone of **[[Routing Loop|loop prevention]]**: tag routes entering a domain, then match that tag to prevent them from being re-advertised back.',
+            keyIdea: 'Tag at entry, match at exit. If a tag is already present, do not send it back.',
+            sections: [
+              { kind: 'code', h: 'Why tags', code:
+`  OSPF --(tag 100)-- EIGRP
+                |
+              router
+                |
+           EIGRP learns
+             tag 100
+
+  Later, prevent routes WITH tag 100
+  from going back to OSPF.` },
+              { kind: 'table', h: 'Tags in context', cols: ['Protocol', 'Notes'], rows: [
+                ['OSPF', 'Tags appear on external routes (E1/E2)'],
+                ['EIGRP', 'Carries tags on external routes'],
+                ['BGP', 'Tags are analogous to **communities**']
+              ]},
+              { kind: 'code', h: 'Tagging on redistribution', code:
+`  route-map OSPF-TO-EIGRP permit 10
+   set tag 100
+
+  router eigrp 100
+   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets` },
+              { kind: 'code', h: 'Matching and denying', code:
+`  route-map EIGRP-TO-OSPF deny 10
+   match tag 100
+
+  route-map EIGRP-TO-OSPF permit 20
+
+  router ospf 1
+   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets` },
+              { kind: 'para', h: 'Tags must be set at the boundary', p: 'A tag has to be applied **as the route enters** a domain. If you never tag it, there is nothing to match when you try to stop it coming back.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip ospf database external
+  show ip eigrp topology` }
+            ],
+            commands: [
+              { label: 'Tag routes entering EIGRP', code:
+`route-map OSPF-TO-EIGRP permit 10
+ set tag 100
+router eigrp 100
+ redistribute ospf 1 route-map OSPF-TO-EIGRP subnets` },
+              { label: 'Block routes by tag going back', code:
+`route-map EIGRP-TO-OSPF deny 10
+ match tag 100
+route-map EIGRP-TO-OSPF permit 20
+router ospf 1
+ redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets` },
+              { label: 'Verify', code:
+`show ip route` }
+            ],
+            traps: [
+              '**Tag at the boundary, match downstream** to prevent loops.',
+              'OSPF carries tags **only on external routes**.',
+              'Tags are central to **loop prevention** designs.',
+              '**BGP’s tag analog is the community**.',
+              'A missing tag means there is nothing to filter.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Identify route origin across redistribution'],
+                ['Applied', 'At the redistribution boundary'],
+                ['Used for', 'Filtering and loop prevention'],
+                ['OSPF', 'Only on external (E1/E2) routes'],
+                ['EIGRP', 'On external routes'],
+                ['BGP equivalent', 'Community'],
+                ['Method', 'set tag in route-map, match tag to deny']
+              ]
+            },
+            related: [
+              { t: '08. Loop Prevention', d: 'the canonical use case' },
+              { t: '07. Filtering', d: 'how tags are enforced' },
+              { t: '01. OSPF to EIGRP', d: 'where tags get attached' }
+            ],
+            glossary: ['Route Tag', 'Route Redistribution', 'Routing Loop', 'Route Map', 'OSPF', 'EIGRP', 'BGP']
+          },
+          {
+            id: 't07', num: '07', group: 'ctrl', title: 'Filtering',
+            blurb: 'Control which routes cross the boundary; implicit deny and direction matter',
+            overview: '**[[Route Filtering]]** decides which routes are redistributed between domains. Blind redistribution is the fastest way to create **[[Routing Loop|loops]]** and unwanted prefixes. The standard tool is a **route-map** applied to the **%%redistribute%%** command, used with **prefix-lists** or **ACLs** to match prefixes.',
+            keyIdea: 'Route-maps on redistribute filter + can set. Watch the implicit deny and apply in the right place.',
+            sections: [
+              { kind: 'table', h: 'Filtering tools', cols: ['Tool', 'Use'], rows: [
+                ['**Route-map**', 'Match + filter + set (tags/metrics) — the standard'],
+                ['**Prefix-list**', 'Clean prefix/length matching'],
+                ['**[[Access Control List|ACL]]**', 'Also works, but **[[Prefix List|prefix-lists]]** are preferred'],
+                ['**Distribute-list**', 'Protocol-specific; OSPF distribute-list is **in only**']
+              ]},
+              { kind: 'code', h: 'Filtering with a route-map', code:
+`  ip prefix-list INTERNAL permit 10.0.0.0/8 le 24
+
+  route-map REDIST deny 10
+   match ip address prefix-list BAD
+
+  route-map REDIST permit 20
+   match ip address prefix-list INTERNAL
+
+  router eigrp 100
+   redistribute ospf 1 route-map REDIST subnets` },
+              { kind: 'para', h: 'Implicit deny', p: 'A route-map used for redistribution has an **implicit deny** at the end. Routes that do not match any **permit** are **not redistributed**.' },
+              { kind: 'code', h: 'Direction matters', code:
+`  Filtering is LOCAL to the boundary router.
+  A deny in OSPF->EIGRP does not affect EIGRP->OSPF
+  unless you configure it there too.` },
+              { kind: 'para', h: 'OSPF distribute-list', p: 'For OSPF specifically, **%%distribute-list in%%** can filter incoming routes, but filtering **out** of OSPF during redistribution is done via the **route-map on %%redistribute%%**.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show running-config | section router` }
+            ],
+            commands: [
+              { label: 'Permit only internal prefixes', code:
+`ip prefix-list INTERNAL permit 10.0.0.0/8 le 24
+route-map REDIST permit 10
+ match ip address prefix-list INTERNAL
+router eigrp 100
+ redistribute ospf 1 route-map REDIST subnets` },
+              { label: 'Verify', code:
+`show ip route eigrp` }
+            ],
+            traps: [
+              '**Route-maps applied to redistribute** filter and can set tags/metrics.',
+              '**Implicit deny** blocks unmatched routes.',
+              'Filters are **local** — configure symmetrically on both directions if needed.',
+              'OSPF **distribute-list is in only**.',
+              '**Tag-based denies** are a strong loop-prevention pattern.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Goal', 'Control which routes cross the boundary'],
+                ['Tool of choice', 'Route-map on the redistribute command'],
+                ['Implicit deny', 'Unmatched routes are not redistributed'],
+                ['Local', 'Each router and direction is independent'],
+                ['Prefix-list', 'Preferred over ACLs for prefix matching'],
+                ['OSPF note', 'distribute-list in only'],
+                ['With tags', 'Can filter by origin to stop loops']
+              ]
+            },
+            related: [
+              { t: '06. Route Tags', d: 'filtering by origin' },
+              { t: '08. Loop Prevention', d: 'why filtering exists' },
+              { t: '01. OSPF to EIGRP', d: 'applied here' }
+            ],
+            glossary: ['Route Filtering', 'Route Redistribution', 'Route Map', 'Prefix List', 'Routing Loop', 'Default Route', 'Loopback Address', 'Control Plane', 'Data Plane', 'Routing Table']
+          },
+          {
+            id: 't08', num: '08', group: 'ctrl', title: 'Loop Prevention',
+            blurb: 'Stop routes coming back and forth between domains',
+            overview: 'Redistributing in **both directions** between two protocols creates a classic **[[Routing Loop|routing loop]]**. A route leaves domain A into B, is redistributed back as external into A with a worse or even equal metric, and can bounce back and forth — often making routes look like externals with inflated metrics. The exam expects **tags + filters**, **AD tuning**, **one boundary router**, or **careful design**.',
+            keyIdea: 'Tag what you send out, deny it coming back. That is the canonical answer.',
+            sections: [
+              { kind: 'code', h: 'The loop', code:
+`  Domain A (OSPF) --> boundary --> Domain B (EIGRP)
+                        |
+                    redistributes both ways
+                        |
+  Route can return with higher/worse info
+  or ping-pong between protocols` },
+              { kind: 'table', h: 'Prevention techniques', cols: ['Technique', 'Why'], rows: [
+                ['**One boundary router**', 'Simplest — no other place to loop through'],
+                ['**Route tags + filter**', 'Tag on entry, deny if tag present on return'],
+                ['**Route filtering**', 'Only allow intended prefixes both ways'],
+                ['**Administrative Distance tuning**', 'Make the "original" source preferred'],
+                ['**Summary / default**', 'Limit what can be redistributed']
+              ]},
+              { kind: 'code', h: 'The canonical solution: tags', code:
+`  ! OSPF -> EIGRP, tag routes
+  route-map OSPF-TO-EIGRP permit 10
+   set tag 100
+  router eigrp 100
+   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets
+
+  ! EIGRP -> OSPF, deny tagged routes
+  route-map EIGRP-TO-OSPF deny 10
+   match tag 100
+  route-map EIGRP-TO-OSPF permit 20
+  router ospf 1
+   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets` },
+              { kind: 'para', h: 'AD as a backstop', p: '**[[Administrative Distance]]** can prefer the original domain’s routes. For example, if an OSPF-internal route becomes EIGRP-external on return, keeping OSPF routes preferred helps prevent the loop.' },
+              { kind: 'para', h: 'The result of a loop', p: 'Routes often become **external** in the second protocol, metrics inflate, and the router can flip between them. In severe cases the network flaps or creates suboptimal paths.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route
+  show ip ospf database
+  show ip eigrp topology` }
+            ],
+            commands: [
+              { label: 'Tag and deny (canonical)', code:
+`route-map OSPF-TO-EIGRP permit 10
+ set tag 100
+router eigrp 100
+ redistribute ospf 1 route-map OSPF-TO-EIGRP subnets
+
+route-map EIGRP-TO-OSPF deny 10
+ match tag 100
+route-map EIGRP-TO-OSPF permit 20
+router ospf 1
+ redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets` },
+              { label: 'Verify', code:
+`show ip route` }
+            ],
+            traps: [
+              '**Tags at entry + deny at return** is the canonical loop-prevention answer.',
+              '**Use one boundary router** if possible to avoid multi-point redistribution.',
+              'Filter **both directions** in multi-boundary designs.',
+              'A loop can turn routes into **externals** with inflated metrics.',
+              '**AD beats metric** — use it as a backstop.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Cause', 'Mutual redistribution between two domains'],
+                ['Best fix', 'One redistribution point'],
+                ['Core mechanism', 'Route tags + route-maps on return'],
+                ['Also useful', 'AD tuning, prefix filtering, summarization'],
+                ['Symptom', 'Routes become external, metrics inflating, flapping'],
+                ['Filter direction', 'Must be applied on the return path'],
+                ['BGP communities', 'Analogous to tags for loop control']
+              ]
+            },
+            related: [
+              { t: '06. Route Tags', d: 'how to mark routes' },
+              { t: '07. Filtering', d: 'how to enforce' },
+              { t: '05. Administrative Distance', d: 'the backstop' }
+            ],
+            glossary: ['Routing Loop', 'Route Redistribution', 'Route Tag', 'Route Filtering', 'Administrative Distance', 'Route Map', 'OSPF', 'EIGRP', 'BGP']
+          }
+        ];
+        
+        const GROUPS = [
+          { key: 'scen', label: 'Redistribution Scenarios', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'mech', label: 'Mechanics', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'ctrl', label: 'Control & Safety', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+        
+        const glossary = [
+          { term: 'Route Redistribution', def: 'Injecting routes from one routing protocol into another at a boundary router. Requires careful handling of metrics, AD, tagging and filtering.' },
+          { term: 'Seed Metric', def: 'The initial metric assigned to a redistributed route. EIGRP needs it explicitly; OSPF uses default-metric/subnets; BGP uses MED.' },
+          { term: 'Route Tag', def: 'A label attached to routes at redistribution boundaries to identify origin and enforce policy. Used heavily to prevent routing loops.' },
+          { term: 'Route Filtering', def: 'Controlling which prefixes are allowed to cross a redistribution boundary, usually with route-maps, prefix-lists or ACLs.' },
+          { term: 'Routing Loop', def: 'A cycle where routes bounce between protocols/domains due to mutual redistribution. Prevented by tags, filters, AD tuning or a single boundary router.' },
+          { term: 'Administrative Distance', def: 'The preference between route sources. Lower AD wins before metric comparison. EIGRP internal 90, OSPF 110, EIGRP external 170, eBGP 20, iBGP 200.' },
+          { term: 'Default Route', def: 'A catch-all prefix sometimes redistributed to provide reachability from a stub domain.' },
+          { term: 'EIGRP Metric', def: 'The composite metric (bandwidth, delay, reliability, load, MTU). Used when redistributing into EIGRP as the seed metric.' },
+          { term: 'MED', def: 'Multi-Exit Discriminator in BGP, often used as the "metric" when redistributing and can inherit values like the OSPF cost.' },
+          { term: 'OSPF', def: 'Link-state protocol; routes redistributed into it become external (E1 or E2) and can carry tags on external routes.' },
+          { term: 'EIGRP', def: 'Hybrid distance-vector; redistributed routes become external (AD 170) and require a seed metric unless coming from certain protocols.' },
+          { term: 'BGP', def: 'Path-vector policy protocol; uses network/redistribute to inject routes, with origin ? on redistribute and MED often defaulting to 0.' },
+          { term: 'Prefix List', def: 'Efficient prefix/length matcher used in route-maps to control redistribution.' },
+          { term: 'Route Map', def: 'Match/set blocks applied to redistribute to filter, tag, or set metrics.' },
+          { term: 'Loopback Address', def: 'Often used as router IDs and sometimes for peering in redistribution designs.' },
+          { term: 'Control Plane', def: 'Where redistribution decisions and policy are applied.' },
+          { term: 'Data Plane', def: 'Where traffic actually flows once routes are installed.' },
+          { term: 'Routing Table', def: 'The RIB; AD determines which redistributed source is installed when prefixes overlap.' }
+        ];
+        
+        const quiz = [
+          {
+            q: 'What is required to redistribute into EIGRP?',
+            options: ['A seed metric', 'Only a network statement', 'An area number', 'A community'],
+            answer: 0,
+            why: 'EIGRP has no default seed metric and will not advertise redistributed routes without one.'
+          },
+          {
+            q: 'Which keyword is needed to redistribute all OSPF subnets into another protocol?',
+            options: ['subnets', 'all-subnets', 'include', 'classless'],
+            answer: 0,
+            why: 'Without subnets, only classful networks are redistributed.'
+          },
+          {
+            q: 'OSPF cost does not map to EIGRP metric. True or false?',
+            options: ['True', 'False'],
+            answer: 0,
+            why: 'There is no automatic conversion; you must supply the EIGRP composite metric.'
+          },
+          {
+            q: 'What is the origin of routes injected via redistribute in BGP?',
+            options: ['i', 'e', '?', 'Incomplete only for external'],
+            answer: 2,
+            why: 'redistribute gives origin incomplete (?); network gives origin i.'
+          },
+          {
+            q: 'What does the network statement in BGP require?',
+            options: ['The prefix to already exist in the routing table', 'A route-map', 'A seed metric', 'An AS number'],
+            answer: 0,
+            why: 'network only advertises prefixes that are already present in the RIB.'
+          },
+          {
+            q: 'Is a seed metric required when redistributing EIGRP into BGP?',
+            options: ['Yes, always', 'No, not required', 'Only if using route-maps', 'Only for external routes'],
+            answer: 1,
+            why: 'BGP does not require the EIGRP 5-tuple; MED is used instead and often defaults to 0.'
+          },
+          {
+            q: 'What does MED often default to when redistributing?',
+            options: ['0', '100', '200', 'Unlimited'],
+            answer: 0,
+            why: 'If not set explicitly, MED often defaults to 0.'
+          },
+          {
+            q: 'Which protocol uses BW, delay, reliability, load, MTU in its seed metric?',
+            options: ['EIGRP', 'OSPF', 'BGP', 'RIP'],
+            answer: 0,
+            why: 'EIGRP’s composite metric requires those five values.'
+          },
+          {
+            q: 'What is the difference between OSPF E2 and E1?',
+            options: ['E2 ignores internal cost, E1 adds it', 'E1 ignores cost, E2 adds it', 'They are the same', 'Only E1 is external'],
+            answer: 0,
+            why: 'E2 uses the seed metric only; E1 adds the internal OSPF path cost.'
+          },
+          {
+            q: 'Which wins when the same prefix is learned with different ADs?',
+            options: ['The one with lower AD', 'The one with lower metric', 'The newer route', 'The one with more hops'],
+            answer: 0,
+            why: 'Administrative Distance is compared first and beats metric.'
+          },
+          {
+            q: 'What is the AD of eBGP?',
+            options: ['20', '90', '110', '170'],
+            answer: 0,
+            why: 'eBGP is 20, which is usually preferred over internal IGPs.'
+          },
+          {
+            q: 'What is the AD of EIGRP external routes?',
+            options: ['90', '110', '170', '200'],
+            answer: 2,
+            why: 'EIGRP external is 170; internal is 90.'
+          },
+          {
+            q: 'What is the AD of OSPF?',
+            options: ['90', '110', '170', '200'],
+            answer: 1,
+            why: 'OSPF uses AD 110.'
+          },
+          {
+            q: 'What is the purpose of route tags?',
+            options: ['To label origin for filtering/loop prevention', 'To encrypt routes', 'To set bandwidth', 'To change AS numbers'],
+            answer: 0,
+            why: 'Tags allow downstream routers to identify where a route came from.'
+          },
+          {
+            q: 'On which OSPF routes do tags appear?',
+            options: ['External routes (E1/E2)', 'Internal routes only', 'All routes', 'Default routes only'],
+            answer: 0,
+            why: 'Tags are carried on external OSPF routes.'
+          },
+          {
+            q: 'What is BGP’s equivalent to route tags?',
+            options: ['Communities', 'MED', 'AS Path', 'Local Preference'],
+            answer: 0,
+            why: 'Communities serve a similar purpose in BGP.'
+          },
+          {
+            q: 'What is the standard tool to filter during redistribution?',
+            options: ['A route-map applied to redistribute', 'An ACL on an interface', 'A static route', 'A prefix-list on the loopback'],
+            answer: 0,
+            why: 'Route-maps on the redistribute command match, filter, and can set values.'
+          },
+          {
+            q: 'What happens to unmatched routes in a route-map used for redistribution?',
+            options: ['They are denied (implicit deny)', 'They are allowed', 'They are summarized', 'They get a default metric'],
+            answer: 0,
+            why: 'Route-maps have an implicit deny at the end.'
+          },
+          {
+            q: 'OSPF distribute-list is limited to which direction?',
+            options: ['in only', 'out only', 'both', 'neither'],
+            answer: 0,
+            why: 'OSPF only supports distribute-list in.'
+          },
+          {
+            q: 'What is the classic cause of routing loops in redistribution?',
+            options: ['Mutual redistribution between protocols', 'Single-point redistribution', 'Using tags', 'Using prefix-lists'],
+            answer: 0,
+            why: 'Routes can bounce back and forth when both directions redistribute.'
+          },
+          {
+            q: 'What is the canonical loop-prevention method?',
+            options: ['Tag routes on entry and deny tagged routes on return', 'Use default metrics', 'Increase AD everywhere', 'Disable redistribution'],
+            answer: 0,
+            why: 'Mark origin with a tag, then filter it back.'
+          },
+          {
+            q: 'What is the simplest way to avoid multi-point redistribution loops?',
+            options: ['Use a single boundary router', 'Use more routers', 'Always redistribute both ways', 'Never use tags'],
+            answer: 0,
+            why: 'One redistribution point eliminates alternative paths for the loop.'
+          },
+          {
+            q: 'How can AD help with loops?',
+            options: ['Make the original source preferred', 'It has no effect', 'It always causes loops', 'It only affects static routes'],
+            answer: 0,
+            why: 'Lower AD wins, so preferring the native domain prevents taking the redistributed version back.'
+          },
+          {
+            q: 'When redistributing into EIGRP, what happens if no seed metric is given?',
+            options: ['Routes are not advertised', 'Routes get a default metric of 0', 'Routes are dropped silently but counted', 'The router reloads'],
+            answer: 0,
+            why: 'EIGRP requires a seed metric and will not advertise routes without one.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'rd.theme', done: 'rd.done', best: 'rd.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
