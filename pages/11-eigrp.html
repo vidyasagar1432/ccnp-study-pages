@@ -1,0 +1,2902 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EIGRP — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 11 EIGRP: the DUAL algorithm, Reported Distance against Feasible Distance, successors and feasible successors, RTP over IP protocol 88, named mode configuration, EIGRP for IPv6, stub routers, authentication, variance and unequal-cost load balancing.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">EIGRP — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">EIGRP</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">EIGRP</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 11</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 11</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">11 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 11 &mdash; EIGRP</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The hybrid protocol end to end: DUAL and the feasibility condition that keeps EIGRP loop-free, RTP over IP protocol 88, named mode and IPv6 configuration, then the stub, authentication and variance work that decides what your routers advertise.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        EIGRP &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 11 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[EIGRP]]** is Cisco’s **advanced distance-vector** protocol, kept loop-free by **[[DUAL]]** and delivered by **[[RTP|Reliable Transport]]**. This level follows the algorithm itself — the **[[Successor|successor]]**, the **[[Feasible Successor|feasible successor]]** and the **[[Feasibility Condition|feasibility condition]]** — then the modern **[[Named Mode EIGRP|named mode]]** and **[[EIGRP for IPv6|IPv6]]** configuration, and the operations that decide what your routers advertise.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'algo', title: 'DUAL',
+            blurb: 'Feasible Distance against Reported Distance, why RD must be strictly less than FD, and what happens when nothing qualifies',
+            overview: '**[[DUAL]] (Diffusing Update Algorithm)** is how **[[EIGRP]]** selects **loop-free paths** and converges. It maintains a **topology table of many paths** and uses the **[[Feasibility Condition|feasibility condition]]** to identify a backup in advance, so a failure can often be absorbed **without sending a single query**.',
+            keyIdea: 'FD is what you totalled yourself; RD is what the neighbour reported. The whole protocol turns on RD being strictly less than FD.',
+            sections: [
+              { kind: 'table', h: 'The two distances', cols: ['Term', 'Meaning'], rows: [
+                ['FD, Feasible Distance', '**Your own** total metric to the destination'],
+                ['RD, Reported Distance', 'The **neighbour’s** total metric to that destination, reported to you'],
+                ['Also called', 'Reported Distance is also written Advertised Distance'],
+                ['Successor', 'The best eligible path, its metric is your FD'],
+                ['Feasible Successor', 'Any path satisfying RD < FD']
+              ]},
+              { kind: 'code', h: 'Where the two numbers come from', code:
+`  Dest 10.20.0.0/16
+
+  Your FD = 30   (total metric you computed yourself)
+     ^
+     |  neighbor says "my total is 20"
+     v
+  RD = 20
+
+
+  FD = your number
+  RD = their number` },
+              { kind: 'code', h: 'The feasibility condition', code:
+`  RD  <  FD    ->  YES, the path is a feasible successor
+  RD  =  FD    ->  NO
+  RD  >  FD    ->  NO
+
+
+  Strictly less than.
+  Equal does not qualify.` },
+              { kind: 'para', h: 'Equal does not qualify', p: 'A neighbour reporting exactly the same total metric you have does **not** satisfy the condition. Only strictly less than. This single rule is what keeps EIGRP loop-free, and it is the most common point where students think the answer is yes.' },
+              { kind: 'code', h: 'The equality case', code:
+`  FD = 30
+
+  RD = 20  ->  20 < 30   YES   feasible successor
+  RD = 30  ->  30 < 30   NO
+  RD = 40  ->  40 < 30   NO` },
+              { kind: 'para', h: 'Second-lowest is not automatically a successor', p: 'The path with the second-lowest total metric is **not automatically** a feasible successor. The metric ranking and the loop-free test are two separate questions, and a path has to pass both.' },
+              { kind: 'code', h: 'Two separate questions', code:
+`  1. Is it cheap enough?     -> metric ranking
+  2. Is it loop-free?        -> RD < FD
+
+
+  A cheap path can fail test 2.
+  A loop-free path can fail test 1.` },
+              { kind: 'para', h: 'No feasible successor means queries', p: 'When the successor fails and **no feasible successor** exists, EIGRP does not install an arbitrary backup. The route goes **active** and DUAL starts a **diffusing computation**: queries go out, replies come back, and only when they all arrive is a new loop-free choice made.' },
+              { kind: 'code', h: 'The slow path', code:
+`  No feasible successor
+       |
+  Route goes ACTIVE
+       |
+  Queries sent to neighbours
+       |
+  Replies returned
+       |
+  Diffusing computation ends
+       |
+  New successor elected
+
+
+  This is the path you design to avoid.` },
+              { kind: 'code', h: 'The fast path', code:
+`  Successor fails
+       |
+  Feasible successor exists?
+       |
+      YES
+       |
+  Promote it.  Done.
+
+
+  No queries.  This is the point of DUAL.` },
+              { kind: 'para', h: 'Active is a route state, not a link state', p: 'A route in **active** means DUAL is running a diffusing computation for it. It does **not** mean the interface is down, the neighbour is dead, or anything physical happened to that path.' },
+              { kind: 'code', h: 'Active against passive', code:
+`  PASSIVE  ->  a stable successor exists, nothing is being computed
+  ACTIVE   ->  DUAL is computing, queries are outstanding
+
+
+  Active is a ROUTE state.
+  It says nothing about the interface.` },
+              { kind: 'para', h: 'EIGRP is not link-state', p: 'EIGRP is classified as an **advanced distance-vector** protocol. It keeps a topology table and does an SPF-like loop-free computation, but it does **not** hold a link-state database and does not run Dijkstra’s algorithm the way OSPF does.' },
+              { kind: 'code', h: 'Classification', code:
+`  EIGRP       advanced distance-vector
+  OSPF        link state, Dijkstra SPF
+  EIGRP       topology table, DUAL, feasibility condition
+
+
+  It looks link-state from the outside.
+  It is not.` },
+              { kind: 'code', h: 'DUAL does not need a full map', code:
+`  OSPF:   every router has the whole topology
+  EIGRP:  you know what your NEIGHBOURS told you
+
+
+  DUAL proves loop-free from that,
+  without a complete map of the network.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip eigrp topology
+  show ip eigrp topology all-links
+  show ip eigrp route
+  show ip eigrp neighbors
+  show ip eigrp events` }
+            ],
+            commands: [
+              { label: 'Read the topology table', code:
+`show ip eigrp topology
+show ip eigrp topology all-links` },
+              { label: 'Read what the RIB actually got', code:
+`show ip eigrp route
+show ip route eigrp` },
+              { label: 'Watch DUAL work', code:
+`show ip eigrp events
+show ip eigrp statistics` }
+            ],
+            traps: [
+              '**FD against RD** — FD is your own total metric, RD is the neighbour’s reported one. Do not swap them.',
+              '**RD = FD does not satisfy the feasibility condition.** It has to be strictly RD < FD.',
+              'The second-lowest metric path is **not automatically** a feasible successor.',
+              'No feasible successor does not mean an arbitrary backup — it means **active, queries, replies**, then a diffusing computation.',
+              '**Active** is the EIGRP route state. It does not mean the interface is down.',
+              'EIGRP is an **advanced distance-vector** protocol, not link-state, and does not maintain a link-state database.',
+              'Queries are the **slow** path. The fast case is successor fails, feasible successor promoted.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Diffusing Update Algorithm'],
+                ['Used by', 'EIGRP'],
+                ['Purpose', 'Loop-free path selection and fast convergence'],
+                ['FD', 'Feasible Distance, your own total metric'],
+                ['RD', 'Reported Distance, the neighbour’s total'],
+                ['RD also called', 'Advertised Distance'],
+                ['Feasibility condition', 'RD strictly less than FD'],
+                ['RD equal to FD', 'Does not qualify'],
+                ['Successor', 'Best eligible path, installed in the RIB'],
+                ['Feasible successor', 'Held in the topology table'],
+                ['Fast case', 'Successor fails, feasible successor promoted'],
+                ['Slow case', 'Active, queries, replies, diffusing computation'],
+                ['Active means', 'A diffusing computation is running'],
+                ['Protocol class', 'Advanced distance-vector'],
+                ['Full network map', 'Not required'],
+                ['Verification', 'show ip eigrp topology']
+              ]
+            },
+            related: [
+              { t: '04. Feasible Successor', d: 'the backup DUAL proves loop-free' },
+              { t: '03. Successor', d: 'the path it installs' },
+              { t: '11. Troubleshooting', d: 'when a route sits in active' }
+            ],
+            glossary: ['DUAL', 'EIGRP', 'Successor', 'Feasible Successor', 'Feasibility Condition', 'EIGRP Metric', 'Administrative Distance', 'Control Plane']
+          },
+          {
+            id: 't02', num: '02', group: 'algo', title: 'RTP',
+            blurb: 'IP protocol 88, what is reliable against what is not, and why hello timers may differ while K-values may not',
+            overview: '**[[RTP]] (Reliable Transport Protocol)** is **[[EIGRP]]’s own delivery mechanism** — not TCP, not UDP. It runs **directly over IP using protocol 88**, so there are **no TCP or UDP ports**, and it makes selected packet types reliable with **sequence numbers, acknowledgments and retransmissions**.',
+            keyIdea: 'Updates, Queries and Replies are reliable. Hellos and ACKs are not — and an ACK is never itself acknowledged.',
+            sections: [
+              { kind: 'code', h: 'How EIGRP is carried', code:
+`  EIGRP -> IP -> Ethernet
+
+  IP Protocol = 88
+
+  NOT TCP.  NOT UDP.
+  Therefore: no TCP port 88, no UDP port 88.` },
+              { kind: 'table', h: 'Reliable against unreliable', cols: ['Packet', 'Delivery'], rows: [
+                ['Update', '**Reliable**'],
+                ['Query', '**Reliable**'],
+                ['Reply', '**Reliable**'],
+                ['Hello', 'Unreliable'],
+                ['ACK', 'Unreliable']
+              ]},
+              { kind: 'code', h: 'The reliable set', code:
+`  RELIABLE          UNRELIABLE
+    Update            Hello
+    Query             ACK
+    Reply
+
+
+  An ACK confirms a reliable packet.
+  An ACK is never itself acknowledged.` },
+              { kind: 'code', h: 'The exchange', code:
+`  A -----------------> B
+      Update  (reliable)
+  A <----------------- B
+      ACK     (unreliable)
+
+
+  If no ACK arrives,
+  the Update is retransmitted.` },
+              { kind: 'para', h: 'Hello timers do not have to match', p: 'Unlike OSPF, **EIGRP hello timers are not required to match**. The receiving router uses **the hold time its neighbour advertised** in the hello, which is why one side can hello faster than the other and the adjacency still forms.' },
+              { kind: 'code', h: 'Timers against K-values', code:
+`  Hello interval   ->  does NOT have to match
+  Hold time        ->  taken from the neighbor, does NOT have to match
+  K-values         ->  MUST match
+
+
+  K mismatch = no adjacency.
+  Timer mismatch = usually fine.` },
+              { kind: 'para', h: 'K-values must match', p: 'If the **K-values** — the metric weights — differ, the two routers cannot compute a comparable metric and the **adjacency never forms**. This is the one parameter people expect timers to be, and get the wrong way round.' },
+              { kind: 'code', h: 'Where K-values sit', code:
+`  metric weights 0 1 0 1 0 0
+                  T K1 K2 K3 K4 K5 K6
+
+  K1 = bandwidth
+  K3 = delay
+
+  Defaults: K1 = 1, K2 = 0, K3 = 1, K4 = 0, K5 = 0
+
+
+  Both ends must agree.` },
+              { kind: 'code', h: 'The multicast group', code:
+`  IPv4 EIGRP  ->  224.0.0.10
+  IPv6 EIGRP  ->  FF02::A
+
+
+  The local EIGRP router group.
+  Not every EIGRP packet is multicast —
+  unicast hellos and unicast ACKs are normal.` },
+              { kind: 'code', h: 'A mismatch produces no adjacency', code:
+`  show ip eigrp neighbors
+
+  <empty>
+
+
+  Likely causes:
+    K-value mismatch
+    AS number mismatch
+    passive-interface
+    no common subnet
+    no EIGRP process on that interface` },
+              { kind: 'para', h: 'SIA is a DUAL problem, not a transport one', p: '**Stuck-in-Active** means the **query and reply process did not complete**. RTP can deliver packets reliably and the route can still go SIA, because the failure is in the diffusing computation, not in delivery.' },
+              { kind: 'code', h: 'Where SIA lives', code:
+`  RTP failed        ->  retransmission, then the adjacency drops
+  SIA               ->  queries went out, replies did not all return
+
+
+  SIA is a DUAL / query-domain problem.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip eigrp neighbors
+  show ip eigrp interface
+  show ip protocols
+  show ip eigrp statistics
+  debug eigrp packet hello` }
+            ],
+            commands: [
+              { label: 'Check the neighbours', code:
+`show ip eigrp neighbors
+show ip protocols` },
+              { label: 'See the interface timers', code:
+`show ip eigrp interface
+show ip eigrp interface GigabitEthernet0/0 detail` },
+              { label: 'Watch RTP exchanges', code:
+`debug eigrp packet hello
+debug eigrp packet ack` }
+            ],
+            traps: [
+              'EIGRP uses **IP protocol 88**. It does **not** use TCP or UDP port 88.',
+              '**RTP is not TCP.** It is EIGRP’s own reliable delivery.',
+              'Reliable: **Update, Query, Reply**. Unreliable: **Hello, ACK**.',
+              'An **ACK does not itself need an ACK**.',
+              '**Hello timers do not have to match** — the receiver uses the hold time its neighbour advertised.',
+              '**K-values must match** or there is no adjacency. Do not confuse the two.',
+              'The IPv4 EIGRP multicast is **224.0.0.10**. Not every packet is multicast.',
+              '**SIA is not an RTP failure.** It is the DUAL query and reply process not completing.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Reliable Transport Protocol'],
+                ['Purpose', 'Deliver EIGRP packets between neighbours'],
+                ['Transport', 'Directly over IP'],
+                ['IP protocol', '88'],
+                ['TCP or UDP', 'Neither, so no ports'],
+                ['Reliability method', 'Sequence numbers, ACKs, retransmissions'],
+                ['Reliable packets', 'Update, Query, Reply'],
+                ['Unreliable packets', 'Hello, ACK'],
+                ['ACK', 'Confirms a reliable packet, never itself acked'],
+                ['Hello timers', 'Do not have to match'],
+                ['Hold time', 'Taken from the neighbour’s hello'],
+                ['K-values', 'Must match, or no adjacency'],
+                ['IPv4 multicast', '224.0.0.10'],
+                ['IPv6 multicast', 'FF02::A'],
+                ['SIA', 'A DUAL problem, not an RTP one'],
+                ['Verification', 'show ip eigrp neighbors']
+              ]
+            },
+            related: [
+              { t: '01. DUAL', d: 'the query and reply process SIA refers to' },
+              { t: '06. IPv6', d: 'the same transport, different multicast' },
+              { t: '11. Troubleshooting', d: 'what to check first' }
+            ],
+            glossary: ['RTP', 'EIGRP', 'Multicast', 'IPv6', 'Control Plane', 'MTU']
+          },
+          {
+            id: 't03', num: '03', group: 'algo', title: 'Successor',
+            blurb: 'The best eligible path, why its metric becomes your FD, and the D and EX codes it installs',
+            overview: 'The **[[Successor|successor]]** is the **[[EIGRP]]** path with the **lowest total [[EIGRP Metric|metric]]** among the eligible candidates. Its route is the one installed in the **[[Routing Table|routing table]]**, and its metric is the router’s **Feasible Distance** for that destination.',
+            keyIdea: 'One successor per destination, and the successor is chosen on metric — feasibility is what determines whether a backup exists at all.',
+            sections: [
+              { kind: 'code', h: 'The definition', code:
+`  Successor = best eligible path
+  FD        = total metric of that path
+
+
+  Lowest total metric among candidates
+  that DUAL is willing to consider.` },
+              { kind: 'code', h: 'What lands in the RIB', code:
+`  show ip route eigrp
+
+  D     10.20.0.0/16 [90/30] via 192.0.2.6
+  D EX  172.16.0.0/16 [170/40] via 192.0.2.10
+
+
+  D     = internal EIGRP,    AD 90
+  D EX  = external EIGRP,    AD 170` },
+              { kind: 'table', h: 'The two route codes', cols: ['Code', 'Route type', 'Administrative Distance'], rows: [
+                ['D', 'Internal EIGRP', '**90**'],
+                ['D EX', 'External EIGRP, redistributed', '**170**']
+              ]},
+              { kind: 'para', h: 'The successor is not the second best', p: 'The successor is simply the **best eligible** path. The second-best metric does not become a successor, and it does not become a backup either — it has to pass the **[[Feasibility Condition|feasibility condition]]** separately.' },
+              { kind: 'code', h: 'Successor against feasible successor', code:
+`  SUCCESSOR              FEASIBLE SUCCESSOR
+    best total metric      RD < FD
+    in the RIB            in the topology table
+    one per destination   zero or more
+
+
+  Different tests.` },
+              { kind: 'para', h: 'Eligibility is a filter first', p: 'A path has to be eligible before it can be compared — an administratively shut interface, an AS mismatch or a passive interface removes the candidate entirely. Only then does DUAL rank the survivors by metric.' },
+              { kind: 'code', h: 'Before the metric is even looked at', code:
+`  Interface up and not passive
+       |
+  Same EIGRP autonomous system
+       |
+  Neighbor is established
+       |
+  K-values compatible
+       |
+  Only NOW compare metrics` },
+              { kind: 'para', h: 'The metric has a formula', p: 'The default EIGRP metric uses **[[Bandwidth|bandwidth]] and [[Delay|delay]]** — K1 and K3 are 1, and K2, K4, K5 are 0. Bandwidth is the **minimum along the path** and delay is **cumulative**, which is why a longer low-delay path can win.' },
+              { kind: 'code', h: 'The default weights', code:
+`  metric weights 0 1 0 1 0 0
+                  T K1 K2 K3 K4 K5 K6
+
+  K1 = 1  ->  bandwidth
+  K3 = 1  ->  delay
+  K2 = K4 = K5 = 0
+
+
+  Load and reliability are switched off by default.` },
+              { kind: 'code', h: 'How it is calculated', code:
+`  Bandwidth component  ->  the WORST bandwidth on the path
+  Delay component      ->  the sum of all delays
+
+
+  Min along the path, not the sum.
+  Delay is the sum.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route eigrp
+  show ip eigrp topology
+  show ip eigrp topology <prefix>
+  show eigrp topology` }
+            ],
+            commands: [
+              { label: 'See the installed successors', code:
+`show ip route eigrp` },
+              { label: 'Compare candidates', code:
+`show ip eigrp topology
+show ip eigrp topology 10.20.0.0/16` },
+              { label: 'Check the parameters', code:
+`show ip protocols
+show ip eigrp interface` }
+            ],
+            traps: [
+              'The successor is the **best eligible path**, and its metric is your **Feasible Distance**.',
+              '**D** is internal EIGRP with AD 90. **D EX** is external with AD 170.',
+              'The second-best path is **not automatically** a successor or a feasible successor.',
+              'The default metric uses **bandwidth and delay** only — K1 and K3 are 1, the rest 0.',
+              'Bandwidth is the **minimum along the path**; delay is **cumulative**.',
+              'RD is Reported Distance. **AD is Administrative Distance.** They are unrelated.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Definition', 'The best eligible path to the destination'],
+                ['Chosen on', 'The lowest total metric'],
+                ['Its metric', 'Your Feasible Distance for that prefix'],
+                ['Where it lives', 'The routing table'],
+                ['Per destination', 'One'],
+                ['Internal route code', 'D'],
+                ['Internal AD', '90'],
+                ['External route code', 'D EX'],
+                ['External AD', '170'],
+                ['Default K values', 'K1 and K3 are 1, the rest 0'],
+                ['Bandwidth component', 'The minimum along the path'],
+                ['Delay component', 'The cumulative sum'],
+                ['Not the same as', 'The second-lowest metric path'],
+                ['Verification', 'show ip route eigrp']
+              ]
+            },
+            related: [
+              { t: '04. Feasible Successor', d: 'the backup that has to pass a different test' },
+              { t: '01. DUAL', d: 'what makes the selection' },
+              { t: '09. Variance', d: 'installing more than one' }
+            ],
+            glossary: ['Successor', 'EIGRP Metric', 'DUAL', 'EIGRP', 'Feasible Successor', 'Routing Table', 'Administrative Distance', 'Data Plane']
+          },
+          {
+            id: 't04', num: '04', group: 'algo', title: 'Feasible Successor',
+            blurb: 'The RD < FD rule, why it guarantees loop-free, and what a topology table entry is actually for',
+            overview: 'A **[[Feasible Successor|feasible successor (FS)]]** is an **[[EIGRP]]** backup path that satisfies **[[DUAL]]**’s **[[Feasibility Condition|feasibility condition]]** and is therefore proven loop-free. It sits in the **topology table**, ready to become the successor the moment the current one fails.',
+            keyIdea: 'RD < FD strictly. Nothing else qualifies, and the FS is not chosen by having the second-lowest metric.',
+            sections: [
+              { kind: 'code', h: 'The rule', code:
+`  RD  <  FD    ->  feasible successor
+  RD  =  FD    ->  no
+  RD  >  FD    ->  no
+
+
+  RD = the neighbour's total metric
+  FD = your own total metric on the successor` },
+              { kind: 'table', h: 'Successor against feasible successor', cols: ['', 'Successor', 'Feasible Successor'], rows: [
+                ['Test', 'Lowest total metric', 'RD < FD'],
+                ['Held in', 'The routing table', 'The topology table'],
+                ['Count per destination', 'One', 'Zero or more'],
+                ['Used when', 'Now', 'When the successor fails'],
+                ['Promotion cost', '—', 'None, no queries sent']
+              ]},
+              { kind: 'para', h: 'Why it is loop-free', p: 'If the neighbour reporting the path already totals less than your own best total, then that neighbour **cannot be routing through you** for that destination — it would have to exceed your total to do so. That is the whole proof, and it needs no network-wide map.' },
+              { kind: 'code', h: 'The proof, informally', code:
+`  You:  FD = 30
+  Neighbour reports RD = 20
+
+  For the neighbour to use YOU, its total
+  would be at least your 30.
+
+  It reports 20 < 30.
+  Therefore it is not looping back through you.` },
+              { kind: 'para', h: 'It is not installed while the successor lives', p: 'The feasible successor is normally **kept only in the topology table**. The routing table carries the successor, which is why a healthy network shows one route for a prefix even though the topology table knows of more.' },
+              { kind: 'code', h: 'Two tables, two jobs', code:
+`  Topology table     all eligible paths, including the FS
+  Routing table      the successor only
+
+
+  show ip eigrp topology   ->  shows both
+  show ip route            ->  shows the successor` },
+              { kind: 'para', h: 'Promotion is instant', p: 'When the successor fails and a valid FS exists, EIGRP **promotes it with no diffusing computation and no queries**. Neighbours are not asked anything, so convergence takes milliseconds rather than a query round-trip.' },
+              { kind: 'code', h: 'The fast case again', code:
+`  Successor fails
+       |
+  FS exists?  YES
+       |
+  Promote the FS
+       |
+  Done.  No queries sent.
+
+
+  This is the entire reason DUAL works the way it does.` },
+              { kind: 'para', h: 'More than one is possible', p: 'Several paths can satisfy the condition at once, and every one of them is a feasible successor. That is what gives **[[Variance|variance]]** something to work with later.' },
+              { kind: 'code', h: 'Several backups', code:
+`  FD = 30
+
+  path A  RD = 10   10 < 30   YES
+  path B  RD = 18   18 < 30   YES
+  path C  RD = 30   30 < 30   NO
+  path D  RD = 45   45 < 30   NO
+
+
+  Two feasible successors.` },
+              { kind: 'para', h: 'No FS means active', p: 'If no path passes the test, EIGRP goes active for the destination and runs a **diffusing computation**. There is never a case where an arbitrary, unproven path is installed as a backup.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip eigrp topology
+  show ip eigrp topology all-links
+  show ip eigrp route
+  show ip route eigrp` }
+            ],
+            commands: [
+              { label: 'List every candidate', code:
+`show ip eigrp topology all-links` },
+              { label: 'See what is installed', code:
+`show ip route eigrp` },
+              { label: 'Watch for promotion', code:
+`debug eigrp fsm
+show ip eigrp events` }
+            ],
+            traps: [
+              'The condition is **RD strictly less than FD**. RD equal to FD does **not** qualify.',
+              'A feasible successor is **not** simply the path with the second-lowest metric.',
+              'It lives in the **topology table**, and is not normally installed in the routing table.',
+              'Promotion happens with **no diffusing computation and no queries** — that is the fast convergence.',
+              'Several paths can qualify at once, which is what variance builds on.',
+              'With no FS, EIGRP goes **active**. It never installs an unproven backup.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Feasible Successor'],
+                ['Also', 'FS'],
+                ['Test', 'RD strictly less than FD'],
+                ['Why it is loop-free', 'The neighbour totals less than you, so it is not routing through you'],
+                ['Where it lives', 'The topology table'],
+                ['Installed in the RIB', 'Not while the successor lives'],
+                ['Count', 'Zero or more'],
+                ['On successor failure', 'Promoted with no queries'],
+                ['Without one', 'The route goes active'],
+                ['Relation to metric rank', 'Independent of second-lowest total'],
+                ['Feeds', 'Variance, for unequal-cost paths'],
+                ['Verification', 'show ip eigrp topology all-links']
+              ]
+            },
+            related: [
+              { t: '03. Successor', d: 'the path it backs up' },
+              { t: '01. DUAL', d: 'the condition it satisfies' },
+              { t: '09. Variance', d: 'using more than one backup' }
+            ],
+            glossary: ['Feasible Successor', 'Feasibility Condition', 'DUAL', 'Successor', 'EIGRP', 'Routing Table', 'Variance']
+          }
+        ,
+          {
+            id: 't05', num: '05', group: 'config', title: 'Named Mode',
+            blurb: 'One named process, an address family underneath it, af-interface for interfaces and topology base for variance',
+            overview: '**[[Named Mode EIGRP|Named-mode EIGRP]]** is the modern **[[EIGRP]]** configuration style. A single **named process** holds the address families, and **IPv4 and IPv6 run underneath the same process** — each with its own autonomous-system number.',
+            keyIdea: 'The name identifies the process; the AS number belongs to the address family. Interface settings live under af-interface, variance under topology base.',
+            sections: [
+              { kind: 'code', h: 'The hierarchy', code:
+`  router eigrp CAMPUS
+   !
+   address-family ipv4 unicast autonomous-system 100
+    !
+    af-interface GigabitEthernet0/1
+     hello-interval 5
+    exit-af-interface
+    !
+    topology base
+     variance 2
+    exit-af-topology
+   !
+   address-family ipv6 unicast autonomous-system 100
+    ...` },
+              { kind: 'para', h: 'The name is not the AS number', p: '%%router eigrp 100%% is the **classic** form, where 100 is the autonomous system. In named mode %%router eigrp CAMPUS%% takes a **name**, and the AS number sits on the address family instead. Confusing the two is the first trap.' },
+              { kind: 'code', h: 'Classic against named', code:
+`  CLASSIC                    NAMED
+
+  router eigrp 100           router eigrp CAMPUS
+   network 10.1.0.0           address-family ipv4 unicast
+   !                            autonomous-system 100
+                                network 10.1.0.0
+                              !
+                              address-family ipv6 unicast
+                                autonomous-system 100
+
+
+  The AS is on the AF in named mode.` },
+              { kind: 'code', h: 'Interface settings go under af-interface', code:
+`  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    af-interface GigabitEthernet0/1
+     hello-interval 5
+     hold-time 15
+     shutdown
+    exit-af-interface` },
+              { kind: 'para', h: 'variance belongs under topology base', p: '%%variance%%, %%maximum-paths%% and %%distance%% are **topology-level** settings, so they sit under %%topology base%% — not directly under the address family.' },
+              { kind: 'code', h: 'Where the topology-level settings go', code:
+`  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    topology base
+     variance 2
+     maximum-paths 4
+     distance 90 170
+    exit-af-topology
+
+
+  NOT directly under address-family.` },
+              { kind: 'para', h: 'IPv6 does not use network statements', p: 'The IPv4 %%network%% command has no IPv6 equivalent. EIGRP for IPv6 is enabled per interface under the address family, which is exactly what %%af-interface%% is for.' },
+              { kind: 'code', h: 'How each family is enabled', code:
+`  IPv4   address-family ipv4 unicast ...
+           network 10.1.0.0 0.0.255.255
+
+  IPv6   address-family ipv6 unicast ...
+           (no network command)
+           enabled on the interfaces via af-interface` },
+              { kind: 'para', h: 'The address family has to be active', p: 'A named EIGRP address family can be **administratively shut down**, so %%no shutdown%% under the address family is part of bringing the process up. An address family in shutdown produces nothing at all.' },
+              { kind: 'code', h: 'Bringing it up', code:
+`  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    no shutdown
+    ...` },
+              { kind: 'para', h: 'One process, several families', p: 'Because the process is named rather than numbered, **IPv4, IPv6 and multiple VRF address families** can all sit under it. Each address family keeps its own AS number, so migration between the two does not need a second process.' },
+              { kind: 'code', h: 'What one named process can hold', code:
+`  address-family ipv4 unicast    autonomous-system 100
+  address-family ipv6 unicast    autonomous-system 100
+  address-family ipv4 vrf BRANCH autonomous-system 200
+
+
+  All under router eigrp CAMPUS.` },
+              { kind: 'para', h: 'K-values are set with metric weights', p: 'The metric weights are configured on the address family as %%metric weights 0 1 0 1 0 0%%, and the **neighbouring routers must use compatible K-values** or no adjacency forms.' },
+              { kind: 'code', h: 'The metric weights', code:
+`  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    metric weights 0 1 0 1 0 0
+                     T K1 K2 K3 K4 K5 K6
+
+
+  K-values must match between neighbours.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip eigrp neighbors
+  show eigrp address-family ipv4
+  show eigrp address-family ipv4 topology
+  show running-config | section eigrp` }
+            ],
+            commands: [
+              { label: 'A named process, end to end', code:
+`router eigrp CAMPUS
+ address-family ipv4 unicast autonomous-system 100
+  no shutdown
+  network 10.1.0.0 0.0.255.255
+  af-interface GigabitEthernet0/1
+   hello-interval 5
+  exit-af-interface
+  topology base
+   variance 2
+  exit-af-topology` },
+              { label: 'Add the IPv6 family', code:
+`router eigrp CAMPUS
+ address-family ipv6 unicast autonomous-system 100
+  no shutdown
+  af-interface GigabitEthernet0/1
+  exit-af-interface` },
+              { label: 'Verify', code:
+`show eigrp address-family ipv4
+show eigrp address-family ipv4 topology` }
+            ],
+            traps: [
+              '**The AS number is not the process name.** %%router eigrp CAMPUS%% names the process; the AS sits on %%address-family ... autonomous-system%%.',
+              'Interface configuration is **%%af-interface%%**, not a generic interface address-family.',
+              '**%%variance%%, %%maximum-paths%% and %%distance%% belong under %%topology base%%.**',
+              'IPv6 has **no %%network%% command** — it is enabled per interface.',
+              '**%%no shutdown%%** is required on the named address family.',
+              '**K-values** are set with %%metric weights%% and must match between neighbours.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Named-mode EIGRP'],
+                ['Process', 'router eigrp <name>'],
+                ['Name against AS', 'The name is the process, the AS belongs to the address family'],
+                ['Address families', 'address-family ipv4 or ipv6 unicast'],
+                ['AS placement', 'autonomous-system on the address family'],
+                ['Interface settings', 'af-interface'],
+                ['Topology settings', 'variance, maximum-paths, distance under topology base'],
+                ['IPv6', 'No network command, enabled per interface'],
+                ['Activation', 'no shutdown on the address family'],
+                ['One process can hold', 'IPv4, IPv6 and multiple VRF families'],
+                ['Metric weights', 'metric weights 0 1 0 1 0 0'],
+                ['K-values', 'Must match between neighbours'],
+                ['Classic form', 'router eigrp <AS>'],
+                ['Verification', 'show eigrp address-family ipv4']
+              ]
+            },
+            related: [
+              { t: '06. IPv6', d: 'the other address family in the same process' },
+              { t: '09. Variance', d: 'the setting that must sit under topology base' },
+              { t: '02. RTP', d: 'the K-values it sets' }
+            ],
+            glossary: ['Named Mode EIGRP', 'EIGRP', 'EIGRP for IPv6', 'VRF', 'EIGRP Metric', 'Variance', 'IPv6']
+          },
+          {
+            id: 't06', num: '06', group: 'config', title: 'IPv6',
+            blurb: 'The same DUAL engine over FF02::A, interface-based activation, and why link-local next hops are normal',
+            overview: '**[[EIGRP for IPv6]]** runs the identical **[[DUAL]]** and **[[RTP|Reliable Transport]]** engine over **[[IPv6]]**. Only the addressing and the configuration scaffolding change — the algorithm, the metrics and the convergence behaviour do not.',
+            keyIdea: 'There is no network command. EIGRP for IPv6 is enabled on interfaces, and the next hop is normally the neighbour’s link-local address.',
+            sections: [
+              { kind: 'code', h: 'What changes and what does not', code:
+`  CHANGES                      DOES NOT CHANGE
+  -------------------------    -------------------------
+  224.0.0.10  ->  FF02::A      DUAL
+  network cmd ->  interfaces   Successor / Feasible Successor
+  IPv4 next hop->  link-local  RD / FD
+                                 Queries and Replies
+                                 RTP
+                                 Metric formula` },
+              { kind: 'code', h: 'The multicast group', code:
+`  IPv4 EIGRP  ->  224.0.0.10
+  IPv6 EIGRP  ->  FF02::A
+
+
+  Same role: the local EIGRP router group.` },
+              { kind: 'para', h: 'No network command', p: 'There is no IPv6 equivalent of %%network 10.1.0.0 0.0.255.255%%. Participation is enabled **on the interface**, which in named mode means the address family plus %%af-interface%%, and in the classic form means %%ipv6 eigrp%% directly on the interface.' },
+              { kind: 'code', h: 'Enabling it', code:
+`  ! named mode
+  router eigrp CAMPUS
+   address-family ipv6 unicast autonomous-system 100
+    no shutdown
+
+  ! classic, on the interface
+  interface GigabitEthernet0/1
+   ipv6 address 2001:db8::1/64
+   ipv6 eigrp 100
+
+
+  Neither form uses a network statement.` },
+              { kind: 'code', h: 'The prerequisite', code:
+`  ! required for IPv6 forwarding at all
+  ipv6 unicast-routing
+
+
+  This does NOT enable EIGRP on any interface.
+  It only turns IPv6 routing on globally.` },
+              { kind: 'para', h: 'Link-local next hops are expected', p: 'An IPv6 EIGRP route routinely shows a next hop in the %%FE80::%% range. That is the **neighbour’s link-local address**, which is always present on an interface and is the natural identifier for the directly connected peer.' },
+              { kind: 'code', h: 'What the RIB shows', code:
+`  show ipv6 route eigrp
+
+  D   2001:db8:1::/64 [90/30]
+       via FE80::2, GigabitEthernet0/1
+
+
+  FE80:: is the neighbor's link-local.
+  It is normal, not a misconfiguration.` },
+              { kind: 'para', h: 'The Router ID is still 32-bit', p: 'Even though the protocol is routing **[[IPv6]]**, the **[[EIGRP]]** router ID remains a 32-bit dotted-quad number such as 1.1.1.1. It is not an IPv6 address.' },
+              { kind: 'code', h: 'The identifier', code:
+`  eigrp router-id 1.1.1.1
+
+
+  32-bit, dotted-quad.
+  Not an IPv6 address.` },
+              { kind: 'table', h: 'IPv4 against IPv6', cols: ['', 'EIGRP IPv4', 'EIGRP IPv6'], rows: [
+                ['Multicast', '224.0.0.10', 'FF02::A'],
+                ['Enabled by', 'network command or interface', 'Interface only'],
+                ['Next hop', 'The neighbour address in the same family', 'Usually the neighbour’s link-local'],
+                ['Router ID', '32-bit', 'Still 32-bit'],
+                ['Global prerequisite', 'None', 'ipv6 unicast-routing'],
+                ['Algorithm', 'DUAL', 'DUAL'],
+                ['K-values', 'Same', 'Same'],
+                ['Authentication', 'MD5 or HMAC-SHA-256', 'The same EIGRP authentication']
+              ]},
+              { kind: 'para', h: 'DUAL is not different', p: 'Successors, feasible successors, RD, FD, queries, replies and RTP all behave exactly as they do in IPv4. Students who re-learn EIGRP for IPv6 from scratch are re-learning the wrong things.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ipv6 eigrp neighbors
+  show ipv6 eigrp topology
+  show ipv6 route eigrp
+  show ipv6 protocols
+  show eigrp address-family ipv6 topology` }
+            ],
+            commands: [
+              { label: 'Enable IPv6 routing and EIGRP', code:
+`ipv6 unicast-routing
+interface GigabitEthernet0/1
+ ipv6 address 2001:db8::1/64
+ ipv6 eigrp 100` },
+              { label: 'Or through named mode', code:
+`router eigrp CAMPUS
+ address-family ipv6 unicast autonomous-system 100
+  no shutdown` },
+              { label: 'Verify', code:
+`show ipv6 eigrp neighbors
+show ipv6 route eigrp` }
+            ],
+            traps: [
+              'IPv4 EIGRP uses **224.0.0.10**; IPv6 EIGRP uses **FF02::A**.',
+              'There is **no IPv6 network command** — participation is enabled on interfaces.',
+              'A next hop of **%%FE80::2%%** is expected behaviour, not a fault.',
+              'The **Router ID is still 32-bit**, not an IPv6 address.',
+              '**%%ipv6 unicast-routing%%** enables IPv6 routing but does not by itself enable EIGRP.',
+              '**DUAL, successors, RD, FD, queries and RTP are unchanged** — only the addressing differs.',
+              'RD is Reported Distance. **AD is Administrative Distance** — internal 90, external 170.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'EIGRP for IPv6'],
+                ['Algorithm', 'DUAL, unchanged'],
+                ['Transport', 'RTP, unchanged'],
+                ['Multicast', 'FF02::A'],
+                ['IPv4 equivalent', '224.0.0.10'],
+                ['Enabled by', 'Interfaces, not a network command'],
+                ['Prerequisite', 'ipv6 unicast-routing'],
+                ['Next hop', 'Usually the neighbour’s link-local'],
+                ['Router ID', 'Still 32-bit dotted-quad'],
+                ['Metric', 'Bandwidth and delay, unchanged'],
+                ['K-values', 'Must still match'],
+                ['Classic enablement', 'ipv6 eigrp <AS> on the interface'],
+                ['Named enablement', 'address-family ipv6 unicast'],
+                ['Route code', 'D, AD 90']
+              ]
+            },
+            related: [
+              { t: '05. Named Mode', d: 'the modern home for both families' },
+              { t: '01. DUAL', d: 'the part that does not change' },
+              { t: '02. RTP', d: 'the multicast group that does' }
+            ],
+            glossary: ['EIGRP for IPv6', 'IPv6', 'DUAL', 'RTP', 'EIGRP', 'Named Mode EIGRP', 'Multicast', 'Loopback Address']
+          },
+          {
+            id: 't07', num: '07', group: 'ops', title: 'Stub',
+            blurb: 'What the default stub advertises, what receive-only means, and why it exists at all',
+            overview: 'An **[[EIGRP Stub|EIGRP stub router]]** advertises a restricted set of routes and **never forwards queries** past itself. It is the standard design tool for **branch, spoke and remote-site routers**, and its real job is **bounding query scope**.',
+            keyIdea: 'A stub controls what it advertises, not what it learns. And the default is connected plus summary — not nothing.',
+            sections: [
+              { kind: 'code', h: 'The design', code:
+`                 HUB
+                /   \\
+               /     \\
+       [EIGRP stub] [EIGRP stub]
+          SPOKE A       SPOKE B
+
+
+  The hub uses the spokes as a source
+  for what they advertise.
+  The spokes are never transit for the rest.` },
+              { kind: 'para', h: 'What it is actually for', p: 'The primary benefit is **limiting EIGRP query propagation**. When a prefix disappears, a query to a stub ends at the stub instead of expanding outward, so the **diffusing computation stays small** and the risk of **Stuck-in-Active** drops.' },
+              { kind: 'code', h: 'Query containment', code:
+`  Without stub:
+    query -> spoke -> ... -> everywhere
+    large diffusing computation, SIA risk
+
+  With stub:
+    query -> stub -> reply, stops here
+    small diffusing computation` },
+              { kind: 'table', h: 'The stub options', cols: ['Option', 'Advertises'], rows: [
+                ['%%eigrp stub%%', '**Connected and summary** routes — the default'],
+                ['connected', 'Connected routes only, added on top'],
+                ['summary', 'Summary routes only, added on top'],
+                ['redistributed', 'Routes redistributed into EIGRP'],
+                ['static', 'Static routes, when redistributed'],
+                ['**receive-only**', '**Nothing.** It accepts routes and advertises none']
+              ]},
+              { kind: 'para', h: 'The default is not nothing', p: 'Plain %%eigrp stub%% means **connected plus summary**, not "advertise nothing". A router that must truly stop advertising has to ask for it explicitly with %%receive-only%%.' },
+              { kind: 'code', h: 'Default against receive-only', code:
+`  eigrp stub                    ->  connected + summary
+  eigrp stub receive-only       ->  receive EIGRP routes,
+                                    advertise NO EIGRP routes
+  eigrp stub static redistributed
+                               ->  connected + summary + static + redistributed` },
+              { kind: 'para', h: 'A stub still learns', p: 'Stub is about **what you send**, not what you accept. A stub receives routes from its neighbours normally. It does not become a routing black hole, and it does not lose reachability.' },
+              { kind: 'code', h: 'Direction', code:
+`  IN   ->  unrestricted.  The stub learns normally.
+  OUT  ->  restricted.  Only the configured options.` },
+              { kind: 'table', h: 'Where it belongs', cols: ['Placement', 'Verdict'], rows: [
+                ['Branch or spoke', '**Yes — this is the design**'],
+                ['Remote office', '**Yes**'],
+                ['Stub LAN', '**Yes**'],
+                ['A deliberate transit point', 'No. It is explicitly not meant to be transit']
+              ]},
+              { kind: 'para', h: 'It does not guarantee no SIA', p: 'A stub reduces query scope, but **Stuck-in-Active can still happen elsewhere** in the topology. Configuring stub is not a fix for an SIA that originated somewhere else.' },
+              { kind: 'code', h: 'Configuring it', code:
+`  ! on the edge router
+  router eigrp 100
+   eigrp stub
+
+  ! or in named mode, per address family
+  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    eigrp stub` },
+              { kind: 'code', h: 'Seeing it', code:
+`  show ip eigrp topology detail
+  show ip eigrp neighbors
+  show ip protocols
+
+
+  The neighbour output marks stub routers,
+  and the topology detail shows the query scope.` }
+            ],
+            commands: [
+              { label: 'Make the edge a stub', code:
+`router eigrp 100
+ eigrp stub` },
+              { label: 'Advertise nothing', code:
+`router eigrp 100
+ eigrp stub receive-only` },
+              { label: 'Verify', code:
+`show ip eigrp neighbors
+show ip eigrp topology detail` }
+            ],
+            traps: [
+              'Plain **%%eigrp stub%% means connected plus summary**, not "advertise nothing".',
+              '**%%receive-only%%** means receive EIGRP routes and advertise **no** EIGRP routes.',
+              'Stub is for **edge, branch and spoke routers** — not a deliberate transit point.',
+              'The design benefit is **limiting query propagation**, which reduces SIA risk.',
+              '**A stub still learns routes.** It controls what it advertises, not what it receives.',
+              'It **does not guarantee no SIA** — a failure elsewhere can still cause one.',
+              'What it advertises is set by the options: connected, static, summary, redistributed, receive-only.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'EIGRP stub router'],
+                ['Purpose', 'Limit query propagation'],
+                ['Default', 'Connected and summary'],
+                ['receive-only', 'Advertise nothing, still receive'],
+                ['Other options', 'Connected, static, summary, redistributed'],
+                ['Learns routes', 'Yes, normally'],
+                ['Placement', 'Branch, spoke, remote site, stub LAN'],
+                ['Avoid', 'Deliberate transit points'],
+                ['SIA benefit', 'Reduced scope, not eliminated'],
+                ['Does not', 'Repair a broken neighbour'],
+                ['Configured', 'eigrp stub'],
+                ['Verification', 'show ip eigrp neighbors']
+              ]
+            },
+            related: [
+              { t: '01. DUAL', d: 'the query process it bounds' },
+              { t: '11. Troubleshooting', d: 'SIA and what stub does not fix' },
+              { t: '05. Named Mode', d: 'where the command sits in named config' }
+            ],
+            glossary: ['EIGRP Stub', 'EIGRP', 'DUAL', 'Control Plane', 'Routing Table', 'Default Route']
+          },
+          {
+            id: 't08', num: '08', group: 'ops', title: 'Authentication',
+            blurb: 'MD5 against HMAC-SHA-256, per interface rather than per area, and why it is not encryption',
+            overview: '**[[EIGRP Authentication]]** verifies that a received EIGRP packet came from a neighbour holding the configured key. It is configured **per interface or address-family interface — never per area** — and it is **not enabled by default**.',
+            keyIdea: 'Authentication proves who sent the packet. It does not encrypt anything, and HMAC-SHA-256 has to be requested explicitly.',
+            sections: [
+              { kind: 'code', h: 'The flow', code:
+`  EIGRP packet
+       |
+  authentication information attached
+       |
+  Neighbor verifies the packet
+       |
+  Valid    ->  process the packet
+  Invalid  ->  reject the packet
+
+
+  No shared key, no adjacency.` },
+              { kind: 'table', h: 'The mechanisms', cols: ['Mode', 'Mechanism'], rows: [
+                ['Classic mode', '**HMAC-MD5**'],
+                ['Named mode', '**HMAC-SHA-256** on supported platforms'],
+                ['Plaintext', 'Not offered — there is no clear-text EIGRP option'],
+                ['Default', '**Off.** Nothing is configured unless you configure it']
+              ]},
+              { kind: 'para', h: 'It is not enabled by default', p: 'EIGRP normally runs with **no authentication at all**. Two routers will happily form an adjacency with an attacker unless someone configured a key — which is why leaving it off is a design decision rather than a neutral default.' },
+              { kind: 'code', h: 'Key chain first', code:
+`  key chain EIGRP-KEYS
+   key 1
+    key-string CCNP-SECRET
+    send-lifetime 00:00:00 january 01 2026 00:00:00 december 31 2030
+    accept-lifetime 00:00:00 january 01 2026 00:00:00 december 31 2030` },
+              { kind: 'code', h: 'Classic mode', code:
+`  interface GigabitEthernet0/1
+   ip authentication mode eigrp 100 md5
+   ip authentication key-chain eigrp 100 EIGRP-KEYS` },
+              { kind: 'code', h: 'Named mode', code:
+`  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    af-interface GigabitEthernet0/1
+     authentication mode hmac-sha-256 CCNP-KEYS 00
+    exit-af-interface
+
+
+  Named mode does NOT enable it for you.` },
+              { kind: 'para', h: 'SHA-256 is not automatic', p: 'Being in named mode does **not** switch on HMAC-SHA-256. The %%authentication mode%% command still has to be written under the af-interface, alongside the key chain it refers to.' },
+              { kind: 'para', h: 'Authentication is not encryption', p: 'Authentication gives you **integrity and origin verification**. It does not give confidentiality — the routing updates still cross the wire in clear. %%authentication ≠ encryption%% is a distinction the exam tests directly.' },
+              { kind: 'code', h: 'What you get and what you do not', code:
+`  GETS                          DOES NOT GET
+  -------------------------     -------------------------
+  Origin verification           Confidentiality
+  Integrity, no tampering       Encryption of updates
+  Peer validation               Protection of payload content` },
+              { kind: 'para', h: 'It is per interface, not per area', p: 'There is no area concept in EIGRP, so authentication is applied **on the interface** — or on the %%af-interface%% in named mode. Incompatible parameters on two ends simply mean the **adjacency never forms**.' },
+              { kind: 'code', h: 'A mismatch produces no adjacency', code:
+`  show ip eigrp neighbors
+
+  <empty>
+
+
+  Likely causes include:
+    authentication mode differs
+    different key chain or key string
+    accept-lifetime has expired` },
+              { kind: 'para', h: 'Key rotation', p: 'Multiple keys live on one key chain, and each has a **send-lifetime and an accept-lifetime**. Overlapping lifetimes are what make a rolling key change possible without dropping the adjacency.' },
+              { kind: 'code', h: 'Rolling a key', code:
+`  key chain EIGRP-KEYS
+   key 1
+    key-string OLD
+    accept-lifetime ...  overlapping  ...
+   key 2
+    key-string NEW
+    send-lifetime  ...  overlapping  ...
+
+
+  Both ends carry both keys during the roll.` },
+              { kind: 'code', h: 'Verification', code:
+`  show key chain
+  show ip eigrp neighbors
+  show ip interface GigabitEthernet0/1 | section authentication
+  show running-config | section key chain` }
+            ],
+            commands: [
+              { label: 'Define the key chain', code:
+`key chain EIGRP-KEYS
+ key 1
+  key-string CCNP-SECRET` },
+              { label: 'Classic mode on an interface', code:
+`interface GigabitEthernet0/1
+ ip authentication mode eigrp 100 md5
+ ip authentication key-chain eigrp 100 EIGRP-KEYS` },
+              { label: 'Named mode on an af-interface', code:
+`router eigrp CAMPUS
+ address-family ipv4 unicast autonomous-system 100
+  af-interface GigabitEthernet0/1
+   authentication mode hmac-sha-256 CCNP-KEYS 00` },
+              { label: 'Verify', code:
+`show key chain
+show ip eigrp neighbors` }
+            ],
+            traps: [
+              '**Authentication is not enabled by default** — EIGRP runs open until you configure it.',
+              '**Authentication is not encryption.** It gives integrity and origin checks, not confidentiality.',
+              '**HMAC-SHA-256 must be configured explicitly.** Named mode does not turn it on.',
+              'It is configured **per interface or af-interface, not per area** — EIGRP has no areas.',
+              'Incompatible authentication parameters mean **the adjacency never forms**.',
+              'Key rotation uses a **send-lifetime and an accept-lifetime**, and multiple keys may coexist.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Verify the packet came from a trusted neighbour'],
+                ['Default', 'Not enabled'],
+                ['Classic mechanism', 'HMAC-MD5'],
+                ['Named mechanism', 'HMAC-SHA-256 where supported'],
+                ['Scope', 'Per interface or af-interface'],
+                ['Areas', 'EIGRP has none'],
+                ['Not', 'Encryption — updates are still clear'],
+                ['Configuration', 'A key chain, referenced from the interface'],
+                ['SHA-256', 'Must be requested with authentication mode'],
+                ['Mismatch result', 'No adjacency'],
+                ['Rotation', 'send-lifetime and accept-lifetime, keys overlap'],
+                ['Failure symptom', 'show ip eigrp neighbors is empty'],
+                ['Verification', 'show key chain']
+              ]
+            },
+            related: [
+              { t: '05. Named Mode', d: 'the af-interface it is configured under' },
+              { t: '11. Troubleshooting', d: 'why a configured adjacency never forms' },
+              { t: '02. RTP', d: 'what is being authenticated' }
+            ],
+            glossary: ['EIGRP Authentication', 'EIGRP', 'Named Mode EIGRP', 'RTP', 'Multicast', 'MTU']
+          }
+        ,
+          {
+            id: 't09', num: '09', group: 'ops', title: 'Variance',
+            blurb: 'Default 1, the three conditions that all have to hold, and which knob controls range against count',
+            overview: '**%%variance%%** lets **[[EIGRP]]** install **unequal-metric paths** to one destination. It widens the metric window, but it does **not** replace the **[[Feasibility Condition|feasibility condition]]** — every candidate still has to pass it.',
+            keyIdea: 'Three things decide installation: the feasibility condition, the variance window, and maximum-paths. Variance only controls the second.',
+            sections: [
+              { kind: 'code', h: 'The default', code:
+`  variance 1
+
+
+  The default.
+  It does NOT enable unequal-cost balancing.
+  Equal-cost multipath only.` },
+              { kind: 'table', h: 'The three conditions', cols: ['Condition', 'Controls'], rows: [
+                ['**Feasibility condition**, RD < FD', 'Loop prevention. Not negotiable'],
+                ['**Variance window**, FD(path) ≤ variance × FD(successor)', 'Which metrics are acceptable'],
+                ['**maximum-paths**', 'How many paths are installed at all']
+              ]},
+              { kind: 'code', h: 'Both tests, both required', code:
+`  FD(path) <= variance x FD(successor)
+                    AND
+  RD(path) < FD(successor)
+
+
+  Miss either one and the path is not installed.` },
+              { kind: 'para', h: 'Variance does not bypass feasibility', p: 'Setting %%variance 10%% does **not** make every path up to ten times the successor usable. The loop-prevention test still applies to each candidate, which is the single most common misconception about this feature.' },
+              { kind: 'code', h: 'What variance 10 does not do', code:
+`  WRONG:
+    variance 10
+    -> any path up to 10x the successor is used
+
+  ACTUAL:
+    variance 10
+    -> the metric window is 10x
+    -> each path must STILL satisfy RD < FD
+    -> and maximum-paths still caps the count` },
+              { kind: 'code', h: 'A worked window', code:
+`  Successor FD = 100
+  variance 3
+
+  path A  FD 100   RD 80    window yes  RD<FD yes  -> installed
+  path B  FD 250   RD 90    window yes  RD<FD yes  -> installed
+  path C  FD 301   RD 90    window NO                -> rejected
+  path D  FD 150   RD 100   window yes  RD<FD NO     -> rejected
+
+
+  Path D is inside the window and still rejected.` },
+              { kind: 'para', h: 'Use RD, not Administrative Distance', p: 'The feasibility condition compares **Reported Distance** against **Feasible Distance**. **[[Administrative Distance]]** is a completely separate mechanism that ranks route **sources**, and it plays no part in this calculation.' },
+              { kind: 'code', h: 'Three abbreviations, two meanings', code:
+`  RD  Reported Distance     neighbour's total metric
+  FD  Feasible Distance     your total metric on the successor
+  AD  Administrative Distance   how much you trust a route SOURCE
+
+
+  RD and FD live in the feasibility condition.
+  AD does not.` },
+              { kind: 'para', h: 'variance does not set the path count', p: '**%%variance%%** decides the metric range. **%%maximum-paths%%** decides how many routes are installed. Raising variance without raising maximum-paths changes which paths qualify but not how many are used.' },
+              { kind: 'table', h: 'Which knob does what', cols: ['Setting', 'Effect'], rows: [
+                ['%%variance%%', 'The acceptable metric window'],
+                ['%%maximum-paths%%', 'The maximum number of installed paths'],
+                ['Both', 'Required before an extra path appears']
+              ]},
+              { kind: 'code', h: 'Configuring it', code:
+`  ! classic mode
+  router eigrp 100
+   variance 2
+
+  ! named mode, under topology base
+  router eigrp CAMPUS
+   address-family ipv4 unicast autonomous-system 100
+    topology base
+     variance 2
+     maximum-paths 4
+    exit-af-topology` },
+              { kind: 'para', h: 'A higher variance does not guarantee more paths', p: 'It only widens the window. A candidate can still be rejected because **RD ≥ FD**, or because **maximum-paths** is already reached. Widening a window nobody is standing in front of changes nothing.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip eigrp topology
+  show ip route eigrp
+  show ip protocols
+  show running-config | section eigrp` }
+            ],
+            commands: [
+              { label: 'Set the variance', code:
+`router eigrp 100
+ variance 2` },
+              { label: 'Named mode placement', code:
+`router eigrp CAMPUS
+ address-family ipv4 unicast autonomous-system 100
+  topology base
+   variance 2
+   maximum-paths 4` },
+              { label: 'Verify what installed', code:
+`show ip route eigrp
+show ip eigrp topology` }
+            ],
+            traps: [
+              '**variance 1 is the default** and does not enable unequal-cost balancing.',
+              'Variance **does not replace the feasibility condition**. RD < FD still applies to every path.',
+              'Use **RD**, not Administrative Distance — AD is unrelated to the feasibility condition.',
+              '**variance sets the metric window; maximum-paths sets the count.**',
+              'A higher variance does not guarantee more paths — RD ≥ FD still rejects, and maximum-paths still caps.',
+              'EIGRP does not guarantee a simple inverse-metric traffic ratio as a universal forwarding rule.',
+              '**Unequal-cost load balancing is an EIGRP distinction** — [[OSPF]] only installs equal-cost paths natively.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Full name', 'Variance'],
+                ['Default', '1'],
+                ['variance 1', 'Equal-cost behaviour only'],
+                ['Purpose', 'Allow unequal-metric paths to install'],
+                ['Condition 1', 'Feasibility condition, RD < FD'],
+                ['Condition 2', 'FD(path) ≤ variance × FD(successor)'],
+                ['Condition 3', 'maximum-paths'],
+                ['Bypasses loop prevention', 'No'],
+                ['Sets the path count', 'No — maximum-paths does'],
+                ['Higher variance', 'Wider window, not more paths guaranteed'],
+                ['Named mode placement', 'Under topology base'],
+                ['Distinctive feature', 'Unequal-cost load balancing'],
+                ['Traffic ratio', 'Not guaranteed to be a simple inverse ratio'],
+                ['Verification', 'show ip route eigrp']
+              ]
+            },
+            related: [
+              { t: '10. Unequal Load Balancing', d: 'what actually happens to the traffic' },
+              { t: '04. Feasible Successor', d: 'the paths it has to work with' },
+              { t: '05. Named Mode', d: 'where the command belongs' }
+            ],
+            glossary: ['Variance', 'Unequal-Cost Load Balancing', 'Feasibility Condition', 'Feasible Successor', 'EIGRP', 'DUAL', 'Administrative Distance', 'OSPF']
+          },
+          {
+            id: 't10', num: '10', group: 'ops', title: 'Unequal Load Balancing',
+            blurb: 'Both conditions every time, why traffic favours the cheap path, and which layer does the forwarding',
+            overview: '**[[Unequal-Cost Load Balancing|Unequal-cost load balancing]]** splits traffic across paths of **different metrics**. It is one of the clearest differences between **[[EIGRP]]** and **[[OSPF]]**, and every installed path must satisfy **both** the feasibility condition and the variance window.',
+            keyIdea: 'Both conditions, every path, every time. And EIGRP chooses the routes — the forwarding plane does the actual spreading.',
+            sections: [
+              { kind: 'code', h: 'The two conditions again', code:
+`  FD(path) <= variance x FD(successor)
+                    AND
+  RD(path) < FD(successor)
+
+
+  Both.  Not either.` },
+              { kind: 'code', h: 'A path failing each side', code:
+`  Successor FD = 100, variance 2
+
+  path X  FD 180  RD 95
+          window: 180 <= 200  YES
+          feasible: 95 < 100   YES   -> installed
+
+  path Y  FD 220  RD 95
+          window: 220 <= 200  NO                     -> rejected
+
+  path Z  FD 150  RD 120
+          window: 150 <= 200  YES
+          feasible: 120 < 100 NO                     -> rejected` },
+              { kind: 'para', h: 'Variance does not bypass loop prevention', p: 'This is worth stating twice because it is the exam favourite. Variance only widens the acceptable metric range. A candidate inside that range still fails if **RD ≥ FD**, because allowing it would risk a **[[Routing Loop|routing loop]]**.' },
+              { kind: 'code', h: 'Why the RD test stays', code:
+`  Inside the window does NOT mean safe.
+
+  If the neighbour's own total is not below yours,
+  it might be routing through you.
+  Installing it creates a loop.
+
+  The window widens CHOICE, not safety.` },
+              { kind: 'para', h: 'Traffic favours the cheap path', p: 'Balanced sharing does **not** split equally across unequal paths. A path with half the metric gets roughly double the traffic — a metric of 100 against 200 gives a **relative share of 2 against 1**, a 2:1 ratio.' },
+              { kind: 'code', h: 'Relative sharing', code:
+`  path A  metric 100   relative share 2
+  path B  metric 200   relative share 1
+
+  Traffic ratio = 2 : 1
+
+
+  Not 1 : 1, and not automatically exact.` },
+              { kind: 'code', h: 'Equal-cost, for contrast', code:
+`  ECMP, equal metrics
+
+  path A  metric 100   share 1
+  path B  metric 100   share 1
+
+  Traffic ratio = 1 : 1` },
+              { kind: 'para', h: 'EIGRP does not forward the packets', p: 'EIGRP computes routes and installs them. The **[[Data Plane|forwarding plane]]** — typically **CEF** — performs the actual packet forwarding and load sharing. An exam question blaming EIGRP for a forwarding behaviour has confused the two layers.' },
+              { kind: 'code', h: 'Who does what', code:
+`  EIGRP / DUAL    selects and installs routes
+       |
+       v
+  RIB             the installed route set
+       |
+       v
+  CEF / FIB       actually forwards and spreads packets
+
+
+  EIGRP never touches the packet.` },
+              { kind: 'table', h: 'Unequal against equal', cols: ['', 'Unequal, EIGRP with variance', 'Equal, ECMP'], rows: [
+                ['Metrics', 'Different', 'Identical'],
+                ['Enabled by', 'variance greater than 1', 'Default'],
+                ['Conditions', 'Feasibility plus window', 'Lowest metric only'],
+                ['Traffic', 'Favours the lower metric', 'Spread evenly by hashing'],
+                ['OSPF equivalent', 'Not available natively', 'Yes']
+              ]},
+              { kind: 'code', h: 'Seeing it in the RIB', code:
+`  show ip route eigrp
+
+  D     10.20.0.0/16 [90/20] via 192.0.2.1
+        [90/30] via 192.0.2.2
+        [90/45] via 192.0.2.3
+
+
+  More than one D route for the prefix
+  means variance is doing its job.` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip route eigrp
+  show ip cef 10.20.0.0/16
+  show ip eigrp topology
+  show ip eigrp events` }
+            ],
+            commands: [
+              { label: 'Confirm multiple paths installed', code:
+`show ip route eigrp` },
+              { label: 'See how CEF spreads it', code:
+`show ip cef 10.20.0.0/16 detail` },
+              { label: 'See the candidates', code:
+`show ip eigrp topology
+show ip eigrp topology all-links` }
+            ],
+            traps: [
+              'Variance **does not bypass loop prevention**. Every path still needs RD < FD.',
+              '**Every path inside the window is not automatically installed** — both conditions are required.',
+              'Unequal paths do **not** receive equal traffic. Metric 100 against 200 gives roughly 2:1.',
+              '**variance 1 does not enable unequal balancing.** You need variance greater than 1.',
+              'Variance controls the **metric window**; **maximum-paths** controls the count.',
+              '**EIGRP does not forward packets** — the forwarding plane, typically CEF, does.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Purpose', 'Spread traffic across paths of different metrics'],
+                ['Enabled by', 'variance greater than 1'],
+                ['Condition 1', 'FD(path) ≤ variance × FD(successor)'],
+                ['Condition 2', 'RD(path) < FD(successor)'],
+                ['Both required', 'Yes, every candidate'],
+                ['Loop prevention', 'Unaffected by variance'],
+                ['Traffic with metric 100 and 200', 'About 2:1'],
+                ['Equal metrics', 'Spread evenly, ECMP'],
+                ['Forwarding done by', 'The forwarding plane, typically CEF'],
+                ['EIGRP’s role', 'Select and install routes only'],
+                ['OSPF equivalent', 'Not available natively'],
+                ['See it', 'Several D routes for one prefix'],
+                ['Verification', 'show ip route eigrp, show ip cef']
+              ]
+            },
+            related: [
+              { t: '09. Variance', d: 'the setting that opens the door' },
+              { t: '04. Feasible Successor', d: 'the paths that can qualify' },
+              { t: '01. DUAL', d: 'the loop prevention it cannot override' }
+            ],
+            glossary: ['Unequal-Cost Load Balancing', 'Variance', 'Data Plane', 'Routing Loop', 'Feasible Successor', 'EIGRP', 'OSPF', 'Routing Table']
+          },
+          {
+            id: 't11', num: '11', group: 'ops', title: 'Troubleshooting',
+            blurb: 'Neighbours before metrics, the parameter mismatch map, and what the topology table does not tell you',
+            overview: '**[[EIGRP]]** troubleshooting follows one rule above all others: **fix the neighbours before you look at the metrics.** Most exam scenarios are a parameter mismatch that stopped the adjacency forming in the first place.',
+            keyIdea: 'K-values must match and timers need not. AS mismatch, passive-interface and authentication each produce the same symptom — an empty neighbour table.',
+            sections: [
+              { kind: 'code', h: 'The order', code:
+`  1. Neighbors   are they up?
+  2. Parameters  do they match?
+  3. Topology    are routes being exchanged?
+  4. RIB         did anything install?
+  5. Forwarding  is the traffic going where it should?
+
+
+  Never start at 4.` },
+              { kind: 'table', h: 'What stops an adjacency', cols: ['Cause', 'Test'], rows: [
+                ['**K-value mismatch**', 'Must match. metric weights'],
+                ['**AS number mismatch**', 'Must match'],
+                ['**Hello / hold timers**', 'Do **not** have to match'],
+                ['**passive-interface**', 'Prevents neighbour formation on that interface'],
+                ['Authentication mismatch', 'Mode, key chain, lifetimes'],
+                ['No common subnet', 'Interface addressing'],
+                ['Interface shut or down', 'Physical and administrative state']
+              ]},
+              { kind: 'code', h: 'The confusing pair', code:
+`  K-values       MUST match      -> no adjacency if they differ
+  Hello timer    need NOT match  -> the receiver uses the neighbor's hold time
+  Hold timer     need NOT match  -> advertised in the hello
+
+
+  People mix these two up constantly.` },
+              { kind: 'code', h: 'The quick checks', code:
+`  show ip eigrp neighbors
+  show ip protocols
+  show ip eigrp interface GigabitEthernet0/1
+  show key chain
+  show running-config | section eigrp` },
+              { kind: 'para', h: 'SIA means the query process did not complete', p: '**Stuck-in-Active** is the diffusing computation failing to finish — queries went out and the replies did not all come back in time. It is a convergence problem, not a transport one, and stub configuration only narrows the scope.' },
+              { kind: 'code', h: 'Reading SIA', code:
+`  Route stuck ACTIVE
+       |
+  Queries outstanding, replies missing
+       |
+  Causes:
+    a neighbour that did not reply
+    packet loss in the query domain
+    a slow or overloaded router
+
+
+  NOT: "RTP failed"` },
+              { kind: 'para', h: 'A topology entry is not a route', p: 'A prefix appearing in the **topology table** does **not** mean it was installed in the **[[Routing Table|routing table]]**. Eligibility, variance and maximum-paths all have to allow it before the RIB sees it.' },
+              { kind: 'code', h: 'The two tables disagree', code:
+`  show ip eigrp topology   ->  10.20.0.0/16 present
+  show ip route eigrp      ->  10.20.0.0/16 absent
+
+
+  It qualified as a candidate.
+  Something downstream still blocked install.` },
+              { kind: 'table', h: 'Symptom to cause', cols: ['Symptom', 'Where to look'], rows: [
+                ['No neighbours at all', 'AS, K-values, passive-interface, addressing, authentication'],
+                ['Adjacency flaps', 'Packet loss, MTU, unstable interface'],
+                ['Route stuck active', 'The query domain, and who did not reply'],
+                ['In the topology table but not the RIB', 'Variance, maximum-paths, administrative distance'],
+                ['Traffic not following the routes', 'The forwarding plane — CEF, not EIGRP'],
+                ['Unequal paths not installing', 'variance 1, or a failed feasibility condition']
+              ]},
+              { kind: 'para', h: 'Redistributed routes need a metric', p: 'An **external EIGRP** route brought in from another source has **no EIGRP metric of its own**, so redistribution without specifying one produces a usable route only if the default metric is set. Otherwise the route is rejected.' },
+              { kind: 'code', h: 'Supplying a metric', code:
+`  router eigrp 100
+   redistribute ospf 1 metric 10000 100 255 1 1500
+                                 BW  DL  load rel  MTU
+
+
+  Without a metric, redistribution fails.` },
+              { kind: 'para', h: 'Bandwidth and delay drive the default metric', p: 'The default EIGRP metric uses **bandwidth and delay** — K1 and K3 are 1. If two routers disagree about interface bandwidth, the computed metrics disagree and the path selection becomes hard to reason about.' },
+              { kind: 'code', h: 'Where the numbers come from', code:
+`  Bandwidth  ->  the minimum along the path
+  Delay      ->  the cumulative sum
+
+
+  Both come from the interface configuration.` },
+              { kind: 'para', h: 'The active timer is not a fix', p: 'Lengthening the **active timer** gives a slow topology more time to answer. It does not repair packet loss or a broken neighbour, and it just delays detection of a real failure.' },
+              { kind: 'code', h: 'The honest checklist', code:
+`  MTU                        interface framing
+  Bandwidth                  matches reality?
+  K-values                   must match
+  AS number                  must match
+  passive-interface          blocks formation
+  Authentication             mode, key, lifetimes
+  Query domain               who did not reply
+
+  Neighbours first.  Metrics second.` }
+            ],
+            commands: [
+              { label: 'The diagnostic progression', code:
+`show ip eigrp neighbors
+show ip protocols
+show ip eigrp interface
+show ip eigrp topology
+show ip route eigrp
+show ip cef` },
+              { label: 'Check the parameters', code:
+`show running-config | section eigrp
+show key chain` },
+              { label: 'Reconverge, deliberately', code:
+`clear ip eigrp neighbors` }
+            ],
+            traps: [
+              '**K-values must match; hello and hold timers do not have to.**',
+              '**An AS mismatch prevents adjacency** in classic EIGRP.',
+              '**passive-interface prevents neighbour formation** on that interface.',
+              '**SIA means the query and reply process did not complete normally** — not that RTP failed.',
+              'EIGRP stub **limits query propagation**; it does not repair a broken neighbour.',
+              'A feasible successor must satisfy **RD < FD**, and **variance does not bypass it**.',
+              '**A route in the topology table is not necessarily in the RIB.**',
+              'Redistributed routes **require an appropriate EIGRP metric**.',
+              '**Bandwidth and delay** drive the default metric.',
+              'Do not use the active timer as a substitute for fixing packet loss.',
+              '**Always troubleshoot neighbours before investigating route metrics.**'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['First rule', 'Neighbours before metrics'],
+                ['K-values', 'Must match'],
+                ['Hello and hold', 'Need not match'],
+                ['AS number', 'Must match in classic mode'],
+                ['passive-interface', 'Prevents formation'],
+                ['Authentication', 'Mode, key chain and lifetimes must agree'],
+                ['SIA', 'Queries sent, replies not all returned'],
+                ['Topology entry', 'Not proof of RIB installation'],
+                ['Redistribution', 'Needs an explicit metric'],
+                ['Default metric inputs', 'Bandwidth and delay'],
+                ['Active timer', 'Not a substitute for fixing loss'],
+                ['Stub', 'Limits query scope only'],
+                ['Forwarding problems', 'Look at CEF, not EIGRP'],
+                ['First command', 'show ip eigrp neighbors']
+              ]
+            },
+            related: [
+              { t: '02. RTP', d: 'why SIA is not a transport failure' },
+              { t: '07. Stub', d: 'what query containment does and does not do' },
+              { t: '10. Unequal Load Balancing', d: 'when extra paths will not appear' }
+            ],
+            glossary: ['EIGRP', 'DUAL', 'RTP', 'EIGRP Stub', 'Routing Table', 'Feasibility Condition', 'Administrative Distance', 'Data Plane', 'MTU', 'EIGRP Metric']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'algo', label: 'Algorithm & Transport', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'config', label: 'Configuration', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'ops', label: 'Operations', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'EIGRP', def: 'Enhanced Interior Gateway Routing Protocol — Cisco’s advanced distance-vector IGP, kept loop-free by DUAL and carried by RTP over IP protocol 88. Route code D, AD 90 internal and 170 external.' },
+          { term: 'DUAL', def: 'Diffusing Update Algorithm — EIGRP’s loop-free path selection. A neighbour’s reported distance must be strictly less than your feasible distance for the path to qualify as a backup.' },
+          { term: 'RTP', def: 'EIGRP’s Reliable Transport Protocol — not TCP and not UDP, running directly over IP protocol 88 with sequence numbers, ACKs and retransmissions. Updates, Queries and Replies are reliable; Hellos and ACKs are not.' },
+          { term: 'Successor', def: 'The EIGRP path with the lowest total metric among eligible candidates. Its metric is your Feasible Distance, and the route is installed in the routing table as D or D EX.' },
+          { term: 'Feasible Successor', def: 'A backup path that passes the feasibility condition and is therefore proven loop-free. Held in the topology table, promoted with no queries when the successor fails.' },
+          { term: 'Feasibility Condition', def: 'The rule RD strictly less than FD. RD equal to FD does not qualify, and neither does a greater RD — that strictness is what guarantees loop freedom.' },
+          { term: 'EIGRP Metric', def: 'The composite metric. By default only bandwidth and delay are used — K1 and K3 are 1 — with bandwidth the minimum along the path and delay cumulative.' },
+          { term: 'Named Mode EIGRP', def: 'The modern configuration model: one named process holding address families. Interface settings under af-interface, variance and maximum-paths under topology base.' },
+          { term: 'EIGRP for IPv6', def: 'The same DUAL and RTP engine over IPv6. Enabled per interface with no network command, multicast FF02::A, and next hops that are normally link-local.' },
+          { term: 'EIGRP Stub', def: 'A router that advertises a restricted route set and never forwards queries past itself. The default is connected plus summary, and it still learns normally.' },
+          { term: 'EIGRP Authentication', def: 'HMAC-MD5 in classic mode and HMAC-SHA-256 in named mode, configured per interface from a key chain. Not enabled by default, and it is not encryption.' },
+          { term: 'Variance', def: 'Default 1. It widens the acceptable metric window for unequal-cost paths, and it never overrides the feasibility condition or the maximum-paths limit.' },
+          { term: 'Unequal-Cost Load Balancing', def: 'Splitting traffic across paths with different metrics, which OSPF cannot do natively. Traffic favours the lower-metric path rather than splitting evenly.' },
+          { term: 'Administrative Distance', def: 'The 0–255 trust ranking between route sources. EIGRP internal is 90 and external is 170 — and AD plays no part in the feasibility condition.' },
+          { term: 'Control Plane', def: 'Where EIGRP’s hellos, updates, queries and DUAL run. Route selection is control-plane work; packet forwarding is not.' },
+          { term: 'Data Plane', def: 'Where packets are actually forwarded, typically by CEF from the FIB. EIGRP selects routes and never touches a packet itself.' },
+          { term: 'Routing Table', def: 'The RIB. A prefix can sit in the EIGRP topology table and still never appear here if variance or maximum-paths blocks installation.' },
+          { term: 'VRF', def: 'A separate routing and forwarding table. Named-mode EIGRP can carry several VRF address families under one named process.' },
+          { term: 'IPv6', def: 'The 128-bit address family that EIGRP supports through the same DUAL engine, activated on interfaces and using FF02::A.' },
+          { term: 'Loopback Address', def: 'A software interface that stays up while the router does — the usual anchor for an EIGRP router ID, which is still a 32-bit number.' },
+          { term: 'Routing Loop', def: 'Traffic circulating because routes disagree. The feasibility condition exists to make this impossible, and variance cannot override it.' },
+          { term: 'MTU', def: 'The largest packet an interface sends in one frame. An MTU mismatch drops adjacencies and shows up as flapping or missing neighbours.' },
+          { term: 'Multicast', def: 'One-to-many delivery. EIGRP uses 224.0.0.10 for IPv4 and FF02::A for IPv6, though many packets are still unicast.' },
+          { term: 'Default Route', def: 'The catch-all destination. In an EIGRP stub design it is often the only route an edge needs toward the hub.' },
+          { term: 'OSPF', def: 'The open-standard link-state IGP, AD 110 — the natural comparison point. It installs equal-cost paths only, which is exactly what variance gives EIGRP.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'What is the feasibility condition in EIGRP?',
+            options: [
+              'RD must be greater than FD',
+              'RD must be strictly less than FD',
+              'RD must equal FD',
+              'The path must have the second-lowest metric'
+            ],
+            answer: 1,
+            why: 'RD < FD strictly. Equal does not qualify, and neither does greater.'
+          },
+          {
+            q: 'What do FD and RD stand for?',
+            options: [
+              'Feasible Distance and Reported Distance',
+              'Forward Delay and Route Distance',
+              'Feasible Distance and Routing Domain',
+              'Fixed Distance and Reported Delay'
+            ],
+            answer: 0,
+            why: 'FD is your own total metric, RD is the neighbour’s reported total. RD is also called Advertised Distance.'
+          },
+          {
+            q: 'A neighbour reports a distance exactly equal to your feasible distance. Is it a feasible successor?',
+            options: [
+              'Yes, equal qualifies',
+              'No — the condition is strictly less than',
+              'Only if variance is greater than 1',
+              'Only on point-to-point links'
+            ],
+            answer: 1,
+            why: 'RD = FD does not satisfy the condition. Only RD < FD does.'
+          },
+          {
+            q: 'If no feasible successor exists when the successor fails, what does EIGRP do?',
+            options: [
+              'Installs the second-lowest path anyway',
+              'Goes active and sends queries',
+              'Redistributes the prefix',
+              'Removes the prefix permanently'
+            ],
+            answer: 1,
+            why: 'The route goes active, queries go out, replies return, and the diffusing computation elects a new successor.'
+          },
+          {
+            q: 'What does an EIGRP route in the active state indicate?',
+            options: [
+              'The interface is down',
+              'DUAL is performing a diffusing computation',
+              'The neighbour has failed',
+              'Variance has been applied'
+            ],
+            answer: 1,
+            why: 'Active is the EIGRP route state, not a link or interface state.'
+          },
+          {
+            q: 'How is EIGRP classified?',
+            options: [
+              'Link-state',
+              'Distance-vector only',
+              'Advanced distance-vector',
+              'Path-vector'
+            ],
+            answer: 2,
+            why: 'EIGRP is an advanced distance-vector protocol. It keeps a topology table but has no link-state database.'
+          },
+          {
+            q: 'Does DUAL require every router to hold a complete map of the network?',
+            options: [
+              'Yes, like OSPF',
+              'No — it proves loop freedom from what its neighbours reported',
+              'Only in named mode',
+              'Only for external routes'
+            ],
+            answer: 1,
+            why: 'DUAL works from neighbour-reported information, which is why it needs no full topology map.'
+          },
+          {
+            q: 'Which IP protocol number does EIGRP use?',
+            options: ['6', '17', '88', '89'],
+            answer: 2,
+            why: 'IP protocol 88 — not TCP 6 and not UDP 17, so there are no TCP or UDP ports involved.'
+          },
+          {
+            q: 'Which EIGRP packet types are sent reliably?',
+            options: [
+              'Update, Query, Reply',
+              'Hello and ACK',
+              'Update and Hello',
+              'ACK and Reply'
+            ],
+            answer: 0,
+            why: 'Update, Query and Reply are reliable. Hello and ACK are not.'
+          },
+          {
+            q: 'Does an EIGRP ACK itself require an acknowledgement?',
+            options: [
+              'Yes, after a retransmission timer',
+              'Yes, but only on broadcast networks',
+              'No — an ACK is never itself acknowledged',
+              'Only in named mode'
+            ],
+            answer: 2,
+            why: 'The ACK confirms a reliable packet and is itself unreliable, so no acknowledgement is needed.'
+          },
+          {
+            q: 'Do EIGRP hello timers have to match between neighbours?',
+            options: [
+              'Yes, exactly, like OSPF',
+              'No — the receiver uses the hold time its neighbour advertised',
+              'Only the hold time must match',
+              'Only when authentication is configured'
+            ],
+            answer: 1,
+            why: 'EIGRP hello and hold timers need not match. The receiver takes the hold time from the received hello.'
+          },
+          {
+            q: 'Which EIGRP parameter must match for an adjacency to form?',
+            options: ['Hello interval', 'Hold time', 'K-values', 'Retransmit interval'],
+            answer: 2,
+            why: 'K-values must match, or the two routers cannot compute a comparable metric.'
+          },
+          {
+            q: 'What is the default IPv4 EIGRP multicast address?',
+            options: ['224.0.0.5', '224.0.0.6', '224.0.0.10', '224.0.0.9'],
+            answer: 2,
+            why: '224.0.0.10. OSPF uses .5 and .6, RIP uses .9.'
+          },
+          {
+            q: 'What is the IPv6 EIGRP multicast address?',
+            options: ['FF02::1', 'FF02::5', 'FF02::A', 'FF02::6'],
+            answer: 2,
+            why: 'FF02::A, the IPv6 equivalent of 224.0.0.10.'
+          },
+          {
+            q: 'Stuck-in-Active is fundamentally a failure of what?',
+            options: [
+              'RTP delivery',
+              'The DUAL query and reply process',
+              'The key chain',
+              'The interface'
+            ],
+            answer: 1,
+            why: 'SIA means the diffusing computation did not complete — queries went out and replies did not all return.'
+          },
+          {
+            q: 'What is the EIGRP successor?',
+            options: [
+              'The backup path with the lowest metric',
+              'The best eligible path, installed in the routing table',
+              'The neighbour with the lowest RID',
+              'The second-best path'
+            ],
+            answer: 1,
+            why: 'The successor is the best eligible path, and its metric is your Feasible Distance.'
+          },
+          {
+            q: 'What Administrative Distance does an internal EIGRP route carry?',
+            options: ['90', '100', '110', '170'],
+            answer: 0,
+            why: 'Internal EIGRP is 90. External EIGRP is 170.'
+          },
+          {
+            q: 'What route code marks an external EIGRP route?',
+            options: ['D', 'D EX', 'O E2', 'D IA'],
+            answer: 1,
+            why: 'D EX, with Administrative Distance 170.'
+          },
+          {
+            q: 'Which inputs does the default EIGRP metric use?',
+            options: [
+              'Bandwidth and delay',
+              'Hop count and delay',
+              'Bandwidth, delay, load and reliability',
+              'Cost, like OSPF'
+            ],
+            answer: 0,
+            why: 'K1 and K3 are 1, so only bandwidth and delay contribute by default.'
+          },
+          {
+            q: 'How is the bandwidth component of the EIGRP metric derived?',
+            options: [
+              'The sum of all link bandwidths',
+              'The minimum bandwidth along the path',
+              'The bandwidth of the first hop',
+              'The average bandwidth'
+            ],
+            answer: 1,
+            why: 'Bandwidth is the worst — that is, minimum — value on the path. Delay, by contrast, is cumulative.'
+          },
+          {
+            q: 'Where does the AS number live in named-mode EIGRP?',
+            options: [
+              'On the router eigrp line',
+              'On the address-family, with autonomous-system',
+              'On the interface',
+              'In topology base'
+            ],
+            answer: 1,
+            why: 'router eigrp CAMPUS names the process; autonomous-system sits on the address family.'
+          },
+          {
+            q: 'In named mode, where does interface-level EIGRP configuration go?',
+            options: ['interface mode', 'af-interface', 'topology base', 'router-map'],
+            answer: 1,
+            why: 'af-interface, beneath the address family.'
+          },
+          {
+            q: 'In named mode, which settings belong under topology base?',
+            options: [
+              'variance, maximum-paths, distance',
+              'hello-interval, hold-time',
+              'authentication mode',
+              'network statements'
+            ],
+            answer: 0,
+            why: 'variance, maximum-paths and distance are topology-level settings.'
+          },
+          {
+            q: 'Which command brings a named-mode address family into service?',
+            options: ['enable', 'no shutdown', 'activate', 'address-family enable'],
+            answer: 1,
+            why: 'A named address family can be administratively shut down, so no shutdown activates it.'
+          },
+          {
+            q: 'How is EIGRP for IPv6 enabled?',
+            options: [
+              'With an IPv6 network statement',
+              'On interfaces — there is no network command',
+              'With ipv6 unicast-routing alone',
+              'Through a route map'
+            ],
+            answer: 1,
+            why: 'Participation is per interface. ipv6 unicast-routing only enables IPv6 forwarding globally.'
+          },
+          {
+            q: 'An IPv6 EIGRP route shows a next hop of FE80::2. Is that a fault?',
+            options: [
+              'Yes, it should be a global address',
+              'No — a link-local next hop is expected',
+              'Only if the interface is point-to-point',
+              'Only when NAT is configured'
+            ],
+            answer: 1,
+            why: 'The link-local address of the directly connected neighbour is the normal IPv6 EIGRP next hop.'
+          },
+          {
+            q: 'What format is the EIGRP router ID on an IPv6-only network?',
+            options: [
+              'A 128-bit IPv6 address',
+              'A 32-bit dotted-quad number',
+              'The link-local address',
+              'Optional on IPv6'
+            ],
+            answer: 1,
+            why: 'The router ID remains a 32-bit dotted-quad identifier regardless of the address family.'
+          },
+          {
+            q: 'What does a default eigrp stub configuration advertise?',
+            options: [
+              'Nothing',
+              'Connected and summary routes',
+              'All EIGRP routes',
+              'Static routes only'
+            ],
+            answer: 1,
+            why: 'The default is connected plus summary — not nothing.'
+          },
+          {
+            q: 'What does eigrp stub receive-only do?',
+            options: [
+              'Receives and advertises everything',
+              'Receives EIGRP routes and advertises none',
+              'Advertises but never receives',
+              'Accepts only summary routes'
+            ],
+            answer: 1,
+            why: 'It accepts routes normally while advertising no EIGRP routes at all.'
+          },
+          {
+            q: 'Can an EIGRP stub router still learn routes?',
+            options: [
+              'No, by definition',
+              'Yes — stub controls what it advertises, not what it receives',
+              'Only static routes',
+              'Only from the hub'
+            ],
+            answer: 1,
+            why: 'The stub restricts outbound advertisements. Inbound learning is unaffected.'
+          },
+          {
+            q: 'What is the primary design benefit of EIGRP stub?',
+            options: [
+              'Faster hello timers',
+              'Limiting query propagation',
+              'Encrypting updates',
+              'Automatic summarization'
+            ],
+            answer: 1,
+            why: 'Bounding query scope shrinks diffusing computations and reduces SIA risk.'
+          },
+          {
+            q: 'Where is EIGRP authentication configured?',
+            options: ['Per area', 'Per interface or af-interface', 'Per VRF only', 'Globally on the process'],
+            answer: 1,
+            why: 'EIGRP has no areas, so authentication is applied per interface or af-interface.'
+          },
+          {
+            q: 'Which mechanism does named-mode EIGRP authentication use?',
+            options: [
+              'Plaintext password',
+              'HMAC-MD5',
+              'HMAC-SHA-256',
+              'No authentication is available'
+            ],
+            answer: 2,
+            why: 'HMAC-SHA-256 on supported platforms — and it must still be configured explicitly.'
+          },
+          {
+            q: 'Is EIGRP authentication enabled by default?',
+            options: [
+              'Yes, with MD5',
+              'Yes, in named mode',
+              'No — nothing is configured unless you configure it',
+              'Only on stub routers'
+            ],
+            answer: 2,
+            why: 'EIGRP runs open until a key chain and authentication mode are configured.'
+          },
+          {
+            q: 'Does EIGRP authentication encrypt the updates?',
+            options: [
+              'Yes, fully',
+              'Yes, in named mode only',
+              'No — it gives integrity and origin checks, not confidentiality',
+              'Only the hello packets'
+            ],
+            answer: 2,
+            why: 'Authentication is not encryption. The updates still cross the wire in clear.'
+          },
+          {
+            q: 'What is the default value of variance?',
+            options: ['0', '1', '2', '10'],
+            answer: 1,
+            why: 'variance 1 is the default and permits equal-cost behaviour only.'
+          },
+          {
+            q: 'Which conditions must a path satisfy to be installed with variance?',
+            options: [
+              'Only FD(path) ≤ variance × FD(successor)',
+              'Both the variance window and RD < FD',
+              'Only RD < FD',
+              'Only that maximum-paths allows it'
+            ],
+            answer: 1,
+            why: 'Both conditions are required — the window and the feasibility condition.'
+          },
+          {
+            q: 'Which setting controls how many EIGRP paths are installed?',
+            options: ['variance', 'maximum-paths', 'bandwidth', 'variance and distance together'],
+            answer: 1,
+            why: 'variance sets the metric window; maximum-paths sets the count.'
+          },
+          {
+            q: 'A path is inside the variance window but RD is greater than FD. What happens?',
+            options: [
+              'It is installed',
+              'It is rejected — variance does not bypass loop prevention',
+              'It is installed as a feasible successor',
+              'It triggers a query'
+            ],
+            answer: 1,
+            why: 'The feasibility condition still applies. The window widens choice, not safety.'
+          },
+          {
+            q: 'Two EIGRP paths have metrics 100 and 200. What traffic ratio should you expect?',
+            options: ['1 : 1', '2 : 1 in favour of the cheaper path', '1 : 2', 'It is always equal'],
+            answer: 1,
+            why: 'Balanced sharing favours the lower-metric path — a relative share of 2 against 1.'
+          },
+          {
+            q: 'Which layer actually forwards packets in an EIGRP network?',
+            options: [
+              'EIGRP itself',
+              'DUAL',
+              'The forwarding plane, typically CEF',
+              'The topology table'
+            ],
+            answer: 2,
+            why: 'EIGRP selects and installs routes; CEF performs the forwarding and load sharing.'
+          },
+          {
+            q: 'Which should be checked first when EIGRP routes are missing?',
+            options: [
+              'Route metrics',
+              'Neighbours and parameters',
+              'The variance setting',
+              'The active timer'
+            ],
+            answer: 1,
+            why: 'Always troubleshoot neighbours before investigating route metrics.'
+          },
+          {
+            q: 'Which two EIGRP parameters must match for an adjacency?',
+            options: [
+              'Hello interval and hold time',
+              'K-values and authentication',
+              'MTU and bandwidth',
+              'Variance and maximum-paths'
+            ],
+            answer: 1,
+            why: 'K-values and the authentication parameters must agree. Hello and hold do not have to.'
+          },
+          {
+            q: 'Why must redistribution into EIGRP supply a metric?',
+            options: [
+              'External routes have no EIGRP metric of their own',
+              'EIGRP rejects all external routes',
+              'It is only needed for stub routers',
+              'To change the Administrative Distance'
+            ],
+            answer: 0,
+            why: 'A redistributed route carries no EIGRP metric, so one must be supplied or the route is rejected.'
+          },
+          {
+            q: 'What should lengthening the EIGRP active timer never be used for?',
+            options: [
+              'Giving a large topology more time to converge',
+              'Substituting for fixing packet loss or topology problems',
+              'Reducing SIA risk in a stub design',
+              'Tuning query scope'
+            ],
+            answer: 1,
+            why: 'The active timer is not a substitute for repairing the underlying failure.'
+          },
+          {
+            q: 'What does it mean when a prefix is in the EIGRP topology table but not the routing table?',
+            options: [
+              'The route is always broken',
+              'Something downstream — variance, maximum-paths or AD — blocked installation',
+              'The neighbour has failed',
+              'The K-values differ'
+            ],
+            answer: 1,
+            why: 'A topology entry is a candidate, not proof of installation.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'ei.theme', done: 'ei.done', best: 'ei.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
