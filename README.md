@@ -28,8 +28,9 @@ Everything is client-side, so `file://` works. It also works over HTTP
 |-------|------|--------|------|
 | 00 | [Networking Basics](pages/00-networking-basics.html) | 7 | 18 questions |
 | 01 | [Physical Layer](pages/01-physical-layer.html) | 12 | 21 questions |
+| 02 | [Network Topologies](pages/02-network-topologies.html) | 9 | 20 questions |
 
-The remaining levels (02–30) are listed on the hub as *planned*. Each one is ported
+The remaining levels (03–30) are listed on the hub as *planned*. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:
 
 > Overview → Core Concepts → Commands → Exam Traps → Quick Review Table → Related Notes → Glossary
@@ -53,7 +54,8 @@ from the matching note set in the CCNP Obsidian vault, keeping the note structur
 - **Keyboard shortcuts** — `/` search, `t` theme, `e` expand/collapse all, `Esc` clear
 
 Progress, theme, and best score are stored in `localStorage` under a per-page prefix
-(`nb.*` for Level 00, `pl.*` for Level 01) so levels never overwrite each other.
+(`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02) so levels never
+overwrite each other.
 
 ## Loading Vue
 
