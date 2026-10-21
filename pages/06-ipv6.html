@@ -1,0 +1,2419 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPv6 — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 06 IPv6: 128-bit addressing, global unicast, link-local and unique local addresses, anycast, multicast, SLAAC, DHCPv6, neighbour discovery, ICMPv6, OSPFv3, EIGRP for IPv6 and BGP IPv6.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">IPv6 — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[13px] font-black tracking-tight text-white">V6</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">IPv6</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 06</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 06</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">13 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 06 &mdash; IPv6</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The whole of IPv6: 128-bit addressing, the address types, how a host gets an address, the control messages that make it work, and how the routing protocols carry it.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        IPv6 &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 06 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `[[IPv6]] replaces 32-bit addressing with **128 bits**, removes broadcast entirely, and makes every host **[[Link Local]]** capable out of the box. This level covers the address types, the two ways a host gets an address ([[SLAAC]] and [[DHCPv6]]), the control messages that make it work ([[Neighbor Discovery]] and [[ICMPv6]]), and how the three routing protocols carry IPv6.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'addr', title: 'IPv6 Addressing',
+            blurb: 'The 128-bit address, shortening rules, address types and subnetting units',
+            overview: '[[IPv6]] uses **128-bit** addresses — roughly 3.4 x 10^38 of them. The address is written as eight groups of four hexadecimal digits, it has **no broadcast**, every interface gets a mandatory [[Link Local]] address automatically, and a **/64** is the standard LAN subnet.',
+            keyIdea: 'Eight hextets, one double colon, no broadcast, and a /64 per LAN. Everything else follows from those four facts.',
+            sections: [
+              { kind: 'para', h: 'The 128-bit format', p: 'An IPv6 address is eight **hextets** of 16 bits each, written in hexadecimal. Eight groups of four hex digits give the full 128 bits, which is why IPv6 addresses are 32 hex characters long rather than the four octets of IPv4.' },
+              { kind: 'code', h: 'A full 128-bit address', code:
+`  2001:0db8:85a3:0000:0000:8a2e:0370:7334
+   |    |    |    |    |    |    |    |
+   16   16   16   16   16   16   16   16  bits  = 128 bits
+
+  IPv4   32 bits   ~4.3 billion addresses
+  IPv6  128 bits   ~3.4 x 10^38 addresses` },
+              { kind: 'para', h: 'Shortening rules', p: 'IPv6 notation has **three simplification rules**, and every exam question about the format is really a question about one of them.' },
+              { kind: 'table', h: 'The three shortening rules', cols: ['Rule', 'Example'], rows: [
+                ['Drop leading zeros in a hextet', '0db8 becomes db8, 0000 becomes 0'],
+                ['Use double colon for the longest run of zero hextets', '2001:0db8:85a3:0000:0000:8a2e:0370:7334 becomes 2001:db8:85a3::8a2e:370:7334'],
+                ['The double colon may appear only once', 'Two of them is an invalid address']
+              ]},
+              { kind: 'code', h: 'Shortening worked through', code:
+`  Full    2001:0db8:85a3:0000:0000:8a2e:0370:7334
+  Step 1  2001:db8:85a3:0:0:8a2e:370:7334     (leading zeros dropped)
+  Step 2  2001:db8:85a3::8a2e:370:7334        (longest zero run collapsed)
+
+  The double colon stands for at least one zero hextet.
+  It can never appear twice in the same address.` },
+              { kind: 'table', h: 'Address types by prefix', cols: ['Type', 'Prefix', 'Example'], rows: [
+                ['Global Unicast (GUA)', '2000::/3', '2001:db8:1:10::1'],
+                ['Link-local', 'fe80::/10', 'fe80::1'],
+                ['Unique Local (ULA)', 'fc00::/7', 'fd12:3456:789a::1'],
+                ['Multicast', 'ff00::/8', 'ff02::1'],
+                ['Loopback', '::1', '::1'],
+                ['Unspecified', '::', '::'],
+                ['IPv4-mapped', '::ffff:0:0/96', '::ffff:192.168.1.1'],
+                ['Anycast', 'No prefix of its own', 'Any global unicast address']
+              ]},
+              { kind: 'para', h: 'IPv6 has no broadcast', p: 'Broadcast is gone. Every job it used to do is done by **multicast** instead — ff02::1 reaches all nodes on the link, and neighbour discovery uses a solicited-node multicast address rather than a broadcast. IPv6 also drops the ARP request/reply pair in favour of [[Neighbor Discovery]].' },
+              { kind: 'list', h: 'What IPv6 removed and what replaced it', items: [
+                { t: 'Broadcast', d: 'Replaced by link-local multicast groups such as ff02::1 for all nodes and ff02::2 for all routers.' },
+                { t: 'ARP', d: 'Replaced by [[Neighbor Discovery]] using ICMPv6 messages instead of an Ethernet broadcast.' },
+                { t: 'Router fragmentation', d: 'Replaced by path MTU discovery — the sender reacts to a Packet Too Big message rather than routers splitting packets.' }
+              ]},
+              { kind: 'para', h: 'Subnetting units', p: 'A **/64** is one LAN subnet and it is effectively mandatory, because [[SLAAC]] needs exactly 64 host bits to fill. A provider commonly hands a site a **/48** or **/56**, which is then split into **/64** subnets, one per VLAN.' },
+              { kind: 'code', h: 'The usual IPv6 subnetting plan', code:
+`  Provider gives the site a /56
+  2001:db8:1234:5a00::/56
+
+  /64 subnets inside it:
+    2001:db8:1234:5a00::/64    VLAN 10
+    2001:db8:1234:5a01::/64    VLAN 20
+    2001:db8:1234:5a02::/64    VLAN 30
+
+  A /48 gives 65,536 usable /64 subnets.
+  A /64 gives 18 quintillion addresses on one LAN.` }
+            ],
+            commands: [
+              { label: 'Host — show the IPv6 addresses on the machine', code:
+`ip -6 addr show` },
+              { label: 'Host — ping over IPv6', code:
+`ping6 2001:db8::1` },
+              { label: 'Cisco IOS — configure a static global address', code:
+`interface GigabitEthernet0/1
+ ipv6 address 2001:db8:1:10::1/64
+ ipv6 enable` },
+              { label: 'Cisco IOS — verify', code:
+`show ipv6 interface GigabitEthernet0/1
+show ipv6 route` }
+            ],
+            traps: [
+              'The double colon may appear only once in an address. Two of them is invalid.',
+              '2001:db8::/32 is the documentation prefix. It is never deployed in production.',
+              'fe80::/10 is always present on every IPv6 interface. It is not something you configure by choice.',
+              'A /64 is required for [[SLAAC]]. A /127 or a /128 breaks autoconfiguration.',
+              'There is no IPv6 broadcast address. A question asking for one is a trap.',
+              'IPv6 addresses are eight groups of four hex digits — 32 hex characters, not four octets.',
+              'The unspecified address :: and the loopback ::1 are IPv6 concepts with no IPv4 equivalent that behaves the same way.',
+              'A double colon stands for one or more zero hextets, never for a fixed number of them.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Size', '128 bits, 8 hextets of 16 bits'],
+                ['Notation', 'Hexadecimal, double colon compresses zero runs'],
+                ['GUA', '2000::/3'],
+                ['Link-local', 'fe80::/10, always present'],
+                ['ULA', 'fc00::/7, fd00::/8 in practice'],
+                ['Multicast', 'ff00::/8'],
+                ['Loopback', '::1'],
+                ['Broadcast', 'None — multicast replaces it'],
+                ['LAN subnet', '/64'],
+                ['Allocation', '/48 site, /64 per LAN']
+              ]
+            },
+            related: [
+              { t: '02. Global Unicast', d: 'the public address type' },
+              { t: '03. Link Local', d: 'the address that is always there' },
+              { t: '11. ICMPv6', d: 'the control protocol underneath' }
+            ],
+            glossary: ['IPv6', 'IPv4', 'Global Unicast', 'Link Local', 'Unique Local', 'IPv6 Multicast', 'Anycast', 'Neighbor Discovery', 'SLAAC']
+          },
+          {
+            id: 't02', num: '02', group: 'addr', title: 'Global Unicast',
+            blurb: '2000::/3, the prefix / subnet / interface ID split, and how a host gets one',
+            overview: '[[Global Unicast]] addresses are IPv6 public addresses, and they live in **2000::/3**. The format is a three-part split — a global routing prefix, a subnet ID, and a 64-bit interface ID — and the /64 per LAN comes from the third part being 64 bits wide.',
+            keyIdea: 'Global unicast is the Internet-routable address. Link-local is the one that is guaranteed; a global address is something you have to arrange.',
+            sections: [
+              { kind: 'code', h: 'The three-part structure', code:
+`  |  global routing prefix  |   subnet ID   |  interface ID  |
+  |  /48 from the ISP       |  site-chosen |  last 64 bits  |
+  |  2001:db8:1234:         |  5a00        |  ::1          |
+
+  Full address: 2001:db8:1234:5a00::1/64` },
+              { kind: 'para', h: 'The /64 rule', p: 'Every LAN gets a **/64**. The reason is structural: the interface ID is the bottom 64 bits, so a /64 prefix leaves exactly the right amount of room for a host to build its own address. It also means you can subdivide a site allocation down to /64 but no further.' },
+              { kind: 'table', h: 'What a provider typically hands you', cols: ['Allocation', 'Number of /64 subnets', 'Typical use'], rows: [
+                ['/48', '65,536', 'Large enterprise or data centre'],
+                ['/56', '256', 'Medium enterprise, delegateable to a CPE'],
+                ['/60', '16', 'Small branch'],
+                ['/64', '1', 'A single LAN']
+              ]},
+              { kind: 'table', h: 'Four ways a host gets a global address', cols: ['Method', 'Where it comes from'], rows: [
+                ['SLAAC', 'The router advertises a prefix in a Router Advertisement and the host combines it with its own interface ID.'],
+                ['DHCPv6', 'A stateful server assigns the address and tracks the lease.'],
+                ['DHCPv6-PD', 'The site router delegates a prefix to a customer edge device.'],
+                ['Static', 'Configured by hand on the interface.']
+              ]},
+              { kind: 'para', h: 'The reachability story that gets asked about', p: 'A host can have a global address and still not be reachable from the Internet, and it can have no global address and still reach its neighbours. The exam question "can two IPv6 hosts on the same segment ping without a global address" has the answer **yes** — they use their link-local addresses. Multi-hop routing is where the global address matters, because link-local never crosses a router.' },
+              { kind: 'list', h: 'Global versus link-local reachability', items: [
+                { t: 'Same segment, no global address', d: 'Works. Both hosts use their fe80 addresses and the zone identifier of the interface.' },
+                { t: 'Different segments, no global address', d: 'Does not work. Link-local addresses are never routed.' },
+                { t: 'Internet access', d: 'Requires a global address, a default route from the Router Advertisement, and a working upstream path.' }
+              ]},
+              { kind: 'para', h: 'The interface ID', p: 'The bottom 64 bits can be derived from the MAC address in **EUI-64** form, or generated randomly. Privacy extensions (RFC 4941) rotate the temporary address so a host cannot be tracked across the network, and modern hosts normally use a **random interface ID** for that reason.' },
+              { kind: 'code', h: 'EUI-64 from a MAC address', code:
+`  MAC   00:1a:2b:3c:4d:5e
+
+  1. drop the colons and insert fffe in the middle
+     001a2b3c4d5e  ->  001a2b3c fffe 4d5e
+  2. flip the U/L bit (the leftmost bit of the first byte)
+     00 -> 02
+  3. insert colons every four hex digits
+     021a:2b3f:fffe:4d5e
+
+  The result is the bottom 64 bits of the address.` },
+              { kind: 'para', h: 'Addressing practice', p: 'Real designs track the prefix from the provider rather than hard-coding it, keep a /64 per VLAN, and number the subnets sequentially so the plan is readable. Privacy extensions are worth enabling on user-facing segments so a single host cannot be profiled from its interface ID.' }
+            ],
+            commands: [
+              { label: 'Configure a static global unicast address', code:
+`interface GigabitEthernet0/1
+ ipv6 address 2001:db8:1:10::1/64` },
+              { label: 'Advertise the prefix for autoconfiguration', code:
+`interface GigabitEthernet0/1
+ ipv6 nd prefix 2001:db8:1:10::/64` },
+              { label: 'Verify the prefix and the address', code:
+`show ipv6 interface GigabitEthernet0/1 | include prefix
+show ipv6 route 2001:db8:1:10::/64` }
+            ],
+            traps: [
+              '2001:db8::/32 is the documentation prefix. Never deployed, always used in exam answers.',
+              'A global unicast address is not automatic. The link-local address is the one that is always there.',
+              'A host with only a link-local address has no path off the local segment.',
+              'IPv6 does not need NAT for address shortage. Prefix translation exists but it is not the default design.',
+              'EUI-64 flips the U/L bit and inserts fffe in the middle of the MAC. Both steps are easy to miss.',
+              'Privacy extensions rotate the interface ID, so do not assume a permanent EUI-64 address.',
+              'The interface ID is the bottom 64 bits, which is exactly why the LAN prefix is /64.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Prefix', '2000::/3'],
+                ['Structure', 'Global routing prefix + subnet ID + 64-bit interface ID'],
+                ['/64', 'The per-LAN standard'],
+                ['Acquisition', 'SLAAC, DHCPv6, prefix delegation, or static'],
+                ['Interface ID', 'EUI-64 from the MAC, or random for privacy'],
+                ['NAT', 'Not required — addresses are plentiful'],
+                ['Default gateway', 'Learned from the Router Advertisement, not from DHCP']
+              ]
+            },
+            related: [
+              { t: '01. IPv6 Addressing', d: 'the format and the address types' },
+              { t: '03. Link Local', d: 'the guaranteed address' },
+              { t: '07. SLAAC', d: 'how the address usually arrives' }
+            ],
+            glossary: ['Global Unicast', 'IPv6', 'Link Local', 'SLAAC', 'DHCPv6', 'Anycast', 'NAT64']
+          },
+          {
+            id: 't03', num: '03', group: 'addr', title: 'Link Local',
+            blurb: 'fe80::/10, automatic generation, zone identifiers and routing adjacencies',
+            overview: '[[Link Local]] addresses in **fe80::/10** are configured automatically on every IPv6 interface. They are never routed, they exist so that the protocol works before anything else is configured, and they are the basis of neighbour discovery, SLAAC signalling and routing protocol adjacencies.',
+            keyIdea: 'Link-local is a normal, deliberate part of IPv6 — not the IPv4 fallback mistake. It is how the protocol bootstraps itself.',
+            sections: [
+              { kind: 'para', h: 'Always present, never routed', p: 'The moment an interface is enabled for IPv6 it has a **link-local address**. It is derived from the MAC address in EUI-64 form or generated as a stable random value under RFC 7217, and it is unique per interface. Routers **never forward** it, so it never appears in a global routing table.' },
+              { kind: 'code', h: 'What an interface looks like after ipv6 enable', code:
+`  GigabitEthernet0/1 is up, line protocol is up
+    IPv6 is enabled, link-local address(es):
+    FE80::214:5FF:FE23:4567, subnetmask FE80::/64
+    Global unicast address(es):
+    2001:db8:1:10::1, subnetmask /64` },
+              { kind: 'para', h: 'The zone identifier', p: 'Because fe80:: means the same thing on every host on the segment, you have to say **which link** you mean. Operating systems express that with a zone or scope identifier after a percent sign.' },
+              { kind: 'code', h: 'Pinging a link-local address', code:
+`  Linux / macOS
+    ping6 fe80::1%eth0
+    ping6 fe80::1%0          interface index on some systems
+
+  Windows
+    ping fe80::1%5           %5 is the interface index` },
+              { kind: 'table', h: 'Where link-local actually does the work', cols: ['Use', 'Why'], rows: [
+                ['Neighbour discovery', 'Every NS and NA is sent from a link-local source address.'],
+                ['Router solicitation and advertisement', 'The RS goes to ff02::2 and the RA is sent from a link-local address.'],
+                ['SLAAC unicast', 'A router uses its link-local address as the next hop for the prefix it advertises.'],
+                ['Routing adjacencies', 'OSPFv3 and EIGRP for IPv6 form adjacencies over link-local and use it as the next hop.'],
+                ['Default gateway', 'A host learns the Router Advertisement sender link-local address as its default route.'],
+                ['Management access', 'Only IT on the connected segment can reach the device over its link-local address.']
+              ]},
+              { kind: 'para', h: 'Several addresses on one interface', p: 'An IPv6 interface normally carries more than one address, and each has a different lifetime. This is the table that explains why a host shows a link-local, a global, and often a temporary address at the same time.' },
+              { kind: 'table', h: 'Address types on a single interface', cols: ['Type', 'Purpose', 'Lifetime'], rows: [
+                ['Link-local (fe80)', 'Local protocol operation', 'Never removed'],
+                ['Global unicast or ULA', 'Routed reachability', 'Prefix lifetime, or renewed by the server'],
+                ['Temporary (privacy)', 'Outbound source address', 'Rotated every few days']
+              ]},
+              { kind: 'para', h: 'The contrast with IPv4', p: 'In IPv4 a self-assigned address means something went wrong — DHCP failed and the host fell back to 169.254. In IPv6 the self-assigned address is how the protocol starts. That difference is the single most common trap in this topic.' }
+            ],
+            commands: [
+              { label: 'Enable IPv6 on an interface (creates the link-local automatically)', code:
+`interface GigabitEthernet0/1
+ ipv6 enable` },
+              { label: 'Set a deterministic link-local address', code:
+`interface GigabitEthernet0/1
+ ipv6 address fe80::1 link-local` },
+              { label: 'Verify the link-local address', code:
+`show ipv6 interface GigabitEthernet0/1 | include Link|fe80` },
+              { label: 'Ping a link-local neighbour from the router itself', code:
+`ping6 fe80::1%0` }
+            ],
+            traps: [
+              'fe80::/10 is not a broken or temporary address. It is mandatory and permanent.',
+              'Link-local addresses are never routed. Pinging one across a router always fails.',
+              'The zone identifier after the percent sign is required when you ping a link-local address.',
+              'A routing table may show a link-local next hop on a transit link. That is normal and is not an error.',
+              'Link-local is not the IPv6 equivalent of APIPA. IPv6 has no failure fallback — it has a mandatory starting point.',
+              'Each interface gets its own link-local address. They are not shared across the device.',
+              'The manually configured link-local form is used when you want a stable address for a routing protocol next hop.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Prefix', 'fe80::/10'],
+                ['Configuration', 'Automatic on ipv6 enable'],
+                ['Scope', 'One link, never routed'],
+                ['Generation', 'EUI-64 from the MAC, or stable random under RFC 7217'],
+                ['Zone identifier', 'Percent sign plus the interface, required for ping'],
+                ['Powers', 'ND, SLAAC signalling, routing adjacencies'],
+                ['Default gateway', 'The link-local address of the Router Advertisement sender'],
+                ['Uniqueness', 'Per interface, per link']
+              ]
+            },
+            related: [
+              { t: '09. Neighbor Discovery', d: 'what runs over link-local' },
+              { t: '07. SLAAC', d: 'uses link-local for the handshake' },
+              { t: '04. Unique Local', d: 'the other internal-only scope' }
+            ],
+            glossary: ['Link Local', 'IPv6', 'Neighbor Discovery', 'SLAAC', 'OSPFv3', 'EIGRP for IPv6', 'Default Route']
+          },
+          {
+            id: 't04', num: '04', group: 'addr', title: 'Unique Local',
+            blurb: 'fc00::/7, the fc versus fd trap, and where ULAs are used',
+            overview: '[[Unique Local]] addresses are the IPv6 counterpart to RFC 1918 private space. The prefix is **fc00::/7**, but only **fd00::/8** is actually used, because the L bit marks a locally assigned address. They are routed inside the organisation and never advertised to the Internet.',
+            keyIdea: 'The range is fc00::/7. The part you deploy from is fd00::/8. ULA is routed inside the site; link-local is not.',
+            sections: [
+              { kind: 'para', h: 'The /7 and its two halves', p: 'RFC 4193 reserves fc00::/7 for unique local addresses. The first eight bits split into **fc00::/8**, which is reserved for future centrally defined semantics, and **fd00::/8**, where the L bit is set to mark a locally assigned address. Every real ULA comes from fd00::/8.' },
+              { kind: 'code', h: 'The fc and fd boundary', code:
+`  fc00::/7   covers  fc00:...  through  fdff:...
+                       ^^^^^^^
+  fc00::/8   reserved, centrally defined semantics
+  fd00::/8   L bit set, locally assigned  <-- this is what you deploy
+
+  ULA example: fd12:3456:789a::1` },
+              { kind: 'code', h: 'The structure of a ULA', code:
+`  | 7 bits | L | 40-bit global ID | 16-bit subnet | 64-bit interface ID |
+
+  fc        1  1234:5678:9abc     0001           ::1
+
+  Prefix    fd12:3456:789a::/48
+  Subnet    fd12:3456:789a:0001::/64` },
+              { kind: 'para', h: 'The global ID should be random', p: 'The 40-bit global ID is meant to be generated randomly so that two organisations that independently choose a ULA are unlikely to collide. A predictable identifier — a site name encoded as hex, for instance — defeats the whole point and causes real conflicts the moment the two sites are connected.' },
+              { kind: 'table', h: 'ULA versus link-local', cols: ['', 'ULA (fd00::/8)', 'Link-local (fe80::/10)'], rows: [
+                ['Scope', 'Site-wide', 'One link'],
+                ['Routed internally', 'Yes', 'No'],
+                ['Purpose', 'Stable internal services', 'Protocol operation'],
+                ['Visible off site', 'No — filtered at the edge', 'Never'],
+                ['Privacy', 'Stable and planned', 'Per interface']
+              ]},
+              { kind: 'table', h: 'When to use a ULA', cols: ['Scenario', 'Use'], rows: [
+                ['Internal DNS, print and management services', 'ULA — stable, and independent of the ISP prefix'],
+                ['Internet-facing services', 'Global unicast'],
+                ['Dual-stack lab with no real provider prefix', 'ULA'],
+                ['Merging two sites', 'ULA with random global IDs, to avoid collisions'],
+                ['Migration, where global space is still growing', 'ULA for internal, global in parallel']
+              ]},
+              { kind: 'para', h: 'Filtering at the edge', p: 'A ULA must never be advertised to the Internet. Every edge that speaks BGP or receives a prefix from an upstream must filter out fd00::/8 and fe80::/10 from what it accepts and what it sends. And unlike IPv4 private space, ULAs do not need NAT — they are simply routed inside the organisation.' }
+            ],
+            commands: [
+              { label: 'Configure a ULA on an interface', code:
+`interface GigabitEthernet0/1
+ ipv6 address fd12:3456:789a:1::1/64` },
+              { label: 'Verify the ULA', code:
+`show ipv6 interface GigabitEthernet0/1 | include fd` },
+              { label: 'Verify the route to the ULA prefix', code:
+`show ipv6 route fd12:3456:789a::/48` }
+            ],
+            traps: [
+              'Only fd00::/8 is locally assigned. fc00::/8 is reserved for the future. The fc versus fd trap is a favourite.',
+              'The range of ULA space is fc00::/7, and both fc and fd fall inside it.',
+              'A ULA is routed inside the organisation. A link-local address is not.',
+              'You do not normally NAT a ULA. It is routed internally like any other prefix.',
+              'The 40-bit global ID should be random. Predictable identifiers cause collisions.',
+              'A ULA never leaves the enterprise. Edge prefix filtering must exclude fd00::/8.',
+              'ULA is not the IPv6 equivalent of a NAT workaround. IPv6 has enough addresses to avoid NAT entirely.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['RFC', '4193'],
+                ['Prefix', 'fc00::/7'],
+                ['Deployed from', 'fd00::/8, the L bit set'],
+                ['Structure', '/48 site + /16 subnet + 64-bit interface ID'],
+                ['Global ID', '40 bits, generated randomly'],
+                ['Scope', 'Routed within the site'],
+                ['Internet', 'Filtered, never advertised'],
+                ['IPv4 analogue', 'RFC 1918 private space'],
+                ['NAT', 'Not required']
+              ]
+            },
+            related: [
+              { t: '03. Link Local', d: 'the other internal scope' },
+              { t: '02. Global Unicast', d: 'the public counterpart' },
+              { t: '13. BGP IPv6', d: 'where the edge filtering happens' }
+            ],
+            glossary: ['Unique Local', 'IPv6', 'Global Unicast', 'Link Local', 'Private IP']
+          },
+          {
+            id: 't05', num: '05', group: 'addr', title: 'Anycast',
+            blurb: 'One address on many devices, nearest delivery, and where you meet it',
+            overview: '[[Anycast]] means the **same unicast address is assigned to several devices**, and the network delivers the packet to the **nearest** one. IPv6 made it a first-class part of the protocol — the address looks like ordinary global unicast — and it underpins DNS, cloud services and content delivery networks.',
+            keyIdea: 'Anycast delivers to one of many: the nearest. Multicast delivers to all of the members. Unicast delivers to one unique host.',
+            sections: [
+              { kind: 'para', h: 'How it works', p: 'Every member of the group holds the same address and advertises the same prefix. Routing then works out the best path to that prefix, and because the members are in different places, the best path leads to the closest one. There is no protocol mechanism involved at all — it is a consequence of ordinary routing.' },
+              { kind: 'code', h: 'One address, three locations', code:
+`            +---- R1 ----+
+            | 2001:db8:100::10 |   loopback
+            +-----+------+
+                  |
+   client -------+------- link
+                  |
+            +-----+------+
+            | 2001:db8:100::10 |   loopback
+            +---- R2 ----+
+
+  The client sends to 2001:db8:100::10.
+  The routing table picks the shortest path, so R1 answers.` },
+              { kind: 'table', h: 'The delivery trio', cols: ['', 'Unicast', 'Anycast', 'Multicast'], rows: [
+                ['Destination address', 'Unique to one host', 'Shared by many hosts', 'Identifies a group'],
+                ['Who receives', 'One host', 'One host — the nearest', 'Every member of the group'],
+                ['Purpose', 'One to one', 'One to nearest of many', 'One to many'],
+                ['IPv6 form', 'Global unicast', 'An ordinary global unicast', 'ff00::/8'],
+                ['Example', 'SSH to a server', 'DNS root and resolver servers', 'A video conference']
+              ]},
+              { kind: 'para', h: 'There is no special anycast prefix', p: 'IPv6 has no anycast block. An address becomes anycast by deployment, not by notation, which is why the question "which of these addresses is anycast" is unanswerable from the address alone. The exception is **subnet anycast** (RFC 2526), where a reserved pattern in the address identifies all the routers on a subnet.' },
+              { kind: 'code', h: 'Subnet anycast', code:
+`  A reserved /7 field in the address identifies the subnet routers.
+
+  Interface address   2001:db8:1:10::1
+  Subnet anycast      2001:db8:1:10:0:0:0:0    <- every router in the subnet
+
+  Packets sent to the subnet anycast go to the nearest router
+  on that subnet.` },
+              { kind: 'table', h: 'Where anycast turns up', cols: ['Deployment', 'How it is built'], rows: [
+                ['DNS root servers', 'The same address on hundreds of nodes worldwide'],
+                ['Public DNS resolvers', 'The same address on anycast points of presence'],
+                ['Cloud load balancing', 'One address per region, so traffic lands on the nearest region'],
+                ['Content delivery networks', 'Edge caches share an address and serve the nearest users'],
+                ['VXLAN fabric gateways', 'The same gateway address on every leaf, so traffic lands on the nearest leaf']
+              ]},
+              { kind: 'para', h: 'The caveats', p: 'An anycast address can only be a **destination**, never a source — a host cannot originate traffic from an address it does not uniquely own. And because the address can move, stateful flows break on failover: a TCP session to a node that dies does not transparently resume on another member, unless the state is shared.' },
+              { kind: 'list', h: 'What breaks with anycast', items: [
+                { t: 'Source address', d: 'Not allowed. A host cannot originate from an address shared with other devices.' },
+                { t: 'Stateful sessions', d: 'A failover to another member drops the session. Stateless protocols such as HTTP are unaffected.' },
+                { t: 'Return path', d: 'Asymmetric routing is normal with anycast, which breaks strict ingress filtering designs.' },
+                { t: 'Policy', d: 'Route maps and filters have to treat the anycast prefix on purpose, because it looks like ordinary unicast.' }
+              ]}
+            ],
+            commands: [
+              { label: 'Put the same anycast address on several routers', code:
+`interface Loopback0
+ ipv6 address 2001:db8:100::10/128` },
+              { label: 'Advertise the anycast prefix so the closest member wins', code:
+`router ospfv3 1
+ address-family ipv6 unicast
+  network 2001:db8:100::10/128 area 0` },
+              { label: 'Confirm the prefix is installed on each router', code:
+`show ipv6 route 2001:db8:100::10/128` }
+            ],
+            traps: [
+              'Anycast delivers to the nearest member, not to all of them. Delivering to all members is multicast.',
+              'An anycast address is indistinguishable from an ordinary unicast address. You cannot tell from the address alone.',
+              'An anycast address cannot be used as a source address.',
+              'A stateful session breaks when the member serving it fails. Stateless traffic is fine.',
+              'Anycast depends on topology. The nearest member by routing metric is the one that answers.',
+              'Subnet anycast is the one case with a reserved pattern in the address. Ordinary anycast has none.',
+              'IPv6 anycast is just global unicast that happens to be deployed on several devices.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Definition', 'Many devices holding the same unicast address'],
+                ['Delivery', 'Nearest member, chosen by the routing table'],
+                ['IPv6 form', 'An ordinary global unicast address'],
+                ['Examples', 'DNS, CDNs, cloud load balancing, VXLAN gateways'],
+                ['As a source', 'Not allowed'],
+                ['State', 'Sessions break on failover unless state is shared'],
+                ['Against multicast', 'Multicast reaches every member, anycast reaches one']
+              ]
+            },
+            related: [
+              { t: '06. Multicast', d: 'the other many-receiver model' },
+              { t: '13. BGP IPv6', d: 'how the same prefix is advertised from many sites' },
+              { t: '02. Global Unicast', d: 'the prefix anycast borrows' }
+            ],
+            glossary: ['Anycast', 'IPv6', 'Global Unicast', 'IPv6 Multicast', 'Neighbor Discovery']
+          },
+          {
+            id: 't06', num: '06', group: 'addr', title: 'Multicast',
+            blurb: 'ff00::/8, scopes, the well-known groups and MLD',
+            overview: '[[IPv6 Multicast]] uses **ff00::/8** and carries a scope and flags field that IPv4 multicast does not have. It replaces broadcast entirely: all-nodes, all-routers, neighbour discovery and DHCPv6 are all just multicast groups with a scope that says how far they may travel.',
+            keyIdea: 'The scope nibble in the address decides the routing boundary. ff02 is link-local and never leaves the segment; ff0e is global.',
+            sections: [
+              { kind: 'code', h: 'The address layout', code:
+`  | 8 bits | 4 bits | 4 bits | 112 bits |
+  |  ff   | flags  | scope  | group ID |
+             T/P/R    1 I, 2 link, 5 site, 8 org, E global` },
+              { kind: 'table', h: 'The scope values', cols: ['Value', 'Scope', 'Meaning'], rows: [
+                ['1', 'Interface-local', 'Reaches only the local interface'],
+                ['2', 'Link-local', 'Reaches the local segment, never forwarded'],
+                ['5', 'Site-local', 'Reaches the site'],
+                ['8', 'Organization-local', 'Reaches the organisation'],
+                ['E', 'Global', 'Reaches anywhere routable'],
+                ['F', 'Reserved', 'Not used']
+              ]},
+              { kind: 'table', h: 'The well-known groups', cols: ['Group', 'Meaning'], rows: [
+                ['ff02::1', 'All nodes on the link — takes over the role of IPv4 broadcast'],
+                ['ff02::2', 'All routers on the link — the destination of a Router Solicitation'],
+                ['ff02::5', 'OSPFv3 all routers'],
+                ['ff02::6', 'OSPFv3 designated and backup designated routers'],
+                ['ff02::A', 'EIGRP routers'],
+                ['ff02::1:2', 'All DHCPv6 clients and servers'],
+                ['ff02::1:3', 'Link-local name resolution'],
+                ['ff02::16', 'MLDv2 reports'],
+                ['ff02::FB', 'Multicast DNS']
+              ]},
+              { kind: 'para', h: 'How multicast replaces broadcast', p: 'There is **no IPv6 broadcast address**, so every function that used one is now a group with a scope. Neighbour discovery uses the **solicited-node multicast** address, DHCPv6 uses ff02::1:2, and a node that wants to reach everyone on the link uses ff02::1. Because link-local multicast has a hop limit of one, it can never leak off the segment.' },
+              { kind: 'code', h: 'Solicited-node multicast', code:
+`  For target address 2001:db8:1:10::1:
+
+    take the bottom 32 bits of the address
+    00000001 00000000 00000000 00000001
+    ff02::1:ff  +  00:00:00:01
+
+    solicited-node address = ff02::1:ff00:0001
+
+  Prefix      ff02::1:ff00:0/104
+  Only about 1 in 65,536 of the link hears the request,
+  instead of everybody.` },
+              { kind: 'para', h: 'MLD is the membership protocol', p: 'MLD is the IPv6 answer to [[IGMP]]. **MLDv1** behaves like IGMPv2. **MLDv2** supports source-specific multicast, where a receiver names both the group and the source it wants, and that is what enables SSM in IPv6 exactly as IGMPv3 does in IPv4. Switches use **MLD snooping** to build a multicast forwarding table so that group traffic only leaves ports that asked for it.' },
+              { kind: 'table', h: 'MLD versions', cols: ['Version', 'Join type', 'Equivalent in IPv4'], rows: [
+                ['MLDv1', 'Group only', 'IGMPv2'],
+                ['MLDv2', 'Group and source (S,G)', 'IGMPv3, enables SSM']
+              ]},
+              { kind: 'list', h: 'Multicast in IPv6 versus IPv4', items: [
+                { t: 'Scope is embedded', d: 'IPv6 puts the scope in the address itself, so a router can decide from the address alone whether to forward it.' },
+                { t: 'No broadcast', d: 'Every broadcast function is a multicast group with a scope.' },
+                { t: 'Hop limit', d: 'Link-local multicast is sent with a hop limit of one, so it is confined to the segment.' },
+                { t: 'Solicited-node', d: 'Neighbour discovery targets one small multicast group instead of the whole link.' }
+              ]}
+            ],
+            commands: [
+              { label: 'Enable multicast routing for IPv6', code:
+`ipv6 multicast routing` },
+              { label: 'Configure PIM in sparse mode on an interface', code:
+`interface GigabitEthernet0/1
+ ipv6 pim sparse-mode` },
+              { label: 'Set the MLD version', code:
+`interface GigabitEthernet0/1
+ ipv6 mld version 2` },
+              { label: 'Verify multicast state', code:
+`show ipv6 mroute
+show ipv6 mld groups` }
+            ],
+            traps: [
+              'The scope nibble is part of the address. ff02 is link-local, ff05 is site-local, ff0e is global.',
+              'There is no IPv6 broadcast address. ff02::1 is a multicast group that plays the all-nodes role.',
+              'MLD is the IPv6 membership protocol, the counterpart of IGMP.',
+              'MLDv2 is what enables source-specific multicast with (S,G) joins.',
+              'Solicited-node multicast is ff02::1:ff00:0/104, not ff02::1.',
+              'Link-local multicast uses a hop limit of one, so it never leaves the link.',
+              'Well-known group numbers are hexadecimal: ff02::A is EIGRP, not ff02::10.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Prefix', 'ff00::/8'],
+                ['Layout', 'ff, 4 flag bits, 4 scope bits, 112-bit group ID'],
+                ['Scopes', '1 interface, 2 link, 5 site, 8 organisation, E global'],
+                ['ff02::1', 'All nodes on the link'],
+                ['ff02::2', 'All routers on the link'],
+                ['ff02::5 and ff02::6', 'OSPFv3 all routers, and designated routers'],
+                ['ff02::A', 'EIGRP routers'],
+                ['ff02::1:2', 'All DHCPv6 servers and clients'],
+                ['Solicited-node', 'ff02::1:ff00:0/104'],
+                ['Membership', 'MLDv1 and MLDv2'],
+                ['Snooping', 'MLD snooping on switches'],
+                ['Broadcast', 'None']
+              ]
+            },
+            related: [
+              { t: '09. Neighbor Discovery', d: 'the multicast messages that replace ARP' },
+              { t: '08. DHCPv6', d: 'uses ff02::1:2' },
+              { t: '10. ICMPv6', d: 'carries the multicast membership messages' }
+            ],
+            glossary: ['IPv6 Multicast', 'Multicast', 'IGMP', 'PIM', 'Neighbor Discovery', 'IPv4 Multicast']
+          },
+          {
+            id: 't07', num: '07', group: 'config', title: 'SLAAC',
+            blurb: 'How a host builds its own address from a Router Advertisement',
+            overview: '[[SLAAC]] lets a host construct its own address with no DHCP server involved. The router advertises a **/64 prefix** in a Router Advertisement, the host appends its own interface ID, and it runs duplicate address detection before using the result. It is the default IPv6 model.',
+            keyIdea: 'The router supplies the prefix, the host supplies the interface ID, and no server is involved at all. That is what "stateless" means.',
+            sections: [
+              { kind: 'para', h: 'What a host actually does', p: 'The sequence is five steps, and every one of them is a protocol message rather than a configuration step.' },
+              { kind: 'code', h: 'The SLAAC sequence', code:
+`  1. Generate a link-local address (EUI-64 or random) and assign it.
+
+  2. Send a Router Solicitation to ff02::2 (all routers).
+     Optional - routers also send RAs on a timer.
+
+  3. Receive a Router Advertisement containing:
+       - the on-link /64 prefix
+       - flags: A (autoconfig), M (managed), O (other config)
+       - router lifetime -> this becomes the default route
+
+  4. Build the address:  prefix + interface ID
+
+  5. Run duplicate address detection with a neighbour solicitation
+     to the solicited-node multicast address before using it.` },
+              { kind: 'table', h: 'The three RA flags', cols: ['Flag', 'Name', 'Meaning'], rows: [
+                ['A', 'Autoconfig', 'The host may build its own address from the advertised prefix'],
+                ['M', 'Managed', 'The host should ask a DHCPv6 server for an address'],
+                ['O', 'Other config', 'The host should ask a DHCPv6 server for other information such as DNS']
+              ]},
+              { kind: 'table', h: 'Flag combinations and what they produce', cols: ['A', 'M', 'O', 'Addressing', 'Other options'], rows: [
+                ['1', '0', '0', 'SLAAC only', 'Router Advertisement options'],
+                ['0', '1', '0', 'DHCPv6 stateful', 'DHCPv6'],
+                ['1', '1', '0', 'Both', 'Either source'],
+                ['0', '0', '1', 'None automatic', 'DHCPv6'],
+                ['1', '0', '1', 'SLAAC', 'DHCPv6 — the common production setup']
+              ]},
+              { kind: 'para', h: 'SLAAC versus DHCPv6', p: 'The choice is a policy decision rather than a technical one. SLAAC needs **no server** and scales effortlessly, but it gives limited options and weak accounting. DHCPv6 gives full options, leases and accounting, but it needs a server and it must be reachable.' },
+              { kind: 'code', h: 'The usual production hybrid', code:
+`  SLAAC for the address        (A = 1)
+  Stateless DHCPv6 for DNS     (O = 1, M = 0)
+
+  The router advertises the /64 prefix.
+  The host builds its own address.
+  The host asks DHCPv6 for the DNS server address only.` },
+              { kind: 'para', h: 'The /64 requirement and duplicate detection', p: 'The prefix advertised in the Router Advertisement must be a **/64**, because the host fills the remaining 64 bits with its own interface ID. A /127 or a /128 breaks autoconfiguration completely, and a /60 leaves the host unable to form a valid address. Duplicate address detection sends a neighbour solicitation from the tentative address; if any neighbour answers with an advertisement, the address is a duplicate and is discarded.' },
+              { kind: 'list', h: 'What SLAAC still needs', items: [
+                { t: 'A router', d: 'Without a router on the segment there is no Router Advertisement, so the host gets only a link-local address and no global one.' },
+                { t: 'A /64 prefix', d: 'The prefix length is not negotiable — SLAAC builds a 64-bit interface ID.' },
+                { t: 'A default route', d: 'The Router Advertisement sender link-local address becomes the host default gateway.' },
+                { t: 'DNS from somewhere', d: 'The Router Advertisement can carry it, or a stateless DHCPv6 server can.' }
+              ]}
+            ],
+            commands: [
+              { label: 'Router — advertise a prefix and enable router advertisements', code:
+`interface GigabitEthernet0/1
+ no ipv6 nd suppress-ra
+ ipv6 nd ra-interval 30
+ ipv6 nd prefix 2001:db8:1:10::/64` },
+              { label: 'Router — also push a DNS server in the advertisement', code:
+`interface GigabitEthernet0/1
+ ipv6 nd ra dns 2001:db8:53::1` },
+              { label: 'Host — verify the address and the default route', code:
+`ip -6 addr show
+ip -6 route show default` }
+            ],
+            traps: [
+              'SLAAC needs no server. The word "stateless" means exactly that.',
+              'The A flag only covers addressing. DNS still needs a Router Advertisement option or DHCPv6.',
+              'The prefix must be /64. A /60 or a /127 breaks autoconfiguration.',
+              'A segment with no IPv6 router gives the host only a link-local address, never a global one.',
+              'Router Solicitation and Router Advertisement are ICMPv6 types 133 and 134. Duplicate detection uses 135 and 136.',
+              'Duplicate address detection happens before the address is used, not afterwards.',
+              'The default gateway comes from the Router Advertisement even when DHCPv6 is in use.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Full name', 'Stateless Address Autoconfiguration'],
+                ['Feed', 'Router Advertisement, ICMPv6 type 134'],
+                ['Request', 'Router Solicitation, type 133, to ff02::2'],
+                ['Builds', 'Advertised prefix plus interface ID'],
+                ['Default route', 'The link-local address of the advertisement sender'],
+                ['Prefix length', '/64, mandatory'],
+                ['DNS', 'Router Advertisement option, or DHCPv6'],
+                ['Duplicate check', 'Neighbour solicitation and advertisement'],
+                ['Server', 'None required'],
+                ['Flags', 'A for autoconfig, M for managed, O for other config']
+              ]
+            },
+            related: [
+              { t: '08. DHCPv6', d: 'the stateful alternative' },
+              { t: '09. Neighbor Discovery', d: 'the messages SLAAC runs on' },
+              { t: '02. Global Unicast', d: 'the address that gets built' }
+            ],
+            glossary: ['SLAAC', 'IPv6', 'Global Unicast', 'Link Local', 'DHCPv6', 'Neighbor Discovery']
+          },
+          {
+            id: 't08', num: '08', group: 'config', title: 'DHCPv6',
+            blurb: 'Stateful addressing, the message flow, IA types and prefix delegation',
+            overview: '[[DHCPv6]] is the stateful counterpart to [[SLAAC]]. The server assigns addresses and tracks leases the way DHCPv4 does, and it delivers options such as DNS and domain name. The Solicit goes out as multicast to ff02::1:2 because IPv6 has no broadcast.',
+            keyIdea: 'Stateful or stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.',
+            sections: [
+              { kind: 'code', h: 'The message flow', code:
+`  client --- SOLICIT -------------------> ff02::1:2 (all DHCPv6 servers)
+  server --- ADVERTISE -----------------> client (unicast)
+  client --- REQUEST -------------------> server
+  server --- REPLY --------------------> client (address, options, lifetimes)
+
+  Lease maintenance: CONFIRM, RENEW, REBIND, RELEASE` },
+              { kind: 'para', h: 'Why Solicit is multicast', p: 'IPv4 DHCP uses a broadcast because a client does not know where the servers are. An IPv6 client does know something useful: it already has a link-local address, so it can receive a unicast reply. The Solicit therefore goes to the multicast group ff02::1:2, and the Advertise comes back as unicast.' },
+              { kind: 'table', h: 'Ports and identifiers', cols: ['Item', 'Value'], rows: [
+                ['Client port', 'UDP 546'],
+                ['Server port', 'UDP 547'],
+                ['All servers group', 'ff02::1:2'],
+                ['Relay agent', 'Forwards Solicit to a server on another subnet']
+              ]},
+              { kind: 'table', h: 'What the RA flags tell DHCPv6 to do', cols: ['Mode', 'M flag', 'O flag', 'DHCPv6 behaviour'], rows: [
+                ['Stateful', '1', '—', 'Assigns addresses through an IA_NA'],
+                ['Stateless', '0', '1', 'Assigns no address, only options such as DNS'],
+                ['SLAAC only', '0', '0', 'DHCPv6 is not used at all']
+              ]},
+              { kind: 'para', h: 'Identity associations', p: 'The server does not hand out a bare address. It returns **identity associations**, each with a preferred lifetime and a valid lifetime. The preferred lifetime is how long the address is preferred and used for new outbound connections; the valid lifetime is how long the address is still recognised. An address past its preferred lifetime is deprecated but still usable for existing connections.' },
+              { kind: 'table', h: 'The three identity association types', cols: ['Type', 'Carries'], rows: [
+                ['IA_NA', 'A non-temporary address'],
+                ['IA_TA', 'A temporary address'],
+                ['IA_PD', 'A delegated prefix, for handing a /56 to a downstream router']
+              ]},
+              { kind: 'para', h: 'Relay agents and prefix delegation', p: 'When the server is not on the segment, a router acts as a relay agent and forwards the Solicit to it, inserting a Relay-Info option so the server knows which client and which subnet the request came from. Separately, **prefix delegation** lets a service provider hand a downstream router a whole prefix — commonly a /56 — which that router then splits into /64 subnets for its own customers.' },
+              { kind: 'code', h: 'A relay agent in the path', code:
+`  client --- SOLICIT ---> relay router --- unicast ---> DHCPv6 server
+                                   |
+                                   +-- inserts Relay-Info
+                                   +-- server replies to the relay
+                                   +-- relay forwards the reply` }
+            ],
+            commands: [
+              { label: 'Router — create a DHCPv6 pool', code:
+`ipv6 dhcp pool CORP
+ address prefix 2001:db8:1:10::/64 lifetime 2592000 604800
+ dns-server 2001:db8:53::1
+ domain-name corp.example` },
+              { label: 'Router — serve the pool and set the RA flags', code:
+`interface GigabitEthernet0/1
+ ipv6 address 2001:db8:1:10::1/64
+ ipv6 dhcp server CORP
+ ipv6 nd managed-config-flag
+ ipv6 nd other-config-flag` },
+              { label: 'Client — request a delegated prefix', code:
+`interface GigabitEthernet0/1
+ ipv6 dhcp client pd PD-CLIENT` },
+              { label: 'Verify', code:
+`show ipv6 dhcp binding
+show ipv6 dhcp interface` }
+            ],
+            traps: [
+              'Solicit is multicast to ff02::1:2, not a broadcast. IPv6 has no broadcast.',
+              'The client uses UDP 546 and the server uses UDP 547.',
+              'Stateful versus stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.',
+              'The default gateway still comes from the Router Advertisement, even in DHCPv6 mode. IPv4 DHCP hands out the gateway; IPv6 DHCP does not.',
+              'DNS comes from a Router Advertisement option or from DHCPv6 options, depending on the flags.',
+              'The preferred lifetime is shorter than the valid lifetime. An address past its preferred lifetime is deprecated but still valid.',
+              'Prefix delegation is what lets a provider hand a /56 to a customer edge device.'
+            ],
+            table: {
+              cols: ['Item', 'Detail'],
+              rows: [
+                ['Ports', 'Client UDP 546, server UDP 547'],
+                ['Solicit destination', 'ff02::1:2'],
+                ['Stateful', 'Assigns addresses, M flag set'],
+                ['Stateless', 'Options only, O flag set'],
+                ['Identity associations', 'IA_NA, IA_TA, IA_PD'],
+                ['Lifetimes', 'Preferred and valid, both returned by the server'],
+                ['Default gateway', 'Still comes from the Router Advertisement'],
+                ['Relay', 'Forwards to a remote server, inserts Relay-Info'],
+                ['Prefix delegation', 'A /56 delegated down to a CPE'],
+                ['Best practice', 'SLAAC for the address, stateless DHCPv6 for DNS']
+              ]
+            },
+            related: [
+              { t: '07. SLAAC', d: 'the stateless alternative' },
+              { t: '06. Multicast', d: 'the ff02::1:2 group' },
+              { t: '16. Network Services', d: 'where DHCP lives in the design' }
+            ],
+            glossary: ['DHCPv6', 'DHCP', 'DHCP Relay', 'SLAAC', 'IPv6', 'IPv6 Multicast']
+          },
+          {
+            id: 't09', num: '09', group: 'ops', title: 'Neighbor Discovery',
+            blurb: 'The five ND messages, solicited-node multicast, the cache and RA Guard',
+            overview: '[[Neighbor Discovery]] is the direct replacement for ARP, ICMP redirects and router discovery, all built on [[ICMPv6]]. It runs on every IPv6 link and does five jobs at once: address resolution, router discovery, prefix distribution, duplicate address detection, and neighbour unreachability detection.',
+            keyIdea: 'ND is not just ARP replacement. It also gives you the default gateway, the prefix, duplicate detection and reachability checking in one protocol.',
+            sections: [
+              { kind: 'table', h: 'The five ND messages', cols: ['Message', 'ICMPv6 type', 'Purpose'], rows: [
+                ['Router Solicitation', '133', 'Asks any router on the link for a Router Advertisement'],
+                ['Router Advertisement', '134', 'Carries the prefix, the flags, the router lifetime and options'],
+                ['Neighbour Solicitation', '135', 'Asks who holds an address — this is the ARP request'],
+                ['Neighbour Advertisement', '136', 'Answers with the link-layer address'],
+                ['Redirect', '137', 'Tells a host about a better next hop for a destination']
+              ]},
+              { kind: 'table', h: 'What ND replaces', cols: ['IPv4', 'IPv6'], rows: [
+                ['ARP broadcast to ff:ff:ff:ff:ff:ff', 'Neighbour solicitation to the solicited-node multicast group'],
+                ['RARP', 'Neighbour discovery'],
+                ['Static default gateway or a router list', 'Router Advertisement supplies the default route'],
+                ['Manual duplicate address check', 'Duplicate address detection'],
+                ['ICMP redirect', 'Redirect, type 137']
+              ]},
+              { kind: 'para', h: 'Solicited-node multicast', p: 'A neighbour solicitation is not broadcast. The sender builds a multicast address from the bottom 32 bits of the target address, so only the host that actually owns that address — and the router — ever sees the request. On a large link that is the difference between waking everybody and waking one device.' },
+              { kind: 'code', h: 'Building the solicited-node address', code:
+`  Target      2001:db8:1:10::1
+  bottom 32   0000:0001
+  group       ff02::1:ff00:0001
+
+  Prefix      ff02::1:ff00:0/104
+
+  Only hosts whose address ends in those 32 bits respond.` },
+              { kind: 'para', h: 'The five jobs ND does', p: 'This is the list to memorise, because "what does neighbour discovery do" is a common question and the answer is much longer than "it replaces ARP": **address resolution**, **router discovery**, **prefix distribution**, **duplicate address detection** and **neighbour unreachability detection**.' },
+              { kind: 'list', h: 'The five jobs', items: [
+                { t: 'Address resolution', d: 'Maps an IPv6 address to a MAC address, and the result is cached in the neighbour cache.' },
+                { t: 'Router discovery', d: 'The Router Advertisement tells the host which routers are available.' },
+                { t: 'Prefix distribution', d: 'The on-link prefix comes from the Router Advertisement and feeds SLAAC.' },
+                { t: 'Duplicate address detection', d: 'A tentative address is probed with a solicitation; an answer means it is a duplicate.' },
+                { t: 'Neighbour unreachability detection', d: 'Confirms that a neighbour is still reachable and detects a peer that has gone away.' }
+              ]},
+              { kind: 'para', h: 'The neighbour cache and its states', p: 'Neighbour entries move through a **state machine** as reachability is confirmed or lost. The states are the same idea as the IPv4 ARP cache states, but with an explicit confirmation step in the middle.' },
+              { kind: 'table', h: 'Neighbour reachability states', cols: ['State', 'Meaning'], rows: [
+                ['INCOMPLETE', 'A solicitation has been sent and no advertisement has come back yet'],
+                ['REACHABLE', 'Reachability has been confirmed'],
+                ['STALE', 'No recent traffic; the entry may still be valid'],
+                ['DELAY', 'Waiting to probe again'],
+                ['PROBE', 'Sending solicitations to re-confirm the neighbour']
+              ]},
+              { kind: 'para', h: 'The security exposure', p: 'Because a rogue Router Advertisement can make an attacker the default gateway, RA spoofing is a real attack and the mitigation is **RA Guard**, applied on the ports that face untrusted hosts. Neighbour advertisement spoofing is the neighbour-discovery equivalent of ARP poisoning, and it is handled by ND snooping and dynamic ARP inspection.' }
+            ],
+            commands: [
+              { label: 'Tune router advertisement behaviour on an interface', code:
+`interface GigabitEthernet0/1
+ ipv6 nd ra-interval 30
+ ipv6 nd ra-lifetime 1800
+ ipv6 nd prefix 2001:db8:1:10::/64
+ ipv6 nd managed-config-flag` },
+              { label: 'View the neighbour cache', code:
+`show ipv6 neighbors` },
+              { label: 'Check the neighbour state of an interface', code:
+`show ipv6 interface GigabitEthernet0/1 | include Neighbor` }
+            ],
+            traps: [
+              'ND is ICMPv6 based. "IPv6 uses ARP" is always wrong.',
+              'The solicitation target is the solicited-node multicast address, not an all-nodes broadcast.',
+              'Router Solicitation and Router Advertisement are types 133 and 134. Neighbour Solicitation and Advertisement are 135 and 136. Do not mix them up.',
+              'ND replaces ARP, ICMP redirects and router discovery, and it also provides duplicate detection and SLAAC.',
+              'The Router Advertisement supplies the default route even when DHCPv6 is in use.',
+              'RA Guard is the defence against a rogue router advertisement on untrusted ports.',
+              'Neighbour discovery runs on every IPv6 link whether or not you configured anything.'
+            ],
+            table: {
+              cols: ['Message', 'Type', 'Purpose'],
+              rows: [
+                ['Router Solicitation', '133', 'Find the routers'],
+                ['Router Advertisement', '134', 'Prefix, flags, gateway, options'],
+                ['Neighbour Solicitation', '135', 'Resolve an address, and duplicate detection'],
+                ['Neighbour Advertisement', '136', 'The answer, with the link-layer address'],
+                ['Redirect', '137', 'A better next hop'],
+                ['Replaces', 'ARP, ICMP redirect, router discovery', 'The IPv4 artefacts'],
+                ['Multicast tool', 'ff02::1:ffxx:xxxx', 'Solicited-node'],
+                ['Cache', 'show ipv6 neighbors', 'The neighbour table'],
+                ['Security', 'RA Guard, ND snooping', 'Against spoofing']
+              ]
+            },
+            related: [
+              { t: '10. ICMPv6', d: 'the protocol that carries ND' },
+              { t: '07. SLAAC', d: 'built on the router advertisement' },
+              { t: '03. Link Local', d: 'the source address of every ND message' }
+            ],
+            glossary: ['Neighbor Discovery', 'ICMPv6', 'IPv6', 'ARP', 'SLAAC', 'Link Local']
+          },
+          {
+            id: 't10', num: '10', group: 'ops', title: 'ICMPv6',
+            blurb: 'Error types, packet too big, path MTU discovery and what firewalls must allow',
+            overview: '[[ICMPv6]] is IPv6 control protocol number 58, and unlike ICMPv4 it is **required** for the protocol to work. It carries error reporting, echo, the whole of neighbour discovery, and multicast listener discovery. Blocking it does not merely hide ping — it breaks IPv6.',
+            keyIdea: 'ICMPv6 is a suite, not a ping function. Permit the neighbour discovery types and Packet Too Big through every firewall or IPv6 will quietly fail.',
+            sections: [
+              { kind: 'table', h: 'The four message classes', cols: ['Class', 'Types', 'Purpose'], rows: [
+                ['Error', '1 destination unreachable, 2 packet too big, 3 time exceeded, 4 parameter problem', 'Problem reporting'],
+                ['Informational', '128 echo request, 129 echo reply', 'ping6 and traceroute6'],
+                ['Neighbour discovery', '133 RS, 134 RA, 135 NS, 136 NA, 137 redirect', 'Neighbour and router operations'],
+                ['MLD', '130 query, 131 report, 132 done', 'Multicast listener management']
+              ]},
+              { kind: 'table', h: 'The error types and codes worth quoting', cols: ['Type', 'Code', 'Meaning'], rows: [
+                ['1', '0', 'No route to the destination'],
+                ['1', '1', 'Administratively prohibited — the firewall signature'],
+                ['1', '3', 'Address unreachable'],
+                ['1', '4', 'Port unreachable'],
+                ['2', '0', 'Packet too big — the fragmentation replacement'],
+                ['3', '0', 'Hop limit exceeded — what traceroute triggers'],
+                ['4', '—', 'Malformed header or option']
+              ]},
+              { kind: 'para', h: 'Path MTU discovery and the no-fragmentation rule', p: 'IPv6 routers **never fragment** a packet. When a router finds a packet larger than the next link can carry, it drops it and returns an ICMPv6 Packet Too Big message carrying the link MTU. The sender then re-sends a smaller packet. If that message is filtered, large packets vanish silently — the MTU black hole.' },
+              { kind: 'code', h: 'How IPv6 handles a too-large packet', code:
+`  IPv4                              IPv6
+  ----                              ----
+  router sees MTU 1500,             router sees MTU 1500,
+  packet is 4000 bytes:             packet is 4000 bytes:
+    fragment it into two               DROP it
+    and send both                      send ICMPv6 type 2
+                                      (Packet Too Big, MTU 1500)
+                                     sender resizes and resends
+
+  IPv6 fragmentation is sender-only, and it is discouraged.` },
+              { kind: 'para', h: 'What a firewall has to permit', p: 'This is the most practical thing on the topic. A filter that drops ICMPv6 breaks neighbour discovery, breaks path MTU discovery, breaks multicast membership, and breaks the default route learning. The safe baseline permits the neighbour discovery types, Packet Too Big, time exceeded, and the MLD types.' },
+              { kind: 'code', h: 'A workable ICMPv6 baseline in an ACL', code:
+`  ipv6 access-list PERMIT-ICMP6
+   permit icmp any any unreachable
+   permit icmp any any packet-too-big
+   permit icmp any any time-exceeded
+   permit icmp any any nd
+   permit icmp any any mld` },
+              { kind: 'table', h: 'ICMPv6 against ICMPv4', cols: ['', 'ICMPv4', 'ICMPv6'], rows: [
+                ['Router fragmentation', 'Permitted', 'Never — the sender must do it'],
+                ['Address resolution', 'Separate, ARP', 'Built into ICMPv6 as neighbour discovery'],
+                ['Multicast membership', 'IGMP', 'MLD'],
+                ['Checksum', 'Sometimes optional', 'Always required'],
+                ['Echo types', '8 and 0', '128 and 129'],
+                ['Firewall treatment', 'Often dropped', 'Must be permitted for PTB and ND']
+              ]},
+              { kind: 'para', h: 'The error message types in one line each', p: 'Type 1 means the destination could not be reached or is administratively blocked. Type 2 means the packet was too big and here is the MTU to use. Type 3 means the hop limit ran out, which is exactly how traceroute works. Type 4 means the packet was malformed.' }
+            ],
+            commands: [
+              { label: 'Ping and trace over IPv6', code:
+`ping6 2001:db8::1
+traceroute6 2001:db8:53::1` },
+              { label: 'Check the MTU on an interface', code:
+`show ipv6 mtu` },
+              { label: 'Debug ICMPv6 messages on the router', code:
+`debug ipv6 icmp` },
+              { label: 'Permit the ICMPv6 types a firewall must allow', code:
+`ipv6 access-list PERMIT-ICMP6
+ permit icmp any any packet-too-big
+ permit icmp any any nd` }
+            ],
+            traps: [
+              'Packet Too Big is type 2, and it is how IPv6 copes with MTU. A router never fragments an IPv6 packet.',
+              'Blocking ICMPv6 breaks IPv6. Allow neighbour discovery types 133 to 137, Packet Too Big, and MLD types 130 to 132.',
+              'Neighbour discovery is carried inside ICMPv6. "Which protocol does ND use" is always ICMPv6, never ARP.',
+              'Echo request and reply are types 128 and 129 in IPv6, not 8 and 0.',
+              'Type 1 code 1 is administratively prohibited, which is the signature of a firewall dropping the traffic.',
+              'The ICMPv6 checksum is always required, unlike IPv4 where it could be omitted on some traffic.',
+              'A filtered Packet Too Big produces an MTU black hole, where small packets work and large ones vanish.'
+            ],
+            table: {
+              cols: ['Message', 'Type', 'Use'],
+              rows: [
+                ['Destination unreachable', '1', 'No route, blocked, port or address failure'],
+                ['Packet too big', '2', 'Path MTU discovery, and the no-fragmentation rule'],
+                ['Time exceeded', '3', 'Hop limit exceeded, used by traceroute'],
+                ['Parameter problem', '4', 'Malformed header or option'],
+                ['Echo request and reply', '128 and 129', 'ping6'],
+                ['Router solicitation and advertisement', '133 and 134', 'Router discovery'],
+                ['Neighbour solicitation and advertisement', '135 and 136', 'Resolution and duplicate detection'],
+                ['Redirect', '137', 'A better next hop'],
+                ['MLD', '130 to 132', 'Multicast listeners'],
+                ['Transport protocol', '58', 'Always checksums']
+              ]
+            },
+            related: [
+              { t: '09. Neighbor Discovery', d: 'the control messages inside ICMPv6' },
+              { t: '01. IPv6 Addressing', d: 'the address space it operates in' },
+              { t: '01. Physical Layer', d: 'where MTU comes from' }
+            ],
+            glossary: ['ICMPv6', 'Neighbor Discovery', 'IPv6', 'MTU', 'IPv4 Multicast']
+          },
+          {
+            id: 't11', num: '11', group: 'routing', title: 'OSPFv3',
+            blurb: 'The OSPF redesign for IPv6, link-local neighbours and the Type 9 LSA',
+            overview: '[[OSPFv3]] is OSPF re-engineered for IPv6 under RFC 5340. The link-state machinery, areas and the neighbour state machine are unchanged, but the protocol **no longer carries addresses inside its LSAs** — the prefixes move into a separate Type 9 intra-area-prefix LSA — and neighbours are identified by link-local addresses.',
+            keyIdea: 'OSPFv3 is address-family independent. The same protocol can carry IPv4 and IPv6, so "OSPFv3 is IPv6 only" is wrong.',
+            sections: [
+              { kind: 'table', h: 'OSPFv2 against OSPFv3', cols: ['Aspect', 'OSPFv2 (IPv4)', 'OSPFv3 (IPv6)'], rows: [
+                ['Transport', 'IPv4, protocol 89', 'IPv6, protocol 89'],
+                ['Multicast groups', '224.0.0.5 and 224.0.0.6', 'ff02::5 and ff02::6'],
+                ['Neighbour identity', 'IPv4 addresses in the hello', 'Link-local addresses'],
+                ['Where addresses live', 'Inside the Type 1 and Type 2 LSAs', 'The Type 9 intra-area-prefix LSA'],
+                ['Router ID', 'Derived from an IPv4 address', 'Configured, or auto-selected'],
+                ['Address families', 'IPv4 only', 'IPv6, and IPv4 as well'],
+                ['Interface cost', 'Scales with bandwidth by default', 'Defaults to 1 on every interface']
+              ]},
+              { kind: 'para', h: 'Two configuration styles', p: 'Classic IOS puts IPv6 into an existing OSPF process. IOS-XE and later platforms prefer the address-family style, which is a separate process with an explicit address-family block, and which is also where IPv4 unicast can be carried inside the same OSPFv3 process.' },
+              { kind: 'code', h: 'The classic style', code:
+`  interface GigabitEthernet0/1
+   ipv6 enable
+   ipv6 ospf 1 area 0
+
+  router ospf 1
+   router-id 1.1.1.1` },
+              { kind: 'code', h: 'The address-family style', code:
+`  router ospfv3 1
+   router-id 1.1.1.1
+   address-family ipv6 unicast
+
+  interface GigabitEthernet0/1
+   ipv6 address 2001:db8:1:10::1/64
+   ospfv3 1 ipv6 area 0` },
+              { kind: 'table', h: 'The OSPFv3 LSA types', cols: ['Type', 'Name', 'Carries'], rows: [
+                ['1', 'Router', 'The router and its interfaces'],
+                ['2', 'Network', 'The segment behind the designated router'],
+                ['8', 'Link-Local', 'Link-local information — new in OSPFv3'],
+                ['9', 'Intra-Area-Prefix', 'The actual IPv6 prefixes of the area'],
+                ['3', 'Inter-Area-Prefix', 'Summarised prefixes between areas'],
+                ['4, 5, 7', 'ASBR, AS-External, NSSA', 'External IPv6 prefixes']
+              ]},
+              { kind: 'para', h: 'Neighbours and next hops', p: 'Neighbour entries in the OSPFv3 table are **link-local addresses**, and the next hop on a transit link is link-local as well. That is a deliberate design: link-local addresses are always present, always unique on the segment, and never need global routing to resolve. A change to the link-local address on an interface will flap the adjacency, so pin it when it matters.' },
+              { kind: 'list', h: 'Details that catch people out', items: [
+                { t: 'Cost defaults to 1', d: 'OSPFv3 does not scale the interface cost with bandwidth the way OSPFv2 does. Set it deliberately with ipv6 ospf cost.' },
+                { t: 'Router ID selection', d: 'Configured, or auto-selected from the highest IPv4 loopback. It is still a 32-bit identifier, not an IPv6 address.' },
+                { t: 'DR and BDR election', d: 'Identical to OSPFv2 — priority first, then router ID.' },
+                { t: 'Protocol number', d: 'Still 89 for both OSPFv2 and OSPFv3. Only the transport differs.' }
+              ]}
+            ],
+            commands: [
+              { label: 'Enable OSPFv3 on an interface', code:
+`interface GigabitEthernet0/1
+ ipv6 address 2001:db8:1:10::1/64
+ ospfv3 1 ipv6 area 0` },
+              { label: 'Configure the process and the router ID', code:
+`router ospfv3 1
+ router-id 1.1.1.1
+ address-family ipv6 unicast` },
+              { label: 'Verify', code:
+`show ipv6 ospf
+show ipv6 ospf neighbor
+show ipv6 ospf database
+show ospfv3 1 address-family ipv6 unicast interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              'The LSAs no longer carry addresses. The Type 9 intra-area-prefix LSA holds the prefixes.',
+              'Neighbours are link-local addresses. Do not expect a global address in the neighbour list.',
+              'The multicast groups are ff02::5 and ff02::6, not 224.0.0.5 and 224.0.0.6.',
+              'The router ID is still a 32-bit value and still must be set or will be auto-selected.',
+              'The interface cost defaults to 1 and does not scale with bandwidth as it does in OSPFv2.',
+              'OSPFv3 can carry IPv4 as well. It is address-family independent, not IPv6 only.',
+              'Protocol number 89 is used by both OSPFv2 and OSPFv3.'
+            ],
+            table: {
+              cols: ['Item', 'OSPFv3'],
+              rows: [
+                ['RFC', '5340'],
+                ['Transport', 'IPv6, protocol 89'],
+                ['Multicast', 'ff02::5 and ff02::6'],
+                ['Neighbour identity', 'Link-local addresses'],
+                ['Where prefixes live', 'Type 9 intra-area-prefix LSA'],
+                ['Router ID', 'Configured, or auto-selected'],
+                ['Interface cost', 'Defaults to 1, does not scale automatically'],
+                ['Configuration styles', 'Classic process, or address-family'],
+                ['Address families', 'IPv6 and IPv4'],
+                ['Areas and DR election', 'Identical to OSPFv2']
+              ]
+            },
+            related: [
+              { t: '12. EIGRP IPv6', d: 'the other interior protocol for IPv6' },
+              { t: '13. BGP IPv6', d: 'the exterior protocol for IPv6' },
+              { t: '03. Link Local', d: 'why neighbours use it' }
+            ],
+            glossary: ['OSPFv3', 'OSPF', 'IPv6', 'Link Local', 'OSPF Router ID', 'Routing Table']
+          },
+          {
+            id: 't12', num: '12', group: 'routing', title: 'EIGRP IPv6',
+            blurb: 'The same DUAL engine over IPv6, named mode, and link-local neighbours',
+            overview: '[[EIGRP for IPv6]] runs the identical DUAL algorithm, the identical composite metric and the identical timers as IPv4 EIGRP. What changes is the plumbing: no network statements in the classic form, link-local neighbours and next hops, and the multicast group ff02::A. It is normally deployed in **named mode**.',
+            keyIdea: 'It is not a new protocol. The algorithm, metrics and convergence behaviour are identical — only the addressing and the configuration scaffolding differ.',
+            sections: [
+              { kind: 'table', h: 'EIGRP IPv4 against EIGRP IPv6', cols: ['Aspect', 'EIGRP IPv4', 'EIGRP IPv6'], rows: [
+                ['Multicast group', '224.0.0.10', 'ff02::A'],
+                ['Neighbour identity', 'IPv4 addresses', 'Link-local addresses'],
+                ['Network statement', 'Required', 'None in classic mode — the address family and the interface enable it'],
+                ['Address family', 'Implicit', 'address-family ipv6 unicast'],
+                ['Router ID', 'Required', 'Required, auto-selected if not set'],
+                ['Metric', 'Composite, K values', 'Identical composite metric'],
+                ['Convergence', 'DUAL', 'DUAL — the same algorithm']
+              ]},
+              { kind: 'para', h: 'Named mode is the way to do it now', p: 'Named mode gives each address family its own configuration block inside one process, which is what lets IPv4 and IPv6 coexist in a single EIGRP instance. The classic form still exists and still works, but it is the older style and new designs use named mode.' },
+              { kind: 'code', h: 'The classic form', code:
+`  interface GigabitEthernet0/1
+   ipv6 eigrp 100
+
+  router eigrp 100
+   address-family ipv6 unicast
+    router-id 1.1.1.1` },
+              { kind: 'code', h: 'The named mode form', code:
+`  router eigrp ENTERPRISE
+   address-family ipv6 unicast
+    router-id 1.1.1.1
+    network 2001:db8:1:10::/64
+
+  interface GigabitEthernet0/1
+   ipv6 address 2001:db8:1:10::1/64
+
+  Named mode is the only form in which a network
+  statement is used for an address family.` },
+              { kind: 'list', h: 'What carries over unchanged', items: [
+                { t: 'The composite metric', d: 'Bandwidth and delay by default, with the same K values and the same rules for changing them.' },
+                { t: 'DUAL', d: 'Successor, feasible successor, and the same fast convergence behaviour.' },
+                { t: 'Timers', d: 'Hello every 5 seconds, dead at three times the hello interval.' },
+                { t: 'Authentication', d: 'Key chain based, with MD5 and HMAC-SHA256 available exactly as in IPv4.' },
+                { t: 'Redistribution rules', d: 'Seed metrics and the same constraints when redistributing between protocols.' }
+              ]},
+              { kind: 'para', h: 'Summarisation and the default route', p: 'Summarisation is per interface, using the ipv6 summary-address eigrp form, and a default route can be injected into the address family in the same way as IPv4. The practical reason to inject one is a stub site that has no other path out.' },
+              { kind: 'code', h: 'Summarisation and a default route', code:
+`  interface GigabitEthernet0/1
+   ipv6 summary-address eigrp 10 2001:db8:1:10::/48
+
+  router eigrp ENTERPRISE
+   address-family ipv6 unicast
+    network 2001:db8:1:10::/64
+    eigrp stub connected summary` }
+            ],
+            commands: [
+              { label: 'Configure EIGRP for IPv6 in named mode', code:
+`router eigrp ENTERPRISE
+ address-family ipv6 unicast
+  router-id 1.1.1.1
+  network 2001:db8:1:10::/64` },
+              { label: 'Enable the address family on the interface', code:
+`interface GigabitEthernet0/1
+ ipv6 address 2001:db8:1:10::1/64` },
+              { label: 'Verify', code:
+`show ipv6 eigrp neighbors
+show ipv6 route eigrp
+show ipv6 protocols` }
+            ],
+            traps: [
+              'Classic EIGRP IPv6 has no network statements. The interface and the address family enable it. Named mode is the exception.',
+              'Neighbours are listed as link-local addresses. Trying to ping them over a global address does not work.',
+              'EIGRP IPv6 still needs a router ID. If it is not set, one is auto-selected and you get a warning.',
+              'The metric weights and the composite metric carry over unchanged. Do not adjust them lightly.',
+              'The multicast group is ff02::A, not 224.0.0.10.',
+              'The timers are the same five second hello and three times dead interval.',
+              'Named mode lets one EIGRP process carry both IPv4 and IPv6 address families.'
+            ],
+            table: {
+              cols: ['Item', 'EIGRP IPv6'],
+              rows: [
+                ['Multicast group', 'ff02::A'],
+                ['Neighbour identity', 'Link-local addresses'],
+                ['Network statement', 'None in classic mode, allowed in named mode'],
+                ['Address family', 'address-family ipv6 unicast'],
+                ['Named mode', 'router eigrp NAME with an address family block'],
+                ['Metric', 'The same composite metric'],
+                ['Convergence', 'DUAL, unchanged'],
+                ['Router ID', 'Required'],
+                ['Summarisation', 'Per interface summary address'],
+                ['Authentication', 'Key chain, MD5 or HMAC-SHA256'],
+                ['Best practice', 'Named mode for both address families']
+              ]
+            },
+            related: [
+              { t: '11. OSPFv3', d: 'the other interior protocol for IPv6' },
+              { t: '13. BGP IPv6', d: 'the exterior protocol' },
+              { t: '03. Link Local', d: 'the neighbour identity' }
+            ],
+            glossary: ['EIGRP for IPv6', 'EIGRP', 'Named Mode EIGRP', 'IPv6', 'Link Local']
+          },
+          {
+            id: 't13', num: '13', group: 'routing', title: 'BGP IPv6',
+            blurb: 'MP-BGP, address families, the activate requirement and next hop handling',
+            overview: '[[BGP]] carries IPv6 routes through **MP-BGP**, the multiprotocol extension that adds the MP_REACH and MP_UNREACH attributes. The transport between the peers is a separate question: an IPv4 session can perfectly well exchange IPv6 prefixes, as long as the neighbour is activated in the IPv6 address family.',
+            keyIdea: 'Transport and payload are independent. An IPv4 neighbour session can carry IPv6 routes, but only if the neighbour is activated under address-family ipv6 unicast.',
+            sections: [
+              { kind: 'table', h: 'The multiprotocol attributes', cols: ['Attribute', 'Carries'], rows: [
+                ['MP_REACH_NLRI', 'The address family, the next hop, and the reachable prefixes'],
+                ['MP_UNREACH_NLRI', 'Withdrawals for a given address family']
+              ]},
+              { kind: 'para', h: 'The address family', p: 'IPv6 unicast is identified by the pair AFI 2 and SAFI 1. Inside that address family, the neighbour, the routes to originate and the policy to apply are all configured separately from the IPv4 unicast family, even though both live in the same BGP process.' },
+              { kind: 'code', h: 'An IPv6 session with an IPv6 transport', code:
+`  router bgp 65001
+   bgp router-id 1.1.1.1
+   neighbor 2001:db8:1::1 remote-as 65002
+
+   address-family ipv6 unicast
+    neighbor 2001:db8:1::1 activate
+    neighbor 2001:db8:1::1 route-map V6IN in
+    network 2001:db8:1:10::/64` },
+              { kind: 'code', h: 'An IPv6 session over an IPv4 transport', code:
+`  router bgp 65001
+   neighbor 10.0.0.1 remote-as 65002
+
+   address-family ipv6 unicast
+    neighbor 10.0.0.1 activate
+    network 2001:db8:1:10::/64
+
+  The TCP session runs over IPv4.
+  The prefixes carried inside it are IPv6.` },
+              { kind: 'table', h: 'Transport against payload', cols: ['Mode', 'Session runs over', 'Prefixes carried'], rows: [
+                ['IPv6 peer', 'IPv6', 'IPv6'],
+                ['IPv4 transport', 'IPv4', 'IPv6'],
+                ['IPv4 peer', 'IPv4', 'IPv4']
+              ]},
+              { kind: 'para', h: 'The next hop and path selection', p: 'For an internal BGP session the next hop must usually be rewritten with **next-hop-self**, because the external peer cannot advertise an address that is reachable from the internal receivers. The path selection algorithm itself is exactly the IPv4 one — AS path, local preference, MED, communities — and no IPv6-specific rule exists.' },
+              { kind: 'list', h: 'BGP IPv6 details worth knowing', items: [
+                { t: 'The activate requirement', d: 'A neighbour that is not activated in the IPv6 address family carries nothing. The session can be up and the table can still be empty.' },
+                { t: 'next-hop-self', d: 'Needed on internal sessions so the next hop is reachable from the internal peers.' },
+                { t: 'ipv6 prefix-list', d: 'The IPv6 filter list, used for filtering and for policy routes.' },
+                { t: 'aggregate-address', d: 'Summarises IPv6 prefixes exactly as it does IPv4.' },
+                { t: 'Path attributes', d: 'AS path, local preference, MED and communities all behave identically to IPv4.' }
+              ]},
+              { kind: 'para', h: 'Where BGP IPv6 is used', p: 'The most common deployment is an ISP edge, where a GUA prefix is advertised to upstream peers and customer /48 blocks are accepted. Inside the enterprise it appears in dual-stack peering, in MPLS VPNv6, and in EVPN, where the same multiprotocol machinery carries both address families and the Ethernet VPN routes in one session.' },
+              { kind: 'code', h: 'A filter for an IPv6 prefix', code:
+`  ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48
+
+  router bgp 65001
+   address-family ipv6 unicast
+    neighbor 2001:db8:1::1 activate
+    neighbor 2001:db8:1::1 prefix-list V6 in` }
+            ],
+            commands: [
+              { label: 'Configure an IPv6 BGP neighbour', code:
+`router bgp 65001
+ bgp router-id 1.1.1.1
+ neighbor 2001:db8:1::1 remote-as 65002
+ address-family ipv6 unicast
+  neighbor 2001:db8:1::1 activate` },
+              { label: 'Verify the address family state', code:
+`show bgp ipv6 unicast summary
+show bgp ipv6 unicast neighbors 2001:db8:1::1
+show bgp ipv6 unicast` },
+              { label: 'Filter IPv6 prefixes', code:
+`ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48` }
+            ],
+            traps: [
+              'A neighbour must be activated in the IPv6 address family. Without it the session can be up and carry nothing.',
+              'Transport and payload are independent. An IPv4 session can carry IPv6 routes.',
+              'The IPv6 next hop is carried inside MP_REACH, not in the ordinary NEXT_HOP attribute.',
+              'Path selection is identical to IPv4. There is no IPv6-specific best path rule.',
+              'The network statement under the address family advertises your own prefix. Aggregates use aggregate-address.',
+              'Internal BGP sessions still need next-hop-self so the next hop is reachable.',
+              'IPv6 prefix filters use ipv6 prefix-list, not the IPv4 prefix-list command.'
+            ],
+            table: {
+              cols: ['Item', 'BGP IPv6'],
+              rows: [
+                ['Mechanism', 'MP-BGP with MP_REACH and MP_UNREACH'],
+                ['Address family', 'IPv6 unicast, AFI 2 and SAFI 1'],
+                ['Transport', 'IPv6 or IPv4, independently'],
+                ['Activate', 'Required in the address family'],
+                ['Next hop', 'Carried in MP_REACH'],
+                ['Path attributes', 'Identical to IPv4'],
+                ['Filter list', 'ipv6 prefix-list'],
+                ['Aggregate', 'aggregate-address'],
+                ['Internal sessions', 'Need next-hop-self'],
+                ['Uses', 'ISP edge, dual-stack peering, MPLS VPNv6, EVPN']
+              ]
+            },
+            related: [
+              { t: '11. OSPFv3', d: 'the interior counterpart' },
+              { t: '12. EIGRP IPv6', d: 'the other interior protocol' },
+              { t: '04. Unique Local', d: 'the prefixes an edge must filter out' }
+            ],
+            glossary: ['BGP', 'MP-BGP', 'eBGP', 'iBGP', 'IPv6', 'Global Unicast']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'addr', label: 'Addressing', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
+          { key: 'config', label: 'Configuration', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'ops', label: 'Operations', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
+          { key: 'routing', label: 'Routing Protocols', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'IPv6', def: 'The 128-bit successor to IPv4, with link-local and unique-local addressing built into the protocol, neighbour discovery instead of ARP, and no broadcast.' },
+          { term: 'Global Unicast', def: 'IPv6 public unicast space, 2000::/3 — the Internet-routable addresses, normally obtained from a provider prefix by SLAAC or DHCPv6.' },
+          { term: 'Link Local', def: 'The fe80::/10 address that is automatically configured on every IPv6 interface. Never routed, and the basis of neighbour discovery and routing adjacencies.' },
+          { term: 'Unique Local', def: 'RFC 4193 space, fc00::/7, with the fd00::/8 form used in practice — IPv6 private space that is routed inside the organisation and never advertised to the Internet.' },
+          { term: 'Anycast', def: 'An addressing model where one address is assigned to many devices and the network delivers to the nearest of them. IPv6 made it a first-class concept.' },
+          { term: 'IPv6 Multicast', def: 'ff00::/8 with embedded flags and scope, replacing broadcast entirely. Membership is managed by MLD and forwarded efficiently by MLD snooping.' },
+          { term: 'Multicast', def: 'One-to-many delivery: one stream to a group address, replicated only along paths that have receivers.' },
+          { term: 'SLAAC', def: 'Stateless Address Autoconfiguration — the host builds its own address from the /64 prefix in a Router Advertisement, with no DHCP server involved.' },
+          { term: 'DHCPv6', def: 'The stateful IPv6 configuration protocol, with a multicast Solicit to ff02::1:2, client port 546 and server port 547.' },
+          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol — the automatic lease of an address, mask, gateway and DNS server to a host on a segment.' },
+          { term: 'DHCP Relay', def: 'A router that forwards client DHCP requests across subnets to a central server, using the giaddr field so the reply reaches the right client.' },
+          { term: 'Neighbor Discovery', def: 'The ICMPv6-based replacement for ARP, ICMP redirects and router discovery, covering address resolution, router discovery, prefix distribution, duplicate detection and unreachability detection.' },
+          { term: 'ICMPv6', def: 'IPv6 control protocol number 58, carrying error reporting, echo, neighbour discovery and MLD. It is required for IPv6 to function.' },
+          { term: 'OSPFv3', def: 'OSPF for IPv6 under RFC 5340 — address-family independent, with prefixes carried in the Type 9 intra-area-prefix LSA and neighbours identified by link-local address.' },
+          { term: 'OSPF', def: 'An open-standard link-state IGP that floods link information, builds a link state database, and computes shortest paths with the Dijkstra algorithm.' },
+          { term: 'OSPF Router ID', def: 'A 32-bit identifier that uniquely names a router in an OSPF domain. It is an identifier, not an address, and it is configured or auto-selected.' },
+          { term: 'EIGRP for IPv6', def: 'EIGRP running over IPv6 with the same DUAL algorithm, composite metric and timers as IPv4 — only the addressing and configuration scaffolding differ.' },
+          { term: 'EIGRP', def: 'A Cisco-proprietary advanced distance-vector IGP combining distance-vector simplicity with fast convergence through the DUAL algorithm.' },
+          { term: 'Named Mode EIGRP', def: 'The modern EIGRP configuration style where each address family has its own block inside one named process, letting IPv4 and IPv6 share a single instance.' },
+          { term: 'BGP', def: 'The path-vector routing protocol of the Internet, exchanging prefixes with path attributes between autonomous systems so operators can apply policy.' },
+          { term: 'MP-BGP', def: 'The multiprotocol extension to BGP that adds address families through the MP_REACH and MP_UNREACH attributes, used for IPv6 and labelled routes.' },
+          { term: 'eBGP', def: 'A BGP session between routers in different autonomous systems, carrying routes across the administrative boundary between them.' },
+          { term: 'iBGP', def: 'A BGP session between routers inside the same autonomous system, normally over loopback addresses and subject to the split-horizon rules.' },
+          { term: 'NAT64', def: 'Translation between the address families that lets an IPv6-only client reach an IPv4-only server.' },
+          { term: 'MTU', def: 'The largest IP packet an interface can send in one frame — 1500 bytes on standard Ethernet. IPv6 never fragments at a router, so path MTU discovery is mandatory.' },
+          { term: 'IPv4', def: 'The 32-bit network-layer protocol that gives every interface an address in four octets, with a subnet mask defining the network and host portions.' },
+          { term: 'IPv4 Multicast', def: 'One-to-many delivery using the Class D range 224.0.0.0/4, with receivers joining via IGMP and routers building the tree with PIM.' },
+          { term: 'ARP', def: 'Address Resolution Protocol — maps an IPv4 address to a MAC address on the local segment. The IPv6 equivalent is neighbour discovery.' },
+          { term: 'Private IP', def: 'RFC 1918 address space — 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16 — the direct analogue of unique local space in IPv6.' },
+          { term: 'IGMP', def: 'Internet Group Management Protocol — the host-to-router membership protocol that tells the local router which multicast groups a receiver wants to join.' },
+          { term: 'PIM', def: 'Protocol Independent Multicast — the router-to-router multicast routing protocol, which builds the tree using the existing unicast routing table for the RPF check.' },
+          { term: 'Default Route', def: 'The catch-all route consulted when nothing more specific matches. In IPv6 it is learned from the Router Advertisement.' },
+          { term: 'Routing Table', def: 'The control-plane database of known networks and how to reach them: next hop, interface, source protocol, metric and administrative distance.' }
+        ];
+
+        const quiz = [
+          {
+            q: 'How many bits is an IPv6 address?',
+            options: ['32 bits', '64 bits', '128 bits', '256 bits'],
+            answer: 2,
+            why: 'IPv6 addresses are 128 bits — eight hextets of 16 bits each — which is roughly 3.4 x 10^38 addresses.'
+          },
+          {
+            q: 'What is the correct shortened form of 2001:0db8:85a3:0000:0000:8a2e:0370:7334?',
+            options: ['2001:db8:85a3::8a2e:370:7334', '2001:db8::85a3:8a2e:370:7334', '2001:db8:85a3:0:0:8a2e:370:7334', '2001:db8:85a3::8a2e::7334'],
+            answer: 0,
+            why: 'Leading zeros are dropped from each hextet, then the longest run of zero hextets is collapsed into a single double colon.'
+          },
+          {
+            q: 'How many times may the double colon appear in an IPv6 address?',
+            options: ['Once', 'Twice', 'Once per zero hextet', 'Any number, as long as it is unambiguous'],
+            answer: 0,
+            why: 'The double colon may appear only once. Two of them would make the address ambiguous and therefore invalid.'
+          },
+          {
+            q: 'Which prefix is the IPv6 link-local range?',
+            options: ['fc00::/7', 'fe80::/10', 'ff00::/8', '2000::/3'],
+            answer: 1,
+            why: 'fe80::/10 is link-local. fc00::/7 is unique local, ff00::/8 is multicast and 2000::/3 is global unicast.'
+          },
+          {
+            q: 'What happens to the prefix when a host configures an address with the ipv6 address autoconfig command?',
+            options: ['The host learns the /64 prefix from the DHCPv6 server', 'The host learns the /64 prefix from a Router Advertisement', 'The host picks any /64 prefix it likes', 'The host learns the prefix from the default route'],
+            answer: 1,
+            why: 'SLAAC takes the /64 prefix from the Router Advertisement and appends its own interface ID to form the address.'
+          },
+          {
+            q: 'Which prefix does IPv6 multicast use?',
+            options: ['224.0.0.0/4', 'ff00::/8', 'ff02::/16', 'fd00::/8'],
+            answer: 1,
+            why: 'IPv6 multicast is ff00::/8. 224.0.0.0/4 is the IPv4 multicast range and ff02::/16 is only the link-local part of it.'
+          },
+          {
+            q: 'What is the scope of the multicast address ff02::1?',
+            options: ['Interface-local', 'Link-local', 'Site-local', 'Global'],
+            answer: 1,
+            why: 'The scope nibble is the 4 in ff02, which means link-local. It reaches every node on the segment and is never forwarded.'
+          },
+          {
+            q: 'Which multicast group does a DHCPv6 client send its Solicit to?',
+            options: ['ff02::1', 'ff02::2', 'ff02::1:2', 'ff02::A'],
+            answer: 2,
+            why: 'Solicit goes to ff02::1:2, the all-DHCPv6-servers-and-clients group. ff02::2 is all routers, used for Router Solicitation.'
+          },
+          {
+            q: 'Which UDP ports does DHCPv6 use?',
+            options: ['67 and 68', '546 and 547', '161 and 162', '500 and 4500'],
+            answer: 1,
+            why: 'The DHCPv6 client uses UDP 546 and the server uses UDP 547. DHCPv4 uses 67 and 68.'
+          },
+          {
+            q: 'What is the largest IPv6 prefix length that a host can use with SLAAC?',
+            options: ['/48', '/64', '/96', '/128'],
+            answer: 1,
+            why: 'The host fills the remaining 64 bits with its own interface ID, so the advertised prefix must be exactly /64.'
+          },
+          {
+            q: 'What does the O flag in a Router Advertisement tell the host?',
+            options: ['To build its address itself', 'To ask a DHCPv6 server for an address', 'To ask a DHCPv6 server for other configuration such as DNS', 'That the router is shutting down'],
+            answer: 2,
+            why: 'O is the other-config flag. It tells the host to use DHCPv6 for extra options while still forming its own address.'
+          },
+          {
+            q: 'Which of these correctly describes IPv6 link-local addresses?',
+            options: ['They are configured manually and must be unique site-wide', 'They are automatically generated per interface and are never routed', 'They are assigned by a DHCPv6 server', 'They are a replacement for global unicast addresses'],
+            answer: 1,
+            why: 'Every IPv6 interface gets a link-local address automatically. It is unique per interface on the link and is never forwarded by a router.'
+          },
+          {
+            q: 'Why does pinging fe80::1 from a Linux host require a zone identifier?',
+            options: ['Because fe80::1 is always a broadcast address', 'Because fe80:: means the same on every link, so the interface must be named', 'Because Linux does not support ping6 on link-local addresses', 'Because the address is incomplete without a prefix length'],
+            answer: 1,
+            why: 'fe80:: is identical on every host on the segment, so the zone identifier identifies which interface and therefore which link.'
+          },
+          {
+            q: 'Which prefix is the range that unique local addresses actually deploy from?',
+            options: ['fc00::/8', 'fd00::/8', 'fe80::/10', 'fc00::/7'],
+            answer: 1,
+            why: 'fc00::/8 is reserved for future centrally defined semantics. The L bit set form, fd00::/8, is what you deploy.'
+          },
+          {
+            q: 'How does IPv6 differ from IPv4 in the way a default route is learned?',
+            options: ['IPv6 also uses the DHCP gateway option', 'IPv6 learns it from the Router Advertisement, even when DHCPv6 is in use', 'IPv6 requires a static default route on every host', 'IPv6 uses an ICMP redirect instead'],
+            answer: 1,
+            why: 'In IPv6 the Router Advertisement supplies the default route and the gateway. DHCPv6 does not hand out a gateway address.'
+          },
+          {
+            q: 'Which ICMPv6 message is used for path MTU discovery?',
+            options: ['Type 1, destination unreachable', 'Type 2, packet too big', 'Type 3, time exceeded', 'Type 4, parameter problem'],
+            answer: 1,
+            why: 'Type 2 carries the link MTU back to the sender. This is how IPv6 copes with a small link, since routers never fragment.'
+          },
+          {
+            q: 'Which statement about IPv6 fragmentation is correct?',
+            options: ['Routers fragment packets that are too large, as in IPv4', 'Only the sending host may fragment, and it is discouraged', 'IPv6 has no fragmentation at all', 'Fragmentation happens at the layer 2 switch instead'],
+            answer: 1,
+            why: 'IPv6 routers never fragment. The sender may fragment if it chooses to, but path MTU discovery is the intended mechanism.'
+          },
+          {
+            q: 'Which four ICMPv6 types are neighbour discovery messages?',
+            options: ['133, 134, 135 and 136', '130, 131, 132 and 133', '1, 2, 3 and 4', '128, 129, 130 and 131'],
+            answer: 0,
+            why: 'Router Solicitation 133, Router Advertisement 134, Neighbour Solicitation 135 and Neighbour Advertisement 136 are the core of ND.'
+          },
+          {
+            q: 'What is the solicited-node multicast address used for?',
+            options: ['Reaching every node on the link', 'Reaching the DHCPv6 servers', 'Delivering a neighbour solicitation only to the nodes that own the target address', 'Advertising the default route'],
+            answer: 2,
+            why: 'The address ff02::1:ff00:0/104 is built from the bottom 32 bits of the target, so only the relevant nodes and the router see the request.'
+          },
+          {
+            q: 'Which protocol does IPv6 neighbour discovery use?',
+            options: ['ARP', 'ICMPv6', 'ICMPv4', 'A separate NDP protocol number'],
+            answer: 1,
+            why: 'Neighbour discovery is built on ICMPv6, protocol number 58. There is no separate NDP protocol number.'
+          },
+          {
+            q: 'In OSPFv3, where are the IPv6 prefixes carried?',
+            options: ['In the Type 1 router LSA', 'In the Type 9 intra-area-prefix LSA', 'In the neighbour hello', 'In the Type 2 network LSA'],
+            answer: 1,
+            why: 'OSPFv3 removed addressing from the Type 1 and Type 2 LSAs. Prefixes now live in the Type 9 intra-area-prefix LSA.'
+          },
+          {
+            q: 'Which multicast groups does OSPFv3 use?',
+            options: ['224.0.0.5 and 224.0.0.6', 'ff02::5 and ff02::6', 'ff02::1 and ff02::2', '224.0.0.9 and 224.0.0.10'],
+            answer: 1,
+            why: 'OSPFv3 uses ff02::5 for all routers and ff02::6 for the designated and backup designated routers.'
+          },
+          {
+            q: 'What is the default OSPFv3 interface cost on an interface?',
+            options: ['It scales with the bandwidth, as in OSPFv2', '1 on every interface', '10 on every interface', 'It is based on the MTU'],
+            answer: 1,
+            why: 'OSPFv3 does not derive the cost from bandwidth by default. Every interface starts at 1 unless you set ipv6 ospf cost.'
+          },
+          {
+            q: 'Which multicast group does EIGRP for IPv6 use?',
+            options: ['224.0.0.10', 'ff02::A', 'ff02::10', 'ff02::2'],
+            answer: 1,
+            why: 'EIGRP for IPv6 uses ff02::A. The IPv4 protocol uses 224.0.0.10.'
+          },
+          {
+            q: 'In which EIGRP configuration style is a network statement used for an IPv6 address family?',
+            options: ['The classic style', 'Named mode only', 'Both styles', 'Neither style'],
+            answer: 1,
+            why: 'Classic EIGRP IPv6 has no network statements. Named mode gives each address family its own block, and that is where network is used.'
+          },
+          {
+            q: 'What is required before a BGP neighbour can exchange IPv6 prefixes?',
+            options: ['The neighbour must be activated under address-family ipv6 unicast', 'The neighbour must use an IPv6 address', 'The router must run OSPFv3', 'The neighbour must have a route reflector configured'],
+            answer: 0,
+            why: 'Without the activate command the neighbour carries nothing. The session can be established and the IPv6 table can still be empty.'
+          },
+          {
+            q: 'Which statement about the BGP session transport is correct?',
+            options: ['An IPv4 session can carry IPv6 routes', 'An IPv4 session can only carry IPv4 routes', 'The transport must match the prefix family exactly', 'IPv6 routes need a separate BGP process'],
+            answer: 0,
+            why: 'Transport and payload are independent. An IPv4 neighbour session can carry IPv6 NLRI through MP_REACH, once activated in the IPv6 address family.'
+          },
+          {
+            q: 'How is an IPv6 anycast address different from a unicast address?',
+            options: ['It uses a reserved prefix', 'It is indistinguishable — it is the same kind of address', 'It is always multicast', 'It cannot be routed'],
+            answer: 1,
+            why: 'IPv6 has no anycast prefix. An address becomes anycast by being deployed on several devices, so you cannot tell from the address alone.'
+          },
+          {
+            q: 'Which delivery model sends to the nearest member of a group?',
+            options: ['Unicast', 'Multicast', 'Anycast', 'Broadcast'],
+            answer: 2,
+            why: 'Anycast delivers to one member — the nearest. Multicast delivers to every member of the group.'
+          },
+          {
+            q: 'Which address is the IPv6 loopback address?',
+            options: ['::', '::1', 'fe80::1', 'ff02::1'],
+            answer: 1,
+            why: '::1 is the loopback address. :: is the unspecified address and fe80::1 is just one link-local address among many.'
+          },
+          {
+            q: 'What is the IPv6 equivalent of IGMP?',
+            options: ['MLD', 'NDP', 'ICMPv6', 'DHCPv6'],
+            answer: 0,
+            why: 'MLD is the multicast listener discovery protocol, with MLDv1 behaving like IGMPv2 and MLDv2 enabling source-specific multicast.'
+          },
+          {
+            q: 'Which statement about IPv6 and NAT is correct?',
+            options: ['IPv6 requires NAT because the address space is too small', 'IPv6 does not need NAT for address conservation', 'IPv6 hosts use NAT64 by default', 'IPv6 private space must be NATed at the edge'],
+            answer: 1,
+            why: 'With 128-bit addresses there is no shortage, so NAT is not required. NAT64 exists only to reach IPv4-only servers from IPv6-only clients.'
+          },
+          {
+            q: 'What is the "M" flag in a Router Advertisement?',
+            options: ['The host should build its own address', 'The host should ask a DHCPv6 server for an address', 'The router is the designated router', 'The prefix is a multicast prefix'],
+            answer: 1,
+            why: 'M is the managed-address-configuration flag. M set means the client uses a stateful DHCPv6 server for its address.'
+          },
+          {
+            q: 'Which prefix does a site typically receive from a provider and then split into /64 subnets?',
+            options: ['/48', '/64', '/96', '/128'],
+            answer: 0,
+            why: 'A /48 gives 65,536 /64 subnets and is the common enterprise allocation. A /56 is also common and gives 256.'
+          },
+          {
+            q: 'Why does IPv6 have no broadcast address?',
+            options: ['It was removed to save bandwidth', 'Every broadcast function is replaced by a multicast group with a scope', 'Broadcast is handled by the layer 2 frame instead', 'It is optional and only used in legacy networks'],
+            answer: 1,
+            why: 'All-nodes, all-routers, neighbour discovery and DHCPv6 are all multicast groups whose scope limits how far they travel.'
+          },
+          {
+            q: 'What is the security control that defends against a rogue Router Advertisement?',
+            options: ['DHCP snooping', 'RA Guard', 'Port security', 'Dynamic ARP inspection'],
+            answer: 1,
+            why: 'RA Guard is applied on ports facing untrusted hosts and blocks rogue router advertisements from becoming the default gateway.'
+          }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'v6.theme', done: 'v6.done', best: 'v6.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
