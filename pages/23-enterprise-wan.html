@@ -590,1023 +590,3495 @@
         const { ref, computed } = Vue;
 
         /* ---------------- Content ---------------- */
-        const heroIntro = `**[[PPP]]** remains the reference point-to-point WAN protocol, with LCP, NCP and PAP or CHAP authentication. **[[PPPoE]]** carries it over Ethernet for broadband, **[[Metro Ethernet]]** provides carrier Ethernet services, and **[[MPLS WAN]]** hands private routing to the provider. **[[Broadband]]** and **[[LTE]]** add cheap, shared transports, while modern **[[SD-WAN]]** ties them together with **[[vManage]]**, **[[vSmart]]**, **[[vBond]]** and the **[[WAN Edge]]**.`;
+        const heroIntro = "**[[PPP]]** remains the reference point-to-point WAN protocol, with LCP, NCP and PAP or CHAP authentication. **[[PPPoE]]** carries it over Ethernet for broadband, **[[Metro Ethernet]]** provides carrier Ethernet services, and **[[MPLS WAN]]** hands private routing to the provider. **[[Broadband]]** and **[[LTE]]** add cheap, shared transports, while modern **[[SD-WAN]]** ties them together with **[[vManage]]**, **[[vSmart]]**, **[[vBond]]** and the **[[WAN Edge]]**.";
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'traditional', title: 'PPP',
-            blurb: 'LCP, NCP, PAP versus CHAP, and multilink bundles',
-            overview: '**[[PPP]]** is the classic point-to-point WAN protocol that succeeded HDLC thanks to authentication, multilink support and negotiation through LCP and NCP. It is also the framing that **[[PPPoE]]** rides on. The exam tests the PPP stack, the LCP phases and the difference between PAP and CHAP.',
-            keyIdea: 'PPP is LCP plus NCP plus PAP or CHAP. LCP opens the link, authentication follows, NCP negotiates IP, and CHAP is the secure challenge-response method.',
-            sections: [
-              { kind: 'table', h: 'The PPP stack', cols: ['Layer', 'Protocol', 'Job'], rows: [
-                ['**Link control**', 'LCP', 'Set up and negotiate link options'],
-                ['**Authentication**', 'PAP or CHAP', 'Verify the peer'],
-                ['**Network control**', 'NCP, such as IPCP', 'Negotiate network layer'],
-                ['**Data**', 'PPP framing', 'Encapsulate packets']
-              ]},
-              { kind: 'table', h: 'LCP phases', cols: ['Phase', 'Action'], rows: [
-                ['**1**', 'Link establishment with LCP'],
-                ['**2**', 'Authentication with PAP or CHAP'],
-                ['**3**', 'Network layer negotiation with NCP'],
-                ['**4**', 'Data transfer']
-              ]},
-              { kind: 'table', h: 'PAP versus CHAP', cols: ['Aspect', 'PAP', 'CHAP'], rows: [
-                ['**Password**', 'Sent in clear text', 'Hashed challenge response'],
-                ['**Direction**', 'One-way', 'Challenge and response'],
-                ['**Security**', 'Weak', 'Stronger'],
-                ['**Re-authentication**', 'No', 'Periodic']
-              ]},
-              { kind: 'code', h: 'PPP configuration', code:
-`  interface Serial0/0/0
-   encapsulation ppp
-   ppp authentication chap
-   ppp chap hostname R1
-   ppp chap password Secret` },
-              { kind: 'table', h: 'PPP commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%encapsulation ppp%%**', 'Enable PPP on the interface'],
-                ['**%%ppp authentication chap%%**', 'Require CHAP'],
-                ['**%%ppp chap hostname%%**', 'Set the CHAP username'],
-                ['**%%ppp chap password%%**', 'Set the shared secret']
-              ]},
-              { kind: 'table', h: 'Multilink PPP', cols: ['Item', 'Detail'], rows: [
-                ['**What**', 'Bond multiple links'],
-                ['**Result**', 'Higher aggregate bandwidth'],
-                ['**Control**', 'LCP fragmentation and sequencing'],
-                ['**Use**', 'QoS across a bundle']
-              ]}
-            ],
-            commands: [
-              { label: 'Configure PPP with CHAP', code:
-`interface Serial0/0/0
- encapsulation ppp
- ppp authentication chap
- ppp chap hostname R1
- ppp chap password Secret` },
-              { label: 'Verify the link and bundle', code:
-`show interface Serial0/0/0
-show ppp multilink
-show controllers Serial0/0/0` },
-              { label: 'Troubleshoot negotiation and auth', code:
-`debug ppp negotiation
-debug ppp authentication` }
-            ],
-            traps: [
-              'PPP is **LCP plus NCP plus PAP or CHAP** authentication.',
-              '**CHAP uses challenge and response** and never sends the password in clear text.',
-              '**PAP is clear text** and is the weaker method.',
-              'Use **%%encapsulation ppp%%** on serial interfaces.',
-              '**MLPPP bonds links** into one logical bundle.',
-              'LCP comes **before authentication**, and NCP comes after it.'
-            ],
-            table: {
-              cols: ['Item', 'PPP'],
-              rows: [
-                ['LCP', 'Link setup'],
-                ['NCP', 'Network control'],
-                ['PAP', 'Clear password'],
-                ['CHAP', 'Hashed challenge'],
-                ['Multilink', 'MLPPP'],
-                ['Encapsulation', 'ppp'],
-                ['Use', 'Leased line'],
-                ['Basis', 'PPPoE']
-              ]
-            },
-            related: [
-              { t: '02. PPPoE', d: 'PPP over Ethernet' },
-              { t: '03. Metro Ethernet', d: 'Another WAN service' },
-              { t: '05. Broadband', d: 'Where PPPoE is common' }
-            ],
-            glossary: ['PPP', 'PPPoE', 'WAN', 'Ethernet']
-          },
-          {
-            id: 't02', num: '02', group: 'traditional', title: 'PPPoE',
-            blurb: 'PADI, PADO, PADR, PADS and the 1492-byte MTU',
-            overview: '**[[PPPoE]]** carries **[[PPP]]** sessions over **[[Ethernet]]**, which makes it the standard session and authentication layer for DSL and many **[[Broadband]]** services. Discovery uses PADI, PADO, PADR and PADS, then LCP, authentication and IPCP run as usual. The exam tests the discovery messages and the dialer configuration.',
-            keyIdea: 'PPPoE discovery is PADI, PADO, PADR, PADS, followed by PPP negotiation. The 8-byte PPPoE header forces an MTU of 1492, and the access concentrator terminates the sessions.',
-            sections: [
-              { kind: 'table', h: 'Why PPPoE', cols: ['Item', 'Detail'], rows: [
-                ['**Medium**', 'Ethernet and DSL'],
-                ['**Sessions**', 'One per subscriber'],
-                ['**Authentication**', 'PPP CHAP or PAP'],
-                ['**Addressing**', 'IPCP or DHCP']
-              ]},
-              { kind: 'table', h: 'Discovery messages', cols: ['Message', 'Meaning'], rows: [
-                ['**PADI**', 'Client broadcast, who offers service'],
-                ['**PADO**', 'Server offer'],
-                ['**PADR**', 'Client requests a session'],
-                ['**PADS**', 'Session established']
-              ]},
-              { kind: 'table', h: 'After discovery', cols: ['Phase', 'Protocol'], rows: [
-                ['**Link**', 'LCP'],
-                ['**Authentication**', 'CHAP or PAP'],
-                ['**Addressing**', 'IPCP'],
-                ['**Data**', 'PPP frames']
-              ]},
-              { kind: 'code', h: 'PPPoE client configuration', code:
-`  interface Dialer1
-   ip address negotiated
-   encapsulation ppp
-   dialer pool 1
-   ppp authentication chap callin
-   ppp chap password Secret
-  !
-  interface GigabitEthernet0/0
-   pppoe enable
-   pppoe-client dial-pool-number 1` },
-              { kind: 'table', h: 'PPPoE commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%pppoe enable%%**', 'Enable PPPoE on the physical port'],
-                ['**%%pppoe-client dial-pool-number%%**', 'Bind the port to a dialer pool'],
-                ['**%%dialer pool%%**', 'Match the dialer to the pool'],
-                ['**%%ip address negotiated%%**', 'Get the address from IPCP']
-              ]},
-              { kind: 'table', h: 'Access concentrator and MTU', cols: ['Item', 'Detail'], rows: [
-                ['**AC or BNG**', 'Terminates PPPoE sessions'],
-                ['**Authentication**', 'Usually **[[RADIUS]]** behind the AC'],
-                ['**MTU**', '1492 bytes'],
-                ['**Why**', '8-byte PPPoE header inside Ethernet']
-              ]}
-            ],
-            commands: [
-              { label: 'Check the PPPoE session and dialer', code:
-`show pppoe session
-show pppoe interface
-show interface Dialer1
-show ip interface brief` },
-              { label: 'Troubleshoot discovery and negotiation', code:
-`debug pppoe events
-debug ppp negotiation` },
-              { label: 'Check addressing and service', code:
-`show ip interface dialer
-show pppoe session` }
-            ],
-            traps: [
-              'Discovery is **PADI, PADO, PADR, PADS**, followed by PPP negotiation.',
-              'PPPoE is **PPP over Ethernet or DSL**, not a routing protocol.',
-              'Use a **dialer interface** with **%%pppoe-client dial-pool-number%%**.',
-              'The MTU is **1492** because PPPoE adds an 8-byte header.',
-              'Authentication still rides **PPP with CHAP or PAP**.',
-              'The **access concentrator** terminates the subscriber sessions.'
-            ],
-            table: {
-              cols: ['Item', 'PPPoE'],
-              rows: [
-                ['Medium', 'Ethernet'],
-                ['Use', 'DSL and broadband'],
-                ['Discovery', 'PADI, PADO, PADR, PADS'],
-                ['Session', 'Dialer'],
-                ['Auth', 'CHAP or PAP'],
-                ['IP', 'IPCP'],
-                ['MTU', '1492'],
-                ['Server', 'Access concentrator']
-              ]
-            },
-            related: [
-              { t: '01. PPP', d: 'The session it carries' },
-              { t: '05. Broadband', d: 'The main use case' },
-              { t: '06. LTE', d: 'Wireless alternative' }
-            ],
-            glossary: ['PPPoE', 'PPP', 'Broadband', 'DHCP', 'Ethernet', 'RADIUS']
-          },
-          {
-            id: 't03', num: '03', group: 'traditional', title: 'Metro Ethernet',
-            blurb: 'E-LINE, E-LAN, E-TREE and pseudowires versus EVPN',
-            overview: '**[[Metro Ethernet]]** uses Ethernet services across a metro or service-provider network as the WAN. It brings cost and speed with familiar Layer 2 skills, offering E-LINE, E-LAN and E-TREE service types delivered through EoMPLS, VPLS or EVPN. The exam contrasts the service types and the Layer 2 versus Layer 3 WAN models.',
-            keyIdea: 'E-LINE is point-to-point, E-LAN is any-to-any and E-TREE is hub-and-spoke. EoMPLS suits point-to-point pseudowires, while VPLS and EVPN deliver multipoint services.',
-            sections: [
-              { kind: 'table', h: 'Why Metro Ethernet', cols: ['Benefit', 'Detail'], rows: [
-                ['**Familiar**', 'Ethernet skills and interfaces'],
-                ['**Speed**', '1, 10 and 100 Gbps'],
-                ['**Cost**', 'Cheaper than legacy TDM'],
-                ['**Scale**', 'EVPN for large fabrics']
-              ]},
-              { kind: 'table', h: 'EVC service types', cols: ['Type', 'Model', 'Use'], rows: [
-                ['**E-LINE**', 'Point-to-point', 'Site-to-site links'],
-                ['**E-LAN**', 'Multipoint', 'Any-to-any'],
-                ['**E-TREE**', 'Hub and spoke', 'Root and leaf sites']
-              ]},
-              { kind: 'table', h: 'Delivery technologies', cols: ['Technology', 'Type'], rows: [
-                ['**EoMPLS**', 'Layer 2 pseudowire'],
-                ['**VPLS**', 'Multipoint Layer 2 VPN'],
-                ['**EVPN**', 'Modern BGP-based control'],
-                ['**QinQ**', 'VLAN stacking']
-              ]},
-              { kind: 'table', h: 'Provider bridging', cols: ['Mode', 'Tag'], rows: [
-                ['**802.1ad, QinQ**', 'Service tag plus customer tag'],
-                ['**Q-in-Q**', 'Stacked **[[VLAN]]** tags'],
-                ['**Service**', 'Carrier Ethernet transport']
-              ]},
-              { kind: 'table', h: 'Metro Ethernet versus MPLS L3VPN', cols: ['Aspect', 'Metro Ethernet', 'MPLS L3VPN'], rows: [
-                ['**Layer**', 'L2 or L3', 'L3'],
-                ['**Routing**', 'Customer', 'Provider'],
-                ['**Control**', 'EVPN or VPLS', 'MP-BGP'],
-                ['**Typical**', 'Data centre and campus', 'Enterprise WAN']
-              ]},
-              { kind: 'para', h: 'EVPN in one line', p: '**EVPN** uses **BGP** to distribute MAC and IP reachability. It scales beyond VPLS and supports modern Layer 2 and Layer 3 services over a shared provider fabric.' }
-            ],
-            commands: [
-              { label: 'Check Layer 2 forwarding', code:
-`show l2vpn forwarding
-show l2vpn service
-show bridge-domain` },
-              { label: 'Check Ethernet service state', code:
-`show ethernet service
-show ethernet service instance` },
-              { label: 'Check EVPN control plane', code:
-`show evpn evi
-show bgp l2vpn evpn` }
-            ],
-            traps: [
-              '**E-LINE is point-to-point, E-LAN is any-to-any and E-TREE is hub-and-spoke**.',
-              '**EoMPLS** delivers point-to-point, while **VPLS or EVPN** delivers multipoint.',
-              '**QinQ** stacks a customer **[[VLAN]]** tag inside a service tag.',
-              'Layer 2 service keeps routing with the customer; Layer 3 hands it to the provider.',
-              '**EVPN uses BGP** and scales beyond VPLS.',
-              'Metro Ethernet is a service model, not a single cable type.'
-            ],
-            table: {
-              cols: ['Item', 'Metro Ethernet'],
-              rows: [
-                ['E-LINE', 'Point-to-point'],
-                ['E-LAN', 'Any-to-any'],
-                ['E-TREE', 'Hub and spoke'],
-                ['P2P tech', 'EoMPLS'],
-                ['MP tech', 'VPLS or EVPN'],
-                ['Tags', 'QinQ'],
-                ['L2 routing', 'Customer'],
-                ['Modern', 'EVPN']
-              ]
-            },
-            related: [
-              { t: '04. MPLS WAN', d: 'The Layer 3 alternative' },
-              { t: '01. PPP', d: 'Legacy WAN framing' },
-              { t: '07. SD-WAN', d: 'Overlay alternative' }
-            ],
-            glossary: ['Metro Ethernet', 'Ethernet', 'VLAN', 'QinQ', 'MPLS VPN', 'WAN']
-          },
-          {
-            id: 't04', num: '04', group: 'traditional', title: 'MPLS WAN',
-            blurb: 'The provider L3VPN model with CE, PE and MP-BGP',
-            overview: 'An **[[MPLS WAN]]** connects enterprise sites over a provider **[[MPLS VPN|L3VPN]]**. Provider edge routers carry customer routes in VRFs, advertise them with MP-BGP, and label-switch traffic across the core. The customer gets a private any-to-any VPN, while the provider handles routing between sites.',
-            keyIdea: 'MPLS WAN is a provider L3VPN: CE to PE, PE holds the VRF, and MP-BGP carries customer routes. Layer 3 hands routing to the provider, unlike Layer 2 Metro Ethernet.',
-            sections: [
-              { kind: 'table', h: 'The L3VPN model', cols: ['Role', 'Device', 'Job'], rows: [
-                ['**CE**', 'Customer edge', 'Connects the site to the PE'],
-                ['**PE**', 'Provider edge', 'VRF and MP-BGP'],
-                ['**P**', 'Provider core', 'Label switching']
-              ]},
-              { kind: 'table', h: 'CE to PE options', cols: ['Protocol', 'Note'], rows: [
-                ['**eBGP**', 'Most common'],
-                ['**OSPF**', 'Mutual redistribution'],
-                ['**EIGRP**', 'Legacy option'],
-                ['**Static**', 'Simplest design']
-              ]},
-              { kind: 'table', h: 'MPLS WAN versus Metro Ethernet', cols: ['Aspect', 'MPLS L3VPN', 'Metro Ethernet'], rows: [
-                ['**Layer**', 'L3', 'L2'],
-                ['**Routing**', 'Provider', 'Customer'],
-                ['**Any-to-any**', 'Yes', 'Via VPLS or EVPN'],
-                ['**Redundancy**', 'Provider plus routing', 'Customer design']
-              ]},
-              { kind: 'table', h: 'Benefits', cols: ['Benefit', 'Detail'], rows: [
-                ['**Private**', 'VRF isolation between customers'],
-                ['**Any-to-any**', 'Full mesh without per-link circuits'],
-                ['**Managed**', 'Provider handles routing'],
-                ['**SLA**', 'Provider guarantees']
-              ]},
-              { kind: 'table', h: 'Dual-homing', cols: ['Model', 'Detail'], rows: [
-                ['**Single PE**', 'Simpler, less resilient'],
-                ['**Dual PE**', 'Resilience at the provider edge'],
-                ['**Dual CE**', 'Resilience at the customer edge'],
-                ['**BGP**', 'Handles best path and failover']
-              ]},
-              { kind: 'table', h: 'Design considerations', cols: ['Point', 'Detail'], rows: [
-                ['**IP plan**', 'Unique addressing per site'],
-                ['**CE redundancy**', 'Dual CE or dual PE'],
-                ['**QoS**', 'Per-class treatment over the VPN'],
-                ['**Internet**', 'Direct internet access, separate from MPLS']
-              ]}
-            ],
-            commands: [
-              { label: 'Check VRF routes and labels', code:
-`show ip route vrf CUST1
-show bgp vpnv4 unicast vrf CUST1
-show mpls forwarding-table` },
-              { label: 'Check VPN reachability', code:
-`ping vrf CUST1 10.10.0.2
-show ip bgp vpnv4 all` },
-              { label: 'Check customer edge routing', code:
-`show ip route vrf CUST1
-show ip bgp summary` }
-            ],
-            traps: [
-              'MPLS WAN is a **provider L3VPN** built with VRFs and MP-BGP.',
-              'CE to PE options include **eBGP, static, OSPF and EIGRP**.',
-              'Layer 3 means the **provider routes**; Layer 2 Metro Ethernet keeps routing with the customer.',
-              '**Dual PE or dual CE** provides resilience through routing.',
-              '**DIA** keeps internet traffic off the private VPN.',
-              'A missing VPN route usually points at **MP-BGP or the VRF configuration**.'
-            ],
-            table: {
-              cols: ['Item', 'MPLS WAN'],
-              rows: [
-                ['Model', 'L3VPN'],
-                ['Edge', 'PE with VRF'],
-                ['CE to PE', 'eBGP or static'],
-                ['Any-to-any', 'Yes'],
-                ['Routing', 'Provider'],
-                ['Redundancy', 'Dual PE or CE'],
-                ['Versus L2', 'Provider routes'],
-                ['Verify', 'Show bgp vpnv4']
-              ]
-            },
-            related: [
-              { t: '03. Metro Ethernet', d: 'The Layer 2 alternative' },
-              { t: '07. SD-WAN', d: 'The modern overlay' },
-              { t: '05. Broadband', d: 'Cheap transport and DIA' }
-            ],
-            glossary: ['MPLS WAN', 'MPLS VPN', 'VRF', 'MP-BGP', 'BGP', 'MPLS', 'WAN']
-          },
-          {
-            id: 't05', num: '05', group: 'traditional', title: 'Broadband',
-            blurb: 'DSL, cable and fiber as shared best-effort WAN transport',
-            overview: '**[[Broadband]]** WANs ride DSL, cable or fiber over a shared access network, usually with **[[PPPoE]]** as the session and authentication layer. Broadband is cheap and widely available, but it is asymmetric, shared and less predictable than MPLS, which makes it a natural secondary, DIA or SD-WAN transport.',
-            keyIdea: 'Broadband is shared, asymmetric and best effort. PPPoE supplies the session, the MTU is 1492, and enterprises use it as backup, DIA or an SD-WAN underlay.',
-            sections: [
-              { kind: 'table', h: 'Broadband types', cols: ['Type', 'Medium', 'Notes'], rows: [
-                ['**DSL**', 'Phone line', 'ADSL or VDSL'],
-                ['**Cable**', 'Coaxial', 'Shared with the neighbourhood'],
-                ['**Fiber**', 'GPON or EPON', 'High speed and more symmetric'],
-                ['**Fixed wireless**', 'RF', 'Rural coverage']
-              ]},
-              { kind: 'table', h: 'Characteristics', cols: ['Characteristic', 'Broadband'], rows: [
-                ['**Asymmetry**', 'Download usually exceeds upload'],
-                ['**Sharing**', 'Shared access network'],
-                ['**Latency**', 'Variable'],
-                ['**Predictability**', 'Low'],
-                ['**Cost**', 'Low']
-              ]},
-              { kind: 'table', h: 'Session model', cols: ['Layer', 'Protocol'], rows: [
-                ['**Access**', 'DSL, cable or fiber'],
-                ['**Session**', 'PPPoE'],
-                ['**Authentication**', 'CHAP or RADIUS'],
-                ['**Addressing**', 'IPCP or DHCP']
-              ]},
-              { kind: 'table', h: 'Enterprise use', cols: ['Role', 'Detail'], rows: [
-                ['**Primary**', 'Small sites with no better option'],
-                ['**Secondary**', 'Backup or DIA'],
-                ['**SD-WAN**', 'Cheap underlay transport'],
-                ['**QoS**', 'Limited control']
-              ]},
-              { kind: 'table', h: 'Design notes', cols: ['Point', 'Detail'], rows: [
-                ['**NAT**', 'The CPE often performs NAT'],
-                ['**MTU**', '1492 with PPPoE'],
-                ['**DIA**', 'Local internet breakout'],
-                ['**Redundancy**', 'Pair with MPLS or LTE']
-              ]}
-            ],
-            commands: [
-              { label: 'Check the broadband session', code:
-`show pppoe session
-show interface Dialer1
-show ip interface brief` },
-              { label: 'Check physical and path quality', code:
-`show interface GigabitEthernet0/0
-ping 8.8.8.8
-traceroute 8.8.8.8` },
-              { label: 'Check NAT and local breakout', code:
-`show ip nat translations
-show ip interface brief` }
-            ],
-            traps: [
-              'Broadband is **DSL, cable or fiber plus PPPoE**.',
-              'It is **asymmetric, shared and best effort**, not an SLA link.',
-              'PPPoE means an MTU of **1492**.',
-              'The typical role is **backup, DIA or SD-WAN transport**.',
-              'Pair broadband with MPLS or LTE for redundancy.',
-              'A shared access network means **contention** affects throughput.'
-            ],
-            table: {
-              cols: ['Item', 'Broadband'],
-              rows: [
-                ['Access', 'DSL, cable, fiber'],
-                ['Session', 'PPPoE'],
-                ['Symmetry', 'Asymmetric'],
-                ['Sharing', 'Yes'],
-                ['SLA', 'None'],
-                ['MTU', '1492'],
-                ['Role', 'Backup or DIA'],
-                ['SD-WAN', 'Transport']
-              ]
-            },
-            related: [
-              { t: '02. PPPoE', d: 'The session layer' },
-              { t: '06. LTE', d: 'Wireless broadband' },
-              { t: '07. SD-WAN', d: 'Uses broadband as underlay' }
-            ],
-            glossary: ['Broadband', 'PPPoE', 'DHCP', 'SD-WAN', 'WAN']
-          },
-          {
-            id: 't06', num: '06', group: 'traditional', title: 'LTE',
-            blurb: 'Cellular WAN with SIM, APN, metered data and SD-WAN failover',
-            overview: '**[[LTE|LTE and 5G cellular]]** is a wireless WAN transport, useful as a primary link in rural areas, as backup, or for roaming and temporary sites. It uses a SIM and an APN profile on a cellular interface, obtains an address by DHCP or negotiation, and works well as an **[[SD-WAN]]** transport with automatic failover.',
-            keyIdea: 'LTE needs a SIM and an APN profile, gets an address from the carrier, and is metered and variable. Its best enterprise role is backup and SD-WAN failover.',
-            sections: [
-              { kind: 'table', h: 'Why LTE', cols: ['Benefit', 'Detail'], rows: [
-                ['**Coverage**', 'Anywhere with cellular signal'],
-                ['**Speed**', 'LTE and 5G rates'],
-                ['**Setup**', 'SIM plus APN'],
-                ['**Mobility**', 'Works while moving'],
-                ['**Cost**', 'Metered per data volume']
-              ]},
-              { kind: 'table', h: 'Use cases', cols: ['Use', 'Detail'], rows: [
-                ['**Primary**', 'Remote or rural sites'],
-                ['**Backup**', 'Failover for a wired link'],
-                ['**Roaming**', 'Vehicles and temporary sites'],
-                ['**SD-WAN**', 'Diverse transport']
-              ]},
-              { kind: 'table', h: 'Interface model', cols: ['Item', 'Detail'], rows: [
-                ['**Interface**', 'Cellular0/0/0'],
-                ['**SIM**', 'Subscriber identity'],
-                ['**APN**', 'Carrier access point name'],
-                ['**Profile**', 'Cellular profile binding']
-              ]},
-              { kind: 'code', h: 'Cellular configuration sketch', code:
-`  interface Cellular0/0/0
-   ip address negotiated
-   cellular profile 1
-   no shutdown
-  !
-  dialer-list 1 protocol ip permit` },
-              { kind: 'table', h: 'Cellular commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%cellular profile%%**', 'Bind the APN profile'],
-                ['**%%ip address negotiated%%**', 'Get an address from the carrier'],
-                ['**%%dialer-list%%**', 'Define interesting traffic']
-              ]},
-              { kind: 'table', h: 'Characteristics', cols: ['Characteristic', 'LTE'], rows: [
-                ['**Latency**', 'Moderate'],
-                ['**Bandwidth**', 'Variable'],
-                ['**Data caps**', 'Common'],
-                ['**Predictability**', 'Variable'],
-                ['**Cost**', 'Per usage']
-              ]},
-              { kind: 'table', h: 'SD-WAN pairing', cols: ['Use', 'Benefit'], rows: [
-                ['**Transport diversity**', 'Adds a path that is independent of wired links'],
-                ['**Failover**', 'Automatic when the primary path fails SLA'],
-                ['**Policy**', 'Route by application and path quality']
-              ]}
-            ],
-            commands: [
-              { label: 'Check cellular hardware and radio', code:
-`show cellular 0/0/0 hardware
-show cellular 0/0/0 radio
-show cellular 0/0/0 profile` },
-              { label: 'Check the interface and address', code:
-`show interface Cellular0/0/0
-show ip interface brief` },
-              { label: 'Check the carrier profile', code:
-`show cellular 0/0/0 profile
-show cellular 0/0/0 hardware` }
-            ],
-            traps: [
-              'LTE uses a **cellular interface, SIM and APN**.',
-              'Its roles are **primary in rural areas, backup and SD-WAN transport**.',
-              '**%%ip address negotiated%%** gets the address from the carrier.',
-              'LTE is **metered and variable**, so treat it as best effort.',
-              'SD-WAN uses LTE for **automatic failover**.',
-              '**NAT** is common on cellular CPE and affects inbound access.'
-            ],
-            table: {
-              cols: ['Item', 'LTE'],
-              rows: [
-                ['Medium', 'Cellular'],
-                ['Identity', 'SIM'],
-                ['Profile', 'APN'],
-                ['IP', 'Negotiated or DHCP'],
-                ['Role', 'Backup and SD-WAN'],
-                ['SD-WAN', 'Transport'],
-                ['Metered', 'Yes'],
-                ['Check', 'Show cellular']
-              ]
-            },
-            related: [
-              { t: '05. Broadband', d: 'Wired alternative' },
-              { t: '07. SD-WAN', d: 'Multi-transport overlay' },
-              { t: '02. PPPoE', d: 'Wired session model' }
-            ],
-            glossary: ['LTE', 'Broadband', 'SD-WAN', 'NAT', 'DHCP']
-          }
-        ,
-          {
-            id: 't07', num: '07', group: 'sdwan', title: 'SD-WAN',
-            blurb: 'An overlay over any transport, built on OMP and three controllers',
-            overview: '**[[SD-WAN|Cisco SD-WAN]]** builds an overlay network over any transport, including MPLS, broadband and LTE, using secure tunnels between WAN edge routers. A controller cluster made of **[[vManage]]**, **[[vSmart]]** and **[[vBond]]** manages policies and routing centrally. The exam wants the planes and the role of each controller.',
-            keyIdea: 'SD-WAN separates the overlay from the underlay. vBond orchestrates and authenticates, vSmart controls with OMP, vManage manages, and the WAN edge carries the data.',
-            sections: [
-              { kind: 'table', h: 'Overlay over any transport', cols: ['Layer', 'Component'], rows: [
-                ['**Underlay**', 'MPLS, broadband or LTE'],
-                ['**Overlay**', 'Secure tunnels between edges'],
-                ['**Control**', 'OMP'],
-                ['**Policy**', 'Centralized on vSmart']
-              ]},
-              { kind: 'table', h: 'The four components', cols: ['Component', 'Role'], rows: [
-                ['**WAN edge**', 'vEdge or cEdge routers'],
-                ['**vSmart**', 'Control and policy'],
-                ['**vManage**', 'Management and analytics'],
-                ['**vBond**', 'Orchestration and onboarding']
-              ]},
-              { kind: 'table', h: 'The planes', cols: ['Plane', 'Runs on'], rows: [
-                ['**Data**', 'WAN edge'],
-                ['**Control**', 'vSmart with OMP'],
-                ['**Management**', 'vManage'],
-                ['**Orchestration**', 'vBond']
-              ]},
-              { kind: 'table', h: 'OMP, the overlay management protocol', cols: ['Item', 'Detail'], rows: [
-                ['**What**', 'Control protocol'],
-                ['**Runs**', 'Between edges and vSmart'],
-                ['**Carries**', 'Routes, TLOCs and policies'],
-                ['**Result**', 'Overlay routing and path selection']
-              ]},
-              { kind: 'table', h: 'Key features', cols: ['Feature', 'Detail'], rows: [
-                ['**Transport independence**', 'Any available link'],
-                ['**Application-aware routing**', 'Paths chosen by SLA'],
-                ['**Security**', 'DTLS and IPsec tunnels'],
-                ['**Centralized policy**', 'vSmart distributes it'],
-                ['**Analytics**', 'vManage dashboards']
-              ]},
-              { kind: 'table', h: 'Benefits', cols: ['Benefit', 'Detail'], rows: [
-                ['**Cost**', 'Use cheaper broadband'],
-                ['**Agility**', 'Fast site bring-up'],
-                ['**Reliability**', 'Multi-link failover'],
-                ['**Visibility**', 'Central monitoring']
-              ]}
-            ],
-            commands: [
-              { label: 'Check overlay control and routes', code:
-`show omp peers
-show omp routes
-show sdwan control connections` },
-              { label: 'Check the local edge configuration', code:
-`show sdwan running-config
-show sdwan interface` },
-              { label: 'Check transport health', code:
-`show sdwan control connections
-show omp tlocs` }
-            ],
-            traps: [
-              'SD-WAN is an **overlay plus OMP plus centralized controllers**.',
-              '**vBond orchestrates, vSmart controls and vManage manages**.',
-              'The data plane runs on the **WAN edge** routers.',
-              '**OMP replaces BGP and IGP** for overlay routing.',
-              'Application-aware routing selects paths by **SLA** metrics.',
-              'The underlay can be **MPLS, broadband or LTE**, often all three at once.'
-            ],
-            table: {
-              cols: ['Item', 'SD-WAN'],
-              rows: [
-                ['Overlay', 'Secure tunnels'],
-                ['Control', 'OMP'],
-                ['vSmart', 'Policy and control'],
-                ['vManage', 'Management'],
-                ['vBond', 'Orchestration'],
-                ['Edge', 'vEdge or cEdge'],
-                ['Transport', 'Any'],
-                ['Routing', 'Application-aware SLA']
-              ]
-            },
-            related: [
-              { t: '08. vManage', d: 'Management plane' },
-              { t: '09. vSmart', d: 'Control plane' },
-              { t: '10. vBond', d: 'Orchestration plane' }
-            ],
-            glossary: ['SD-WAN', 'vManage', 'vSmart', 'vBond', 'WAN Edge', 'IPsec', 'MPLS WAN']
-          },
-          {
-            id: 't08', num: '08', group: 'sdwan', title: 'vManage',
-            blurb: 'The management plane: templates, onboarding, monitoring and APIs',
-            overview: '**[[vManage]]** is the management plane of Cisco **[[SD-WAN]]**. It provides the web interface and API used to onboard devices, push templates, monitor health and gather analytics. Configuration flows through vManage, while **[[vSmart]]** controls routing and **[[vBond]]** handles orchestration.',
-            keyIdea: 'vManage is the management plane: templates, zero-touch onboarding, monitoring and REST APIs. It configures and observes the fabric but does not run OMP or carry user data.',
-            sections: [
-              { kind: 'table', h: 'The role of vManage', cols: ['Function', 'Detail'], rows: [
-                ['**Dashboard**', 'Single interface for the fabric'],
-                ['**Templates**', 'Device and feature configuration'],
-                ['**Onboarding**', 'Zero-touch provisioning'],
-                ['**Monitoring**', 'Health, alarms and analytics'],
-                ['**APIs**', 'REST automation']
-              ]},
-              { kind: 'table', h: 'Plane placement', cols: ['Plane', 'Component'], rows: [
-                ['**Management**', 'vManage'],
-                ['**Control**', 'vSmart'],
-                ['**Orchestration**', 'vBond'],
-                ['**Data**', 'WAN edge']
-              ]},
-              { kind: 'table', h: 'How configuration flows', cols: ['Step', 'Detail'], rows: [
-                ['**1**', 'Build a template in vManage'],
-                ['**2**', 'Push it to the device'],
-                ['**3**', 'The device validates the change'],
-                ['**4**', 'Monitor the result in vManage']
-              ]},
-              { kind: 'table', h: 'Features', cols: ['Feature', 'Detail'], rows: [
-                ['**Templates**', 'Feature and device templates'],
-                ['**CLI mode**', 'Direct configuration when needed'],
-                ['**Monitoring**', 'Real-time device and link state'],
-                ['**Alerts**', 'Health and event notification'],
-                ['**REST API**', 'Programmable operations']
-              ]},
-              { kind: 'table', h: 'Monitoring and analytics', cols: ['View', 'Content'], rows: [
-                ['**Device list**', 'Status and reachability'],
-                ['**Links**', 'SLA, usage and errors'],
-                ['**Events**', 'Alerts and alarms'],
-                ['**Logs**', 'Troubleshooting detail']
-              ]},
-              { kind: 'table', h: 'High availability', cols: ['Item', 'Detail'], rows: [
-                ['**Cluster**', 'Multiple vManage nodes'],
-                ['**Replication**', 'Database synchronisation'],
-                ['**Failover**', 'Transparent to the operator'],
-                ['**Backup**', 'Configuration and data protection']
-              ]}
-            ],
-            commands: [
-              { label: 'Check device and management state', code:
-`show sdwan running-config
-show sdwan device
-show sdwan vmanage connections` },
-              { label: 'Check control and OMP health', code:
-`show omp peers
-show sdwan control` },
-              { label: 'Check templates and config', code:
-`show sdwan running-config
-show sdwan device` }
-            ],
-            traps: [
-              'vManage is the **management plane** for dashboards, templates and monitoring.',
-              'Configuration is **template-driven and pushed centrally**.',
-              '**vSmart controls and vBond orchestrates**, while vManage manages.',
-              'The **REST API** enables automation.',
-              'Run vManage in a **cluster** for high availability.',
-              'vManage does not replace **OMP on vSmart**.'
-            ],
-            table: {
-              cols: ['Item', 'vManage'],
-              rows: [
-                ['Plane', 'Management'],
-                ['Configuration', 'Templates'],
-                ['Onboarding', 'Zero-touch'],
-                ['Monitoring', 'Health and analytics'],
-                ['API', 'REST'],
-                ['Cluster', 'High availability'],
-                ['Compared with vSmart', 'Control'],
-                ['Compared with vBond', 'Orchestration']
-              ]
-            },
-            related: [
-              { t: '07. SD-WAN', d: 'The overall architecture' },
-              { t: '09. vSmart', d: 'Control plane' },
-              { t: '10. vBond', d: 'Orchestration plane' }
-            ],
-            glossary: ['vManage', 'SD-WAN', 'vSmart', 'vBond', 'WAN Edge']
-          },
-          {
-            id: 't09', num: '09', group: 'sdwan', title: 'vSmart',
-            blurb: 'The control plane: OMP, TLOCs and centralized policy',
-            overview: '**[[vSmart]]** is the control plane of Cisco **[[SD-WAN]]**. It runs OMP with every WAN edge, computes the overlay topology and distributes centralized policy for routing, data and application awareness. Without vSmart, edges have no overlay control or policy.',
-            keyIdea: 'vSmart is the control plane. OMP carries routes and TLOCs between vSmart and the edges, and centralized policy is authored once and pushed from vSmart.',
-            sections: [
-              { kind: 'table', h: 'The role of vSmart', cols: ['Function', 'Detail'], rows: [
-                ['**OMP**', 'Control protocol with the edges'],
-                ['**Route distribution**', 'Overlay prefixes and TLOCs'],
-                ['**Policy**', 'Centralized routing and data policy'],
-                ['**Topology**', 'Overlay path computation'],
-                ['**SLA**', 'Application-aware path selection']
-              ]},
-              { kind: 'table', h: 'OMP, the overlay management protocol', cols: ['Item', 'Detail'], rows: [
-                ['**Peers**', 'vSmart and every WAN edge'],
-                ['**Routes**', 'OMP routes for prefixes'],
-                ['**TLOC**', 'Transport locator for each path'],
-                ['**Policy**', 'Attached and distributed']
-              ]},
-              { kind: 'table', h: 'Route types and objects', cols: ['Type', 'Meaning'], rows: [
-                ['**OMP route**', 'A prefix with its origin'],
-                ['**TLOC**', 'Transport location and colour'],
-                ['**Service**', 'VPN or service endpoint'],
-                ['**Policy**', 'Match and action rules']
-              ]},
-              { kind: 'table', h: 'Policy model', cols: ['Policy', 'Effect'], rows: [
-                ['**Centralized**', 'Authored for vSmart and pushed to edges'],
-                ['**Local**', 'Applied directly on an edge'],
-                ['**Application-aware**', 'Chooses a path by SLA'],
-                ['**Control**', 'Filters and modifies routes']
-              ]},
-              { kind: 'table', h: 'Why centralized control matters', cols: ['Benefit', 'Detail'], rows: [
-                ['**Consistency**', 'One source of policy'],
-                ['**Agility**', 'Change once, apply everywhere'],
-                ['**Scale**', 'Edges stay lightweight'],
-                ['**Application awareness**', 'Global SLA view']
-              ]},
-              { kind: 'table', h: 'vSmart versus the other controllers', cols: ['Controller', 'Plane'], rows: [
-                ['**vBond**', 'Orchestration'],
-                ['**vSmart**', 'Control'],
-                ['**vManage**', 'Management']
-              ]}
-            ],
-            commands: [
-              { label: 'Check OMP peers, routes and TLOCs', code:
-`show omp peers
-show omp routes
-show omp tlocs` },
-              { label: 'Check control and policy state', code:
-`show sdwan control
-show sdwan policy` },
-              { label: 'Check edge control connections', code:
-`show sdwan control connections
-show omp peers` }
-            ],
-            traps: [
-              'vSmart is the **control plane**, running **OMP and centralized policy**.',
-              '**OMP carries routes and TLOCs**.',
-              'Centralized policy is **pushed from vSmart** to the edges.',
-              '**vBond orchestrates, vManage manages and vSmart controls**.',
-              'Without vSmart, there is **no overlay control**.',
-              'Application-aware routing uses **SLA metrics**, not just hop count.'
-            ],
-            table: {
-              cols: ['Item', 'vSmart'],
-              rows: [
-                ['Plane', 'Control'],
-                ['Protocol', 'OMP'],
-                ['Routes', 'OMP routes'],
-                ['TLOC', 'Transport locator'],
-                ['Policy', 'Centralized'],
-                ['App routing', 'SLA based'],
-                ['Compared with vBond', 'Orchestration'],
-                ['Compared with vManage', 'Management']
-              ]
-            },
-            related: [
-              { t: '07. SD-WAN', d: 'The overall architecture' },
-              { t: '10. vBond', d: 'Orchestration plane' },
-              { t: '11. WAN Edge', d: 'The OMP peer' }
-            ],
-            glossary: ['vSmart', 'SD-WAN', 'vManage', 'vBond', 'WAN Edge']
-          },
-          {
-            id: 't10', num: '10', group: 'sdwan', title: 'vBond',
-            blurb: 'The orchestration plane: first contact, authentication and discovery',
-            overview: '**[[vBond]]** is the orchestration plane of Cisco **[[SD-WAN]]** and the first contact point for a new device. It authenticates and onboards edges and controllers, tells them which **[[vSmart]]** and **[[vManage]]** to use, and anchors the public identity of the fabric. It is the front door, not the routing brain.',
-            keyIdea: 'vBond orchestrates and authenticates. New edges contact vBond first, prove identity, and are then pointed at vSmart and vManage.',
-            sections: [
-              { kind: 'table', h: 'The role of vBond', cols: ['Function', 'Detail'], rows: [
-                ['**Orchestration**', 'First contact for new devices'],
-                ['**Authentication**', 'Validates device identity'],
-                ['**Discovery**', 'Points devices at vSmart and vManage'],
-                ['**Bootstrap**', 'Supports NTP and key setup']
-              ]},
-              { kind: 'table', h: 'Onboarding flow', cols: ['Step', 'Detail'], rows: [
-                ['**1**', 'The new edge contacts vBond'],
-                ['**2**', 'vBond verifies its identity'],
-                ['**3**', 'vBond assigns the controllers'],
-                ['**4**', 'The edge builds secure sessions']
-              ]},
-              { kind: 'table', h: 'Why reachability matters', cols: ['Item', 'Detail'], rows: [
-                ['**Public IP**', 'vBond must be reachable from the internet or WAN'],
-                ['**DTLS**', 'Secures onboarding'],
-                ['**DNS**', 'Used to discover vBond'],
-                ['**Firewall**', 'Allow 12346 or 443 as designed']
-              ]},
-              { kind: 'table', h: 'Identity and security', cols: ['Item', 'Detail'], rows: [
-                ['**Serial or chassis**', 'Device identifier'],
-                ['**Certificates**', 'Mutual authentication'],
-                ['**Keys**', 'Bootstrap trust'],
-                ['**Result**', 'A trusted fabric']
-              ]},
-              { kind: 'table', h: 'The three controllers', cols: ['Controller', 'Plane'], rows: [
-                ['**vBond**', 'Orchestration'],
-                ['**vSmart**', 'Control'],
-                ['**vManage**', 'Management']
-              ]},
-              { kind: 'table', h: 'Scale and high availability', cols: ['Item', 'Detail'], rows: [
-                ['**Multiple vBond**', 'Redundancy'],
-                ['**DNS round-robin**', 'Load distribution'],
-                ['**Out-of-band**', 'Separate management network'],
-                ['**HA**', 'Keeps onboarding available']
-              ]}
-            ],
-            commands: [
-              { label: 'Check vBond and identity state', code:
-`show sdwan vbond list
-show sdwan identity
-show sdwan hardware-status` },
-              { label: 'Check onboarding and config', code:
-`show sdwan running-config
-show sdwan control connections` },
-              { label: 'Troubleshoot orchestration', code:
-`debug sdwan
-show sdwan vbond list` }
-            ],
-            traps: [
-              'vBond is the **orchestration plane**, responsible for onboarding and authentication.',
-              'Edges **contact vBond first**, then get pointed at vSmart and vManage.',
-              'vBond must be **reachable**, normally through a public address or DNS.',
-              'Identity is proven with **serial number and certificates**.',
-              '**vBond is not vSmart and not vManage**.',
-              'Time skew can break certificate validation, so **NTP** matters.'
-            ],
-            table: {
-              cols: ['Item', 'vBond'],
-              rows: [
-                ['Plane', 'Orchestration'],
-                ['Job', 'Onboard'],
-                ['Auth', 'Serial and certificate'],
-                ['Discovery', 'Assign controllers'],
-                ['Reachable', 'Public or DNS'],
-                ['DTLS', 'Secure onboarding'],
-                ['Compared with vSmart', 'Control'],
-                ['Compared with vManage', 'Management']
-              ]
-            },
-            related: [
-              { t: '07. SD-WAN', d: 'The overall architecture' },
-              { t: '09. vSmart', d: 'Control plane' },
-              { t: '11. WAN Edge', d: 'The device being onboarded' }
-            ],
-            glossary: ['vBond', 'SD-WAN', 'vManage', 'vSmart', 'WAN Edge']
-          },
-          {
-            id: 't11', num: '11', group: 'sdwan', title: 'WAN Edge',
-            blurb: 'vEdge and cEdge routers: the data plane of the overlay',
-            overview: '**[[WAN Edge]]** is the SD-WAN term for the routers at each site: **vEdge** on Viptela OS or **cEdge** on IOS-XE. They terminate overlay tunnels, run OMP with **[[vSmart]]**, forward data through DTLS or **[[IPsec]]**, and enforce application-aware policy. This is where the data plane actually lives.',
-            keyIdea: 'The WAN edge is the data plane. cEdge runs IOS-XE, vEdge runs Viptela OS, and each transport is identified by a TLOC and colour.',
-            sections: [
-              { kind: 'table', h: 'WAN edge roles', cols: ['Function', 'Detail'], rows: [
-                ['**Tunnel termination**', 'DTLS or IPsec'],
-                ['**OMP**', 'Control session to vSmart'],
-                ['**Data forwarding**', 'Overlay and local traffic'],
-                ['**Local policy**', 'Applied from templates'],
-                ['**Multi-WAN**', 'Several transports per site']
-              ]},
-              { kind: 'table', h: 'vEdge versus cEdge', cols: ['Item', 'vEdge', 'cEdge'], rows: [
-                ['**OS**', 'Viptela OS', 'IOS-XE'],
-                ['**Platform**', 'Viptela hardware or virtual', 'Catalyst or ISR'],
-                ['**Configuration**', 'SD-WAN CLI', 'IOS-XE SD-WAN'],
-                ['**Interoperability**', 'Native', 'Native']
-              ]},
-              { kind: 'table', h: 'Transport connections', cols: ['Item', 'Detail'], rows: [
-                ['**TLOC**', 'Transport locator'],
-                ['**Colour**', 'Label such as MPLS, broadband or LTE'],
-                ['**Multiple links**', 'One TLOC per transport'],
-                ['**SLA**', 'Path health and quality']
-              ]},
-              { kind: 'table', h: 'Control connections', cols: ['Session', 'Peer'], rows: [
-                ['**Onboarding**', 'vBond'],
-                ['**OMP**', 'vSmart'],
-                ['**Management**', 'vManage'],
-                ['**Data tunnels**', 'Other WAN edges']
-              ]},
-              { kind: 'table', h: 'Data plane', cols: ['Layer', 'Detail'], rows: [
-                ['**Tunnel**', 'DTLS or IPsec'],
-                ['**Overlay**', 'Routes learned through OMP'],
-                ['**Policy**', 'Application-aware forwarding'],
-                ['**NAT**', 'Enabled per transport as needed']
-              ]},
-              { kind: 'code', h: 'WAN edge verification', code:
-`  show sdwan control connections
-  show sdwan omp peers
-  show omp routes
-  show sdwan interface` }
-            ],
-            commands: [
-              { label: 'Check control and OMP sessions', code:
-`show sdwan control connections
-show sdwan control connections-history
-show omp peers` },
-              { label: 'Check routes and interfaces', code:
-`show omp routes
-show sdwan interface
-show sdwan running-config` },
-              { label: 'Check transport and SLA state', code:
-`show omp tlocs
-show sdwan control connections` }
-            ],
-            traps: [
-              'The WAN edge is the **data plane**.',
-              '**cEdge runs IOS-XE; vEdge runs Viptela OS**.',
-              'A **TLOC and colour** identify a transport path.',
-              'The edge keeps sessions with **vBond, vSmart, vManage and peer edges**.',
-              'Data tunnels use **DTLS or IPsec**, with application-aware policy.',
-              'An edge can have **multiple transports**, each with its own TLOC.'
-            ],
-            table: {
-              cols: ['Item', 'WAN Edge'],
-              rows: [
-                ['Plane', 'Data'],
-                ['vEdge', 'Viptela OS'],
-                ['cEdge', 'IOS-XE'],
-                ['Tunnel', 'DTLS or IPsec'],
-                ['TLOC', 'Transport locator'],
-                ['Colour', 'Transport label'],
-                ['OMP', 'To vSmart'],
-                ['Verify', 'Show sdwan control']
-              ]
-            },
-            related: [
-              { t: '07. SD-WAN', d: 'The overall architecture' },
-              { t: '09. vSmart', d: 'The control peer' },
-              { t: '08. vManage', d: 'Management and templates' }
-            ],
-            glossary: ['WAN Edge', 'SD-WAN', 'vSmart', 'vManage', 'vBond', 'IPsec']
-          }
-        ];
+ {
+  "id": "t01",
+  "num": "01",
+  "group": "traditional",
+  "title": "PPP",
+  "blurb": "LCP, NCP, PAP versus CHAP, and multilink bundles",
+  "overview": "**[[PPP]]** is the classic point-to-point WAN protocol that succeeded HDLC thanks to authentication, multilink support and negotiation through LCP and NCP. It is also the framing that **[[PPPoE]]** rides on. The exam tests the PPP stack, the LCP phases and the difference between PAP and CHAP.",
+  "keyIdea": "PPP is LCP plus NCP plus PAP or CHAP. LCP opens the link, authentication follows, NCP negotiates IP, and CHAP is the secure challenge-response method.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The PPP stack",
+    "cols": [
+     "Layer",
+     "Protocol",
+     "Job"
+    ],
+    "rows": [
+     [
+      "**Link control**",
+      "LCP",
+      "Set up and negotiate link options"
+     ],
+     [
+      "**Authentication**",
+      "PAP or CHAP",
+      "Verify the peer"
+     ],
+     [
+      "**Network control**",
+      "NCP, such as IPCP",
+      "Negotiate network layer"
+     ],
+     [
+      "**Data**",
+      "PPP framing",
+      "Encapsulate packets"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "LCP phases",
+    "cols": [
+     "Phase",
+     "Action"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "Link establishment with LCP"
+     ],
+     [
+      "**2**",
+      "Authentication with PAP or CHAP"
+     ],
+     [
+      "**3**",
+      "Network layer negotiation with NCP"
+     ],
+     [
+      "**4**",
+      "Data transfer"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PAP versus CHAP",
+    "cols": [
+     "Aspect",
+     "PAP",
+     "CHAP"
+    ],
+    "rows": [
+     [
+      "**Password**",
+      "Sent in clear text",
+      "Hashed challenge response"
+     ],
+     [
+      "**Direction**",
+      "One-way",
+      "Challenge and response"
+     ],
+     [
+      "**Security**",
+      "Weak",
+      "Stronger"
+     ],
+     [
+      "**Re-authentication**",
+      "No",
+      "Periodic"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "PPP configuration",
+    "code": "  interface Serial0/0/0\n   encapsulation ppp\n   ppp authentication chap\n   ppp chap hostname R1\n   ppp chap password Secret"
+   },
+   {
+    "kind": "table",
+    "h": "PPP commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%encapsulation ppp%%**",
+      "Enable PPP on the interface"
+     ],
+     [
+      "**%%ppp authentication chap%%**",
+      "Require CHAP"
+     ],
+     [
+      "**%%ppp chap hostname%%**",
+      "Set the CHAP username"
+     ],
+     [
+      "**%%ppp chap password%%**",
+      "Set the shared secret"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Multilink PPP",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**What**",
+      "Bond multiple links"
+     ],
+     [
+      "**Result**",
+      "Higher aggregate bandwidth"
+     ],
+     [
+      "**Control**",
+      "LCP fragmentation and sequencing"
+     ],
+     [
+      "**Use**",
+      "QoS across a bundle"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configure PPP with CHAP",
+    "code": "interface Serial0/0/0\n encapsulation ppp\n ppp authentication chap\n ppp chap hostname R1\n ppp chap password Secret"
+   },
+   {
+    "label": "Verify the link and bundle",
+    "code": "show interface Serial0/0/0\nshow ppp multilink\nshow controllers Serial0/0/0"
+   },
+   {
+    "label": "Troubleshoot negotiation and auth",
+    "code": "debug ppp negotiation\ndebug ppp authentication"
+   }
+  ],
+  "traps": [
+   "PPP is **LCP plus NCP plus PAP or CHAP** authentication.",
+   "**CHAP uses challenge and response** and never sends the password in clear text.",
+   "**PAP is clear text** and is the weaker method.",
+   "Use **%%encapsulation ppp%%** on serial interfaces.",
+   "**MLPPP bonds links** into one logical bundle.",
+   "LCP comes **before authentication**, and NCP comes after it."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "PPP"
+   ],
+   "rows": [
+    [
+     "LCP",
+     "Link setup"
+    ],
+    [
+     "NCP",
+     "Network control"
+    ],
+    [
+     "PAP",
+     "Clear password"
+    ],
+    [
+     "CHAP",
+     "Hashed challenge"
+    ],
+    [
+     "Multilink",
+     "MLPPP"
+    ],
+    [
+     "Encapsulation",
+     "ppp"
+    ],
+    [
+     "Use",
+     "Leased line"
+    ],
+    [
+     "Basis",
+     "PPPoE"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. PPPoE",
+    "d": "PPP over Ethernet"
+   },
+   {
+    "t": "03. Metro Ethernet",
+    "d": "Another WAN service"
+   },
+   {
+    "t": "05. Broadband",
+    "d": "Where PPPoE is common"
+   }
+  ],
+  "glossary": [
+   "PPP",
+   "PPPoE",
+   "WAN",
+   "Ethernet"
+  ]
+ },
+ {
+  "id": "t02",
+  "num": "02",
+  "group": "traditional",
+  "title": "PPPoE",
+  "blurb": "PADI, PADO, PADR, PADS and the 1492-byte MTU",
+  "overview": "**[[PPPoE]]** carries **[[PPP]]** sessions over **[[Ethernet]]**, which makes it the standard session and authentication layer for DSL and many **[[Broadband]]** services. Discovery uses PADI, PADO, PADR and PADS, then LCP, authentication and IPCP run as usual. The exam tests the discovery messages and the dialer configuration.",
+  "keyIdea": "PPPoE discovery is PADI, PADO, PADR, PADS, followed by PPP negotiation. The 8-byte PPPoE header forces an MTU of 1492, and the access concentrator terminates the sessions.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Why PPPoE",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Medium**",
+      "Ethernet and DSL"
+     ],
+     [
+      "**Sessions**",
+      "One per subscriber"
+     ],
+     [
+      "**Authentication**",
+      "PPP CHAP or PAP"
+     ],
+     [
+      "**Addressing**",
+      "IPCP or DHCP"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Discovery messages",
+    "cols": [
+     "Message",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**PADI**",
+      "Client broadcast, who offers service"
+     ],
+     [
+      "**PADO**",
+      "Server offer"
+     ],
+     [
+      "**PADR**",
+      "Client requests a session"
+     ],
+     [
+      "**PADS**",
+      "Session established"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "After discovery",
+    "cols": [
+     "Phase",
+     "Protocol"
+    ],
+    "rows": [
+     [
+      "**Link**",
+      "LCP"
+     ],
+     [
+      "**Authentication**",
+      "CHAP or PAP"
+     ],
+     [
+      "**Addressing**",
+      "IPCP"
+     ],
+     [
+      "**Data**",
+      "PPP frames"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "PPPoE client configuration",
+    "code": "  interface Dialer1\n   ip address negotiated\n   encapsulation ppp\n   dialer pool 1\n   ppp authentication chap callin\n   ppp chap password Secret\n  !\n  interface GigabitEthernet0/0\n   pppoe enable\n   pppoe-client dial-pool-number 1"
+   },
+   {
+    "kind": "table",
+    "h": "PPPoE commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%pppoe enable%%**",
+      "Enable PPPoE on the physical port"
+     ],
+     [
+      "**%%pppoe-client dial-pool-number%%**",
+      "Bind the port to a dialer pool"
+     ],
+     [
+      "**%%dialer pool%%**",
+      "Match the dialer to the pool"
+     ],
+     [
+      "**%%ip address negotiated%%**",
+      "Get the address from IPCP"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Access concentrator and MTU",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**AC or BNG**",
+      "Terminates PPPoE sessions"
+     ],
+     [
+      "**Authentication**",
+      "Usually **[[RADIUS]]** behind the AC"
+     ],
+     [
+      "**MTU**",
+      "1492 bytes"
+     ],
+     [
+      "**Why**",
+      "8-byte PPPoE header inside Ethernet"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check the PPPoE session and dialer",
+    "code": "show pppoe session\nshow pppoe interface\nshow interface Dialer1\nshow ip interface brief"
+   },
+   {
+    "label": "Troubleshoot discovery and negotiation",
+    "code": "debug pppoe events\ndebug ppp negotiation"
+   },
+   {
+    "label": "Check addressing and service",
+    "code": "show ip interface dialer\nshow pppoe session"
+   }
+  ],
+  "traps": [
+   "Discovery is **PADI, PADO, PADR, PADS**, followed by PPP negotiation.",
+   "PPPoE is **PPP over Ethernet or DSL**, not a routing protocol.",
+   "Use a **dialer interface** with **%%pppoe-client dial-pool-number%%**.",
+   "The MTU is **1492** because PPPoE adds an 8-byte header.",
+   "Authentication still rides **PPP with CHAP or PAP**.",
+   "The **access concentrator** terminates the subscriber sessions."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "PPPoE"
+   ],
+   "rows": [
+    [
+     "Medium",
+     "Ethernet"
+    ],
+    [
+     "Use",
+     "DSL and broadband"
+    ],
+    [
+     "Discovery",
+     "PADI, PADO, PADR, PADS"
+    ],
+    [
+     "Session",
+     "Dialer"
+    ],
+    [
+     "Auth",
+     "CHAP or PAP"
+    ],
+    [
+     "IP",
+     "IPCP"
+    ],
+    [
+     "MTU",
+     "1492"
+    ],
+    [
+     "Server",
+     "Access concentrator"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. PPP",
+    "d": "The session it carries"
+   },
+   {
+    "t": "05. Broadband",
+    "d": "The main use case"
+   },
+   {
+    "t": "06. LTE",
+    "d": "Wireless alternative"
+   }
+  ],
+  "glossary": [
+   "PPPoE",
+   "PPP",
+   "Broadband",
+   "DHCP",
+   "Ethernet",
+   "RADIUS"
+  ]
+ },
+ {
+  "id": "t03",
+  "num": "03",
+  "group": "traditional",
+  "title": "Metro Ethernet",
+  "blurb": "E-LINE, E-LAN, E-TREE and pseudowires versus EVPN",
+  "overview": "**[[Metro Ethernet]]** uses Ethernet services across a metro or service-provider network as the WAN. It brings cost and speed with familiar Layer 2 skills, offering E-LINE, E-LAN and E-TREE service types delivered through EoMPLS, VPLS or EVPN. The exam contrasts the service types and the Layer 2 versus Layer 3 WAN models.",
+  "keyIdea": "E-LINE is point-to-point, E-LAN is any-to-any and E-TREE is hub-and-spoke. EoMPLS suits point-to-point pseudowires, while VPLS and EVPN deliver multipoint services.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Why Metro Ethernet",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Familiar**",
+      "Ethernet skills and interfaces"
+     ],
+     [
+      "**Speed**",
+      "1, 10 and 100 Gbps"
+     ],
+     [
+      "**Cost**",
+      "Cheaper than legacy TDM"
+     ],
+     [
+      "**Scale**",
+      "EVPN for large fabrics"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "EVC service types",
+    "cols": [
+     "Type",
+     "Model",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**E-LINE**",
+      "Point-to-point",
+      "Site-to-site links"
+     ],
+     [
+      "**E-LAN**",
+      "Multipoint",
+      "Any-to-any"
+     ],
+     [
+      "**E-TREE**",
+      "Hub and spoke",
+      "Root and leaf sites"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Delivery technologies",
+    "cols": [
+     "Technology",
+     "Type"
+    ],
+    "rows": [
+     [
+      "**EoMPLS**",
+      "Layer 2 pseudowire"
+     ],
+     [
+      "**VPLS**",
+      "Multipoint Layer 2 VPN"
+     ],
+     [
+      "**EVPN**",
+      "Modern BGP-based control"
+     ],
+     [
+      "**QinQ**",
+      "VLAN stacking"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Provider bridging",
+    "cols": [
+     "Mode",
+     "Tag"
+    ],
+    "rows": [
+     [
+      "**802.1ad, QinQ**",
+      "Service tag plus customer tag"
+     ],
+     [
+      "**Q-in-Q**",
+      "Stacked **[[VLAN]]** tags"
+     ],
+     [
+      "**Service**",
+      "Carrier Ethernet transport"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Metro Ethernet versus MPLS L3VPN",
+    "cols": [
+     "Aspect",
+     "Metro Ethernet",
+     "MPLS L3VPN"
+    ],
+    "rows": [
+     [
+      "**Layer**",
+      "L2 or L3",
+      "L3"
+     ],
+     [
+      "**Routing**",
+      "Customer",
+      "Provider"
+     ],
+     [
+      "**Control**",
+      "EVPN or VPLS",
+      "MP-BGP"
+     ],
+     [
+      "**Typical**",
+      "Data centre and campus",
+      "Enterprise WAN"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "EVPN in one line",
+    "p": "**EVPN** uses **BGP** to distribute MAC and IP reachability. It scales beyond VPLS and supports modern Layer 2 and Layer 3 services over a shared provider fabric."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check Layer 2 forwarding",
+    "code": "show l2vpn forwarding\nshow l2vpn service\nshow bridge-domain"
+   },
+   {
+    "label": "Check Ethernet service state",
+    "code": "show ethernet service\nshow ethernet service instance"
+   },
+   {
+    "label": "Check EVPN control plane",
+    "code": "show evpn evi\nshow bgp l2vpn evpn"
+   }
+  ],
+  "traps": [
+   "**E-LINE is point-to-point, E-LAN is any-to-any and E-TREE is hub-and-spoke**.",
+   "**EoMPLS** delivers point-to-point, while **VPLS or EVPN** delivers multipoint.",
+   "**QinQ** stacks a customer **[[VLAN]]** tag inside a service tag.",
+   "Layer 2 service keeps routing with the customer; Layer 3 hands it to the provider.",
+   "**EVPN uses BGP** and scales beyond VPLS.",
+   "Metro Ethernet is a service model, not a single cable type."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Metro Ethernet"
+   ],
+   "rows": [
+    [
+     "E-LINE",
+     "Point-to-point"
+    ],
+    [
+     "E-LAN",
+     "Any-to-any"
+    ],
+    [
+     "E-TREE",
+     "Hub and spoke"
+    ],
+    [
+     "P2P tech",
+     "EoMPLS"
+    ],
+    [
+     "MP tech",
+     "VPLS or EVPN"
+    ],
+    [
+     "Tags",
+     "QinQ"
+    ],
+    [
+     "L2 routing",
+     "Customer"
+    ],
+    [
+     "Modern",
+     "EVPN"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. MPLS WAN",
+    "d": "The Layer 3 alternative"
+   },
+   {
+    "t": "01. PPP",
+    "d": "Legacy WAN framing"
+   },
+   {
+    "t": "07. SD-WAN",
+    "d": "Overlay alternative"
+   }
+  ],
+  "glossary": [
+   "Metro Ethernet",
+   "Ethernet",
+   "VLAN",
+   "QinQ",
+   "MPLS VPN",
+   "WAN"
+  ]
+ },
+ {
+  "id": "t04",
+  "num": "04",
+  "group": "traditional",
+  "title": "MPLS WAN",
+  "blurb": "The provider L3VPN model with CE, PE and MP-BGP",
+  "overview": "An **[[MPLS WAN]]** connects enterprise sites over a provider **[[MPLS VPN|L3VPN]]**. Provider edge routers carry customer routes in VRFs, advertise them with MP-BGP, and label-switch traffic across the core. The customer gets a private any-to-any VPN, while the provider handles routing between sites.",
+  "keyIdea": "MPLS WAN is a provider L3VPN: CE to PE, PE holds the VRF, and MP-BGP carries customer routes. Layer 3 hands routing to the provider, unlike Layer 2 Metro Ethernet.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The L3VPN model",
+    "cols": [
+     "Role",
+     "Device",
+     "Job"
+    ],
+    "rows": [
+     [
+      "**CE**",
+      "Customer edge",
+      "Connects the site to the PE"
+     ],
+     [
+      "**PE**",
+      "Provider edge",
+      "VRF and MP-BGP"
+     ],
+     [
+      "**P**",
+      "Provider core",
+      "Label switching"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "CE to PE options",
+    "cols": [
+     "Protocol",
+     "Note"
+    ],
+    "rows": [
+     [
+      "**eBGP**",
+      "Most common"
+     ],
+     [
+      "**OSPF**",
+      "Mutual redistribution"
+     ],
+     [
+      "**EIGRP**",
+      "Legacy option"
+     ],
+     [
+      "**Static**",
+      "Simplest design"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "MPLS WAN versus Metro Ethernet",
+    "cols": [
+     "Aspect",
+     "MPLS L3VPN",
+     "Metro Ethernet"
+    ],
+    "rows": [
+     [
+      "**Layer**",
+      "L3",
+      "L2"
+     ],
+     [
+      "**Routing**",
+      "Provider",
+      "Customer"
+     ],
+     [
+      "**Any-to-any**",
+      "Yes",
+      "Via VPLS or EVPN"
+     ],
+     [
+      "**Redundancy**",
+      "Provider plus routing",
+      "Customer design"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Private**",
+      "VRF isolation between customers"
+     ],
+     [
+      "**Any-to-any**",
+      "Full mesh without per-link circuits"
+     ],
+     [
+      "**Managed**",
+      "Provider handles routing"
+     ],
+     [
+      "**SLA**",
+      "Provider guarantees"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Dual-homing",
+    "cols": [
+     "Model",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Single PE**",
+      "Simpler, less resilient"
+     ],
+     [
+      "**Dual PE**",
+      "Resilience at the provider edge"
+     ],
+     [
+      "**Dual CE**",
+      "Resilience at the customer edge"
+     ],
+     [
+      "**BGP**",
+      "Handles best path and failover"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Design considerations",
+    "cols": [
+     "Point",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**IP plan**",
+      "Unique addressing per site"
+     ],
+     [
+      "**CE redundancy**",
+      "Dual CE or dual PE"
+     ],
+     [
+      "**QoS**",
+      "Per-class treatment over the VPN"
+     ],
+     [
+      "**Internet**",
+      "Direct internet access, separate from MPLS"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check VRF routes and labels",
+    "code": "show ip route vrf CUST1\nshow bgp vpnv4 unicast vrf CUST1\nshow mpls forwarding-table"
+   },
+   {
+    "label": "Check VPN reachability",
+    "code": "ping vrf CUST1 10.10.0.2\nshow ip bgp vpnv4 all"
+   },
+   {
+    "label": "Check customer edge routing",
+    "code": "show ip route vrf CUST1\nshow ip bgp summary"
+   }
+  ],
+  "traps": [
+   "MPLS WAN is a **provider L3VPN** built with VRFs and MP-BGP.",
+   "CE to PE options include **eBGP, static, OSPF and EIGRP**.",
+   "Layer 3 means the **provider routes**; Layer 2 Metro Ethernet keeps routing with the customer.",
+   "**Dual PE or dual CE** provides resilience through routing.",
+   "**DIA** keeps internet traffic off the private VPN.",
+   "A missing VPN route usually points at **MP-BGP or the VRF configuration**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "MPLS WAN"
+   ],
+   "rows": [
+    [
+     "Model",
+     "L3VPN"
+    ],
+    [
+     "Edge",
+     "PE with VRF"
+    ],
+    [
+     "CE to PE",
+     "eBGP or static"
+    ],
+    [
+     "Any-to-any",
+     "Yes"
+    ],
+    [
+     "Routing",
+     "Provider"
+    ],
+    [
+     "Redundancy",
+     "Dual PE or CE"
+    ],
+    [
+     "Versus L2",
+     "Provider routes"
+    ],
+    [
+     "Verify",
+     "Show bgp vpnv4"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. Metro Ethernet",
+    "d": "The Layer 2 alternative"
+   },
+   {
+    "t": "07. SD-WAN",
+    "d": "The modern overlay"
+   },
+   {
+    "t": "05. Broadband",
+    "d": "Cheap transport and DIA"
+   }
+  ],
+  "glossary": [
+   "MPLS WAN",
+   "MPLS VPN",
+   "VRF",
+   "MP-BGP",
+   "BGP",
+   "MPLS",
+   "WAN"
+  ]
+ },
+ {
+  "id": "t05",
+  "num": "05",
+  "group": "traditional",
+  "title": "Broadband",
+  "blurb": "DSL, cable and fiber as shared best-effort WAN transport",
+  "overview": "**[[Broadband]]** WANs ride DSL, cable or fiber over a shared access network, usually with **[[PPPoE]]** as the session and authentication layer. Broadband is cheap and widely available, but it is asymmetric, shared and less predictable than MPLS, which makes it a natural secondary, DIA or SD-WAN transport.",
+  "keyIdea": "Broadband is shared, asymmetric and best effort. PPPoE supplies the session, the MTU is 1492, and enterprises use it as backup, DIA or an SD-WAN underlay.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Broadband types",
+    "cols": [
+     "Type",
+     "Medium",
+     "Notes"
+    ],
+    "rows": [
+     [
+      "**DSL**",
+      "Phone line",
+      "ADSL or VDSL"
+     ],
+     [
+      "**Cable**",
+      "Coaxial",
+      "Shared with the neighbourhood"
+     ],
+     [
+      "**Fiber**",
+      "GPON or EPON",
+      "High speed and more symmetric"
+     ],
+     [
+      "**Fixed wireless**",
+      "RF",
+      "Rural coverage"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Characteristics",
+    "cols": [
+     "Characteristic",
+     "Broadband"
+    ],
+    "rows": [
+     [
+      "**Asymmetry**",
+      "Download usually exceeds upload"
+     ],
+     [
+      "**Sharing**",
+      "Shared access network"
+     ],
+     [
+      "**Latency**",
+      "Variable"
+     ],
+     [
+      "**Predictability**",
+      "Low"
+     ],
+     [
+      "**Cost**",
+      "Low"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Session model",
+    "cols": [
+     "Layer",
+     "Protocol"
+    ],
+    "rows": [
+     [
+      "**Access**",
+      "DSL, cable or fiber"
+     ],
+     [
+      "**Session**",
+      "PPPoE"
+     ],
+     [
+      "**Authentication**",
+      "CHAP or RADIUS"
+     ],
+     [
+      "**Addressing**",
+      "IPCP or DHCP"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Enterprise use",
+    "cols": [
+     "Role",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Primary**",
+      "Small sites with no better option"
+     ],
+     [
+      "**Secondary**",
+      "Backup or DIA"
+     ],
+     [
+      "**SD-WAN**",
+      "Cheap underlay transport"
+     ],
+     [
+      "**QoS**",
+      "Limited control"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Design notes",
+    "cols": [
+     "Point",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**NAT**",
+      "The CPE often performs NAT"
+     ],
+     [
+      "**MTU**",
+      "1492 with PPPoE"
+     ],
+     [
+      "**DIA**",
+      "Local internet breakout"
+     ],
+     [
+      "**Redundancy**",
+      "Pair with MPLS or LTE"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check the broadband session",
+    "code": "show pppoe session\nshow interface Dialer1\nshow ip interface brief"
+   },
+   {
+    "label": "Check physical and path quality",
+    "code": "show interface GigabitEthernet0/0\nping 8.8.8.8\ntraceroute 8.8.8.8"
+   },
+   {
+    "label": "Check NAT and local breakout",
+    "code": "show ip nat translations\nshow ip interface brief"
+   }
+  ],
+  "traps": [
+   "Broadband is **DSL, cable or fiber plus PPPoE**.",
+   "It is **asymmetric, shared and best effort**, not an SLA link.",
+   "PPPoE means an MTU of **1492**.",
+   "The typical role is **backup, DIA or SD-WAN transport**.",
+   "Pair broadband with MPLS or LTE for redundancy.",
+   "A shared access network means **contention** affects throughput."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Broadband"
+   ],
+   "rows": [
+    [
+     "Access",
+     "DSL, cable, fiber"
+    ],
+    [
+     "Session",
+     "PPPoE"
+    ],
+    [
+     "Symmetry",
+     "Asymmetric"
+    ],
+    [
+     "Sharing",
+     "Yes"
+    ],
+    [
+     "SLA",
+     "None"
+    ],
+    [
+     "MTU",
+     "1492"
+    ],
+    [
+     "Role",
+     "Backup or DIA"
+    ],
+    [
+     "SD-WAN",
+     "Transport"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. PPPoE",
+    "d": "The session layer"
+   },
+   {
+    "t": "06. LTE",
+    "d": "Wireless broadband"
+   },
+   {
+    "t": "07. SD-WAN",
+    "d": "Uses broadband as underlay"
+   }
+  ],
+  "glossary": [
+   "Broadband",
+   "PPPoE",
+   "DHCP",
+   "SD-WAN",
+   "WAN"
+  ]
+ },
+ {
+  "id": "t06",
+  "num": "06",
+  "group": "traditional",
+  "title": "LTE",
+  "blurb": "Cellular WAN with SIM, APN, metered data and SD-WAN failover",
+  "overview": "**[[LTE|LTE and 5G cellular]]** is a wireless WAN transport, useful as a primary link in rural areas, as backup, or for roaming and temporary sites. It uses a SIM and an APN profile on a cellular interface, obtains an address by DHCP or negotiation, and works well as an **[[SD-WAN]]** transport with automatic failover.",
+  "keyIdea": "LTE needs a SIM and an APN profile, gets an address from the carrier, and is metered and variable. Its best enterprise role is backup and SD-WAN failover.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Why LTE",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Coverage**",
+      "Anywhere with cellular signal"
+     ],
+     [
+      "**Speed**",
+      "LTE and 5G rates"
+     ],
+     [
+      "**Setup**",
+      "SIM plus APN"
+     ],
+     [
+      "**Mobility**",
+      "Works while moving"
+     ],
+     [
+      "**Cost**",
+      "Metered per data volume"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Use cases",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Primary**",
+      "Remote or rural sites"
+     ],
+     [
+      "**Backup**",
+      "Failover for a wired link"
+     ],
+     [
+      "**Roaming**",
+      "Vehicles and temporary sites"
+     ],
+     [
+      "**SD-WAN**",
+      "Diverse transport"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Interface model",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Interface**",
+      "Cellular0/0/0"
+     ],
+     [
+      "**SIM**",
+      "Subscriber identity"
+     ],
+     [
+      "**APN**",
+      "Carrier access point name"
+     ],
+     [
+      "**Profile**",
+      "Cellular profile binding"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Cellular configuration sketch",
+    "code": "  interface Cellular0/0/0\n   ip address negotiated\n   cellular profile 1\n   no shutdown\n  !\n  dialer-list 1 protocol ip permit"
+   },
+   {
+    "kind": "table",
+    "h": "Cellular commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%cellular profile%%**",
+      "Bind the APN profile"
+     ],
+     [
+      "**%%ip address negotiated%%**",
+      "Get an address from the carrier"
+     ],
+     [
+      "**%%dialer-list%%**",
+      "Define interesting traffic"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Characteristics",
+    "cols": [
+     "Characteristic",
+     "LTE"
+    ],
+    "rows": [
+     [
+      "**Latency**",
+      "Moderate"
+     ],
+     [
+      "**Bandwidth**",
+      "Variable"
+     ],
+     [
+      "**Data caps**",
+      "Common"
+     ],
+     [
+      "**Predictability**",
+      "Variable"
+     ],
+     [
+      "**Cost**",
+      "Per usage"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SD-WAN pairing",
+    "cols": [
+     "Use",
+     "Benefit"
+    ],
+    "rows": [
+     [
+      "**Transport diversity**",
+      "Adds a path that is independent of wired links"
+     ],
+     [
+      "**Failover**",
+      "Automatic when the primary path fails SLA"
+     ],
+     [
+      "**Policy**",
+      "Route by application and path quality"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check cellular hardware and radio",
+    "code": "show cellular 0/0/0 hardware\nshow cellular 0/0/0 radio\nshow cellular 0/0/0 profile"
+   },
+   {
+    "label": "Check the interface and address",
+    "code": "show interface Cellular0/0/0\nshow ip interface brief"
+   },
+   {
+    "label": "Check the carrier profile",
+    "code": "show cellular 0/0/0 profile\nshow cellular 0/0/0 hardware"
+   }
+  ],
+  "traps": [
+   "LTE uses a **cellular interface, SIM and APN**.",
+   "Its roles are **primary in rural areas, backup and SD-WAN transport**.",
+   "**%%ip address negotiated%%** gets the address from the carrier.",
+   "LTE is **metered and variable**, so treat it as best effort.",
+   "SD-WAN uses LTE for **automatic failover**.",
+   "**NAT** is common on cellular CPE and affects inbound access."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "LTE"
+   ],
+   "rows": [
+    [
+     "Medium",
+     "Cellular"
+    ],
+    [
+     "Identity",
+     "SIM"
+    ],
+    [
+     "Profile",
+     "APN"
+    ],
+    [
+     "IP",
+     "Negotiated or DHCP"
+    ],
+    [
+     "Role",
+     "Backup and SD-WAN"
+    ],
+    [
+     "SD-WAN",
+     "Transport"
+    ],
+    [
+     "Metered",
+     "Yes"
+    ],
+    [
+     "Check",
+     "Show cellular"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Broadband",
+    "d": "Wired alternative"
+   },
+   {
+    "t": "07. SD-WAN",
+    "d": "Multi-transport overlay"
+   },
+   {
+    "t": "02. PPPoE",
+    "d": "Wired session model"
+   }
+  ],
+  "glossary": [
+   "LTE",
+   "Broadband",
+   "SD-WAN",
+   "NAT",
+   "DHCP"
+  ]
+ },
+ {
+  "id": "t07",
+  "num": "07",
+  "group": "sdwan",
+  "title": "SD-WAN",
+  "blurb": "An overlay over any transport, built on OMP and three controllers",
+  "overview": "**[[SD-WAN|Cisco SD-WAN]]** builds an overlay network over any transport, including MPLS, broadband and LTE, using secure tunnels between WAN edge routers. A controller cluster made of **[[vManage]]**, **[[vSmart]]** and **[[vBond]]** manages policies and routing centrally. The exam wants the planes and the role of each controller.",
+  "keyIdea": "SD-WAN separates the overlay from the underlay. vBond orchestrates and authenticates, vSmart controls with OMP, vManage manages, and the WAN edge carries the data.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Overlay over any transport",
+    "cols": [
+     "Layer",
+     "Component"
+    ],
+    "rows": [
+     [
+      "**Underlay**",
+      "MPLS, broadband or LTE"
+     ],
+     [
+      "**Overlay**",
+      "Secure tunnels between edges"
+     ],
+     [
+      "**Control**",
+      "OMP"
+     ],
+     [
+      "**Policy**",
+      "Centralized on vSmart"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The four components",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "**WAN edge**",
+      "vEdge or cEdge routers"
+     ],
+     [
+      "**vSmart**",
+      "Control and policy"
+     ],
+     [
+      "**vManage**",
+      "Management and analytics"
+     ],
+     [
+      "**vBond**",
+      "Orchestration and onboarding"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The planes",
+    "cols": [
+     "Plane",
+     "Runs on"
+    ],
+    "rows": [
+     [
+      "**Data**",
+      "WAN edge"
+     ],
+     [
+      "**Control**",
+      "vSmart with OMP"
+     ],
+     [
+      "**Management**",
+      "vManage"
+     ],
+     [
+      "**Orchestration**",
+      "vBond"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "OMP, the overlay management protocol",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**What**",
+      "Control protocol"
+     ],
+     [
+      "**Runs**",
+      "Between edges and vSmart"
+     ],
+     [
+      "**Carries**",
+      "Routes, TLOCs and policies"
+     ],
+     [
+      "**Result**",
+      "Overlay routing and path selection"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key features",
+    "cols": [
+     "Feature",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Transport independence**",
+      "Any available link"
+     ],
+     [
+      "**Application-aware routing**",
+      "Paths chosen by SLA"
+     ],
+     [
+      "**Security**",
+      "DTLS and IPsec tunnels"
+     ],
+     [
+      "**Centralized policy**",
+      "vSmart distributes it"
+     ],
+     [
+      "**Analytics**",
+      "vManage dashboards"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Cost**",
+      "Use cheaper broadband"
+     ],
+     [
+      "**Agility**",
+      "Fast site bring-up"
+     ],
+     [
+      "**Reliability**",
+      "Multi-link failover"
+     ],
+     [
+      "**Visibility**",
+      "Central monitoring"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check overlay control and routes",
+    "code": "show omp peers\nshow omp routes\nshow sdwan control connections"
+   },
+   {
+    "label": "Check the local edge configuration",
+    "code": "show sdwan running-config\nshow sdwan interface"
+   },
+   {
+    "label": "Check transport health",
+    "code": "show sdwan control connections\nshow omp tlocs"
+   }
+  ],
+  "traps": [
+   "SD-WAN is an **overlay plus OMP plus centralized controllers**.",
+   "**vBond orchestrates, vSmart controls and vManage manages**.",
+   "The data plane runs on the **WAN edge** routers.",
+   "**OMP replaces BGP and IGP** for overlay routing.",
+   "Application-aware routing selects paths by **SLA** metrics.",
+   "The underlay can be **MPLS, broadband or LTE**, often all three at once."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SD-WAN"
+   ],
+   "rows": [
+    [
+     "Overlay",
+     "Secure tunnels"
+    ],
+    [
+     "Control",
+     "OMP"
+    ],
+    [
+     "vSmart",
+     "Policy and control"
+    ],
+    [
+     "vManage",
+     "Management"
+    ],
+    [
+     "vBond",
+     "Orchestration"
+    ],
+    [
+     "Edge",
+     "vEdge or cEdge"
+    ],
+    [
+     "Transport",
+     "Any"
+    ],
+    [
+     "Routing",
+     "Application-aware SLA"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. vManage",
+    "d": "Management plane"
+   },
+   {
+    "t": "09. vSmart",
+    "d": "Control plane"
+   },
+   {
+    "t": "10. vBond",
+    "d": "Orchestration plane"
+   }
+  ],
+  "glossary": [
+   "SD-WAN",
+   "vManage",
+   "vSmart",
+   "vBond",
+   "WAN Edge",
+   "IPsec",
+   "MPLS WAN"
+  ]
+ },
+ {
+  "id": "t08",
+  "num": "08",
+  "group": "sdwan",
+  "title": "Cisco Catalyst SD-WAN Manager (vManage)",
+  "blurb": "The management plane: templates, onboarding, monitoring and APIs",
+  "overview": "**[[vManage]]** is the management plane of Cisco **[[SD-WAN]]**. It provides the web interface and API used to onboard devices, push templates, monitor health and gather analytics. Configuration flows through vManage, while **[[vSmart]]** controls routing and **[[vBond]]** handles orchestration.",
+  "keyIdea": "Catalyst SD-WAN Manager (formerly vManage) is the management plane: templates, zero-touch onboarding, monitoring and REST APIs. It configures and observes the fabric but does not run OMP or carry user data.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The role of vManage",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Dashboard**",
+      "Single interface for the fabric"
+     ],
+     [
+      "**Templates**",
+      "Device and feature configuration"
+     ],
+     [
+      "**Onboarding**",
+      "Zero-touch provisioning"
+     ],
+     [
+      "**Monitoring**",
+      "Health, alarms and analytics"
+     ],
+     [
+      "**APIs**",
+      "REST automation"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Plane placement",
+    "cols": [
+     "Plane",
+     "Component"
+    ],
+    "rows": [
+     [
+      "**Management**",
+      "vManage"
+     ],
+     [
+      "**Control**",
+      "vSmart"
+     ],
+     [
+      "**Orchestration**",
+      "vBond"
+     ],
+     [
+      "**Data**",
+      "WAN edge"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "How configuration flows",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "Build a template in vManage"
+     ],
+     [
+      "**2**",
+      "Push it to the device"
+     ],
+     [
+      "**3**",
+      "The device validates the change"
+     ],
+     [
+      "**4**",
+      "Monitor the result in vManage"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Features",
+    "cols": [
+     "Feature",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Templates**",
+      "Feature and device templates"
+     ],
+     [
+      "**CLI mode**",
+      "Direct configuration when needed"
+     ],
+     [
+      "**Monitoring**",
+      "Real-time device and link state"
+     ],
+     [
+      "**Alerts**",
+      "Health and event notification"
+     ],
+     [
+      "**REST API**",
+      "Programmable operations"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Monitoring and analytics",
+    "cols": [
+     "View",
+     "Content"
+    ],
+    "rows": [
+     [
+      "**Device list**",
+      "Status and reachability"
+     ],
+     [
+      "**Links**",
+      "SLA, usage and errors"
+     ],
+     [
+      "**Events**",
+      "Alerts and alarms"
+     ],
+     [
+      "**Logs**",
+      "Troubleshooting detail"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "High availability",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Cluster**",
+      "Multiple vManage nodes"
+     ],
+     [
+      "**Replication**",
+      "Database synchronisation"
+     ],
+     [
+      "**Failover**",
+      "Transparent to the operator"
+     ],
+     [
+      "**Backup**",
+      "Configuration and data protection"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Current product naming",
+    "cols": [
+     "Older name",
+     "Current name",
+     "Role"
+    ],
+    "rows": [
+     [
+      "**vManage**",
+      "Cisco Catalyst SD-WAN Manager",
+      "Management plane"
+     ],
+     [
+      "**vSmart**",
+      "Cisco Catalyst SD-WAN Controller",
+      "Control plane and OMP"
+     ],
+     [
+      "**vBond**",
+      "Cisco Catalyst SD-WAN Validator",
+      "Orchestration and onboarding"
+     ],
+     [
+      "**vEdge / cEdge**",
+      "Cisco Catalyst SD-WAN Edge",
+      "Data plane and WAN edge"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "What the Manager exposes",
+    "items": [
+     {
+      "t": "Templates",
+      "d": "Feature and device templates keep configuration consistent across sites."
+     },
+     {
+      "t": "Manager API",
+      "d": "REST endpoints support onboarding, monitoring and configuration automation."
+     },
+     {
+      "t": "Analytics",
+      "d": "Link SLA, application experience and alarms are viewed from the management plane."
+     },
+     {
+      "t": "Naming on the exam",
+      "d": "The blueprint may use Catalyst SD-WAN Manager while older material and CLI output still say vManage."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check device and management state",
+    "code": "show sdwan running-config\nshow sdwan device\nshow sdwan vmanage connections"
+   },
+   {
+    "label": "Check control and OMP health",
+    "code": "show omp peers\nshow sdwan control"
+   },
+   {
+    "label": "Check templates and config",
+    "code": "show sdwan running-config\nshow sdwan device"
+   }
+  ],
+  "traps": [
+   "vManage is the **management plane** for dashboards, templates and monitoring.",
+   "Configuration is **template-driven and pushed centrally**.",
+   "**vSmart controls and vBond orchestrates**, while vManage manages.",
+   "The **REST API** enables automation.",
+   "Run vManage in a **cluster** for high availability.",
+   "vManage does not replace **OMP on vSmart**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "vManage"
+   ],
+   "rows": [
+    [
+     "Plane",
+     "Management"
+    ],
+    [
+     "Configuration",
+     "Templates"
+    ],
+    [
+     "Onboarding",
+     "Zero-touch"
+    ],
+    [
+     "Monitoring",
+     "Health and analytics"
+    ],
+    [
+     "API",
+     "REST"
+    ],
+    [
+     "Cluster",
+     "High availability"
+    ],
+    [
+     "Compared with vSmart",
+     "Control"
+    ],
+    [
+     "Compared with vBond",
+     "Orchestration"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. SD-WAN",
+    "d": "The overall architecture"
+   },
+   {
+    "t": "09. vSmart",
+    "d": "Control plane"
+   },
+   {
+    "t": "10. vBond",
+    "d": "Orchestration plane"
+   }
+  ],
+  "glossary": [
+   "vManage",
+   "SD-WAN",
+   "vSmart",
+   "vBond",
+   "WAN Edge"
+  ]
+ },
+ {
+  "id": "t09",
+  "num": "09",
+  "group": "sdwan",
+  "title": "vSmart",
+  "blurb": "The control plane: OMP, TLOCs and centralized policy",
+  "overview": "**[[vSmart]]** is the control plane of Cisco **[[SD-WAN]]**. It runs OMP with every WAN edge, computes the overlay topology and distributes centralized policy for routing, data and application awareness. Without vSmart, edges have no overlay control or policy.",
+  "keyIdea": "vSmart is the control plane. OMP carries routes and TLOCs between vSmart and the edges, and centralized policy is authored once and pushed from vSmart.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The role of vSmart",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**OMP**",
+      "Control protocol with the edges"
+     ],
+     [
+      "**Route distribution**",
+      "Overlay prefixes and TLOCs"
+     ],
+     [
+      "**Policy**",
+      "Centralized routing and data policy"
+     ],
+     [
+      "**Topology**",
+      "Overlay path computation"
+     ],
+     [
+      "**SLA**",
+      "Application-aware path selection"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "OMP, the overlay management protocol",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Peers**",
+      "vSmart and every WAN edge"
+     ],
+     [
+      "**Routes**",
+      "OMP routes for prefixes"
+     ],
+     [
+      "**TLOC**",
+      "Transport locator for each path"
+     ],
+     [
+      "**Policy**",
+      "Attached and distributed"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Route types and objects",
+    "cols": [
+     "Type",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**OMP route**",
+      "A prefix with its origin"
+     ],
+     [
+      "**TLOC**",
+      "Transport location and colour"
+     ],
+     [
+      "**Service**",
+      "VPN or service endpoint"
+     ],
+     [
+      "**Policy**",
+      "Match and action rules"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Policy model",
+    "cols": [
+     "Policy",
+     "Effect"
+    ],
+    "rows": [
+     [
+      "**Centralized**",
+      "Authored for vSmart and pushed to edges"
+     ],
+     [
+      "**Local**",
+      "Applied directly on an edge"
+     ],
+     [
+      "**Application-aware**",
+      "Chooses a path by SLA"
+     ],
+     [
+      "**Control**",
+      "Filters and modifies routes"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why centralized control matters",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Consistency**",
+      "One source of policy"
+     ],
+     [
+      "**Agility**",
+      "Change once, apply everywhere"
+     ],
+     [
+      "**Scale**",
+      "Edges stay lightweight"
+     ],
+     [
+      "**Application awareness**",
+      "Global SLA view"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "vSmart versus the other controllers",
+    "cols": [
+     "Controller",
+     "Plane"
+    ],
+    "rows": [
+     [
+      "**vBond**",
+      "Orchestration"
+     ],
+     [
+      "**vSmart**",
+      "Control"
+     ],
+     [
+      "**vManage**",
+      "Management"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check OMP peers, routes and TLOCs",
+    "code": "show omp peers\nshow omp routes\nshow omp tlocs"
+   },
+   {
+    "label": "Check control and policy state",
+    "code": "show sdwan control\nshow sdwan policy"
+   },
+   {
+    "label": "Check edge control connections",
+    "code": "show sdwan control connections\nshow omp peers"
+   }
+  ],
+  "traps": [
+   "vSmart is the **control plane**, running **OMP and centralized policy**.",
+   "**OMP carries routes and TLOCs**.",
+   "Centralized policy is **pushed from vSmart** to the edges.",
+   "**vBond orchestrates, vManage manages and vSmart controls**.",
+   "Without vSmart, there is **no overlay control**.",
+   "Application-aware routing uses **SLA metrics**, not just hop count."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "vSmart"
+   ],
+   "rows": [
+    [
+     "Plane",
+     "Control"
+    ],
+    [
+     "Protocol",
+     "OMP"
+    ],
+    [
+     "Routes",
+     "OMP routes"
+    ],
+    [
+     "TLOC",
+     "Transport locator"
+    ],
+    [
+     "Policy",
+     "Centralized"
+    ],
+    [
+     "App routing",
+     "SLA based"
+    ],
+    [
+     "Compared with vBond",
+     "Orchestration"
+    ],
+    [
+     "Compared with vManage",
+     "Management"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. SD-WAN",
+    "d": "The overall architecture"
+   },
+   {
+    "t": "10. vBond",
+    "d": "Orchestration plane"
+   },
+   {
+    "t": "11. WAN Edge",
+    "d": "The OMP peer"
+   }
+  ],
+  "glossary": [
+   "vSmart",
+   "SD-WAN",
+   "vManage",
+   "vBond",
+   "WAN Edge"
+  ]
+ },
+ {
+  "id": "t10",
+  "num": "10",
+  "group": "sdwan",
+  "title": "vBond",
+  "blurb": "The orchestration plane: first contact, authentication and discovery",
+  "overview": "**[[vBond]]** is the orchestration plane of Cisco **[[SD-WAN]]** and the first contact point for a new device. It authenticates and onboards edges and controllers, tells them which **[[vSmart]]** and **[[vManage]]** to use, and anchors the public identity of the fabric. It is the front door, not the routing brain.",
+  "keyIdea": "vBond orchestrates and authenticates. New edges contact vBond first, prove identity, and are then pointed at vSmart and vManage.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The role of vBond",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Orchestration**",
+      "First contact for new devices"
+     ],
+     [
+      "**Authentication**",
+      "Validates device identity"
+     ],
+     [
+      "**Discovery**",
+      "Points devices at vSmart and vManage"
+     ],
+     [
+      "**Bootstrap**",
+      "Supports NTP and key setup"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Onboarding flow",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "The new edge contacts vBond"
+     ],
+     [
+      "**2**",
+      "vBond verifies its identity"
+     ],
+     [
+      "**3**",
+      "vBond assigns the controllers"
+     ],
+     [
+      "**4**",
+      "The edge builds secure sessions"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why reachability matters",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Public IP**",
+      "vBond must be reachable from the internet or WAN"
+     ],
+     [
+      "**DTLS**",
+      "Secures onboarding"
+     ],
+     [
+      "**DNS**",
+      "Used to discover vBond"
+     ],
+     [
+      "**Firewall**",
+      "Allow 12346 or 443 as designed"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Identity and security",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Serial or chassis**",
+      "Device identifier"
+     ],
+     [
+      "**Certificates**",
+      "Mutual authentication"
+     ],
+     [
+      "**Keys**",
+      "Bootstrap trust"
+     ],
+     [
+      "**Result**",
+      "A trusted fabric"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The three controllers",
+    "cols": [
+     "Controller",
+     "Plane"
+    ],
+    "rows": [
+     [
+      "**vBond**",
+      "Orchestration"
+     ],
+     [
+      "**vSmart**",
+      "Control"
+     ],
+     [
+      "**vManage**",
+      "Management"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Scale and high availability",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Multiple vBond**",
+      "Redundancy"
+     ],
+     [
+      "**DNS round-robin**",
+      "Load distribution"
+     ],
+     [
+      "**Out-of-band**",
+      "Separate management network"
+     ],
+     [
+      "**HA**",
+      "Keeps onboarding available"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check vBond and identity state",
+    "code": "show sdwan vbond list\nshow sdwan identity\nshow sdwan hardware-status"
+   },
+   {
+    "label": "Check onboarding and config",
+    "code": "show sdwan running-config\nshow sdwan control connections"
+   },
+   {
+    "label": "Troubleshoot orchestration",
+    "code": "debug sdwan\nshow sdwan vbond list"
+   }
+  ],
+  "traps": [
+   "vBond is the **orchestration plane**, responsible for onboarding and authentication.",
+   "Edges **contact vBond first**, then get pointed at vSmart and vManage.",
+   "vBond must be **reachable**, normally through a public address or DNS.",
+   "Identity is proven with **serial number and certificates**.",
+   "**vBond is not vSmart and not vManage**.",
+   "Time skew can break certificate validation, so **NTP** matters."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "vBond"
+   ],
+   "rows": [
+    [
+     "Plane",
+     "Orchestration"
+    ],
+    [
+     "Job",
+     "Onboard"
+    ],
+    [
+     "Auth",
+     "Serial and certificate"
+    ],
+    [
+     "Discovery",
+     "Assign controllers"
+    ],
+    [
+     "Reachable",
+     "Public or DNS"
+    ],
+    [
+     "DTLS",
+     "Secure onboarding"
+    ],
+    [
+     "Compared with vSmart",
+     "Control"
+    ],
+    [
+     "Compared with vManage",
+     "Management"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. SD-WAN",
+    "d": "The overall architecture"
+   },
+   {
+    "t": "09. vSmart",
+    "d": "Control plane"
+   },
+   {
+    "t": "11. WAN Edge",
+    "d": "The device being onboarded"
+   }
+  ],
+  "glossary": [
+   "vBond",
+   "SD-WAN",
+   "vManage",
+   "vSmart",
+   "WAN Edge"
+  ]
+ },
+ {
+  "id": "t11",
+  "num": "11",
+  "group": "sdwan",
+  "title": "WAN Edge",
+  "blurb": "vEdge and cEdge routers: the data plane of the overlay",
+  "overview": "**[[WAN Edge]]** is the SD-WAN term for the routers at each site: **vEdge** on Viptela OS or **cEdge** on IOS-XE. They terminate overlay tunnels, run OMP with **[[vSmart]]**, forward data through DTLS or **[[IPsec]]**, and enforce application-aware policy. This is where the data plane actually lives.",
+  "keyIdea": "The WAN edge is the data plane. cEdge runs IOS-XE, vEdge runs Viptela OS, and each transport is identified by a TLOC and colour.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "WAN edge roles",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Tunnel termination**",
+      "DTLS or IPsec"
+     ],
+     [
+      "**OMP**",
+      "Control session to vSmart"
+     ],
+     [
+      "**Data forwarding**",
+      "Overlay and local traffic"
+     ],
+     [
+      "**Local policy**",
+      "Applied from templates"
+     ],
+     [
+      "**Multi-WAN**",
+      "Several transports per site"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "vEdge versus cEdge",
+    "cols": [
+     "Item",
+     "vEdge",
+     "cEdge"
+    ],
+    "rows": [
+     [
+      "**OS**",
+      "Viptela OS",
+      "IOS-XE"
+     ],
+     [
+      "**Platform**",
+      "Viptela hardware or virtual",
+      "Catalyst or ISR"
+     ],
+     [
+      "**Configuration**",
+      "SD-WAN CLI",
+      "IOS-XE SD-WAN"
+     ],
+     [
+      "**Interoperability**",
+      "Native",
+      "Native"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Transport connections",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**TLOC**",
+      "Transport locator"
+     ],
+     [
+      "**Colour**",
+      "Label such as MPLS, broadband or LTE"
+     ],
+     [
+      "**Multiple links**",
+      "One TLOC per transport"
+     ],
+     [
+      "**SLA**",
+      "Path health and quality"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Control connections",
+    "cols": [
+     "Session",
+     "Peer"
+    ],
+    "rows": [
+     [
+      "**Onboarding**",
+      "vBond"
+     ],
+     [
+      "**OMP**",
+      "vSmart"
+     ],
+     [
+      "**Management**",
+      "vManage"
+     ],
+     [
+      "**Data tunnels**",
+      "Other WAN edges"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Data plane",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Tunnel**",
+      "DTLS or IPsec"
+     ],
+     [
+      "**Overlay**",
+      "Routes learned through OMP"
+     ],
+     [
+      "**Policy**",
+      "Application-aware forwarding"
+     ],
+     [
+      "**NAT**",
+      "Enabled per transport as needed"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "WAN edge verification",
+    "code": "  show sdwan control connections\n  show sdwan omp peers\n  show omp routes\n  show sdwan interface"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check control and OMP sessions",
+    "code": "show sdwan control connections\nshow sdwan control connections-history\nshow omp peers"
+   },
+   {
+    "label": "Check routes and interfaces",
+    "code": "show omp routes\nshow sdwan interface\nshow sdwan running-config"
+   },
+   {
+    "label": "Check transport and SLA state",
+    "code": "show omp tlocs\nshow sdwan control connections"
+   }
+  ],
+  "traps": [
+   "The WAN edge is the **data plane**.",
+   "**cEdge runs IOS-XE; vEdge runs Viptela OS**.",
+   "A **TLOC and colour** identify a transport path.",
+   "The edge keeps sessions with **vBond, vSmart, vManage and peer edges**.",
+   "Data tunnels use **DTLS or IPsec**, with application-aware policy.",
+   "An edge can have **multiple transports**, each with its own TLOC."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "WAN Edge"
+   ],
+   "rows": [
+    [
+     "Plane",
+     "Data"
+    ],
+    [
+     "vEdge",
+     "Viptela OS"
+    ],
+    [
+     "cEdge",
+     "IOS-XE"
+    ],
+    [
+     "Tunnel",
+     "DTLS or IPsec"
+    ],
+    [
+     "TLOC",
+     "Transport locator"
+    ],
+    [
+     "Colour",
+     "Transport label"
+    ],
+    [
+     "OMP",
+     "To vSmart"
+    ],
+    [
+     "Verify",
+     "Show sdwan control"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. SD-WAN",
+    "d": "The overall architecture"
+   },
+   {
+    "t": "09. vSmart",
+    "d": "The control peer"
+   },
+   {
+    "t": "08. vManage",
+    "d": "Management and templates"
+   }
+  ],
+  "glossary": [
+   "WAN Edge",
+   "SD-WAN",
+   "vSmart",
+   "vManage",
+   "vBond",
+   "IPsec"
+  ]
+ }
+];
 
-        const GROUPS = [
-          { key: 'traditional', label: 'Traditional WAN', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
-          { key: 'sdwan', label: 'SD-WAN', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
-        ];
+        const GROUPS = [{"key":"traditional","label":"Traditional WAN","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"sdwan","label":"SD-WAN","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
+
         const groups = GROUPS;
+
         const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
 
         const glossary = [
-          { term: 'PPP', def: 'Point-to-Point Protocol. A WAN encapsulation with LCP link negotiation, NCP network negotiation, PAP or CHAP authentication and optional multilink.' },
-          { term: 'PPPoE', def: 'PPP over Ethernet. A session and authentication layer for DSL and broadband, using PADI, PADO, PADR and PADS discovery with an MTU of 1492.' },
-          { term: 'Metro Ethernet', def: 'Carrier Ethernet WAN services delivered as E-LINE, E-LAN or E-TREE, using EoMPLS, VPLS or EVPN and often QinQ tagging.' },
-          { term: 'MPLS WAN', def: 'A provider-managed Layer 3 VPN WAN. Customer sites connect to provider edge routers, which isolate routes in VRFs and advertise them with MP-BGP.' },
-          { term: 'Broadband', def: 'DSL, cable or fiber internet access, typically shared, asymmetric and best effort, often using PPPoE and suitable for backup or SD-WAN transport.' },
-          { term: 'LTE', def: 'Long-Term Evolution cellular WAN access. It uses a SIM and APN profile, offers metered and variable bandwidth, and is common for backup or SD-WAN failover.' },
-          { term: 'SD-WAN', def: 'Software-Defined WAN. An overlay over MPLS, broadband or LTE, using secure tunnels, OMP and centralized controllers to apply policy and choose paths by SLA.' },
-          { term: 'vManage', def: 'The Cisco SD-WAN management plane. It provides templates, zero-touch onboarding, monitoring, analytics and REST APIs.' },
-          { term: 'vSmart', def: 'The Cisco SD-WAN control plane. It runs OMP with the edges, distributes routes and TLOCs, and pushes centralized policy.' },
-          { term: 'vBond', def: 'The Cisco SD-WAN orchestration plane. It is the first contact for new devices, authenticates them and points them at vSmart and vManage.' },
-          { term: 'WAN Edge', def: 'The SD-WAN router at a site, either vEdge on Viptela OS or cEdge on IOS-XE. It terminates tunnels and carries the data plane.' },
-          { term: 'Ethernet', def: 'The Layer 2 LAN technology used as the physical and service foundation for PPPoE, Metro Ethernet and most WAN edge links.' },
-          { term: 'VLAN', def: 'Virtual LAN. A Layer 2 broadcast domain, often stacked with QinQ tags across a Metro Ethernet provider network.' },
-          { term: 'QinQ', def: 'A provider bridging technique that stacks a service VLAN tag around a customer VLAN tag, also called 802.1ad or Q-in-Q.' },
-          { term: 'MPLS VPN', def: 'A provider VPN built on MPLS. Layer 3 VPNs use VRFs and MP-BGP, while Layer 2 VPNs use pseudowires such as EoMPLS.' },
-          { term: 'VRF', def: 'Virtual Routing and Forwarding. Separate routing tables on a provider edge router that keep customer VPNs isolated.' },
-          { term: 'MP-BGP', def: 'Multiprotocol BGP. It carries VPN routes, including VPNv4 prefixes with route targets and route distinguishers, across an MPLS provider core.' },
-          { term: 'BGP', def: 'Border Gateway Protocol. The routing protocol used for CE to PE connectivity and for EVPN control planes and larger WAN designs.' },
-          { term: 'MPLS', def: 'Multiprotocol Label Switching. A label-switching transport used by service providers to build VPNs and traffic-engineered cores.' },
-          { term: 'IPsec', def: 'An IP security framework used for encrypted SD-WAN data tunnels, alongside DTLS, to protect traffic between WAN edges.' },
-          { term: 'NAT', def: 'Network Address Translation. Broadband and cellular CPE often NAT client traffic, which affects inbound access and overlay design.' },
-          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol. It supplies addresses on broadband, cellular and Ethernet links where address negotiation is not done by IPCP.' },
-          { term: 'RADIUS', def: 'Remote Authentication Dial-In User Service. The AAA server commonly used behind a PPPoE access concentrator for subscriber authentication.' },
-          { term: 'WAN', def: 'Wide Area Network. The connectivity that links enterprise sites across a service provider or the internet.' }
-        ];
+ {
+  "term": "PPP",
+  "def": "Point-to-Point Protocol. A WAN encapsulation with LCP link negotiation, NCP network negotiation, PAP or CHAP authentication and optional multilink."
+ },
+ {
+  "term": "PPPoE",
+  "def": "PPP over Ethernet. A session and authentication layer for DSL and broadband, using PADI, PADO, PADR and PADS discovery with an MTU of 1492."
+ },
+ {
+  "term": "Metro Ethernet",
+  "def": "Carrier Ethernet WAN services delivered as E-LINE, E-LAN or E-TREE, using EoMPLS, VPLS or EVPN and often QinQ tagging."
+ },
+ {
+  "term": "MPLS WAN",
+  "def": "A provider-managed Layer 3 VPN WAN. Customer sites connect to provider edge routers, which isolate routes in VRFs and advertise them with MP-BGP."
+ },
+ {
+  "term": "Broadband",
+  "def": "DSL, cable or fiber internet access, typically shared, asymmetric and best effort, often using PPPoE and suitable for backup or SD-WAN transport."
+ },
+ {
+  "term": "LTE",
+  "def": "Long-Term Evolution cellular WAN access. It uses a SIM and APN profile, offers metered and variable bandwidth, and is common for backup or SD-WAN failover."
+ },
+ {
+  "term": "SD-WAN",
+  "def": "Software-Defined WAN. An overlay over MPLS, broadband or LTE, using secure tunnels, OMP and centralized controllers to apply policy and choose paths by SLA."
+ },
+ {
+  "term": "vManage",
+  "def": "Cisco Catalyst SD-WAN Manager (formerly vManage) is the SD-WAN management plane. It provides templates, zero-touch onboarding, monitoring, analytics and REST APIs."
+ },
+ {
+  "term": "vSmart",
+  "def": "The Cisco SD-WAN control plane. It runs OMP with the edges, distributes routes and TLOCs, and pushes centralized policy."
+ },
+ {
+  "term": "vBond",
+  "def": "The Cisco SD-WAN orchestration plane. It is the first contact for new devices, authenticates them and points them at vSmart and vManage."
+ },
+ {
+  "term": "WAN Edge",
+  "def": "The SD-WAN router at a site, either vEdge on Viptela OS or cEdge on IOS-XE. It terminates tunnels and carries the data plane."
+ },
+ {
+  "term": "Ethernet",
+  "def": "The Layer 2 LAN technology used as the physical and service foundation for PPPoE, Metro Ethernet and most WAN edge links."
+ },
+ {
+  "term": "VLAN",
+  "def": "Virtual LAN. A Layer 2 broadcast domain, often stacked with QinQ tags across a Metro Ethernet provider network."
+ },
+ {
+  "term": "QinQ",
+  "def": "A provider bridging technique that stacks a service VLAN tag around a customer VLAN tag, also called 802.1ad or Q-in-Q."
+ },
+ {
+  "term": "MPLS VPN",
+  "def": "A provider VPN built on MPLS. Layer 3 VPNs use VRFs and MP-BGP, while Layer 2 VPNs use pseudowires such as EoMPLS."
+ },
+ {
+  "term": "VRF",
+  "def": "Virtual Routing and Forwarding. Separate routing tables on a provider edge router that keep customer VPNs isolated."
+ },
+ {
+  "term": "MP-BGP",
+  "def": "Multiprotocol BGP. It carries VPN routes, including VPNv4 prefixes with route targets and route distinguishers, across an MPLS provider core."
+ },
+ {
+  "term": "BGP",
+  "def": "Border Gateway Protocol. The routing protocol used for CE to PE connectivity and for EVPN control planes and larger WAN designs."
+ },
+ {
+  "term": "MPLS",
+  "def": "Multiprotocol Label Switching. A label-switching transport used by service providers to build VPNs and traffic-engineered cores."
+ },
+ {
+  "term": "IPsec",
+  "def": "An IP security framework used for encrypted SD-WAN data tunnels, alongside DTLS, to protect traffic between WAN edges."
+ },
+ {
+  "term": "NAT",
+  "def": "Network Address Translation. Broadband and cellular CPE often NAT client traffic, which affects inbound access and overlay design."
+ },
+ {
+  "term": "DHCP",
+  "def": "Dynamic Host Configuration Protocol. It supplies addresses on broadband, cellular and Ethernet links where address negotiation is not done by IPCP."
+ },
+ {
+  "term": "RADIUS",
+  "def": "Remote Authentication Dial-In User Service. The AAA server commonly used behind a PPPoE access concentrator for subscriber authentication."
+ },
+ {
+  "term": "WAN",
+  "def": "Wide Area Network. The connectivity that links enterprise sites across a service provider or the internet."
+ },
+ {
+  "term": "Catalyst SD-WAN Manager",
+  "def": "The current name for Cisco's SD-WAN management plane, formerly vManage. It provides templates, onboarding, monitoring and REST APIs, but does not run OMP or forward user traffic."
+ }
+];
 
         const quiz = [
-          { q: 'Which two protocols provide PPP authentication?', options: ['PAP and CHAP', 'LCP and NCP', 'RADIUS and TACACS', 'IPsec and DTLS'], answer: 0, why: 'PPP uses PAP or CHAP for peer authentication.' },
-          { q: 'Which PPP component negotiates link options?', options: ['NCP', 'LCP', 'IPCP', 'CHAP'], answer: 1, why: 'The Link Control Protocol establishes and configures the link.' },
-          { q: 'Which PPP component negotiates IP?', options: ['LCP', 'PAP', 'NCP', 'MLPPP'], answer: 2, why: 'Network Control Protocols such as IPCP negotiate network-layer parameters.' },
-          { q: 'How does PAP send the password?', options: ['As a hash', 'In a certificate', 'Only after CHAP', 'In clear text'], answer: 3, why: 'PAP is clear text and is weaker than CHAP.' },
-          { q: 'How does CHAP authenticate?', options: ['With a challenge and hashed response', 'By sending the password in clear', 'With a static token', 'With DHCP'], answer: 0, why: 'CHAP challenges the peer and verifies a hash without sending the secret.' },
-          { q: 'What is the correct PPP phase order?', options: ['Network, link, data, auth', 'Link, authentication, network, data', 'Auth, link, data, network', 'Data, auth, link, network'], answer: 1, why: 'LCP establishes the link, then authentication, NCP and finally data.' },
-          { q: 'Which command enables PPP on a serial interface?', options: ['encapsulation hdlc', 'ppp enable', 'encapsulation ppp', 'dialer ppp'], answer: 2, why: 'encapsulation ppp selects PPP framing.' },
-          { q: 'What does MLPPP do?', options: ['Encrypts PPP', 'Replaces CHAP', 'Assigns IP addresses', 'Bonds multiple links into one bundle'], answer: 3, why: 'Multilink PPP aggregates links for more bandwidth and shared QoS.' },
-          { q: 'What medium does PPPoE use?', options: ['Ethernet', 'Fibre Channel', 'Serial only', 'MPLS labels'], answer: 0, why: 'PPPoE carries PPP sessions over Ethernet.' },
-          { q: 'What is the PPPoE discovery order?', options: ['PADO, PADI, PADS, PADR', 'PADI, PADO, PADR, PADS', 'PADR, PADS, PADI, PADO', 'PADS, PADR, PADO, PADI'], answer: 1, why: 'The client discovers, receives an offer, requests a session and receives confirmation.' },
-          { q: 'What does PADI mean?', options: ['A server offer', 'A session confirmation', 'A client broadcast searching for a server', 'A routing update'], answer: 2, why: 'PADI is the initial PPPoE discovery packet from the client.' },
-          { q: 'What does PADS indicate?', options: ['The client is searching', 'The server is full', 'The MTU is wrong', 'The session is established'], answer: 3, why: 'PADS confirms the session and carries the session ID.' },
-          { q: 'What MTU does PPPoE require?', options: ['1492', '1500', '9000', '1476'], answer: 0, why: 'PPPoE overhead reduces the effective MTU to 1492.' },
-          { q: 'Why is the PPPoE MTU 1492?', options: ['Ethernet cannot carry 1500 bytes', 'The 8-byte PPPoE header consumes space', 'CHAP adds a header', 'IPsec requires it'], answer: 1, why: 'PPP and PPPoE headers take 8 bytes from the Ethernet payload.' },
-          { q: 'Which interface carries a PPPoE client session?', options: ['A loopback', 'A tunnel interface', 'A dialer interface', 'A bridge domain'], answer: 2, why: 'A dialer interface represents the PPPoE session.' },
-          { q: 'What terminates PPPoE subscriber sessions?', options: ['A route reflector', 'A WLC', 'A DHCP relay', 'An access concentrator or BNG'], answer: 3, why: 'The access concentrator or broadband network gateway terminates PPPoE.' },
-          { q: 'Which Metro Ethernet service is point-to-point?', options: ['E-LINE', 'E-LAN', 'E-TREE', 'E-VPN'], answer: 0, why: 'E-LINE provides a point-to-point Ethernet virtual connection.' },
-          { q: 'Which Metro Ethernet service is any-to-any?', options: ['E-LINE', 'E-LAN', 'E-TREE', 'EoMPLS'], answer: 1, why: 'E-LAN is a multipoint service that connects all sites.' },
-          { q: 'Which Metro Ethernet service is hub-and-spoke?', options: ['E-LAN', 'E-LINE', 'E-TREE', 'EVPN'], answer: 2, why: 'E-TREE uses root and leaf sites for hub-and-spoke traffic.' },
-          { q: 'Which technology is a point-to-point Layer 2 pseudowire?', options: ['VPLS', 'EVPN', 'QinQ', 'EoMPLS'], answer: 3, why: 'EoMPLS delivers point-to-point Ethernet over an MPLS network.' },
-          { q: 'Which technologies deliver multipoint Metro Ethernet?', options: ['VPLS and EVPN', 'EoMPLS only', 'PPP and CHAP', 'QinQ only'], answer: 0, why: 'VPLS and EVPN provide multipoint Layer 2 services.' },
-          { q: 'What does QinQ do?', options: ['Encrypts Ethernet frames', 'Stacks customer and service VLAN tags', 'Bonds PPP links', 'Assigns cellular APNs'], answer: 1, why: 'QinQ adds an outer service tag around the customer VLAN tag.' },
-          { q: 'Who handles routing in a Layer 2 Metro Ethernet service?', options: ['The service provider', 'The RADIUS server', 'The customer', 'The vBond controller'], answer: 2, why: 'Layer 2 transport keeps routing with the enterprise.' },
-          { q: 'What model does an MPLS WAN provide?', options: ['A Layer 2 pseudowire only', 'A cellular backup only', 'A public internet service', 'A Layer 3 VPN'], answer: 3, why: 'MPLS WAN is normally a provider-managed Layer 3 VPN.' },
-          { q: 'What is the customer edge device called?', options: ['CE', 'PE', 'P', 'RR'], answer: 0, why: 'The CE is the customer edge router that connects to the provider.' },
-          { q: 'What is the provider edge device called?', options: ['CE', 'PE', 'P', 'CPE'], answer: 1, why: 'The PE holds the VRF and connects to customer sites.' },
-          { q: 'Which CE to PE routing protocol is most common?', options: ['RIP', 'IS-IS only', 'eBGP', 'LDP'], answer: 2, why: 'eBGP is the usual choice for CE to PE connectivity.' },
-          { q: 'Who routes between sites in an MPLS L3VPN?', options: ['The customer CE only', 'The RADIUS server', 'The access point', 'The service provider'], answer: 3, why: 'The provider handles VPN routing across the MPLS core.' },
-          { q: 'What isolates customer routes on a PE?', options: ['A VRF', 'A VLAN tag', 'A dialer pool', 'A SIM'], answer: 0, why: 'Virtual Routing and Forwarding keeps customer tables separate.' },
-          { q: 'Does an MPLS L3VPN provide any-to-any connectivity?', options: ['No, only hub-and-spoke', 'Yes, through the provider VPN', 'Only with PPP', 'Only with LTE'], answer: 1, why: 'The provider VPN connects all sites without per-link circuits.' },
-          { q: 'Which access technologies are broadband?', options: ['Serial and ATM only', 'MPLS and VRF', 'DSL, cable and fiber', 'PPP and CHAP'], answer: 2, why: 'Broadband covers DSL, cable, fiber and some fixed wireless.' },
-          { q: 'What are typical broadband characteristics?', options: ['Dedicated and symmetric', 'Always encrypted', 'Guaranteed latency', 'Shared and asymmetric'], answer: 3, why: 'Broadband is usually shared, asymmetric and best effort.' },
-          { q: 'Which session layer is common on broadband?', options: ['PPPoE', 'HDLC', 'Frame Relay', 'LDP'], answer: 0, why: 'PPPoE is widely used for broadband session and authentication.' },
-          { q: 'What is a common enterprise role for broadband?', options: ['Core MPLS routing', 'Backup, DIA or SD-WAN transport', 'MP-BGP route reflection', 'WLC management'], answer: 1, why: 'Broadband is cheap and widely used as a secondary or SD-WAN underlay.' },
-          { q: 'What identifies an LTE subscriber?', options: ['A VLAN tag', 'A TLOC', 'A SIM', 'A VRF'], answer: 2, why: 'The SIM carries the subscriber identity for cellular access.' },
-          { q: 'What defines the carrier access point for LTE?', options: ['A BSSID', 'A VRF', 'A PADI', 'An APN'], answer: 3, why: 'The APN selects the carrier packet data network.' },
-          { q: 'How does an LTE interface often get its address?', options: ['Negotiated or DHCP from the carrier', 'Static only', 'Through IPCP only', 'Through OMP'], answer: 0, why: 'Cellular interfaces commonly use negotiated or DHCP addressing.' },
-          { q: 'What is a key LTE cost characteristic?', options: ['Free unlimited bandwidth', 'Metered data usage', 'Fixed latency', 'Dedicated fibre'], answer: 1, why: 'Cellular plans are usually metered and variable.' },
-          { q: 'What underlay can SD-WAN use?', options: ['MPLS only', 'Broadband only', 'Any available transport', 'LTE only'], answer: 2, why: 'SD-WAN overlays MPLS, broadband, LTE and other transports.' },
-          { q: 'Which protocol is the SD-WAN control plane?', options: ['OSPF', 'LDP', 'CAPWAP', 'OMP'], answer: 3, why: 'The Overlay Management Protocol carries routes and policy between vSmart and edges.' },
-          { q: 'Which controller is the management plane?', options: ['vManage', 'vSmart', 'vBond', 'WAN edge'], answer: 0, why: 'vManage provides templates, monitoring and APIs.' },
-          { q: 'Which controller is the control plane?', options: ['vManage', 'vSmart', 'vBond', 'cEdge'], answer: 1, why: 'vSmart runs OMP and distributes policy.' },
-          { q: 'Which controller is the orchestration plane?', options: ['vSmart', 'vManage', 'vBond', 'vEdge'], answer: 2, why: 'vBond handles first contact and onboarding.' },
-          { q: 'What is the main job of vBond?', options: ['Forward user data', 'Run OMP routes', 'Push feature templates', 'Authenticate and onboard devices'], answer: 3, why: 'vBond authenticates devices and points them at the other controllers.' },
-          { q: 'Which plane does the WAN edge serve?', options: ['Data plane', 'Control plane', 'Management plane', 'Orchestration plane'], answer: 0, why: 'WAN edge routers forward the overlay data traffic.' },
-          { q: 'Which OS does a cEdge run?', options: ['Viptela OS', 'IOS-XE', 'NX-OS', 'Junos'], answer: 1, why: 'cEdge is an IOS-XE router running SD-WAN.' },
-          { q: 'Which OS does a vEdge run?', options: ['IOS-XE', 'NX-OS', 'Viptela OS', 'EOS'], answer: 2, why: 'vEdge uses the Viptela-native operating system.' },
-          { q: 'What does a TLOC plus colour identify?', options: ['A VLAN', 'A certificate', 'A DHCP scope', 'A transport path'], answer: 3, why: 'The TLOC and colour identify a specific WAN transport at an edge.' },
-          { q: 'Between which devices does OMP run?', options: ['vSmart and the WAN edges', 'vManage and RADIUS', 'vBond and DHCP', 'CE and PE only'], answer: 0, why: 'OMP sessions run between vSmart and each edge.' },
-          { q: 'How are SD-WAN data tunnels protected?', options: ['WEP', 'DTLS or IPsec', 'TKIP only', 'Plain GRE'], answer: 1, why: 'Cisco SD-WAN uses DTLS or IPsec for overlay data tunnels.' },
-          { q: 'What does application-aware routing use to choose a path?', options: ['Hop count only', 'Administrative distance only', 'SLA metrics', 'VLAN ID'], answer: 2, why: 'Latency, jitter and loss drive SLA-based path selection.' },
-          { q: 'How is configuration normally delivered by vManage?', options: ['Through OMP routes', 'Through PADI', 'Through BGP only', 'Through templates'], answer: 3, why: 'vManage uses device and feature templates to push configuration.' },
-          { q: 'Why must vBond be reachable?', options: ['New devices contact it first', 'It carries all user data', 'It stores client DHCP leases', 'It routes OMP prefixes'], answer: 0, why: 'vBond is the onboarding and authentication entry point.' },
-          { q: 'Where does centralized SD-WAN policy live?', options: ['On vBond', 'On vSmart', 'On the RADIUS server', 'On the access point'], answer: 1, why: 'vSmart holds and distributes centralized policy to the edges.' },
-          { q: 'How many controller session types does a WAN edge normally keep?', options: ['Only one', 'Only DHCP', 'Three controllers plus peer edges', 'Two, vBond and RADIUS'], answer: 2, why: 'The edge connects to vBond, vSmart, vManage and other edges.' }
-        ];
+ {
+  "q": "Which two protocols provide PPP authentication?",
+  "options": [
+   "LCP and NCP",
+   "PAP and CHAP",
+   "RADIUS and TACACS",
+   "IPsec and DTLS"
+  ],
+  "answer": 1,
+  "why": "PPP uses PAP or CHAP for peer authentication."
+ },
+ {
+  "q": "Which PPP component negotiates link options?",
+  "options": [
+   "LCP",
+   "NCP",
+   "IPCP",
+   "CHAP"
+  ],
+  "answer": 0,
+  "why": "The Link Control Protocol establishes and configures the link."
+ },
+ {
+  "q": "Which PPP component negotiates IP?",
+  "options": [
+   "LCP",
+   "PAP",
+   "MLPPP",
+   "NCP"
+  ],
+  "answer": 3,
+  "why": "Network Control Protocols such as IPCP negotiate network-layer parameters."
+ },
+ {
+  "q": "How does PAP send the password?",
+  "options": [
+   "As a hash",
+   "In a certificate",
+   "In clear text",
+   "Only after CHAP"
+  ],
+  "answer": 2,
+  "why": "PAP is clear text and is weaker than CHAP."
+ },
+ {
+  "q": "How does CHAP authenticate?",
+  "options": [
+   "By sending the password in clear",
+   "With a challenge and hashed response",
+   "With a static token",
+   "With DHCP"
+  ],
+  "answer": 1,
+  "why": "CHAP challenges the peer and verifies a hash without sending the secret."
+ },
+ {
+  "q": "What is the correct PPP phase order?",
+  "options": [
+   "Link, authentication, network, data",
+   "Network, link, data, auth",
+   "Auth, link, data, network",
+   "Data, auth, link, network"
+  ],
+  "answer": 0,
+  "why": "LCP establishes the link, then authentication, NCP and finally data."
+ },
+ {
+  "q": "Which command enables PPP on a serial interface?",
+  "options": [
+   "encapsulation hdlc",
+   "ppp enable",
+   "dialer ppp",
+   "encapsulation ppp"
+  ],
+  "answer": 3,
+  "why": "encapsulation ppp selects PPP framing."
+ },
+ {
+  "q": "What does MLPPP do?",
+  "options": [
+   "Encrypts PPP",
+   "Replaces CHAP",
+   "Bonds multiple links into one bundle",
+   "Assigns IP addresses"
+  ],
+  "answer": 2,
+  "why": "Multilink PPP aggregates links for more bandwidth and shared QoS."
+ },
+ {
+  "q": "What medium does PPPoE use?",
+  "options": [
+   "Fibre Channel",
+   "Ethernet",
+   "Serial only",
+   "MPLS labels"
+  ],
+  "answer": 1,
+  "why": "PPPoE carries PPP sessions over Ethernet."
+ },
+ {
+  "q": "What is the PPPoE discovery order?",
+  "options": [
+   "PADI, PADO, PADR, PADS",
+   "PADO, PADI, PADS, PADR",
+   "PADR, PADS, PADI, PADO",
+   "PADS, PADR, PADO, PADI"
+  ],
+  "answer": 0,
+  "why": "The client discovers, receives an offer, requests a session and receives confirmation."
+ },
+ {
+  "q": "What does PADI mean?",
+  "options": [
+   "A server offer",
+   "A session confirmation",
+   "A routing update",
+   "A client broadcast searching for a server"
+  ],
+  "answer": 3,
+  "why": "PADI is the initial PPPoE discovery packet from the client."
+ },
+ {
+  "q": "What does PADS indicate?",
+  "options": [
+   "The client is searching",
+   "The server is full",
+   "The session is established",
+   "The MTU is wrong"
+  ],
+  "answer": 2,
+  "why": "PADS confirms the session and carries the session ID."
+ },
+ {
+  "q": "What MTU does PPPoE require?",
+  "options": [
+   "1500",
+   "1492",
+   "9000",
+   "1476"
+  ],
+  "answer": 1,
+  "why": "PPPoE overhead reduces the effective MTU to 1492."
+ },
+ {
+  "q": "Why is the PPPoE MTU 1492?",
+  "options": [
+   "The 8-byte PPPoE header consumes space",
+   "Ethernet cannot carry 1500 bytes",
+   "CHAP adds a header",
+   "IPsec requires it"
+  ],
+  "answer": 0,
+  "why": "PPP and PPPoE headers take 8 bytes from the Ethernet payload."
+ },
+ {
+  "q": "Which interface carries a PPPoE client session?",
+  "options": [
+   "A loopback",
+   "A tunnel interface",
+   "A bridge domain",
+   "A dialer interface"
+  ],
+  "answer": 3,
+  "why": "A dialer interface represents the PPPoE session."
+ },
+ {
+  "q": "What terminates PPPoE subscriber sessions?",
+  "options": [
+   "A route reflector",
+   "A WLC",
+   "An access concentrator or BNG",
+   "A DHCP relay"
+  ],
+  "answer": 2,
+  "why": "The access concentrator or broadband network gateway terminates PPPoE."
+ },
+ {
+  "q": "Which Metro Ethernet service is point-to-point?",
+  "options": [
+   "E-LAN",
+   "E-LINE",
+   "E-TREE",
+   "E-VPN"
+  ],
+  "answer": 1,
+  "why": "E-LINE provides a point-to-point Ethernet virtual connection."
+ },
+ {
+  "q": "Which Metro Ethernet service is any-to-any?",
+  "options": [
+   "E-LAN",
+   "E-LINE",
+   "E-TREE",
+   "EoMPLS"
+  ],
+  "answer": 0,
+  "why": "E-LAN is a multipoint service that connects all sites."
+ },
+ {
+  "q": "Which Metro Ethernet service is hub-and-spoke?",
+  "options": [
+   "E-LAN",
+   "E-LINE",
+   "EVPN",
+   "E-TREE"
+  ],
+  "answer": 3,
+  "why": "E-TREE uses root and leaf sites for hub-and-spoke traffic."
+ },
+ {
+  "q": "Which technology is a point-to-point Layer 2 pseudowire?",
+  "options": [
+   "VPLS",
+   "EVPN",
+   "EoMPLS",
+   "QinQ"
+  ],
+  "answer": 2,
+  "why": "EoMPLS delivers point-to-point Ethernet over an MPLS network."
+ },
+ {
+  "q": "Which technologies deliver multipoint Metro Ethernet?",
+  "options": [
+   "EoMPLS only",
+   "VPLS and EVPN",
+   "PPP and CHAP",
+   "QinQ only"
+  ],
+  "answer": 1,
+  "why": "VPLS and EVPN provide multipoint Layer 2 services."
+ },
+ {
+  "q": "What does QinQ do?",
+  "options": [
+   "Stacks customer and service VLAN tags",
+   "Encrypts Ethernet frames",
+   "Bonds PPP links",
+   "Assigns cellular APNs"
+  ],
+  "answer": 0,
+  "why": "QinQ adds an outer service tag around the customer VLAN tag."
+ },
+ {
+  "q": "Who handles routing in a Layer 2 Metro Ethernet service?",
+  "options": [
+   "The service provider",
+   "The RADIUS server",
+   "The vBond controller",
+   "The customer"
+  ],
+  "answer": 3,
+  "why": "Layer 2 transport keeps routing with the enterprise."
+ },
+ {
+  "q": "What model does an MPLS WAN provide?",
+  "options": [
+   "A Layer 2 pseudowire only",
+   "A cellular backup only",
+   "A Layer 3 VPN",
+   "A public internet service"
+  ],
+  "answer": 2,
+  "why": "MPLS WAN is normally a provider-managed Layer 3 VPN."
+ },
+ {
+  "q": "What is the customer edge device called?",
+  "options": [
+   "PE",
+   "CE",
+   "P",
+   "RR"
+  ],
+  "answer": 1,
+  "why": "The CE is the customer edge router that connects to the provider."
+ },
+ {
+  "q": "What is the provider edge device called?",
+  "options": [
+   "PE",
+   "CE",
+   "P",
+   "CPE"
+  ],
+  "answer": 0,
+  "why": "The PE holds the VRF and connects to customer sites."
+ },
+ {
+  "q": "Which CE to PE routing protocol is most common?",
+  "options": [
+   "RIP",
+   "IS-IS only",
+   "LDP",
+   "eBGP"
+  ],
+  "answer": 3,
+  "why": "eBGP is the usual choice for CE to PE connectivity."
+ },
+ {
+  "q": "Who routes between sites in an MPLS L3VPN?",
+  "options": [
+   "The customer CE only",
+   "The RADIUS server",
+   "The service provider",
+   "The access point"
+  ],
+  "answer": 2,
+  "why": "The provider handles VPN routing across the MPLS core."
+ },
+ {
+  "q": "What isolates customer routes on a PE?",
+  "options": [
+   "A VLAN tag",
+   "A VRF",
+   "A dialer pool",
+   "A SIM"
+  ],
+  "answer": 1,
+  "why": "Virtual Routing and Forwarding keeps customer tables separate."
+ },
+ {
+  "q": "Does an MPLS L3VPN provide any-to-any connectivity?",
+  "options": [
+   "Yes, through the provider VPN",
+   "No, only hub-and-spoke",
+   "Only with PPP",
+   "Only with LTE"
+  ],
+  "answer": 0,
+  "why": "The provider VPN connects all sites without per-link circuits."
+ },
+ {
+  "q": "Which access technologies are broadband?",
+  "options": [
+   "Serial and ATM only",
+   "MPLS and VRF",
+   "PPP and CHAP",
+   "DSL, cable and fiber"
+  ],
+  "answer": 3,
+  "why": "Broadband covers DSL, cable, fiber and some fixed wireless."
+ },
+ {
+  "q": "What are typical broadband characteristics?",
+  "options": [
+   "Dedicated and symmetric",
+   "Always encrypted",
+   "Shared and asymmetric",
+   "Guaranteed latency"
+  ],
+  "answer": 2,
+  "why": "Broadband is usually shared, asymmetric and best effort."
+ },
+ {
+  "q": "Which session layer is common on broadband?",
+  "options": [
+   "HDLC",
+   "PPPoE",
+   "Frame Relay",
+   "LDP"
+  ],
+  "answer": 1,
+  "why": "PPPoE is widely used for broadband session and authentication."
+ },
+ {
+  "q": "What is a common enterprise role for broadband?",
+  "options": [
+   "Backup, DIA or SD-WAN transport",
+   "Core MPLS routing",
+   "MP-BGP route reflection",
+   "WLC management"
+  ],
+  "answer": 0,
+  "why": "Broadband is cheap and widely used as a secondary or SD-WAN underlay."
+ },
+ {
+  "q": "What identifies an LTE subscriber?",
+  "options": [
+   "A VLAN tag",
+   "A TLOC",
+   "A VRF",
+   "A SIM"
+  ],
+  "answer": 3,
+  "why": "The SIM carries the subscriber identity for cellular access."
+ },
+ {
+  "q": "What defines the carrier access point for LTE?",
+  "options": [
+   "A BSSID",
+   "A VRF",
+   "An APN",
+   "A PADI"
+  ],
+  "answer": 2,
+  "why": "The APN selects the carrier packet data network."
+ },
+ {
+  "q": "How does an LTE interface often get its address?",
+  "options": [
+   "Static only",
+   "Negotiated or DHCP from the carrier",
+   "Through IPCP only",
+   "Through OMP"
+  ],
+  "answer": 1,
+  "why": "Cellular interfaces commonly use negotiated or DHCP addressing."
+ },
+ {
+  "q": "What is a key LTE cost characteristic?",
+  "options": [
+   "Metered data usage",
+   "Free unlimited bandwidth",
+   "Fixed latency",
+   "Dedicated fibre"
+  ],
+  "answer": 0,
+  "why": "Cellular plans are usually metered and variable."
+ },
+ {
+  "q": "What underlay can SD-WAN use?",
+  "options": [
+   "MPLS only",
+   "Broadband only",
+   "LTE only",
+   "Any available transport"
+  ],
+  "answer": 3,
+  "why": "SD-WAN overlays MPLS, broadband, LTE and other transports."
+ },
+ {
+  "q": "Which protocol is the SD-WAN control plane?",
+  "options": [
+   "OSPF",
+   "LDP",
+   "OMP",
+   "CAPWAP"
+  ],
+  "answer": 2,
+  "why": "The Overlay Management Protocol carries routes and policy between vSmart and edges."
+ },
+ {
+  "q": "Which controller is the management plane?",
+  "options": [
+   "vSmart",
+   "vManage",
+   "vBond",
+   "WAN edge"
+  ],
+  "answer": 1,
+  "why": "vManage provides templates, monitoring and APIs."
+ },
+ {
+  "q": "Which controller is the control plane?",
+  "options": [
+   "vSmart",
+   "vManage",
+   "vBond",
+   "cEdge"
+  ],
+  "answer": 0,
+  "why": "vSmart runs OMP and distributes policy."
+ },
+ {
+  "q": "Which controller is the orchestration plane?",
+  "options": [
+   "vSmart",
+   "vManage",
+   "vEdge",
+   "vBond"
+  ],
+  "answer": 3,
+  "why": "vBond handles first contact and onboarding."
+ },
+ {
+  "q": "What is the main job of vBond?",
+  "options": [
+   "Forward user data",
+   "Run OMP routes",
+   "Authenticate and onboard devices",
+   "Push feature templates"
+  ],
+  "answer": 2,
+  "why": "vBond authenticates devices and points them at the other controllers."
+ },
+ {
+  "q": "Which plane does the WAN edge serve?",
+  "options": [
+   "Control plane",
+   "Data plane",
+   "Management plane",
+   "Orchestration plane"
+  ],
+  "answer": 1,
+  "why": "WAN edge routers forward the overlay data traffic."
+ },
+ {
+  "q": "Which OS does a cEdge run?",
+  "options": [
+   "IOS-XE",
+   "Viptela OS",
+   "NX-OS",
+   "Junos"
+  ],
+  "answer": 0,
+  "why": "cEdge is an IOS-XE router running SD-WAN."
+ },
+ {
+  "q": "Which OS does a vEdge run?",
+  "options": [
+   "IOS-XE",
+   "NX-OS",
+   "EOS",
+   "Viptela OS"
+  ],
+  "answer": 3,
+  "why": "vEdge uses the Viptela-native operating system."
+ },
+ {
+  "q": "What does a TLOC plus colour identify?",
+  "options": [
+   "A VLAN",
+   "A certificate",
+   "A transport path",
+   "A DHCP scope"
+  ],
+  "answer": 2,
+  "why": "The TLOC and colour identify a specific WAN transport at an edge."
+ },
+ {
+  "q": "Between which devices does OMP run?",
+  "options": [
+   "vManage and RADIUS",
+   "vSmart and the WAN edges",
+   "vBond and DHCP",
+   "CE and PE only"
+  ],
+  "answer": 1,
+  "why": "OMP sessions run between vSmart and each edge."
+ },
+ {
+  "q": "How are SD-WAN data tunnels protected?",
+  "options": [
+   "DTLS or IPsec",
+   "WEP",
+   "TKIP only",
+   "Plain GRE"
+  ],
+  "answer": 0,
+  "why": "Cisco SD-WAN uses DTLS or IPsec for overlay data tunnels."
+ },
+ {
+  "q": "What does application-aware routing use to choose a path?",
+  "options": [
+   "Hop count only",
+   "Administrative distance only",
+   "VLAN ID",
+   "SLA metrics"
+  ],
+  "answer": 3,
+  "why": "Latency, jitter and loss drive SLA-based path selection."
+ },
+ {
+  "q": "How is configuration normally delivered by vManage?",
+  "options": [
+   "Through OMP routes",
+   "Through PADI",
+   "Through templates",
+   "Through BGP only"
+  ],
+  "answer": 2,
+  "why": "vManage uses device and feature templates to push configuration."
+ },
+ {
+  "q": "Why must vBond be reachable?",
+  "options": [
+   "It carries all user data",
+   "New devices contact it first",
+   "It stores client DHCP leases",
+   "It routes OMP prefixes"
+  ],
+  "answer": 1,
+  "why": "vBond is the onboarding and authentication entry point."
+ },
+ {
+  "q": "Where does centralized SD-WAN policy live?",
+  "options": [
+   "On vSmart",
+   "On vBond",
+   "On the RADIUS server",
+   "On the access point"
+  ],
+  "answer": 0,
+  "why": "vSmart holds and distributes centralized policy to the edges."
+ },
+ {
+  "q": "How many controller session types does a WAN edge normally keep?",
+  "options": [
+   "Only one",
+   "Only DHCP",
+   "Two, vBond and RADIUS",
+   "Three controllers plus peer edges"
+  ],
+  "answer": 3,
+  "why": "The edge connects to vBond, vSmart, vManage and other edges."
+ },
+ {
+  "q": "Which component is now called Cisco Catalyst SD-WAN Manager?",
+  "options": [
+   "vSmart",
+   "vBond",
+   "vManage",
+   "WAN edge"
+  ],
+  "answer": 2,
+  "why": "Catalyst SD-WAN Manager is the new name for vManage. vSmart is the Controller and vBond is the Validator."
+ },
+ {
+  "q": "Which SD-WAN plane does the Manager provide?",
+  "options": [
+   "Control",
+   "Management",
+   "Data",
+   "Orchestration"
+  ],
+  "answer": 1,
+  "why": "The Manager handles templates, monitoring and APIs. The Controller runs OMP and the Validator handles orchestration."
+ }
+];
 
         /* ---------------- Helpers ---------------- */
         const AMP = String.fromCharCode(38);

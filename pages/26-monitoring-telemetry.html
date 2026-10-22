@@ -633,16 +633,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "SNMP model",
-      "d": "**Manager polls the agent's MIB** via OIDs."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Operations",
     "cols": [
@@ -679,16 +669,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Operations",
-      "d": "**GET reads; SET writes; TRAP/INFORM push alerts.**"
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Versions",
     "cols": [
@@ -708,16 +688,6 @@
       "v3",
       "auth + encryption"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Versions",
-      "d": "**v2c = community string (weak); v3 = secure (auth/priv).**"
-     }
     ]
    },
    {
@@ -744,16 +714,6 @@
       "Walk",
       "GETNEXT through tree"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "MIB/OID",
-      "d": "The **OID** names a value in the MIB."
-     }
     ]
    },
    {
@@ -825,20 +785,54 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "v2c vs v3",
-      "d": "**v3 for security; v2c is legacy.**"
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No response",
+      "community",
+      "show snmp"
+     ],
+     [
+      "No traps",
+      "host/port",
+      "show snmp host"
+     ],
+     [
+      "v3 fail",
+      "auth",
+      "user/group"
+     ],
+     [
+      "Timeout",
+      "UDP 161",
+      "ACL"
+     ],
+     [
+      "Wrong OID",
+      "MIB",
+      "snmpwalk"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "show snmp\nshow snmp mib\nshow snmp sessions\nsnmpget -v2c -c public host 1.3.6.1.2.1.1.1.0\nsnmpwalk -v2c -c public host .1"
+    "label": "SNMPv2c configuration",
+    "code": "snmp-server community public RO\nsnmp-server location HQ\nsnmp-server contact netops@example.com\nsnmp-server host 192.0.2.50 version 2c public"
+   },
+   {
+    "label": "SNMPv3 authPriv configuration",
+    "code": "snmp-server group MONITOR v3 priv\nsnmp-server user monitor MONITOR v3 auth sha AUTHKEY priv aes 128 PRIVKEY\nsnmp-server host 192.0.2.50 version 3 priv monitor"
+   },
+   {
+    "label": "Verification",
+    "code": "show snmp\nshow snmp user\nshow snmp group\nsnmpget -v3 -u monitor -l authPriv -a SHA -A AUTHKEY -x AES -X PRIVKEY 192.0.2.1 1.3.6.1.2.1.1.1.0"
    }
   ],
   "traps": [
@@ -946,16 +940,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "What NetFlow exports",
-      "d": "NetFlow = **metadata, not full packets**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "The 7-tuple",
     "cols": [
@@ -994,16 +978,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "The 7-tuple",
-      "d": "These identify and **tag a flow**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Versions",
     "cols": [
@@ -1027,16 +1001,6 @@
       "IPFIX",
       "template-based (standard)"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Versions",
-      "d": "**v5 fixed; v9/IPFIX template-based.**"
-     }
     ]
    },
    {
@@ -1102,16 +1066,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Export",
-      "d": "The device caches flows and **exports to a collector**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "The exam focus",
     "cols": [
@@ -1142,19 +1096,45 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "The exam focus",
-      "d": "**v5 vs v9 = fixed vs templates** is the classic trap."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No flows",
+      "record",
+      "show flow monitor"
+     ],
+     [
+      "No export",
+      "collector",
+      "show flow exporter"
+     ],
+     [
+      "UDP blocked",
+      "ACL/firewall",
+      "port 2055"
+     ],
+     [
+      "Wrong fields",
+      "record",
+      "match commands"
+     ],
+     [
+      "Direction",
+      "interface",
+      "input/output"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
+    "label": "Commands",
     "code": "flow record FR1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n match ip protocol\n collect counter bytes\n collect counter packets\nflow exporter EXP1\n destination 192.0.2.10\n transport udp 2055\nflow monitor FM1\n record FR1\n exporter EXP1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor FM1 input"
    }
   ],
@@ -1260,16 +1240,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Flow record anatomy",
-      "d": "Keys define the flow identity; collect adds **info about it**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Record examples",
     "cols": [
@@ -1301,16 +1271,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Record examples",
-      "d": "FNF lets you **tailor fields** to the use case."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Exporter details",
     "cols": [
@@ -1337,16 +1297,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Exporter details",
-      "d": "Export templates **describe the record** to the collector."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Monitor + cache",
     "cols": [
@@ -1370,16 +1320,6 @@
       "Interface",
       "enable input/output"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Monitor + cache",
-      "d": "Monitor binds everything; the **cache stores flow state**."
-     }
     ]
    },
    {
@@ -1414,16 +1354,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Why FNF over v5",
-      "d": "**FNF wins on flexibility and scale.**"
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Integration",
     "cols": [
@@ -1450,19 +1380,45 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Integration",
-      "d": "FNF combines with **NBAR and sampling**."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No records",
+      "match",
+      "show flow record"
+     ],
+     [
+      "No export",
+      "exporter",
+      "show flow exporter"
+     ],
+     [
+      "Zero cache",
+      "interface",
+      "show flow monitor cache"
+     ],
+     [
+      "v9 fail",
+      "collector",
+      "compatibility"
+     ],
+     [
+      "MBPS issue",
+      "timeout",
+      "cache active"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
+    "label": "Commands",
     "code": "flow record R1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n collect counter bytes\n collect counter packets\nflow exporter E1\n destination 192.0.2.10\n transport udp 2055\nflow monitor M1\n record R1\n exporter E1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor M1 input"
    }
   ],
@@ -1568,16 +1524,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "SPAN basics",
-      "d": "SPAN = **port mirroring on a single switch**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Source directions",
     "cols": [
@@ -1597,16 +1543,6 @@
       "both",
       "both directions"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Source directions",
-      "d": "%%monitor session 1 source ... rx/tx/both%%."
-     }
     ]
    },
    {
@@ -1636,16 +1572,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Destination",
-      "d": "Destination is the **analyzer/IDS connection**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Configuration",
     "cols": [
@@ -1669,16 +1595,6 @@
       "%%no monitor session N%%",
       "remove"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Configuration",
-      "d": "Build session = **source + destination**."
-     }
     ]
    },
    {
@@ -1708,16 +1624,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Limitations",
-      "d": "SPAN **does not route**; keep sources sane."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "SPAN vs RSPAN vs ERSPAN",
     "cols": [
@@ -1740,20 +1646,50 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "SPAN vs RSPAN vs ERSPAN",
-      "d": "**SPAN local; RSPAN/ERSPAN remote** (note 05)."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "Empty capture",
+      "direction",
+      "rx/tx"
+     ],
+     [
+      "Nothing at dest",
+      "session",
+      "show monitor"
+     ],
+     [
+      "Traffic loss",
+      "overload",
+      "rate"
+     ],
+     [
+      "Wrong vlan",
+      "scope",
+      "vlan source"
+     ],
+     [
+      "Loop",
+      "mixing",
+      "STP watch"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination interface GigabitEthernet0/2\nshow monitor session 1\nshow monitor"
+    "label": "Configuration",
+    "code": "monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination interface GigabitEthernet0/2"
+   },
+   {
+    "label": "Verification & checks",
+    "code": "show monitor session 1\nshow monitor"
    }
   ],
   "traps": [
@@ -1857,16 +1793,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "ERSPAN basics",
-      "d": "ERSPAN = **SPAN over IP/GRE**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Encapsulation",
     "cols": [
@@ -1893,16 +1819,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Encapsulation",
-      "d": "The mirror is **tunneled to the analyzer**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "ERSPAN vs SPAN vs RSPAN",
     "cols": [
@@ -1922,16 +1838,6 @@
       "ERSPAN",
       "remote via IP/GRE"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "ERSPAN vs SPAN vs RSPAN",
-      "d": "**ERSPAN = routed remote mirroring.**"
-     }
     ]
    },
    {
@@ -1969,16 +1875,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Configuration",
-      "d": "ERSPAN session = **source + GRE destination + id**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Requirements",
     "cols": [
@@ -2002,16 +1898,6 @@
       "Overhead",
       "+50 bytes"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Requirements",
-      "d": "Both routers need **routes + GRE** and MTU headroom."
-     }
     ]
    },
    {
@@ -2041,20 +1927,50 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Caveats",
-      "d": "Design with **size and load** in mind."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "Nothing received",
+      "route",
+      "ping dest"
+     ],
+     [
+      "No mirror",
+      "origin IP",
+      "show monitor"
+     ],
+     [
+      "Fragments",
+      "MTU",
+      "raise size"
+     ],
+     [
+      "ACL drop",
+      "GRE",
+      "permit"
+     ],
+     [
+      "Session mismatch",
+      "id",
+      "both sides"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "monitor session 1 type erspan-source\n monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination\n erspan id 100\n erspan ip-address 192.0.2.10\n erspan origin-ip 198.51.100.1\nshow monitor session 1"
+    "label": "Configuration",
+    "code": "monitor session 1 type erspan-source\n monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination\n erspan id 100\n erspan ip-address 192.0.2.10\n erspan origin-ip 198.51.100.1"
+   },
+   {
+    "label": "Verification & checks",
+    "code": "show monitor session 1"
    }
   ],
   "traps": [
@@ -2159,16 +2075,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "What IP SLA measures",
-      "d": "Probes generate **real, measurable traffic**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Operation types",
     "cols": [
@@ -2196,16 +2102,6 @@
       "UDP echo",
       "protocol"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Operation types",
-      "d": "Pick the **probe type** that matches what you monitor."
-     }
     ]
    },
    {
@@ -2283,16 +2179,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Configuration",
-      "d": "Build = create → define → schedule → track."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Integration",
     "cols": [
@@ -2316,16 +2202,6 @@
       "Syslog",
       "logs"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Integration",
-      "d": "IP SLA feeds **tracking and monitoring systems**."
-     }
     ]
    },
    {
@@ -2360,20 +2236,50 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "ICP vs ICMP",
-      "d": "**IP SLA beats ping** for real SLA numbers."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No results",
+      "schedule",
+      "show ip sla config"
+     ],
+     [
+      "Timeouts",
+      "path",
+      "probe type"
+     ],
+     [
+      "No track",
+      "id",
+      "track command"
+     ],
+     [
+      "Noise",
+      "ACL",
+      "permit"
+     ],
+     [
+      "High jitter",
+      "QoS",
+      "metrics"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "ip sla 10\n icmp-echo 192.0.2.5\n frequency 60\n timeout 1000\nip sla schedule 10 life forever start-time now\ntrack 1 ip sla 10 reachability\nshow ip sla statistics\nshow ip sla config\nshow track 1"
+    "label": "Configuration",
+    "code": "ip sla 10\n icmp-echo 192.0.2.5\n frequency 60\n timeout 1000\nip sla schedule 10 life forever start-time now\ntrack 1 ip sla 10 reachability"
+   },
+   {
+    "label": "Verification & checks",
+    "code": "show ip sla statistics\nshow ip sla config\nshow track 1"
    }
   ],
   "traps": [
@@ -2477,16 +2383,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Syslog model",
-      "d": "Message = **facility + severity + text**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Severity levels",
     "cols": [
@@ -2538,16 +2434,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Severity levels",
-      "d": "**Lower number = more severe.**"
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Destinations",
     "cols": [
@@ -2571,16 +2457,6 @@
       "Trap/SNMP",
       "via NMS"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Destinations",
-      "d": "Configure **console, buffer, and server separately**."
-     }
     ]
    },
    {
@@ -2656,20 +2532,50 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Syslog vs SNMP traps",
-      "d": "Syslog = **text logs**; SNMP = **structured alerts**."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No server logs",
+      "trap level",
+      "show logging"
+     ],
+     [
+      "Buffer zero",
+      "buffered",
+      "config"
+     ],
+     [
+      "Time wrong",
+      "timestamp",
+      "clock"
+     ],
+     [
+      "No UDP",
+      "firewall",
+      "514"
+     ],
+     [
+      "Console spam",
+      "level",
+      "level"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "logging host 192.0.2.10\nlogging trap informational\nshow logging\nshow logging | include 192\nterminal monitor"
+    "label": "Configuration",
+    "code": "logging host 192.0.2.10\nlogging trap informational\nterminal monitor"
+   },
+   {
+    "label": "Verification & checks",
+    "code": "show logging\nshow logging | include 192"
    }
   ],
   "traps": [
@@ -2814,16 +2720,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Telemetry protocol stack",
-      "d": "Stack: **YANG model + gRPC/gNMI transport**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Models of interest",
     "cols": [
@@ -2850,16 +2746,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Models of interest",
-      "d": "**gNMI over gRPC** is the modern pairing."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Model-driven telemetry (MDT)",
     "cols": [
@@ -2883,16 +2769,6 @@
       "Darwin",
       "cadence"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Model-driven telemetry (MDT)",
-      "d": "Cisco MDT: subscribe to a **YANG path** and stream."
-     }
     ]
    },
    {
@@ -2932,16 +2808,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "vs SNMP/NetFlow",
-      "d": "Telemetry = **richer + lower latency + scalable**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Considerations",
     "cols": [
@@ -2968,19 +2834,107 @@
     ]
    },
    {
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "No stream",
+      "subscription",
+      "show telemetry"
+     ],
+     [
+      "No data",
+      "xpath",
+      "filter"
+     ],
+     [
+      "gRPC down",
+      "port",
+      "receiver"
+     ],
+     [
+      "Cadence",
+      "update-policy",
+      "interval"
+     ],
+     [
+      "Encoding",
+      "collector",
+      "kvgpb"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Telemetry transports",
+    "cols": [
+     "Transport / model",
+     "How it works",
+     "Typical use"
+    ],
+    "rows": [
+     [
+      "**gRPC / gNMI**",
+      "Open streaming RPC model with encoded payloads",
+      "Model-driven device telemetry"
+     ],
+     [
+      "**JSON-RPC**",
+      "Request/response over HTTPS",
+      "API-style on-demand state"
+     ],
+     [
+      "**Kafka or HTTP receivers**",
+      "Push data to an external collector",
+      "Analytics and data platforms"
+     ],
+     [
+      "**SNMP poll**",
+      "Manager requests data on a schedule",
+      "Legacy monitoring"
+     ],
+     [
+      "**NetFlow export**",
+      "Device exports sampled or full flow records",
+      "Traffic accounting"
+     ]
+    ]
+   },
+   {
     "kind": "list",
-    "h": "",
+    "h": "Telemetry design checklist",
     "items": [
      {
-      "t": "Considerations",
-      "d": "Design for **sustained stream load**."
+      "t": "Choose the model",
+      "d": "Subscribe to the YANG paths you need instead of polling everything."
+     },
+     {
+      "t": "Choose the encoding",
+      "d": "Protobuf is compact; JSON is easier to debug but larger."
+     },
+     {
+      "t": "Choose the interval",
+      "d": "Sub-second streaming is expensive; periodic updates suit most operational metrics."
+     },
+     {
+      "t": "Secure the channel",
+      "d": "Use TLS or an IPsec tunnel when telemetry crosses an untrusted network."
+     },
+     {
+      "t": "Correlate with logs",
+      "d": "Telemetry shows state change; syslog and NetFlow explain traffic and events."
      }
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
+    "label": "Commands",
     "code": "telemetry ietf subscription 10\n encoding encode-kvgpb\n filter xpath /interfaces/interface/statistics\n stream yang-push\n update-policy periodic 30000\n receiver ip address 192.0.2.11 port 57500 protocol grpc-tcp"
    }
   ],
@@ -3090,16 +3044,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "What Wireshark does",
-      "d": "Wireshark = **capture, decode, filter, and analyze**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Capture vs display filters",
     "cols": [
@@ -3128,16 +3072,6 @@
       "rich fields",
       "%%http.request%%"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Capture vs display filters",
-      "d": "**BPF limits what's stored; display filters refine the view.**"
-     }
     ]
    },
    {
@@ -3175,16 +3109,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Common display filters",
-      "d": "Display filters inspect **decoded fields**."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Protocol decode",
     "cols": [
@@ -3212,16 +3136,6 @@
       "Expert",
       "malformed/fail"
      ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Protocol decode",
-      "d": "Decode tree shows **each header + flags**."
-     }
     ]
    },
    {
@@ -3255,16 +3169,6 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Analysis workflows",
-      "d": "**Follow Stream + statistics** accelerate diagnosis."
-     }
-    ]
-   },
-   {
     "kind": "table",
     "h": "Capture points",
     "cols": [
@@ -3291,20 +3195,50 @@
     ]
    },
    {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Capture points",
-      "d": "Choose the **vantage point** to match the question."
-     }
+    "kind": "table",
+    "h": "Troubleshooting & common failures",
+    "cols": [
+     "Symptom",
+     "Likely cause",
+     "Check"
+    ],
+    "rows": [
+     [
+      "Nothing",
+      "interface",
+      "capture point"
+     ],
+     [
+      "Too much",
+      "no filter",
+      "BPF"
+     ],
+     [
+      "Wrong view",
+      "display filter",
+      "refine"
+     ],
+     [
+      "Truncated",
+      "buffer limit",
+      "size"
+     ],
+     [
+      "Cannot parse",
+      "capture",
+      "tool version"
+     ]
     ]
    }
   ],
   "commands": [
    {
-    "label": "Configuration and verification",
-    "code": "(ioanalyze/capture on IOS-XE)\nmonitor capture CAP interface Gi0/1 both\nmonitor capture CAP limit ...\nmonitor capture CAP buffer size 10240\nmonitor capture CAP start\nshow monitor capture CAP\nWireshark: tshark -i eth0 -f \"tcp port 443\""
+    "label": "Capture on the router",
+    "code": "monitor capture CAP interface GigabitEthernet1/0/1 both\nmonitor capture CAP match any protocol ip\nmonitor capture CAP buffer size 10240\nmonitor capture CAP start"
+   },
+   {
+    "label": "Analyze offline",
+    "code": "tshark -i eth0 -f \"tcp port 443\"\ntshark -r capture.pcap -Y \"tls.handshake.type == 1\"\nwireshark capture.pcap"
    }
   ],
   "traps": [
@@ -3370,7 +3304,7 @@
  }
 ];
 
-        const GROUPS = [{"key": "device", "label": "Device & Performance", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "traffic", "label": "Traffic Monitoring", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}];
+        const GROUPS = [{"key":"device","label":"Device & Performance","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"traffic","label":"Traffic Monitoring","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
 
         const groups = GROUPS;
 
@@ -3412,306 +3346,332 @@
  {
   "term": "Wireshark",
   "def": "Wireshark is the industry-standard packet analyzer: it captures, decodes, and filters traffic for troubleshooting (alongside the CLI tcpdump). It reads pcap/pcapng captures (from itself, a SPAN port, or a remote box via SSH), decodes hundreds of protocols, and answers \"what exactly did the..."
+ },
+ {
+  "term": "gNMI",
+  "def": "gRPC Network Management Interface. An open model-driven interface that streams YANG-encoded state and supports configuration operations over gRPC."
  }
 ];
 
         const quiz = [
  {
-  "q": "In SNMP, which value matches \"Poll\"?",
+  "q": "Which SNMPv3 security level provides both authentication and encryption?",
   "options": [
-   "UDP 161",
-   "UDP 162",
-   "community",
-   "auth+priv"
-  ],
-  "answer": 0,
-  "why": "The SNMP quick review pairs \"Poll\" with \"UDP 161\"."
- },
- {
-  "q": "In SNMP, which value matches \"Data\"?",
-  "options": [
-   "YANG",
-   "MIB/OID",
-   "UDP 161",
-   "UDP 162"
+   "noAuthNoPriv",
+   "authPriv",
+   "authNoPriv",
+   "read-only"
   ],
   "answer": 1,
-  "why": "The SNMP quick review pairs \"Data\" with \"MIB/OID\"."
+  "why": "authPriv combines authentication (SHA) and privacy (AES). authNoPriv only authenticates; noAuthNoPriv sends clear text."
  },
  {
-  "q": "In SNMP, which value matches \"TRAP\"?",
+  "q": "A NetFlow record is typically identified by which key fields?",
   "options": [
-   "SNMP 162",
-   "UDP 161",
-   "alert",
-   "UDP 162"
+   "The 7-tuple: source/destination IP, ports, protocol, ToS and interfaces",
+   "Only the source MAC address",
+   "The VLAN ID and VNI only",
+   "The BGP AS path only"
   ],
-  "answer": 2,
-  "why": "The SNMP quick review pairs \"TRAP\" with \"alert\"."
+  "answer": 0,
+  "why": "A standard NetFlow key uses source and destination IP, source and destination port, IP protocol, IP ToS and ingress/egress interfaces."
  },
  {
-  "q": "In NetFlow, which value matches \"Records\"?",
+  "q": "What must a SPAN destination port not do?",
   "options": [
-   "custom",
-   "UDP 161",
-   "UDP 162",
-   "metadata"
+   "Be on the same switch as the source",
+   "Receive mirrored traffic",
+   "Be a physical interface",
+   "Carry normal production traffic"
   ],
   "answer": 3,
-  "why": "The NetFlow quick review pairs \"Records\" with \"metadata\"."
+  "why": "A SPAN destination is a dedicated mirror port. If production traffic uses it, the capture and the network are both compromised."
  },
  {
-  "q": "In NetFlow, which value matches \"Export\"?",
+  "q": "Which technology carries mirrored traffic to a remote collector over IP?",
   "options": [
-   "UDP 2055",
-   "v9/IPFIX",
-   "pcap",
-   "UDP 161"
-  ],
-  "answer": 0,
-  "why": "The NetFlow quick review pairs \"Export\" with \"UDP 2055\"."
- },
- {
-  "q": "In NetFlow, which value matches \"Use\"?",
-  "options": [
-   "flexible",
-   "analysis",
-   "capture",
-   "remote mirror"
-  ],
-  "answer": 1,
-  "why": "The NetFlow quick review pairs \"Use\" with \"analysis\"."
- },
- {
-  "q": "In Flexible NetFlow, which value matches \"Records\"?",
-  "options": [
-   "metadata",
-   "UDP 161",
-   "custom",
-   "UDP 162"
+   "Local SPAN",
+   "RSPAN over a native VLAN only",
+   "ERSPAN",
+   "SNMP traps"
   ],
   "answer": 2,
-  "why": "The Flexible NetFlow quick review pairs \"Records\" with \"custom\"."
+  "why": "ERSPAN encapsulates mirrored packets in GRE so the collector can be off-box. RSPAN uses a special VLAN, not IP."
  },
  {
-  "q": "In Flexible NetFlow, which value matches \"Monitor\"?",
+  "q": "Which syslog severity level is the most severe?",
   "options": [
-   "UDP 161",
-   "UDP 162",
-   "community",
+   "7, debugging",
+   "0, emergencies",
+   "3, errors",
+   "6, informational"
+  ],
+  "answer": 1,
+  "why": "Lower severity numbers are more severe. 0 is emergencies and 7 is debugging."
+ },
+ {
+  "q": "How does model-driven telemetry differ from SNMP polling?",
+  "options": [
+   "The device pushes subscribed data to a receiver",
+   "The manager polls every object continuously",
+   "It uses only UDP port 161",
+   "It requires NetFlow exporters"
+  ],
+  "answer": 0,
+  "why": "MDT subscribes to YANG paths and streams updates. SNMP is a pull model where the manager polls the device."
+ },
+ {
+  "q": "Which SNMP message is sent by an agent without the manager asking for it?",
+  "options": [
+   "Get",
+   "GetNext",
+   "Set",
+   "Trap or inform"
+  ],
+  "answer": 3,
+  "why": "Traps and informs are unsolicited notifications. Get, GetNext and Set are manager-initiated operations."
+ },
+ {
+  "q": "Why is NetFlow preferred over SNMP interface counters for application traffic accounting?",
+  "options": [
+   "It replaces routing protocols",
+   "It encrypts traffic",
+   "It records flow details such as addresses, ports and protocol",
+   "It only measures CPU usage"
+  ],
+  "answer": 2,
+  "why": "NetFlow describes conversations, not just interface totals. SNMP counters show aggregate bytes and packets per interface."
+ },
+ {
+  "q": "What is an IP SLA tracking object used for?",
+  "options": [
+   "To assign an IP address to a probe",
+   "To tie a probe result to a route or gateway decision",
+   "To encrypt the probe payload",
+   "To replace Syslog"
+  ],
+  "answer": 1,
+  "why": "A track object watches an IP SLA operation and can withdraw a static route or change HSRP priority when the probe fails."
+ },
+ {
+  "q": "Which Wireshark display filter shows only DNS queries?",
+  "options": [
+   "dns.flags.response == 0",
+   "tcp.port == 53",
+   "ip.addr == 10.0.0.1",
+   "udp.length > 100"
+  ],
+  "answer": 0,
+  "why": "The DNS response flag distinguishes queries from responses. A capture filter such as `port 53` would capture both directions."
+ },
+ {
+  "q": "What does a SPAN source direction of `both` capture?",
+  "options": [
+   "Only broadcast traffic",
+   "Only egress traffic",
+   "Only traffic destined to the CPU",
+   "Ingress and egress traffic on the source interface"
+  ],
+  "answer": 3,
+  "why": "SPAN can copy ingress, egress or both directions from the source interface to the destination port."
+ },
+ {
+  "q": "In SNMP — SNMP model, which value matches \"Manager (NMS)\"?",
+  "options": [
+   "runs on device",
+   "data tree",
+   "polls/collects",
+   "address of data"
+  ],
+  "answer": 2,
+  "why": "SNMP model in SNMP pairs \"Manager (NMS)\" with \"polls/collects\"."
+ },
+ {
+  "q": "In SNMP — SNMP model, which value matches \"Agent\"?",
+  "options": [
+   "polls/collects",
+   "runs on device",
+   "data tree",
+   "address of data"
+  ],
+  "answer": 1,
+  "why": "SNMP model in SNMP pairs \"Agent\" with \"runs on device\"."
+ },
+ {
+  "q": "In NetFlow — What NetFlow exports, which value matches \"Flow\"?",
+  "options": [
+   "conversation",
+   "forward + reverse",
+   "tuple + bytes",
+   "receiver"
+  ],
+  "answer": 0,
+  "why": "What NetFlow exports in NetFlow pairs \"Flow\" with \"conversation\"."
+ },
+ {
+  "q": "In NetFlow — What NetFlow exports, which value matches \"Direction\"?",
+  "options": [
+   "conversation",
+   "tuple + bytes",
+   "receiver",
+   "forward + reverse"
+  ],
+  "answer": 3,
+  "why": "What NetFlow exports in NetFlow pairs \"Direction\" with \"forward + reverse\"."
+ },
+ {
+  "q": "In Flexible NetFlow — Flow record anatomy, which value matches \"collect\"?",
+  "options": [
+   "key fields",
+   "collector",
+   "extra fields",
    "bind"
   ],
-  "answer": 3,
-  "why": "The Flexible NetFlow quick review pairs \"Monitor\" with \"bind\"."
+  "answer": 2,
+  "why": "Flow record anatomy in Flexible NetFlow pairs \"collect\" with \"extra fields\"."
  },
  {
-  "q": "In Flexible NetFlow, which value matches \"vs v5\"?",
+  "q": "In Flexible NetFlow — Flow record anatomy, which value matches \"exporter\"?",
   "options": [
-   "templates",
-   "UDP 161",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 0,
-  "why": "The Flexible NetFlow quick review pairs \"vs v5\" with \"templates\"."
- },
- {
-  "q": "In SPAN, which value matches \"Scope\"?",
-  "options": [
-   "routed",
-   "local",
-   "UDP 161",
-   "UDP 162"
+   "key fields",
+   "collector",
+   "extra fields",
+   "bind"
   ],
   "answer": 1,
-  "why": "The SPAN quick review pairs \"Scope\" with \"local\"."
+  "why": "Flow record anatomy in Flexible NetFlow pairs \"exporter\" with \"collector\"."
  },
  {
-  "q": "In SPAN, which value matches \"Session\"?",
+  "q": "In SPAN — SPAN basics, which value matches \"Source\"?",
   "options": [
-   "UDP 161",
-   "UDP 162",
-   "monitor",
-   "community"
-  ],
-  "answer": 2,
-  "why": "The SPAN quick review pairs \"Session\" with \"monitor\"."
- },
- {
-  "q": "In SPAN, which value matches \"Use\"?",
-  "options": [
-   "analysis",
-   "flexible",
-   "remote mirror",
-   "capture"
-  ],
-  "answer": 3,
-  "why": "The SPAN quick review pairs \"Use\" with \"capture\"."
- },
- {
-  "q": "In ERSPAN, which value matches \"Scope\"?",
-  "options": [
-   "routed",
-   "local",
-   "UDP 161",
-   "UDP 162"
+   "interface/vlan",
+   "analyzer port",
+   "rx/tx/both",
+   "local switch"
   ],
   "answer": 0,
-  "why": "The ERSPAN quick review pairs \"Scope\" with \"routed\"."
+  "why": "SPAN basics in SPAN pairs \"Source\" with \"interface/vlan\"."
  },
  {
-  "q": "In ERSPAN, which value matches \"vs SPAN\"?",
+  "q": "In SPAN — SPAN basics, which value matches \"Destination\"?",
   "options": [
-   "UDP 161",
-   "remote",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 1,
-  "why": "The ERSPAN quick review pairs \"vs SPAN\" with \"remote\"."
- },
- {
-  "q": "In ERSPAN, which value matches \"Use\"?",
-  "options": [
-   "analysis",
-   "flexible",
-   "remote mirror",
-   "capture"
-  ],
-  "answer": 2,
-  "why": "The ERSPAN quick review pairs \"Use\" with \"remote mirror\"."
- },
- {
-  "q": "In IP SLA, which value matches \"Probes\"?",
-  "options": [
-   "UDP 161",
-   "UDP 162",
-   "community",
-   "synthetic"
+   "interface/vlan",
+   "rx/tx/both",
+   "local switch",
+   "analyzer port"
   ],
   "answer": 3,
-  "why": "The IP SLA quick review pairs \"Probes\" with \"synthetic\"."
+  "why": "SPAN basics in SPAN pairs \"Destination\" with \"analyzer port\"."
  },
  {
-  "q": "In IP SLA, which value matches \"Track\"?",
+  "q": "In ERSPAN — ERSPAN basics, which value matches \"Source\"?",
   "options": [
-   "reactions",
-   "UDP 161",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 0,
-  "why": "The IP SLA quick review pairs \"Track\" with \"reactions\"."
- },
- {
-  "q": "In IP SLA, which value matches \"vs ping\"?",
-  "options": [
-   "UDP 161",
-   "richer",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 1,
-  "why": "The IP SLA quick review pairs \"vs ping\" with \"richer\"."
- },
- {
-  "q": "In Syslog, which value matches \"Port\"?",
-  "options": [
-   "UDP 161",
-   "UDP 162",
-   "UDP 514",
-   "community"
+   "remote IP/GRE",
+   "IP + GRE",
+   "local port/vlan",
+   "routed network"
   ],
   "answer": 2,
-  "why": "The Syslog quick review pairs \"Port\" with \"UDP 514\"."
+  "why": "ERSPAN basics in ERSPAN pairs \"Source\" with \"local port/vlan\"."
  },
  {
-  "q": "In Syslog, which value matches \"Server\"?",
+  "q": "In ERSPAN — ERSPAN basics, which value matches \"Destination\"?",
   "options": [
-   "UDP 161",
-   "UDP 162",
-   "community",
-   "logging host"
+   "local port/vlan",
+   "remote IP/GRE",
+   "IP + GRE",
+   "routed network"
+  ],
+  "answer": 1,
+  "why": "ERSPAN basics in ERSPAN pairs \"Destination\" with \"remote IP/GRE\"."
+ },
+ {
+  "q": "In IP SLA — What IP SLA measures, which value matches \"Latency\"?",
+  "options": [
+   "RTT time",
+   "delay variation",
+   "packet loss %",
+   "reachability"
+  ],
+  "answer": 0,
+  "why": "What IP SLA measures in IP SLA pairs \"Latency\" with \"RTT time\"."
+ },
+ {
+  "q": "In IP SLA — What IP SLA measures, which value matches \"Jitter\"?",
+  "options": [
+   "RTT time",
+   "packet loss %",
+   "reachability",
+   "delay variation"
   ],
   "answer": 3,
-  "why": "The Syslog quick review pairs \"Server\" with \"logging host\"."
+  "why": "What IP SLA measures in IP SLA pairs \"Jitter\" with \"delay variation\"."
  },
  {
-  "q": "In Syslog, which value matches \"Trap\"?",
+  "q": "In Syslog — Syslog model, which value matches \"Message\"?",
   "options": [
-   "SNMP 162",
-   "alert",
-   "UDP 161",
-   "UDP 162"
-  ],
-  "answer": 0,
-  "why": "The Syslog quick review pairs \"Trap\" with \"SNMP 162\"."
- },
- {
-  "q": "In Telemetry, which value matches \"Mode\"?",
-  "options": [
-   "UDP 161",
-   "push",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 1,
-  "why": "The Telemetry quick review pairs \"Mode\" with \"push\"."
- },
- {
-  "q": "In Telemetry, which value matches \"Encoding\"?",
-  "options": [
-   "UDP 161",
-   "UDP 162",
-   "protobuf/JSON",
-   "community"
+   "source of event",
+   "importance",
+   "event/text",
+   "time of event"
   ],
   "answer": 2,
-  "why": "The Telemetry quick review pairs \"Encoding\" with \"protobuf/JSON\"."
+  "why": "Syslog model in Syslog pairs \"Message\" with \"event/text\"."
  },
  {
-  "q": "In Telemetry, which value matches \"Use\"?",
+  "q": "In Syslog — Syslog model, which value matches \"Facility\"?",
   "options": [
-   "analysis",
-   "flexible",
-   "capture",
-   "modern"
+   "event/text",
+   "source of event",
+   "importance",
+   "time of event"
+  ],
+  "answer": 1,
+  "why": "Syslog model in Syslog pairs \"Facility\" with \"source of event\"."
+ },
+ {
+  "q": "In Telemetry — Push vs pull, which value matches \"SNMP/poll\"?",
+  "options": [
+   "collector asks",
+   "device sends",
+   "device exports",
+   "on change/interval"
+  ],
+  "answer": 0,
+  "why": "Push vs pull in Telemetry pairs \"SNMP/poll\" with \"collector asks\"."
+ },
+ {
+  "q": "In Telemetry — Push vs pull, which value matches \"Streaming\"?",
+  "options": [
+   "collector asks",
+   "device exports",
+   "on change/interval",
+   "device sends"
   ],
   "answer": 3,
-  "why": "The Telemetry quick review pairs \"Use\" with \"modern\"."
+  "why": "Push vs pull in Telemetry pairs \"Streaming\" with \"device sends\"."
  },
  {
-  "q": "In Wireshark, which value matches \"Role\"?",
+  "q": "In Wireshark — What Wireshark does, which value matches \"Capture\"?",
   "options": [
-   "packet analyzer",
-   "UDP 161",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 0,
-  "why": "The Wireshark quick review pairs \"Role\" with \"packet analyzer\"."
- },
- {
-  "q": "In Wireshark, which value matches \"Follow\"?",
-  "options": [
-   "UDP 161",
-   "TCP stream",
-   "UDP 162",
-   "community"
-  ],
-  "answer": 1,
-  "why": "The Wireshark quick review pairs \"Follow\" with \"TCP stream\"."
- },
- {
-  "q": "In Wireshark, which value matches \"Use\"?",
-  "options": [
-   "analysis",
-   "flexible",
-   "troubleshooting",
-   "capture"
+   "protocol tree",
+   "BPF + display",
+   "live interface",
+   "TCP stream"
   ],
   "answer": 2,
-  "why": "The Wireshark quick review pairs \"Use\" with \"troubleshooting\"."
+  "why": "What Wireshark does in Wireshark pairs \"Capture\" with \"live interface\"."
+ },
+ {
+  "q": "In Wireshark — What Wireshark does, which value matches \"Decode\"?",
+  "options": [
+   "live interface",
+   "protocol tree",
+   "BPF + display",
+   "TCP stream"
+  ],
+  "answer": 1,
+  "why": "What Wireshark does in Wireshark pairs \"Decode\" with \"protocol tree\"."
  }
 ];
 

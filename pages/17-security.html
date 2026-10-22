@@ -590,876 +590,2618 @@
         const { ref, computed } = Vue;
 
         /* ---------------- Content ---------------- */
-        const heroIntro = `Security on the exam is layered: **[[AAA]]** with **[[TACACS+]]** or **[[RADIUS]]** controls who gets in, **[[ACL|ACLs]]** decide what traffic may pass, and the Layer 2 features (**[[Port Security]]**, **[[Dynamic ARP Inspection]]**, **[[IP Source Guard]]**, **[[Storm Control]]**) stop attacks at the access edge. **[[CoPP]]** and **[[Device Hardening]]** protect the box itself.`;
+        const heroIntro = "Security on the exam is layered: **[[AAA]]** with **[[TACACS+]]** or **[[RADIUS]]** controls who gets in, **[[ACL|ACLs]]** decide what traffic may pass, and the Layer 2 features (**[[Port Security]]**, **[[Dynamic ARP Inspection]]**, **[[IP Source Guard]]**, **[[Storm Control]]**) stop attacks at the access edge. **[[CoPP]]** and **[[Device Hardening]]** protect the box itself.";
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'auth', title: 'AAA',
-            blurb: 'Authentication, authorization, accounting and how method lists are built',
-            overview: '**[[AAA]]** answers three questions: **authentication** (who are you), **authorization** (what may you do) and **accounting** (what did you do). Cisco IOS can use the **local database** or a central server, and everything starts with **%%aaa new-model%%** plus a method list per service.',
-            keyIdea: 'aaa new-model, then a method list per service. Authentication is identity, authorization is permission, accounting is a record.',
-            sections: [
-              { kind: 'table', h: 'The three A pieces', cols: ['Component', 'Question', 'Example'], rows: [
-                ['**Authentication**', 'Who are you?', 'Username and password, or a certificate'],
-                ['**Authorization**', 'What are you allowed to do?', 'Which commands, which privilege level'],
-                ['**Accounting**', 'What did you do?', 'Command logs, session start and stop']
-              ]},
-              { kind: 'code', h: 'Order of operation', code:
-`  Login attempt
-     |
-     v
-  Authentication  ->  fail: rejected
-     |
-     v
-  Authorization   ->  decides allowed actions
-     |
-     v
-  Accounting      ->  records what happened` },
-              { kind: 'code', h: 'Basic configuration', code:
-`  aaa new-model
-  !
-  aaa authentication login default group tacacs+ local
-  aaa authorization exec default group tacacs+ local
-  aaa authorization commands 15 default group tacacs+ local
-  aaa accounting exec default start-stop group tacacs+
-  !
-  username netops privilege 15 secret SECRET` },
-              { kind: 'para', h: 'Method list fallback', p: 'Methods are tried left to right. **%%group tacacs+ local%%** means try the server first and fall back to the local database, which is what keeps you logged in when the server dies.' },
-              { kind: 'code', h: 'Verification', code:
-`  show aaa method-lists
-  show running-config | include aaa
-  test aaa group tacacs+ netops SECRET legacy` }
-            ],
-            commands: [
-              { label: 'Turn on AAA with local fallback', code:
-`aaa new-model\naaa authentication login default group tacacs+ local\naaa authorization exec default group tacacs+ local` },
-              { label: 'Privilege 15 command authorization', code:
-`aaa authorization commands 15 default group tacacs+ local` },
-              { label: 'Verify', code:
-`show aaa method-lists` }
-            ],
-            traps: [
-              '**Authentication is not authorization** — identity versus permission.',
-              '**Accounting does not grant access**, it only records.',
-              'In **%%aaa authorization commands 15%%** the **15 is a privilege level**, not a count.',
-              'Method lists are consulted **left to right**.',
-              '**%%aaa new-model%%** changes login behaviour immediately; keep a local fallback.',
-              'Console, VTY and EXEC can each use a different method list.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['A pieces', 'Authentication, Authorization, Accounting'],
-                ['Enable AAA', 'aaa new-model'],
-                ['Method list order', 'Left to right, first success wins'],
-                ['Local fallback', 'group tacacs+ local'],
-                ['Command authorization', 'aaa authorization commands LEVEL'],
-                ['Accounting', 'start-stop records session activity'],
-                ['Verify', 'show aaa method-lists']
-              ]
-            },
-            related: [
-              { t: '02. TACACS+', d: 'Device administration protocol' },
-              { t: '03. RADIUS', d: 'Network access protocol' }
-            ],
-            glossary: ['AAA', 'TACACS+', 'RADIUS']
-          },
-          {
-            id: 't02', num: '02', group: 'auth', title: 'TACACS+',
-            blurb: 'TCP 49, full body encryption, and granular per-command control',
-            overview: '**[[TACACS+]]** is a Cisco-developed AAA protocol for **device administration**. It runs over **TCP 49**, separates authentication, authorization and accounting, and supports **per-command authorization**. The whole packet body is encrypted with the shared secret, while the header stays readable.',
-            keyIdea: 'TCP 49. Encrypts the body, not the header. Separate AAA and per-command authorization.',
-            sections: [
-              { kind: 'table', h: 'TACACS+ versus RADIUS', cols: ['Feature', 'TACACS+', 'RADIUS'], rows: [
-                ['Transport', '**TCP 49**', '**UDP 1812 / 1813**'],
-                ['AAA separation', '**Separate** functions', 'Combined in one exchange'],
-                ['Encryption', '**Whole body**', 'Password only'],
-                ['Authorization', '**Per command**', 'Per session or service'],
-                ['Typical use', '**Device administration**', 'Network access (802.1X, VPN)']
-              ]},
-              { kind: 'code', h: 'Server and client configuration', code:
-`  aaa new-model
-  tacacs server ISE1
-   address ipv4 10.1.1.50
-   key SHAREDSECRET
-  !
-  aaa group server tacacs+ ADMINS
-   server name ISE1
-  !
-  aaa authentication login default group ADMINS local
-  aaa authorization commands 15 default group ADMINS local` },
-              { kind: 'para', h: 'Read the trap carefully', p: 'It is inaccurate to say the whole IP packet is encrypted. The **TACACS+ body** is encrypted with the shared secret; the **header remains visible**.' },
-              { kind: 'code', h: 'Verification', code:
-`  show tacacs
-  test aaa group tacacs+ netops SECRET legacy` }
-            ],
-            commands: [
-              { label: 'Define the server', code:
-`tacacs server ISE1\n address ipv4 10.1.1.50\n key SHAREDSECRET` },
-              { label: 'Use it for login and commands', code:
-`aaa authentication login default group tacacs+ local\naaa authorization commands 15 default group tacacs+ local` },
-              { label: 'Verify', code:
-`show tacacs` }
-            ],
-            traps: [
-              '**TACACS+ uses TCP 49**, not UDP.',
-              'RADIUS is **UDP 1812 and 1813**.',
-              'Only the **packet body** is encrypted; the header is visible.',
-              'TACACS+ separates **authentication, authorization and accounting**.',
-              'Per-command authorization is the TACACS+ strength.',
-              'TACACS+ is preferred for **device administration**; RADIUS for **network access**.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Transport', 'TCP 49'],
-                ['Encryption', 'Packet body only'],
-                ['AAA model', 'Separate functions'],
-                ['Authorization', 'Per command'],
-                ['Best fit', 'Router and switch administration'],
-                ['Server config', 'tacacs server NAME'],
-                ['Verify', 'show tacacs']
-              ]
-            },
-            related: [
-              { t: '01. AAA', d: 'The framework' },
-              { t: '03. RADIUS', d: 'The open-standard alternative' }
-            ],
-            glossary: ['TACACS+', 'AAA', 'RADIUS']
-          },
-          {
-            id: 't03', num: '03', group: 'auth', title: 'RADIUS',
-            blurb: 'UDP 1812 and 1813, combined AAA, and the 802.1X workhorse',
-            overview: '**[[RADIUS]]** is the open-standard AAA protocol used for **network access**: 802.1X, wireless, VPN and remote access. Authentication uses **UDP 1812** and accounting uses **UDP 1813**. It combines authentication and authorization in one exchange and encrypts only the password.',
-            keyIdea: 'UDP 1812 auth, 1813 accounting. Password only is encrypted. The switch or AP is the client, not the laptop.',
-            sections: [
-              { kind: 'table', h: 'Ports and roles', cols: ['Item', 'Value'], rows: [
-                ['Authentication', '**UDP 1812**'],
-                ['Accounting', '**UDP 1813**'],
-                ['Legacy ports', 'UDP 1645 / 1646'],
-                ['Client (NAS)', 'Switch, AP, WLC or VPN gateway'],
-                ['Encryption', '**Password field only**']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  aaa new-model
-  radius server ISE1
-   address ipv4 10.1.1.50 auth-port 1812 acct-port 1813
-   key SHAREDSECRET
-  !
-  aaa group server radius ACCESS
-   server name ISE1
-  !
-  aaa authentication dot1x default group ACCESS
-  aaa accounting dot1x default start-stop group ACCESS` },
-              { kind: 'table', h: 'Where it wins', cols: ['Scenario', 'Why RADIUS'], rows: [
-                ['802.1X wired and wireless', 'Standard and widely supported'],
-                ['VPN and remote access', 'Deployed everywhere'],
-                ['Multi-vendor estate', 'Open standard'],
-                ['Accounting of sessions', 'Start-stop records']
-              ]},
-              { kind: 'code', h: 'Verification', code:
-`  show radius server
-  show radius statistics
-  test aaa group radius netops SECRET new-code` }
-            ],
-            commands: [
-              { label: 'Define the server', code:
-`radius server ISE1\n address ipv4 10.1.1.50 auth-port 1812 acct-port 1813\n key SHAREDSECRET` },
-              { label: 'Use it for 802.1X', code:
-`aaa authentication dot1x default group radius\naaa accounting dot1x default start-stop group radius` },
-              { label: 'Verify', code:
-`show radius statistics` }
-            ],
-            traps: [
-              '**UDP 1812 authentication, UDP 1813 accounting.**',
-              'The **switch or AP is the RADIUS client**, not the user device.',
-              'RADIUS encrypts the **password only**, not the whole payload.',
-              'RADIUS **combines** authentication and authorization.',
-              'TACACS+ is the per-command device-admin choice.',
-              'Legacy 1645 and 1646 still appear on old exams and old gear.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Auth port', 'UDP 1812'],
-                ['Accounting port', 'UDP 1813'],
-                ['Encryption', 'Password field only'],
-                ['AAA model', 'Combined authn and authz'],
-                ['Client role', 'Switch, AP, WLC, VPN gateway'],
-                ['Best fit', '802.1X, wireless, VPN'],
-                ['Server config', 'radius server NAME']
-              ]
-            },
-            related: [
-              { t: '02. TACACS+', d: 'Device administration alternative' },
-              { t: '01. AAA', d: 'The framework' }
-            ],
-            glossary: ['RADIUS', 'AAA', 'TACACS+']
-          },
-          {
-            id: 't04', num: '04', group: 'auth', title: 'ACL',
-            blurb: 'Wildcard masks, standard versus extended, placement and the implicit deny',
-            overview: '**[[ACL|Access Control Lists]]** are ordered rules that permit or deny traffic by address, protocol and port. They are used for filtering, management access, NAT selection, route-map matching, QoS classification and control-plane protection. The **first match wins**, and anything unmatched hits the **implicit deny**.',
-            keyIdea: 'First match wins, implicit deny at the end, wildcard 0 means match and 1 means ignore.',
-            sections: [
-              { kind: 'table', h: 'Standard versus extended', cols: ['Type', 'Matches', 'Numbers'], rows: [
-                ['**Standard**', '**Source only**', '1 to 99, 1300 to 1999'],
-                ['**Extended**', 'Source, destination, protocol, port', '100 to 199, 2000 to 2699']
-              ]},
-              { kind: 'code', h: 'Wildcard logic', code:
-`  Wildcard = inverse of the subnet mask
-  0 = must match
-  1 = ignore this bit
+ {
+  "id": "t01",
+  "num": "01",
+  "group": "auth",
+  "title": "AAA",
+  "blurb": "Authentication, authorization, accounting and how method lists are built",
+  "overview": "**[[AAA]]** answers three questions: **authentication** (who are you), **authorization** (what may you do) and **accounting** (what did you do). Cisco IOS can use the **local database** or a central server, and everything starts with **%%aaa new-model%%** plus a method list per service.",
+  "keyIdea": "aaa new-model, then a method list per service. Authentication is identity, authorization is permission, accounting is a record.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The three A pieces",
+    "cols": [
+     "Component",
+     "Question",
+     "Example"
+    ],
+    "rows": [
+     [
+      "**Authentication**",
+      "Who are you?",
+      "Username and password, or a certificate"
+     ],
+     [
+      "**Authorization**",
+      "What are you allowed to do?",
+      "Which commands, which privilege level"
+     ],
+     [
+      "**Accounting**",
+      "What did you do?",
+      "Command logs, session start and stop"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Order of operation",
+    "code": "  Login attempt\n     |\n     v\n  Authentication  ->  fail: rejected\n     |\n     v\n  Authorization   ->  decides allowed actions\n     |\n     v\n  Accounting      ->  records what happened"
+   },
+   {
+    "kind": "code",
+    "h": "Basic configuration",
+    "code": "  aaa new-model\n  !\n  aaa authentication login default group tacacs+ local\n  aaa authorization exec default group tacacs+ local\n  aaa authorization commands 15 default group tacacs+ local\n  aaa accounting exec default start-stop group tacacs+\n  !\n  username netops privilege 15 secret SECRET"
+   },
+   {
+    "kind": "para",
+    "h": "Method list fallback",
+    "p": "Methods are tried left to right. **%%group tacacs+ local%%** means try the server first and fall back to the local database, which is what keeps you logged in when the server dies."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show aaa method-lists\n  show running-config | include aaa\n  test aaa group tacacs+ netops SECRET legacy"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Turn on AAA with local fallback",
+    "code": "aaa new-model\naaa authentication login default group tacacs+ local\naaa authorization exec default group tacacs+ local"
+   },
+   {
+    "label": "Privilege 15 command authorization",
+    "code": "aaa authorization commands 15 default group tacacs+ local"
+   },
+   {
+    "label": "Verify",
+    "code": "show aaa method-lists"
+   }
+  ],
+  "traps": [
+   "**Authentication is not authorization** — identity versus permission.",
+   "**Accounting does not grant access**, it only records.",
+   "In **%%aaa authorization commands 15%%** the **15 is a privilege level**, not a count.",
+   "Method lists are consulted **left to right**.",
+   "**%%aaa new-model%%** changes login behaviour immediately; keep a local fallback.",
+   "Console, VTY and EXEC can each use a different method list."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "A pieces",
+     "Authentication, Authorization, Accounting"
+    ],
+    [
+     "Enable AAA",
+     "aaa new-model"
+    ],
+    [
+     "Method list order",
+     "Left to right, first success wins"
+    ],
+    [
+     "Local fallback",
+     "group tacacs+ local"
+    ],
+    [
+     "Command authorization",
+     "aaa authorization commands LEVEL"
+    ],
+    [
+     "Accounting",
+     "start-stop records session activity"
+    ],
+    [
+     "Verify",
+     "show aaa method-lists"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. TACACS+",
+    "d": "Device administration protocol"
+   },
+   {
+    "t": "03. RADIUS",
+    "d": "Network access protocol"
+   }
+  ],
+  "glossary": [
+   "AAA",
+   "TACACS+",
+   "RADIUS"
+  ]
+ },
+ {
+  "id": "t02",
+  "num": "02",
+  "group": "auth",
+  "title": "TACACS+",
+  "blurb": "TCP 49, full body encryption, and granular per-command control",
+  "overview": "**[[TACACS+]]** is a Cisco-developed AAA protocol for **device administration**. It runs over **TCP 49**, separates authentication, authorization and accounting, and supports **per-command authorization**. The whole packet body is encrypted with the shared secret, while the header stays readable.",
+  "keyIdea": "TCP 49. Encrypts the body, not the header. Separate AAA and per-command authorization.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "TACACS+ versus RADIUS",
+    "cols": [
+     "Feature",
+     "TACACS+",
+     "RADIUS"
+    ],
+    "rows": [
+     [
+      "Transport",
+      "**TCP 49**",
+      "**UDP 1812 / 1813**"
+     ],
+     [
+      "AAA separation",
+      "**Separate** functions",
+      "Combined in one exchange"
+     ],
+     [
+      "Encryption",
+      "**Whole body**",
+      "Password only"
+     ],
+     [
+      "Authorization",
+      "**Per command**",
+      "Per session or service"
+     ],
+     [
+      "Typical use",
+      "**Device administration**",
+      "Network access (802.1X, VPN)"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Server and client configuration",
+    "code": "  aaa new-model\n  tacacs server ISE1\n   address ipv4 10.1.1.50\n   key SHAREDSECRET\n  !\n  aaa group server tacacs+ ADMINS\n   server name ISE1\n  !\n  aaa authentication login default group ADMINS local\n  aaa authorization commands 15 default group ADMINS local"
+   },
+   {
+    "kind": "para",
+    "h": "Read the trap carefully",
+    "p": "It is inaccurate to say the whole IP packet is encrypted. The **TACACS+ body** is encrypted with the shared secret; the **header remains visible**."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show tacacs\n  test aaa group tacacs+ netops SECRET legacy"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Define the server",
+    "code": "tacacs server ISE1\n address ipv4 10.1.1.50\n key SHAREDSECRET"
+   },
+   {
+    "label": "Use it for login and commands",
+    "code": "aaa authentication login default group tacacs+ local\naaa authorization commands 15 default group tacacs+ local"
+   },
+   {
+    "label": "Verify",
+    "code": "show tacacs"
+   }
+  ],
+  "traps": [
+   "**TACACS+ uses TCP 49**, not UDP.",
+   "RADIUS is **UDP 1812 and 1813**.",
+   "Only the **packet body** is encrypted; the header is visible.",
+   "TACACS+ separates **authentication, authorization and accounting**.",
+   "Per-command authorization is the TACACS+ strength.",
+   "TACACS+ is preferred for **device administration**; RADIUS for **network access**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Transport",
+     "TCP 49"
+    ],
+    [
+     "Encryption",
+     "Packet body only"
+    ],
+    [
+     "AAA model",
+     "Separate functions"
+    ],
+    [
+     "Authorization",
+     "Per command"
+    ],
+    [
+     "Best fit",
+     "Router and switch administration"
+    ],
+    [
+     "Server config",
+     "tacacs server NAME"
+    ],
+    [
+     "Verify",
+     "show tacacs"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. AAA",
+    "d": "The framework"
+   },
+   {
+    "t": "03. RADIUS",
+    "d": "The open-standard alternative"
+   }
+  ],
+  "glossary": [
+   "TACACS+",
+   "AAA",
+   "RADIUS"
+  ]
+ },
+ {
+  "id": "t03",
+  "num": "03",
+  "group": "auth",
+  "title": "RADIUS",
+  "blurb": "UDP 1812 and 1813, combined AAA, and the 802.1X workhorse",
+  "overview": "**[[RADIUS]]** is the open-standard AAA protocol used for **network access**: 802.1X, wireless, VPN and remote access. Authentication uses **UDP 1812** and accounting uses **UDP 1813**. It combines authentication and authorization in one exchange and encrypts only the password.",
+  "keyIdea": "UDP 1812 auth, 1813 accounting. Password only is encrypted. The switch or AP is the client, not the laptop.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Ports and roles",
+    "cols": [
+     "Item",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Authentication",
+      "**UDP 1812**"
+     ],
+     [
+      "Accounting",
+      "**UDP 1813**"
+     ],
+     [
+      "Legacy ports",
+      "UDP 1645 / 1646"
+     ],
+     [
+      "Client (NAS)",
+      "Switch, AP, WLC or VPN gateway"
+     ],
+     [
+      "Encryption",
+      "**Password field only**"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  aaa new-model\n  radius server ISE1\n   address ipv4 10.1.1.50 auth-port 1812 acct-port 1813\n   key SHAREDSECRET\n  !\n  aaa group server radius ACCESS\n   server name ISE1\n  !\n  aaa authentication dot1x default group ACCESS\n  aaa accounting dot1x default start-stop group ACCESS"
+   },
+   {
+    "kind": "table",
+    "h": "Where it wins",
+    "cols": [
+     "Scenario",
+     "Why RADIUS"
+    ],
+    "rows": [
+     [
+      "802.1X wired and wireless",
+      "Standard and widely supported"
+     ],
+     [
+      "VPN and remote access",
+      "Deployed everywhere"
+     ],
+     [
+      "Multi-vendor estate",
+      "Open standard"
+     ],
+     [
+      "Accounting of sessions",
+      "Start-stop records"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show radius server\n  show radius statistics\n  test aaa group radius netops SECRET new-code"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Define the server",
+    "code": "radius server ISE1\n address ipv4 10.1.1.50 auth-port 1812 acct-port 1813\n key SHAREDSECRET"
+   },
+   {
+    "label": "Use it for 802.1X",
+    "code": "aaa authentication dot1x default group radius\naaa accounting dot1x default start-stop group radius"
+   },
+   {
+    "label": "Verify",
+    "code": "show radius statistics"
+   }
+  ],
+  "traps": [
+   "**UDP 1812 authentication, UDP 1813 accounting.**",
+   "The **switch or AP is the RADIUS client**, not the user device.",
+   "RADIUS encrypts the **password only**, not the whole payload.",
+   "RADIUS **combines** authentication and authorization.",
+   "TACACS+ is the per-command device-admin choice.",
+   "Legacy 1645 and 1646 still appear on old exams and old gear."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Auth port",
+     "UDP 1812"
+    ],
+    [
+     "Accounting port",
+     "UDP 1813"
+    ],
+    [
+     "Encryption",
+     "Password field only"
+    ],
+    [
+     "AAA model",
+     "Combined authn and authz"
+    ],
+    [
+     "Client role",
+     "Switch, AP, WLC, VPN gateway"
+    ],
+    [
+     "Best fit",
+     "802.1X, wireless, VPN"
+    ],
+    [
+     "Server config",
+     "radius server NAME"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. TACACS+",
+    "d": "Device administration alternative"
+   },
+   {
+    "t": "01. AAA",
+    "d": "The framework"
+   }
+  ],
+  "glossary": [
+   "RADIUS",
+   "AAA",
+   "TACACS+"
+  ]
+ },
+ {
+  "id": "t04",
+  "num": "04",
+  "group": "auth",
+  "title": "ACL",
+  "blurb": "Wildcard masks, standard versus extended, placement and the implicit deny",
+  "overview": "**[[ACL|Access Control Lists]]** are ordered rules that permit or deny traffic by address, protocol and port. They are used for filtering, management access, NAT selection, route-map matching, QoS classification and control-plane protection. The **first match wins**, and anything unmatched hits the **implicit deny**.",
+  "keyIdea": "First match wins, implicit deny at the end, wildcard 0 means match and 1 means ignore.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Standard versus extended",
+    "cols": [
+     "Type",
+     "Matches",
+     "Numbers"
+    ],
+    "rows": [
+     [
+      "**Standard**",
+      "**Source only**",
+      "1 to 99, 1300 to 1999"
+     ],
+     [
+      "**Extended**",
+      "Source, destination, protocol, port",
+      "100 to 199, 2000 to 2699"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Wildcard logic",
+    "code": "  Wildcard = inverse of the subnet mask\n  0 = must match\n  1 = ignore this bit\n\n  255.255.255.0  ->  0.0.0.255"
+   },
+   {
+    "kind": "code",
+    "h": "Examples",
+    "code": "  access-list 10 permit 10.1.1.0 0.0.0.255\n  access-list 10 permit host 10.1.1.50\n  access-list 10 deny any\n  !\n  ip access-list extended WEB-IN\n   permit tcp any host 10.1.1.80 eq 443\n   deny ip any any log\n  !\n  interface GigabitEthernet0/1\n   ip access-group WEB-IN in"
+   },
+   {
+    "kind": "table",
+    "h": "Placement guideline",
+    "cols": [
+     "Type",
+     "Place",
+     "Reason"
+    ],
+    "rows": [
+     [
+      "**Extended**",
+      "Close to the source",
+      "Stops unwanted traffic early"
+     ],
+     [
+      "**Standard**",
+      "Close to the destination",
+      "Only knows the source address"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Order matters",
+    "p": "A **%%permit ip any any%%** at the top makes every rule below it unreachable. Put specific rules first and the broad permit last."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Named extended ACL",
+    "code": "ip access-list extended WEB-IN\n permit tcp any host 10.1.1.80 eq 443\n deny ip any any log"
+   },
+   {
+    "label": "Apply to an interface",
+    "code": "interface GigabitEthernet0/1\n ip access-group WEB-IN in"
+   },
+   {
+    "label": "Verify",
+    "code": "show access-lists\nshow ip interface GigabitEthernet0/1"
+   }
+  ],
+  "traps": [
+   "**First match wins** — order decides everything.",
+   "There is an **implicit deny** at the end of every ACL.",
+   "Wildcard **0 means match**, 1 means ignore. It is the inverse of the mask.",
+   "**Standard ACLs match source only**; extended match source, destination, protocol, port.",
+   "Place extended ACLs near the source and standard ACLs near the destination.",
+   "An ACL applied in the wrong direction does nothing useful."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Evaluation",
+     "Top down, first match wins"
+    ],
+    [
+     "End of list",
+     "Implicit deny"
+    ],
+    [
+     "Wildcard 0 / 1",
+     "Match / ignore"
+    ],
+    [
+     "Standard",
+     "Source only"
+    ],
+    [
+     "Extended",
+     "Source, destination, protocol, port"
+    ],
+    [
+     "Extended placement",
+     "Near the source"
+    ],
+    [
+     "Standard placement",
+     "Near the destination"
+    ],
+    [
+     "Interface command",
+     "ip access-group NAME in|out"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. CoPP",
+    "d": "ACLs classify control-plane traffic"
+   },
+   {
+    "t": "11. Secure Management",
+    "d": "Protecting VTY lines"
+   }
+  ],
+  "glossary": [
+   "ACL",
+   "CoPP",
+   "Device Hardening",
+   "Control Plane",
+   "Data Plane"
+  ]
+ },
+ {
+  "id": "t05",
+  "num": "05",
+  "group": "l2",
+  "title": "Port Security",
+  "blurb": "Secure MAC limits, violation modes and sticky learning",
+  "overview": "**[[Port Security]]** restricts which **source MAC addresses** may appear on a switchport and how many may be learned. It runs at the access layer to stop unauthorised devices and MAC flooding. It is not a replacement for 802.1X or DAI.",
+  "keyIdea": "Default maximum is 1, default violation is shutdown, sticky MACs land in the running-config.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Violation modes",
+    "cols": [
+     "Mode",
+     "Behaviour"
+    ],
+    "rows": [
+     [
+      "**Shutdown** (default)",
+      "Err-disables the port and logs"
+     ],
+     [
+      "**Restrict**",
+      "Drops violating traffic, increments counters and logs"
+     ],
+     [
+      "**Protect**",
+      "Drops violating traffic silently"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  interface GigabitEthernet0/1\n   switchport mode access\n   switchport port-security\n   switchport port-security maximum 2\n   switchport port-security mac-address sticky\n   switchport port-security violation restrict\n   switchport port-security aging time 10"
+   },
+   {
+    "kind": "table",
+    "h": "MAC address types",
+    "cols": [
+     "Type",
+     "Survives reload"
+    ],
+    "rows": [
+     [
+      "**Static**",
+      "Yes, it is in the config"
+     ],
+     [
+      "**Sticky**",
+      "Yes if the config is saved"
+     ],
+     [
+      "**Dynamic**",
+      "No"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Recovery and verification",
+    "code": "  errdisable recovery cause psecure-violation\n  errdisable recovery interval 300\n  !\n  show port-security\n  show port-security interface GigabitEthernet0/1"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Secure an access port",
+    "code": "interface GigabitEthernet0/1\n switchport mode access\n switchport port-security\n switchport port-security maximum 2\n switchport port-security mac-address sticky"
+   },
+   {
+    "label": "Auto-recover from err-disable",
+    "code": "errdisable recovery cause psecure-violation"
+   },
+   {
+    "label": "Verify",
+    "code": "show port-security interface GigabitEthernet0/1\nshow port-security address"
+   }
+  ],
+  "traps": [
+   "Default maximum secure MACs is **1**.",
+   "Default violation mode is **shutdown**.",
+   "**Shutdown** means err-disabled, not merely dropped packets.",
+   "**Restrict** drops and logs; **protect** drops silently.",
+   "**Sticky MACs go into the running-config**, and survive a reload only if saved.",
+   "Port security limits **MAC addresses**, not IP addresses."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Limits",
+     "Source MAC addresses per port"
+    ],
+    [
+     "Default maximum",
+     "1"
+    ],
+    [
+     "Default violation",
+     "Shutdown (err-disable)"
+    ],
+    [
+     "Restrict",
+     "Drop plus counters and logs"
+    ],
+    [
+     "Protect",
+     "Drop silently"
+    ],
+    [
+     "Sticky",
+     "Written to running-config"
+    ],
+    [
+     "Dynamic MACs",
+     "Lost on reload"
+    ],
+    [
+     "Recovery",
+     "errdisable recovery cause psecure-violation"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. IP Source Guard",
+    "d": "Adds IP and MAC checking"
+   },
+   {
+    "t": "06. Dynamic ARP Inspection",
+    "d": "Other Layer 2 control"
+   }
+  ],
+  "glossary": [
+   "Port Security",
+   "Dynamic ARP Inspection",
+   "IP Source Guard"
+  ]
+ },
+ {
+  "id": "t06",
+  "num": "06",
+  "group": "l2",
+  "title": "Dynamic ARP Inspection",
+  "blurb": "ARP validation per VLAN, trust boundaries, ARP ACLs and rate limits",
+  "overview": "**[[Dynamic ARP Inspection]]** stops **ARP spoofing and poisoning** by validating ARP packets received on **untrusted** ports. It normally checks against the **DHCP snooping binding table**, and uses **ARP ACLs** for hosts with static addresses.",
+  "keyIdea": "Enabled per VLAN, untrusted by default, trust only uplinks. It validates both requests and replies.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Dependency chain",
+    "cols": [
+     "Feature",
+     "Role"
+    ],
+    "rows": [
+     [
+      "**DHCP snooping**",
+      "Builds the IP to MAC binding table"
+     ],
+     [
+      "**DAI**",
+      "Validates ARP against those bindings"
+     ],
+     [
+      "**ARP ACL**",
+      "Covers static-IP hosts with no binding"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  ip arp inspection vlan 10,20\n  !\n  interface GigabitEthernet0/1\n   ip arp inspection trust\n  !\n  ip arp inspection validate src-mac dst-mac ip\n  ip arp inspection limit rate 15"
+   },
+   {
+    "kind": "table",
+    "h": "Validation checks",
+    "cols": [
+     "Check",
+     "What it compares"
+    ],
+    "rows": [
+     [
+      "**src-mac**",
+      "Ethernet source MAC against ARP sender MAC"
+     ],
+     [
+      "**dst-mac**",
+      "Ethernet destination MAC against ARP target MAC"
+     ],
+     [
+      "**ip**",
+      "ARP addresses against the binding table"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip arp inspection\n  show ip arp inspection statistics vlan 10\n  show ip dhcp snooping binding"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable per VLAN and trust the uplink",
+    "code": "ip arp inspection vlan 10\ninterface GigabitEthernet0/1\n ip arp inspection trust"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip arp inspection statistics vlan 10"
+   }
+  ],
+  "traps": [
+   "DAI is enabled **per VLAN**.",
+   "Interfaces are **untrusted by default** for DAI.",
+   "Trust **uplinks and infrastructure**, never endpoint ports.",
+   "DAI inspects **requests and replies**, not only replies.",
+   "Static-IP hosts need an **ARP ACL**.",
+   "Legitimate traffic dropped? Check the **DHCP snooping binding table** first."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Protects against",
+     "ARP spoofing and poisoning"
+    ],
+    [
+     "Enable scope",
+     "Per VLAN"
+    ],
+    [
+     "Default trust",
+     "Untrusted"
+    ],
+    [
+     "Binding source",
+     "DHCP snooping table"
+    ],
+    [
+     "Static hosts",
+     "ARP ACL"
+    ],
+    [
+     "Checks",
+     "src-mac, dst-mac, ip"
+    ],
+    [
+     "Rate limit",
+     "Configured per interface"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Port Security",
+    "d": "Access-port admission control"
+   },
+   {
+    "t": "07. IP Source Guard",
+    "d": "Source address enforcement"
+   }
+  ],
+  "glossary": [
+   "Dynamic ARP Inspection",
+   "DHCP Snooping",
+   "IP Source Guard"
+  ]
+ },
+ {
+  "id": "t07",
+  "num": "07",
+  "group": "l2",
+  "title": "IP Source Guard",
+  "blurb": "Source IP and MAC allowlisting from the snooping binding table",
+  "overview": "**[[IP Source Guard]]** prevents a host from using an address it does not own by building a per-interface allowlist of source **IP, MAC and VLAN** bindings. Those bindings usually come from **DHCP snooping**, with **%%ip source binding%%** covering static hosts.",
+  "keyIdea": "ip verify source checks the IP; adding port-security also checks the MAC. It is not the same as enabling port security.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Modes",
+    "cols": [
+     "Command",
+     "What is checked"
+    ],
+    "rows": [
+     [
+      "**%%ip verify source%%**",
+      "Source IP only"
+     ],
+     [
+      "**%%ip verify source port-security%%**",
+      "Source IP **and** source MAC"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  interface GigabitEthernet0/1\n   switchport mode access\n   ip verify source port-security\n  !\n  ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2"
+   },
+   {
+    "kind": "table",
+    "h": "Which feature does what",
+    "cols": [
+     "Feature",
+     "Enforces"
+    ],
+    "rows": [
+     [
+      "**Port Security**",
+      "Source MAC admission"
+     ],
+     [
+      "**IP Source Guard**",
+      "Source IP and optionally MAC"
+     ],
+     [
+      "**DAI**",
+      "ARP contents"
+     ],
+     [
+      "**DHCP Snooping**",
+      "DHCP message trust"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip source binding\n  show ip verify source\n  show ip dhcp snooping binding"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable on an access port",
+    "code": "interface GigabitEthernet0/1\n ip verify source port-security"
+   },
+   {
+    "label": "Static binding",
+    "code": "ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip source binding\nshow ip verify source"
+   }
+  ],
+  "traps": [
+   "**%%ip verify source%%** filters on **source IP**.",
+   "Adding **port-security** to the command also validates the **source MAC**.",
+   "That keyword is **not** the same as configuring **%%switchport port-security%%**.",
+   "Static-IP hosts need an **%%ip source binding%%**.",
+   "Deploy on **host-facing access ports**, not uplinks.",
+   "IPSG protects addressing; **DAI** protects ARP."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Protects against",
+     "Source IP spoofing"
+    ],
+    [
+     "IP only mode",
+     "ip verify source"
+    ],
+    [
+     "IP plus MAC mode",
+     "ip verify source port-security"
+    ],
+    [
+     "Binding source",
+     "DHCP snooping table"
+    ],
+    [
+     "Static host",
+     "ip source binding"
+    ],
+    [
+     "Deploy on",
+     "Host-facing access ports"
+    ],
+    [
+     "Verify",
+     "show ip source binding"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Port Security",
+    "d": "MAC-level admission"
+   },
+   {
+    "t": "06. Dynamic ARP Inspection",
+    "d": "ARP-level validation"
+   }
+  ],
+  "glossary": [
+   "IP Source Guard",
+   "Port Security",
+   "Dynamic ARP Inspection",
+   "DHCP Snooping"
+  ]
+ },
+ {
+  "id": "t08",
+  "num": "08",
+  "group": "l2",
+  "title": "Storm Control",
+  "blurb": "Limiting broadcast, multicast and unknown unicast per interface",
+  "overview": "**[[Storm Control]]** limits excessive **broadcast, multicast and unknown-unicast** traffic on a switchport. It is a flood-control mechanism, not a loop-prevention mechanism: **STP** stops loops, storm control limits the damage while the loop exists.",
+  "keyIdea": "It watches three traffic types, not known unicast, and normally suppresses rather than shutting the port.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Traffic types",
+    "cols": [
+     "Type",
+     "Monitored"
+    ],
+    "rows": [
+     [
+      "**Broadcast**",
+      "Yes"
+     ],
+     [
+      "**Multicast**",
+      "Yes"
+     ],
+     [
+      "**Unknown unicast**",
+      "Yes"
+     ],
+     [
+      "**Known unicast**",
+      "**No**"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  interface GigabitEthernet0/1\n   storm-control broadcast level 20\n   storm-control multicast level 20\n   storm-control action trap\n   storm-control action shutdown"
+   },
+   {
+    "kind": "table",
+    "h": "Threshold units",
+    "cols": [
+     "Unit",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**Percentage**",
+      "Share of interface bandwidth"
+     ],
+     [
+      "**pps**",
+      "Packets per second"
+     ],
+     [
+      "**bps**",
+      "Bits per second"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Hysteresis",
+    "p": "A **rising** threshold starts suppression and a **falling** threshold clears it. That gap prevents the port flapping between normal and suppressed states."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Limit broadcast and multicast",
+    "code": "interface GigabitEthernet0/1\n storm-control broadcast level 20\n storm-control multicast level 20"
+   },
+   {
+    "label": "Choose the action",
+    "code": "storm-control action trap\nstorm-control action shutdown"
+   },
+   {
+    "label": "Verify",
+    "code": "show storm-control\nshow interfaces counters"
+   }
+  ],
+  "traps": [
+   "Storm control covers **broadcast, multicast and unknown unicast**.",
+   "**Unknown unicast is not all unicast.**",
+   "It runs at the **interface level**.",
+   "It is **not a replacement for STP**.",
+   "Default behaviour **suppresses** traffic instead of shutting the port.",
+   "**%%action trap%%** notifies; it does not shut the interface."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Monitors",
+     "Broadcast, multicast, unknown unicast"
+    ],
+    [
+     "Ignores",
+     "Known unicast"
+    ],
+    [
+     "Scope",
+     "Per switchport"
+    ],
+    [
+     "Units",
+     "Percentage, pps or bps"
+    ],
+    [
+     "Default action",
+     "Suppress excess"
+    ],
+    [
+     "action trap",
+     "Notify only"
+    ],
+    [
+     "action shutdown",
+     "Err-disable the port"
+    ],
+    [
+     "Relationship",
+     "Complements STP, does not replace it"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Port Security",
+    "d": "Other access-port control"
+   },
+   {
+    "t": "09. CoPP",
+    "d": "Control-plane equivalent"
+   }
+  ],
+  "glossary": [
+   "Storm Control",
+   "CoPP",
+   "Routing Loop"
+  ]
+ },
+ {
+  "id": "t09",
+  "num": "09",
+  "group": "infra",
+  "title": "CoPP",
+  "blurb": "Protecting the CPU with class-maps, policy-maps and policing",
+  "overview": "**[[CoPP]]** protects the device CPU by rate-limiting traffic **destined to the device**. It uses the QoS building blocks: an **ACL** identifies traffic, a **class-map** groups it, a **policy-map** sets policing, and the **%%control-plane%%** applies it before packets reach the processor.",
+  "keyIdea": "CoPP polices traffic to the control plane. Data plane transit traffic is not affected.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The three planes",
+    "cols": [
+     "Plane",
+     "Purpose",
+     "Examples"
+    ],
+    "rows": [
+     [
+      "**Data**",
+      "Forwards transit traffic",
+      "CEF-switched packets"
+     ],
+     [
+      "**Control**",
+      "Protocols and traffic to the device",
+      "OSPF, BGP, STP, ICMP"
+     ],
+     [
+      "**Management**",
+      "Administration",
+      "SSH, SNMP, HTTPS, Syslog"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Processing path",
+    "code": "  Packet to the device\n     |\n  ACL / class-map\n     |\n  policy-map  ->  police  ->  transmit or drop\n     |\n  Control plane / CPU"
+   },
+   {
+    "kind": "code",
+    "h": "Configuration skeleton",
+    "code": "  ip access-list extended COPP-MGMT\n   permit tcp any host 192.0.2.1 eq 22\n  !\n  class-map match-any COPP-MGMT-CLASS\n   match access-group name COPP-MGMT\n  !\n  policy-map COPP-POLICY\n   class COPP-MGMT-CLASS\n    police 8000 conform-action transmit exceed-action drop\n  !\n  control-plane\n   service-policy input COPP-POLICY"
+   },
+   {
+    "kind": "para",
+    "h": "Why it matters",
+    "p": "A flood aimed at the device can starve routing protocols and management access even while transit traffic keeps flowing. CoPP keeps the CPU reachable, which is why an explicit permit for routing and management traffic is essential."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Build the policy",
+    "code": "class-map match-any COPP-MGMT-CLASS\n match access-group name COPP-MGMT\npolicy-map COPP-POLICY\n class COPP-MGMT-CLASS\n  police 8000 conform-action transmit exceed-action drop"
+   },
+   {
+    "label": "Apply to the control plane",
+    "code": "control-plane\n service-policy input COPP-POLICY"
+   },
+   {
+    "label": "Verify",
+    "code": "show policy-map control-plane\nshow policy-map interface"
+   }
+  ],
+  "traps": [
+   "CoPP protects the **control plane**, not transit traffic.",
+   "It uses **ACL, class-map, policy-map and policing**.",
+   "The policy is applied under **%%control-plane%%** with **%%service-policy input%%**.",
+   "A missing permit for routing or management traffic can lock you out.",
+   "CoPP is not Storm Control: different scope and different purpose.",
+   "CoPP polices traffic **to** the device, not through it."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Protects",
+     "Device CPU and control plane"
+    ],
+    [
+     "Building blocks",
+     "ACL, class-map, policy-map, police"
+    ],
+    [
+     "Applied under",
+     "control-plane"
+    ],
+    [
+     "Direction",
+     "Input"
+    ],
+    [
+     "Scope",
+     "Traffic destined to the device"
+    ],
+    [
+     "Risk",
+     "Over-policing breaks routing or SSH"
+    ],
+    [
+     "Verify",
+     "show policy-map control-plane"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. ACL",
+    "d": "Classifies the traffic"
+   },
+   {
+    "t": "08. Storm Control",
+    "d": "Interface-level flood control"
+   }
+  ],
+  "glossary": [
+   "CoPP",
+   "ACL",
+   "Control Plane",
+   "Data Plane",
+   "Storm Control"
+  ]
+ },
+ {
+  "id": "t10",
+  "num": "10",
+  "group": "infra",
+  "title": "Device Hardening",
+  "blurb": "Secrets, SSH-only access, brute-force protection and line security",
+  "overview": "**[[Device Hardening]]** reduces the attack surface of the device itself: strong secret storage, SSH instead of Telnet, login rate limiting, management-plane ACLs, and securing the console, VTY and AUX lines.",
+  "keyIdea": "enable secret not enable password, SSH not Telnet, and lock the lines with ACLs and rate limits.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What to harden",
+    "cols": [
+     "Area",
+     "Action"
+    ],
+    "rows": [
+     [
+      "Passwords",
+      "**%%enable secret%%** with a strong hash"
+     ],
+     [
+      "Remote access",
+      "SSH only, **%%transport input ssh%%**"
+     ],
+     [
+      "Brute force",
+      "**%%login block-for%%** with a quiet period"
+     ],
+     [
+      "Management access",
+      "ACL on VTY lines"
+     ],
+     [
+      "Unused services",
+      "Disable finger, http, cdp where not needed"
+     ],
+     [
+      "Lines",
+      "Secure console, VTY and AUX"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  enable secret STRONGSECRET\n  service password-encryption\n  !\n  login block-for 120 attempts 3 within 60\n  !\n  ip access-list standard MGMT-ALLOWED\n   permit 10.1.1.0 0.0.0.255\n  !\n  line vty 0 15\n   access-class MGMT-ALLOWED in\n   transport input ssh\n   exec-timeout 5 0\n   logging synchronous"
+   },
+   {
+    "kind": "table",
+    "h": "Secret types",
+    "cols": [
+     "Command",
+     "Storage"
+    ],
+    "rows": [
+     [
+      "**%%enable secret%%**",
+      "Strong one-way hash"
+     ],
+     [
+      "**%%enable password%%**",
+      "Cleartext unless encrypted"
+     ],
+     [
+      "**%%service password-encryption%%**",
+      "Type 7, reversible obfuscation"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show running-config | include enable\n  show login\n  show users"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Secret and SSH-only lines",
+    "code": "enable secret STRONGSECRET\nline vty 0 15\n transport input ssh\n access-class MGMT-ALLOWED in"
+   },
+   {
+    "label": "Brute-force protection",
+    "code": "login block-for 120 attempts 3 within 60"
+   },
+   {
+    "label": "Verify",
+    "code": "show login\nshow running-config | include enable"
+   }
+  ],
+  "traps": [
+   "Use **%%enable secret%%**, never **%%enable password%%**.",
+   "**Type 7 is reversible obfuscation**, not encryption.",
+   "**%%service password-encryption%%** does not make secrets strong.",
+   "**%%login block-for%%** slows brute force but does not replace strong passwords.",
+   "Always keep a management ACL and a local fallback account.",
+   "Disable unused services rather than relying on obscurity."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Best secret",
+     "enable secret"
+    ],
+    [
+     "Type 7",
+     "Reversible obfuscation"
+    ],
+    [
+     "Remote access",
+     "SSH only"
+    ],
+    [
+     "Brute force",
+     "login block-for"
+    ],
+    [
+     "VTY protection",
+     "access-class in"
+    ],
+    [
+     "Line timeout",
+     "exec-timeout"
+    ],
+    [
+     "Unused services",
+     "Disable them"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. Secure Management",
+    "d": "Protecting management protocols"
+   },
+   {
+    "t": "01. AAA",
+    "d": "Centralised credentials"
+   }
+  ],
+  "glossary": [
+   "Device Hardening",
+   "AAA",
+   "SSH",
+   "ACL"
+  ]
+ },
+ {
+  "id": "t11",
+  "num": "11",
+  "group": "infra",
+  "title": "Secure Management",
+  "blurb": "Encrypted, authenticated and restricted management paths",
+  "overview": "**Secure management** means management traffic is **encrypted**, **authenticated**, **authorised**, **restricted** to trusted sources and **logged**. That rules out Telnet and plain HTTP and points to **SSH**, **HTTPS**, **SNMPv3** and **Syslog** with correct time.",
+  "keyIdea": "SSH instead of Telnet, HTTPS instead of HTTP, SNMPv3 instead of v2c, and log everything.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Insecure and secure pairs",
+    "cols": [
+     "Insecure",
+     "Secure"
+    ],
+    "rows": [
+     [
+      "Telnet (23)",
+      "**SSH (22)**"
+     ],
+     [
+      "HTTP (80)",
+      "**HTTPS (443)**"
+     ],
+     [
+      "SNMPv2c",
+      "**SNMPv3**"
+     ],
+     [
+      "TFTP",
+      "SCP or SFTP"
+     ],
+     [
+      "Syslog cleartext",
+      "Syslog over TLS where supported"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Management hardening",
+    "code": "  ip ssh version 2\n  ip http secure-server\n  no ip http server\n  !\n  snmp-server group ADMINS v3 priv\n  !\n  logging host 10.1.1.30\n  logging source-interface Loopback0\n  ntp server 10.1.1.5"
+   },
+   {
+    "kind": "table",
+    "h": "The goals",
+    "cols": [
+     "Goal",
+     "How"
+    ],
+    "rows": [
+     [
+      "Encrypted",
+      "SSH, HTTPS, SNMPv3 authPriv"
+     ],
+     [
+      "Authenticated",
+      "AAA, certificates, host keys"
+     ],
+     [
+      "Authorised",
+      "Privilege levels, command authorization"
+     ],
+     [
+      "Restricted",
+      "Management ACLs, out-of-band access"
+     ],
+     [
+      "Audited",
+      "Syslog, accounting, NTP timestamps"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Out of band",
+    "p": "A separate management VRF or dedicated management interface keeps administrative traffic away from user data, so a data-plane problem cannot lock you out."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Encrypted management stack",
+    "code": "ip ssh version 2\nip http secure-server\nno ip http server\nsnmp-server group ADMINS v3 priv"
+   },
+   {
+    "label": "Logging and time",
+    "code": "logging host 10.1.1.30\nlogging source-interface Loopback0\nntp server 10.1.1.5"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip ssh\nshow snmp user\nshow logging"
+   }
+  ],
+  "traps": [
+   "Telnet is insecure; **SSH** is the management answer.",
+   "Plain HTTP is insecure; **HTTPS** is the management answer.",
+   "**SNMPv2c community strings are not encryption** — use v3.",
+   "Management ACLs belong on the VTY lines and the management interface.",
+   "Logging needs **NTP** to be useful for correlation.",
+   "Out-of-band management survives data-plane failures."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "CLI",
+     "SSH on TCP 22"
+    ],
+    [
+     "Web",
+     "HTTPS on TCP 443"
+    ],
+    [
+     "Monitoring",
+     "SNMPv3 with authPriv"
+    ],
+    [
+     "Logging",
+     "Syslog to a central host"
+    ],
+    [
+     "Time",
+     "NTP for accurate timestamps"
+    ],
+    [
+     "Restriction",
+     "Management ACL and VRF"
+    ],
+    [
+     "Audit",
+     "AAA accounting plus Syslog"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. Device Hardening",
+    "d": "Device-level configuration"
+   },
+   {
+    "t": "03. RADIUS",
+    "d": "Central authentication"
+   }
+  ],
+  "glossary": [
+   "Device Hardening",
+   "SSH",
+   "SNMP",
+   "NTP",
+   "Syslog",
+   "AAA"
+  ]
+ },
+ {
+  "id": "t12",
+  "num": "12",
+  "group": "infra",
+  "title": "Infrastructure Security",
+  "blurb": "uRPF, routing protocol authentication and infrastructure protection",
+  "overview": "**Infrastructure security** protects routers, switches and the routing protocols themselves: spoofed source addresses handled by **uRPF**, forged routing updates blocked by protocol authentication, and control-plane resources protected by **CoPP**.",
+  "keyIdea": "Strict uRPF breaks asymmetric routing, loose uRPF does not. Routing protocols need authentication.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "uRPF modes",
+    "cols": [
+     "Mode",
+     "Command",
+     "Requirement"
+    ],
+    "rows": [
+     [
+      "**Strict**",
+      "**%%ip verify unicast source reachable-via rx%%**",
+      "Reverse path uses the incoming interface"
+     ],
+     [
+      "**Loose**",
+      "**%%ip verify unicast source reachable-via any%%**",
+      "Source reachable through any interface"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Routing protocol authentication",
+    "code": "  ! OSPF\n  interface GigabitEthernet0/0\n   ip ospf authentication message-digest\n   ip ospf message-digest-key 1 md5 OSPFSecret\n  !\n  ! EIGRP\n  key chain EIGRP-KEYS\n   key 1\n    key-string EIGRPSecret\n  interface GigabitEthernet0/0\n   ip authentication key-chain eigrp 100 EIGRP-KEYS"
+   },
+   {
+    "kind": "table",
+    "h": "BGP protection",
+    "cols": [
+     "Mechanism",
+     "What it does"
+    ],
+    "rows": [
+     [
+      "**TCP MD5**",
+      "Authenticates the TCP session"
+     ],
+     [
+      "**TTL security**",
+      "Restricts how many hops away a peer may be"
+     ],
+     [
+      "Neither",
+      "General-purpose encryption"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Layered defence",
+    "p": "Infrastructure protection is cumulative: **uRPF** for spoofing, **authentication** for routing sessions, **CoPP** for the CPU, and **Layer 2 controls** for the access edge. No single feature covers everything."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Strict and loose uRPF",
+    "code": "interface GigabitEthernet0/0\n ip verify unicast source reachable-via rx\n!\ninterface GigabitEthernet0/1\n ip verify unicast source reachable-via any"
+   },
+   {
+    "label": "OSPF authentication",
+    "code": "interface GigabitEthernet0/0\n ip ospf authentication message-digest\n ip ospf message-digest-key 1 md5 OSPFSecret"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip interface GigabitEthernet0/0\nshow ip ospf interface"
+   }
+  ],
+  "traps": [
+   "**Strict uRPF breaks asymmetric routing**; that is the classic trap.",
+   "**Loose uRPF** only requires the source to be reachable somewhere.",
+   "**TCP MD5** authenticates the session, **TTL security** limits hop distance.",
+   "Neither BGP mechanism encrypts the payload.",
+   "OSPF and EIGRP authentication stop forged routing updates.",
+   "DAI depends on DHCP snooping bindings; do not treat them as independent."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "uRPF strict",
+     "Reverse path on the incoming interface"
+    ],
+    [
+     "uRPF loose",
+     "Source reachable anywhere"
+    ],
+    [
+     "Asymmetric routing",
+     "Strict uRPF can drop legitimate traffic"
+    ],
+    [
+     "OSPF security",
+     "Message-digest authentication"
+    ],
+    [
+     "EIGRP security",
+     "Key chain authentication"
+    ],
+    [
+     "BGP TCP MD5",
+     "Session authentication"
+    ],
+    [
+     "BGP TTL security",
+     "Hop-distance restriction"
+    ],
+    [
+     "Overall",
+     "Layer defences, not one feature"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. CoPP",
+    "d": "CPU protection"
+   },
+   {
+    "t": "10. Device Hardening",
+    "d": "Device-level controls"
+   }
+  ],
+  "glossary": [
+   "CoPP",
+   "Device Hardening",
+   "BGP",
+   "Routing Loop",
+   "Control Plane"
+  ]
+ },
+ {
+  "id": "t13",
+  "num": "13",
+  "group": "infra",
+  "title": "TrustSec, MACsec & Security Design",
+  "blurb": "Identity-based segmentation with SGTs and SGACLs, hop-by-hop encryption with MACsec, and the wider security architecture",
+  "overview": "**[[TrustSec]]** adds identity-based segmentation: a packet is classified once and carries a **[[Security Group Tag|security group tag (SGT)]]**, while **[[SGACL|SGACLs]]** enforce which tags may talk. **[[MACsec]]** encrypts an Ethernet link hop by hop, and the wider design adds **[[Next-Generation Firewall|NGFWs]]**, **[[Endpoint Security]]** and **[[Network Access Control|NAC]]** so policy follows the user and device rather than only the subnet.",
+  "keyIdea": "TrustSec tags traffic once and enforces group policy; MACsec encrypts each link; NGFW and NAC add stateful inspection and endpoint admission.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Security architecture components",
+    "cols": [
+     "Component",
+     "Primary job",
+     "Typical placement"
+    ],
+    "rows": [
+     [
+      "**TrustSec**",
+      "Identity-based segmentation using SGTs and SGACLs",
+      "Campus and data-centre switches"
+     ],
+     [
+      "**MACsec**",
+      "Encrypt and integrity-protect an Ethernet link",
+      "Switch-to-switch, switch-to-host, WAN edge"
+     ],
+     [
+      "**Next-Generation Firewall**",
+      "Stateful and application-aware inspection",
+      "Internet edge, data-centre boundary, segmentation point"
+     ],
+     [
+      "**Endpoint Security**",
+      "Host protection, posture and malware defence",
+      "Servers, laptops and managed devices"
+     ],
+     [
+      "**Network Access Control**",
+      "Authenticate and admit endpoints, then apply posture",
+      "Access layer with 802.1X or MAB"
+     ],
+     [
+      "**ISE**",
+      "Policy decision point for TrustSec, 802.1X and posture",
+      "Central policy service"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "TrustSec building blocks",
+    "cols": [
+     "Piece",
+     "What it is",
+     "Exam cue"
+    ],
+    "rows": [
+     [
+      "**SGT**",
+      "16-bit tag carried in the Cisco metadata header or SXP",
+      "Identity travels with the packet"
+     ],
+     [
+      "**SGACL**",
+      "Permissions between source and destination groups",
+      "Enforced on the egress or enforcement device"
+     ],
+     [
+      "**ISE**",
+      "Assigns SGTs and distributes policy",
+      "Policy decision point"
+     ],
+     [
+      "**Inline tagging**",
+      "Device inserts and reads the SGT in the Ethernet frame",
+      "Requires hardware and trust between links"
+     ],
+     [
+      "**SXP**",
+      "Propagates IP-to-SGT mappings when inline tagging is unavailable",
+      "Tag transport, not a routing protocol"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "How a tagged packet moves",
+    "items": [
+     {
+      "t": "Classify",
+      "d": "The ingress device assigns an SGT based on user, device, port or VLAN identity."
+     },
+     {
+      "t": "Carry",
+      "d": "The tag travels inline in the Ethernet header, or the mapping is shared through SXP."
+     },
+     {
+      "t": "Enforce",
+      "d": "The enforcement device applies the SGACL between source and destination groups."
+     },
+     {
+      "t": "Log",
+      "d": "Policy decisions and denied flows are exported to ISE or the logging platform."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "MACsec versus IPsec",
+    "cols": [
+     "Aspect",
+     "MACsec",
+     "IPsec"
+    ],
+    "rows": [
+     [
+      "Layer",
+      "Layer 2 Ethernet",
+      "Layer 3 IP"
+     ],
+     [
+      "Scope",
+      "One link or hop",
+      "End-to-end or tunnel"
+     ],
+     [
+      "Encrypts",
+      "The entire Ethernet frame payload",
+      "The IP packet or payload"
+     ],
+     [
+      "Typical use",
+      "Switch-to-switch, switch-to-host, WAN",
+      "Site-to-site VPN, remote access"
+     ],
+     [
+      "Keying",
+      "MKA with a connectivity association key",
+      "IKEv2 or manual keys"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration sketch",
+    "code": "! TrustSec identity and inline enforcement\ncts credentials id ISE-USER password SECRET\ninterface GigabitEthernet1/0/1\n cts manual\n  sap pmk 1234ABCD apply\n  propagate sgt\n!\n! MACsec on a point-to-point link\nmka policy MKA-LINK\n key-server priority 10\ninterface GigabitEthernet1/0/1\n macsec\n mka policy MKA-LINK"
+   },
+   {
+    "kind": "list",
+    "h": "Design checkpoints",
+    "items": [
+     {
+      "t": "Know the trust boundary",
+      "d": "Every inline-tagged link must trust the tag or an attacker can choose their own group."
+     },
+     {
+      "t": "Protect the control plane",
+      "d": "TrustSec and MACsec do not replace CoPP, routing authentication or device hardening."
+     },
+     {
+      "t": "Plan the enforcement point",
+      "d": "SGACLs only work if the path has an inline enforcement device or SXP mappings."
+     },
+     {
+      "t": "Separate authentication from authorization",
+      "d": "NAC authenticates and postures the endpoint; TrustSec applies the resulting group policy."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "TrustSec identity and enforcement",
+    "code": "cts credentials id ISE-USER password SECRET\ninterface GigabitEthernet1/0/1\n cts manual\n  sap pmk 1234ABCD apply\n  propagate sgt"
+   },
+   {
+    "label": "MACsec link protection",
+    "code": "mka policy MKA-LINK\n key-server priority 10\ninterface GigabitEthernet1/0/1\n macsec\n mka policy MKA-LINK"
+   },
+   {
+    "label": "Verification",
+    "code": "show cts interface\nshow cts environment-data\nshow macsec interface GigabitEthernet1/0/1\nshow mka sessions\nshow cts role-based permissions"
+   }
+  ],
+  "traps": [
+   "**TrustSec classification happens at ingress once.** Later devices read the tag; they do not reclassify every packet.",
+   "**SGACLs are group-to-group policy, not an ACL applied to a VLAN interface.**",
+   "**SXP carries IP-to-SGT mappings**, so it is used when inline tagging is not supported.",
+   "**MACsec is hop-by-hop Layer 2 encryption.** IPsec is the end-to-end Layer 3 choice.",
+   "**MACsec protects data in transit, not data at rest.**",
+   "**NGFW and NAC are not substitutes for each other.** NAC admits the endpoint; the NGFW inspects traffic."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "TrustSec tag",
+     "SGT, 16 bits"
+    ],
+    [
+     "TrustSec policy",
+     "SGACL between groups"
+    ],
+    [
+     "Policy server",
+     "Cisco ISE"
+    ],
+    [
+     "Tag transport fallback",
+     "SXP"
+    ],
+    [
+     "MACsec scope",
+     "One Ethernet link"
+    ],
+    [
+     "MACsec keying",
+     "MKA"
+    ],
+    [
+     "NGFW",
+     "Stateful and application-aware"
+    ],
+    [
+     "NAC",
+     "Authentication, posture and admission"
+    ],
+    [
+     "End-to-end encryption",
+     "IPsec, not MACsec"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. ACL",
+    "d": "Traffic filtering and rule order"
+   },
+   {
+    "t": "09. CoPP",
+    "d": "Protecting the control plane"
+   },
+   {
+    "t": "12. Infrastructure Security",
+    "d": "uRPF, routing authentication and layered defence"
+   }
+  ],
+  "glossary": [
+   "TrustSec",
+   "Security Group Tag",
+   "SGACL",
+   "MACsec",
+   "Next-Generation Firewall",
+   "Endpoint Security",
+   "Network Access Control",
+   "RADIUS"
+  ]
+ }
+];
 
-  255.255.255.0  ->  0.0.0.255` },
-              { kind: 'code', h: 'Examples', code:
-`  access-list 10 permit 10.1.1.0 0.0.0.255
-  access-list 10 permit host 10.1.1.50
-  access-list 10 deny any
-  !
-  ip access-list extended WEB-IN
-   permit tcp any host 10.1.1.80 eq 443
-   deny ip any any log
-  !
-  interface GigabitEthernet0/1
-   ip access-group WEB-IN in` },
-              { kind: 'table', h: 'Placement guideline', cols: ['Type', 'Place', 'Reason'], rows: [
-                ['**Extended**', 'Close to the source', 'Stops unwanted traffic early'],
-                ['**Standard**', 'Close to the destination', 'Only knows the source address']
-              ]},
-              { kind: 'para', h: 'Order matters', p: 'A **%%permit ip any any%%** at the top makes every rule below it unreachable. Put specific rules first and the broad permit last.' }
-            ],
-            commands: [
-              { label: 'Named extended ACL', code:
-`ip access-list extended WEB-IN\n permit tcp any host 10.1.1.80 eq 443\n deny ip any any log` },
-              { label: 'Apply to an interface', code:
-`interface GigabitEthernet0/1\n ip access-group WEB-IN in` },
-              { label: 'Verify', code:
-`show access-lists\nshow ip interface GigabitEthernet0/1` }
-            ],
-            traps: [
-              '**First match wins** — order decides everything.',
-              'There is an **implicit deny** at the end of every ACL.',
-              'Wildcard **0 means match**, 1 means ignore. It is the inverse of the mask.',
-              '**Standard ACLs match source only**; extended match source, destination, protocol, port.',
-              'Place extended ACLs near the source and standard ACLs near the destination.',
-              'An ACL applied in the wrong direction does nothing useful.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Evaluation', 'Top down, first match wins'],
-                ['End of list', 'Implicit deny'],
-                ['Wildcard 0 / 1', 'Match / ignore'],
-                ['Standard', 'Source only'],
-                ['Extended', 'Source, destination, protocol, port'],
-                ['Extended placement', 'Near the source'],
-                ['Standard placement', 'Near the destination'],
-                ['Interface command', 'ip access-group NAME in|out']
-              ]
-            },
-            related: [
-              { t: '09. CoPP', d: 'ACLs classify control-plane traffic' },
-              { t: '11. Secure Management', d: 'Protecting VTY lines' }
-            ],
-            glossary: ['ACL', 'CoPP', 'Device Hardening', 'Control Plane', 'Data Plane']
-          },
-          {
-            id: 't05', num: '05', group: 'l2', title: 'Port Security',
-            blurb: 'Secure MAC limits, violation modes and sticky learning',
-            overview: '**[[Port Security]]** restricts which **source MAC addresses** may appear on a switchport and how many may be learned. It runs at the access layer to stop unauthorised devices and MAC flooding. It is not a replacement for 802.1X or DAI.',
-            keyIdea: 'Default maximum is 1, default violation is shutdown, sticky MACs land in the running-config.',
-            sections: [
-              { kind: 'table', h: 'Violation modes', cols: ['Mode', 'Behaviour'], rows: [
-                ['**Shutdown** (default)', 'Err-disables the port and logs'],
-                ['**Restrict**', 'Drops violating traffic, increments counters and logs'],
-                ['**Protect**', 'Drops violating traffic silently']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  interface GigabitEthernet0/1
-   switchport mode access
-   switchport port-security
-   switchport port-security maximum 2
-   switchport port-security mac-address sticky
-   switchport port-security violation restrict
-   switchport port-security aging time 10` },
-              { kind: 'table', h: 'MAC address types', cols: ['Type', 'Survives reload'], rows: [
-                ['**Static**', 'Yes, it is in the config'],
-                ['**Sticky**', 'Yes if the config is saved'],
-                ['**Dynamic**', 'No']
-              ]},
-              { kind: 'code', h: 'Recovery and verification', code:
-`  errdisable recovery cause psecure-violation
-  errdisable recovery interval 300
-  !
-  show port-security
-  show port-security interface GigabitEthernet0/1` }
-            ],
-            commands: [
-              { label: 'Secure an access port', code:
-`interface GigabitEthernet0/1\n switchport mode access\n switchport port-security\n switchport port-security maximum 2\n switchport port-security mac-address sticky` },
-              { label: 'Auto-recover from err-disable', code:
-`errdisable recovery cause psecure-violation` },
-              { label: 'Verify', code:
-`show port-security interface GigabitEthernet0/1\nshow port-security address` }
-            ],
-            traps: [
-              'Default maximum secure MACs is **1**.',
-              'Default violation mode is **shutdown**.',
-              '**Shutdown** means err-disabled, not merely dropped packets.',
-              '**Restrict** drops and logs; **protect** drops silently.',
-              '**Sticky MACs go into the running-config**, and survive a reload only if saved.',
-              'Port security limits **MAC addresses**, not IP addresses.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Limits', 'Source MAC addresses per port'],
-                ['Default maximum', '1'],
-                ['Default violation', 'Shutdown (err-disable)'],
-                ['Restrict', 'Drop plus counters and logs'],
-                ['Protect', 'Drop silently'],
-                ['Sticky', 'Written to running-config'],
-                ['Dynamic MACs', 'Lost on reload'],
-                ['Recovery', 'errdisable recovery cause psecure-violation']
-              ]
-            },
-            related: [
-              { t: '07. IP Source Guard', d: 'Adds IP and MAC checking' },
-              { t: '06. Dynamic ARP Inspection', d: 'Other Layer 2 control' }
-            ],
-            glossary: ['Port Security', 'Dynamic ARP Inspection', 'IP Source Guard']
-          },
-          {
-            id: 't06', num: '06', group: 'l2', title: 'Dynamic ARP Inspection',
-            blurb: 'ARP validation per VLAN, trust boundaries, ARP ACLs and rate limits',
-            overview: '**[[Dynamic ARP Inspection]]** stops **ARP spoofing and poisoning** by validating ARP packets received on **untrusted** ports. It normally checks against the **DHCP snooping binding table**, and uses **ARP ACLs** for hosts with static addresses.',
-            keyIdea: 'Enabled per VLAN, untrusted by default, trust only uplinks. It validates both requests and replies.',
-            sections: [
-              { kind: 'table', h: 'Dependency chain', cols: ['Feature', 'Role'], rows: [
-                ['**DHCP snooping**', 'Builds the IP to MAC binding table'],
-                ['**DAI**', 'Validates ARP against those bindings'],
-                ['**ARP ACL**', 'Covers static-IP hosts with no binding']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip arp inspection vlan 10,20
-  !
-  interface GigabitEthernet0/1
-   ip arp inspection trust
-  !
-  ip arp inspection validate src-mac dst-mac ip
-  ip arp inspection limit rate 15` },
-              { kind: 'table', h: 'Validation checks', cols: ['Check', 'What it compares'], rows: [
-                ['**src-mac**', 'Ethernet source MAC against ARP sender MAC'],
-                ['**dst-mac**', 'Ethernet destination MAC against ARP target MAC'],
-                ['**ip**', 'ARP addresses against the binding table']
-              ]},
-              { kind: 'code', h: 'Verification', code:
-`  show ip arp inspection
-  show ip arp inspection statistics vlan 10
-  show ip dhcp snooping binding` }
-            ],
-            commands: [
-              { label: 'Enable per VLAN and trust the uplink', code:
-`ip arp inspection vlan 10\ninterface GigabitEthernet0/1\n ip arp inspection trust` },
-              { label: 'Verify', code:
-`show ip arp inspection statistics vlan 10` }
-            ],
-            traps: [
-              'DAI is enabled **per VLAN**.',
-              'Interfaces are **untrusted by default** for DAI.',
-              'Trust **uplinks and infrastructure**, never endpoint ports.',
-              'DAI inspects **requests and replies**, not only replies.',
-              'Static-IP hosts need an **ARP ACL**.',
-              'Legitimate traffic dropped? Check the **DHCP snooping binding table** first.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Protects against', 'ARP spoofing and poisoning'],
-                ['Enable scope', 'Per VLAN'],
-                ['Default trust', 'Untrusted'],
-                ['Binding source', 'DHCP snooping table'],
-                ['Static hosts', 'ARP ACL'],
-                ['Checks', 'src-mac, dst-mac, ip'],
-                ['Rate limit', 'Configured per interface']
-              ]
-            },
-            related: [
-              { t: '05. Port Security', d: 'Access-port admission control' },
-              { t: '07. IP Source Guard', d: 'Source address enforcement' }
-            ],
-            glossary: ['Dynamic ARP Inspection', 'DHCP Snooping', 'IP Source Guard']
-          },
-          {
-            id: 't07', num: '07', group: 'l2', title: 'IP Source Guard',
-            blurb: 'Source IP and MAC allowlisting from the snooping binding table',
-            overview: '**[[IP Source Guard]]** prevents a host from using an address it does not own by building a per-interface allowlist of source **IP, MAC and VLAN** bindings. Those bindings usually come from **DHCP snooping**, with **%%ip source binding%%** covering static hosts.',
-            keyIdea: 'ip verify source checks the IP; adding port-security also checks the MAC. It is not the same as enabling port security.',
-            sections: [
-              { kind: 'table', h: 'Modes', cols: ['Command', 'What is checked'], rows: [
-                ['**%%ip verify source%%**', 'Source IP only'],
-                ['**%%ip verify source port-security%%**', 'Source IP **and** source MAC']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  interface GigabitEthernet0/1
-   switchport mode access
-   ip verify source port-security
-  !
-  ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2` },
-              { kind: 'table', h: 'Which feature does what', cols: ['Feature', 'Enforces'], rows: [
-                ['**Port Security**', 'Source MAC admission'],
-                ['**IP Source Guard**', 'Source IP and optionally MAC'],
-                ['**DAI**', 'ARP contents'],
-                ['**DHCP Snooping**', 'DHCP message trust']
-              ]},
-              { kind: 'code', h: 'Verification', code:
-`  show ip source binding
-  show ip verify source
-  show ip dhcp snooping binding` }
-            ],
-            commands: [
-              { label: 'Enable on an access port', code:
-`interface GigabitEthernet0/1\n ip verify source port-security` },
-              { label: 'Static binding', code:
-`ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2` },
-              { label: 'Verify', code:
-`show ip source binding\nshow ip verify source` }
-            ],
-            traps: [
-              '**%%ip verify source%%** filters on **source IP**.',
-              'Adding **port-security** to the command also validates the **source MAC**.',
-              'That keyword is **not** the same as configuring **%%switchport port-security%%**.',
-              'Static-IP hosts need an **%%ip source binding%%**.',
-              'Deploy on **host-facing access ports**, not uplinks.',
-              'IPSG protects addressing; **DAI** protects ARP.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Protects against', 'Source IP spoofing'],
-                ['IP only mode', 'ip verify source'],
-                ['IP plus MAC mode', 'ip verify source port-security'],
-                ['Binding source', 'DHCP snooping table'],
-                ['Static host', 'ip source binding'],
-                ['Deploy on', 'Host-facing access ports'],
-                ['Verify', 'show ip source binding']
-              ]
-            },
-            related: [
-              { t: '05. Port Security', d: 'MAC-level admission' },
-              { t: '06. Dynamic ARP Inspection', d: 'ARP-level validation' }
-            ],
-            glossary: ['IP Source Guard', 'Port Security', 'Dynamic ARP Inspection', 'DHCP Snooping']
-          },
-          {
-            id: 't08', num: '08', group: 'l2', title: 'Storm Control',
-            blurb: 'Limiting broadcast, multicast and unknown unicast per interface',
-            overview: '**[[Storm Control]]** limits excessive **broadcast, multicast and unknown-unicast** traffic on a switchport. It is a flood-control mechanism, not a loop-prevention mechanism: **STP** stops loops, storm control limits the damage while the loop exists.',
-            keyIdea: 'It watches three traffic types, not known unicast, and normally suppresses rather than shutting the port.',
-            sections: [
-              { kind: 'table', h: 'Traffic types', cols: ['Type', 'Monitored'], rows: [
-                ['**Broadcast**', 'Yes'],
-                ['**Multicast**', 'Yes'],
-                ['**Unknown unicast**', 'Yes'],
-                ['**Known unicast**', '**No**']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  interface GigabitEthernet0/1
-   storm-control broadcast level 20
-   storm-control multicast level 20
-   storm-control action trap
-   storm-control action shutdown` },
-              { kind: 'table', h: 'Threshold units', cols: ['Unit', 'Meaning'], rows: [
-                ['**Percentage**', 'Share of interface bandwidth'],
-                ['**pps**', 'Packets per second'],
-                ['**bps**', 'Bits per second']
-              ]},
-              { kind: 'para', h: 'Hysteresis', p: 'A **rising** threshold starts suppression and a **falling** threshold clears it. That gap prevents the port flapping between normal and suppressed states.' }
-            ],
-            commands: [
-              { label: 'Limit broadcast and multicast', code:
-`interface GigabitEthernet0/1\n storm-control broadcast level 20\n storm-control multicast level 20` },
-              { label: 'Choose the action', code:
-`storm-control action trap\nstorm-control action shutdown` },
-              { label: 'Verify', code:
-`show storm-control\nshow interfaces counters` }
-            ],
-            traps: [
-              'Storm control covers **broadcast, multicast and unknown unicast**.',
-              '**Unknown unicast is not all unicast.**',
-              'It runs at the **interface level**.',
-              'It is **not a replacement for STP**.',
-              'Default behaviour **suppresses** traffic instead of shutting the port.',
-              '**%%action trap%%** notifies; it does not shut the interface.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Monitors', 'Broadcast, multicast, unknown unicast'],
-                ['Ignores', 'Known unicast'],
-                ['Scope', 'Per switchport'],
-                ['Units', 'Percentage, pps or bps'],
-                ['Default action', 'Suppress excess'],
-                ['action trap', 'Notify only'],
-                ['action shutdown', 'Err-disable the port'],
-                ['Relationship', 'Complements STP, does not replace it']
-              ]
-            },
-            related: [
-              { t: '05. Port Security', d: 'Other access-port control' },
-              { t: '09. CoPP', d: 'Control-plane equivalent' }
-            ],
-            glossary: ['Storm Control', 'CoPP', 'Routing Loop']
-          },
-          {
-            id: 't09', num: '09', group: 'infra', title: 'CoPP',
-            blurb: 'Protecting the CPU with class-maps, policy-maps and policing',
-            overview: '**[[CoPP]]** protects the device CPU by rate-limiting traffic **destined to the device**. It uses the QoS building blocks: an **ACL** identifies traffic, a **class-map** groups it, a **policy-map** sets policing, and the **%%control-plane%%** applies it before packets reach the processor.',
-            keyIdea: 'CoPP polices traffic to the control plane. Data plane transit traffic is not affected.',
-            sections: [
-              { kind: 'table', h: 'The three planes', cols: ['Plane', 'Purpose', 'Examples'], rows: [
-                ['**Data**', 'Forwards transit traffic', 'CEF-switched packets'],
-                ['**Control**', 'Protocols and traffic to the device', 'OSPF, BGP, STP, ICMP'],
-                ['**Management**', 'Administration', 'SSH, SNMP, HTTPS, Syslog']
-              ]},
-              { kind: 'code', h: 'Processing path', code:
-`  Packet to the device
-     |
-  ACL / class-map
-     |
-  policy-map  ->  police  ->  transmit or drop
-     |
-  Control plane / CPU` },
-              { kind: 'code', h: 'Configuration skeleton', code:
-`  ip access-list extended COPP-MGMT
-   permit tcp any host 192.0.2.1 eq 22
-  !
-  class-map match-any COPP-MGMT-CLASS
-   match access-group name COPP-MGMT
-  !
-  policy-map COPP-POLICY
-   class COPP-MGMT-CLASS
-    police 8000 conform-action transmit exceed-action drop
-  !
-  control-plane
-   service-policy input COPP-POLICY` },
-              { kind: 'para', h: 'Why it matters', p: 'A flood aimed at the device can starve routing protocols and management access even while transit traffic keeps flowing. CoPP keeps the CPU reachable, which is why an explicit permit for routing and management traffic is essential.' }
-            ],
-            commands: [
-              { label: 'Build the policy', code:
-`class-map match-any COPP-MGMT-CLASS\n match access-group name COPP-MGMT\npolicy-map COPP-POLICY\n class COPP-MGMT-CLASS\n  police 8000 conform-action transmit exceed-action drop` },
-              { label: 'Apply to the control plane', code:
-`control-plane\n service-policy input COPP-POLICY` },
-              { label: 'Verify', code:
-`show policy-map control-plane\nshow policy-map interface` }
-            ],
-            traps: [
-              'CoPP protects the **control plane**, not transit traffic.',
-              'It uses **ACL, class-map, policy-map and policing**.',
-              'The policy is applied under **%%control-plane%%** with **%%service-policy input%%**.',
-              'A missing permit for routing or management traffic can lock you out.',
-              'CoPP is not Storm Control: different scope and different purpose.',
-              'CoPP polices traffic **to** the device, not through it.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Protects', 'Device CPU and control plane'],
-                ['Building blocks', 'ACL, class-map, policy-map, police'],
-                ['Applied under', 'control-plane'],
-                ['Direction', 'Input'],
-                ['Scope', 'Traffic destined to the device'],
-                ['Risk', 'Over-policing breaks routing or SSH'],
-                ['Verify', 'show policy-map control-plane']
-              ]
-            },
-            related: [
-              { t: '04. ACL', d: 'Classifies the traffic' },
-              { t: '08. Storm Control', d: 'Interface-level flood control' }
-            ],
-            glossary: ['CoPP', 'ACL', 'Control Plane', 'Data Plane', 'Storm Control']
-          },
-          {
-            id: 't10', num: '10', group: 'infra', title: 'Device Hardening',
-            blurb: 'Secrets, SSH-only access, brute-force protection and line security',
-            overview: '**[[Device Hardening]]** reduces the attack surface of the device itself: strong secret storage, SSH instead of Telnet, login rate limiting, management-plane ACLs, and securing the console, VTY and AUX lines.',
-            keyIdea: 'enable secret not enable password, SSH not Telnet, and lock the lines with ACLs and rate limits.',
-            sections: [
-              { kind: 'table', h: 'What to harden', cols: ['Area', 'Action'], rows: [
-                ['Passwords', '**%%enable secret%%** with a strong hash'],
-                ['Remote access', 'SSH only, **%%transport input ssh%%**'],
-                ['Brute force', '**%%login block-for%%** with a quiet period'],
-                ['Management access', 'ACL on VTY lines'],
-                ['Unused services', 'Disable finger, http, cdp where not needed'],
-                ['Lines', 'Secure console, VTY and AUX']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  enable secret STRONGSECRET
-  service password-encryption
-  !
-  login block-for 120 attempts 3 within 60
-  !
-  ip access-list standard MGMT-ALLOWED
-   permit 10.1.1.0 0.0.0.255
-  !
-  line vty 0 15
-   access-class MGMT-ALLOWED in
-   transport input ssh
-   exec-timeout 5 0
-   logging synchronous` },
-              { kind: 'table', h: 'Secret types', cols: ['Command', 'Storage'], rows: [
-                ['**%%enable secret%%**', 'Strong one-way hash'],
-                ['**%%enable password%%**', 'Cleartext unless encrypted'],
-                ['**%%service password-encryption%%**', 'Type 7, reversible obfuscation']
-              ]},
-              { kind: 'code', h: 'Verification', code:
-`  show running-config | include enable
-  show login
-  show users` }
-            ],
-            commands: [
-              { label: 'Secret and SSH-only lines', code:
-`enable secret STRONGSECRET\nline vty 0 15\n transport input ssh\n access-class MGMT-ALLOWED in` },
-              { label: 'Brute-force protection', code:
-`login block-for 120 attempts 3 within 60` },
-              { label: 'Verify', code:
-`show login\nshow running-config | include enable` }
-            ],
-            traps: [
-              'Use **%%enable secret%%**, never **%%enable password%%**.',
-              '**Type 7 is reversible obfuscation**, not encryption.',
-              '**%%service password-encryption%%** does not make secrets strong.',
-              '**%%login block-for%%** slows brute force but does not replace strong passwords.',
-              'Always keep a management ACL and a local fallback account.',
-              'Disable unused services rather than relying on obscurity.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Best secret', 'enable secret'],
-                ['Type 7', 'Reversible obfuscation'],
-                ['Remote access', 'SSH only'],
-                ['Brute force', 'login block-for'],
-                ['VTY protection', 'access-class in'],
-                ['Line timeout', 'exec-timeout'],
-                ['Unused services', 'Disable them']
-              ]
-            },
-            related: [
-              { t: '11. Secure Management', d: 'Protecting management protocols' },
-              { t: '01. AAA', d: 'Centralised credentials' }
-            ],
-            glossary: ['Device Hardening', 'AAA', 'SSH', 'ACL']
-          },
-          {
-            id: 't11', num: '11', group: 'infra', title: 'Secure Management',
-            blurb: 'Encrypted, authenticated and restricted management paths',
-            overview: '**Secure management** means management traffic is **encrypted**, **authenticated**, **authorised**, **restricted** to trusted sources and **logged**. That rules out Telnet and plain HTTP and points to **SSH**, **HTTPS**, **SNMPv3** and **Syslog** with correct time.',
-            keyIdea: 'SSH instead of Telnet, HTTPS instead of HTTP, SNMPv3 instead of v2c, and log everything.',
-            sections: [
-              { kind: 'table', h: 'Insecure and secure pairs', cols: ['Insecure', 'Secure'], rows: [
-                ['Telnet (23)', '**SSH (22)**'],
-                ['HTTP (80)', '**HTTPS (443)**'],
-                ['SNMPv2c', '**SNMPv3**'],
-                ['TFTP', 'SCP or SFTP'],
-                ['Syslog cleartext', 'Syslog over TLS where supported']
-              ]},
-              { kind: 'code', h: 'Management hardening', code:
-`  ip ssh version 2
-  ip http secure-server
-  no ip http server
-  !
-  snmp-server group ADMINS v3 priv
-  !
-  logging host 10.1.1.30
-  logging source-interface Loopback0
-  ntp server 10.1.1.5` },
-              { kind: 'table', h: 'The goals', cols: ['Goal', 'How'], rows: [
-                ['Encrypted', 'SSH, HTTPS, SNMPv3 authPriv'],
-                ['Authenticated', 'AAA, certificates, host keys'],
-                ['Authorised', 'Privilege levels, command authorization'],
-                ['Restricted', 'Management ACLs, out-of-band access'],
-                ['Audited', 'Syslog, accounting, NTP timestamps']
-              ]},
-              { kind: 'para', h: 'Out of band', p: 'A separate management VRF or dedicated management interface keeps administrative traffic away from user data, so a data-plane problem cannot lock you out.' }
-            ],
-            commands: [
-              { label: 'Encrypted management stack', code:
-`ip ssh version 2\nip http secure-server\nno ip http server\nsnmp-server group ADMINS v3 priv` },
-              { label: 'Logging and time', code:
-`logging host 10.1.1.30\nlogging source-interface Loopback0\nntp server 10.1.1.5` },
-              { label: 'Verify', code:
-`show ip ssh\nshow snmp user\nshow logging` }
-            ],
-            traps: [
-              'Telnet is insecure; **SSH** is the management answer.',
-              'Plain HTTP is insecure; **HTTPS** is the management answer.',
-              '**SNMPv2c community strings are not encryption** — use v3.',
-              'Management ACLs belong on the VTY lines and the management interface.',
-              'Logging needs **NTP** to be useful for correlation.',
-              'Out-of-band management survives data-plane failures.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['CLI', 'SSH on TCP 22'],
-                ['Web', 'HTTPS on TCP 443'],
-                ['Monitoring', 'SNMPv3 with authPriv'],
-                ['Logging', 'Syslog to a central host'],
-                ['Time', 'NTP for accurate timestamps'],
-                ['Restriction', 'Management ACL and VRF'],
-                ['Audit', 'AAA accounting plus Syslog']
-              ]
-            },
-            related: [
-              { t: '10. Device Hardening', d: 'Device-level configuration' },
-              { t: '03. RADIUS', d: 'Central authentication' }
-            ],
-            glossary: ['Device Hardening', 'SSH', 'SNMP', 'NTP', 'Syslog', 'AAA']
-          },
-          {
-            id: 't12', num: '12', group: 'infra', title: 'Infrastructure Security',
-            blurb: 'uRPF, routing protocol authentication and infrastructure protection',
-            overview: '**Infrastructure security** protects routers, switches and the routing protocols themselves: spoofed source addresses handled by **uRPF**, forged routing updates blocked by protocol authentication, and control-plane resources protected by **CoPP**.',
-            keyIdea: 'Strict uRPF breaks asymmetric routing, loose uRPF does not. Routing protocols need authentication.',
-            sections: [
-              { kind: 'table', h: 'uRPF modes', cols: ['Mode', 'Command', 'Requirement'], rows: [
-                ['**Strict**', '**%%ip verify unicast source reachable-via rx%%**', 'Reverse path uses the incoming interface'],
-                ['**Loose**', '**%%ip verify unicast source reachable-via any%%**', 'Source reachable through any interface']
-              ]},
-              { kind: 'code', h: 'Routing protocol authentication', code:
-`  ! OSPF
-  interface GigabitEthernet0/0
-   ip ospf authentication message-digest
-   ip ospf message-digest-key 1 md5 OSPFSecret
-  !
-  ! EIGRP
-  key chain EIGRP-KEYS
-   key 1
-    key-string EIGRPSecret
-  interface GigabitEthernet0/0
-   ip authentication key-chain eigrp 100 EIGRP-KEYS` },
-              { kind: 'table', h: 'BGP protection', cols: ['Mechanism', 'What it does'], rows: [
-                ['**TCP MD5**', 'Authenticates the TCP session'],
-                ['**TTL security**', 'Restricts how many hops away a peer may be'],
-                ['Neither', 'General-purpose encryption']
-              ]},
-              { kind: 'para', h: 'Layered defence', p: 'Infrastructure protection is cumulative: **uRPF** for spoofing, **authentication** for routing sessions, **CoPP** for the CPU, and **Layer 2 controls** for the access edge. No single feature covers everything.' }
-            ],
-            commands: [
-              { label: 'Strict and loose uRPF', code:
-`interface GigabitEthernet0/0\n ip verify unicast source reachable-via rx\n!\ninterface GigabitEthernet0/1\n ip verify unicast source reachable-via any` },
-              { label: 'OSPF authentication', code:
-`interface GigabitEthernet0/0\n ip ospf authentication message-digest\n ip ospf message-digest-key 1 md5 OSPFSecret` },
-              { label: 'Verify', code:
-`show ip interface GigabitEthernet0/0\nshow ip ospf interface` }
-            ],
-            traps: [
-              '**Strict uRPF breaks asymmetric routing**; that is the classic trap.',
-              '**Loose uRPF** only requires the source to be reachable somewhere.',
-              '**TCP MD5** authenticates the session, **TTL security** limits hop distance.',
-              'Neither BGP mechanism encrypts the payload.',
-              'OSPF and EIGRP authentication stop forged routing updates.',
-              'DAI depends on DHCP snooping bindings; do not treat them as independent.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['uRPF strict', 'Reverse path on the incoming interface'],
-                ['uRPF loose', 'Source reachable anywhere'],
-                ['Asymmetric routing', 'Strict uRPF can drop legitimate traffic'],
-                ['OSPF security', 'Message-digest authentication'],
-                ['EIGRP security', 'Key chain authentication'],
-                ['BGP TCP MD5', 'Session authentication'],
-                ['BGP TTL security', 'Hop-distance restriction'],
-                ['Overall', 'Layer defences, not one feature']
-              ]
-            },
-            related: [
-              { t: '09. CoPP', d: 'CPU protection' },
-              { t: '10. Device Hardening', d: 'Device-level controls' }
-            ],
-            glossary: ['CoPP', 'Device Hardening', 'BGP', 'Routing Loop', 'Control Plane']
-          }
-        ];
+        const GROUPS = [{"key":"auth","label":"Authentication & Access Control","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"l2","label":"Layer 2 Security","chip":"bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300","dot":"bg-sky-600","bullet":"text-sky-600 dark:text-sky-400"},{"key":"infra","label":"Infrastructure Protection","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
 
-        const GROUPS = [
-          { key: 'auth', label: 'Authentication & Access Control', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
-          { key: 'l2', label: 'Layer 2 Security', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
-          { key: 'infra', label: 'Infrastructure Protection', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
-        ];
         const groups = GROUPS;
+
         const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
 
         const glossary = [
-          { term: 'AAA', def: 'Authentication, Authorization and Accounting. Identity, permission and audit trail, configured with aaa new-model and method lists.' },
-          { term: 'TACACS+', def: 'Cisco AAA protocol for device administration over TCP 49, with separate AAA functions, per-command authorization and body encryption.' },
-          { term: 'RADIUS', def: 'Open-standard AAA protocol for network access over UDP 1812 (authentication) and 1813 (accounting), encrypting only the password.' },
-          { term: 'ACL', def: 'Access Control List. Ordered permit and deny rules evaluated top down with first match winning and an implicit deny at the end.' },
-          { term: 'Port Security', def: 'Switchport feature limiting the source MAC addresses allowed on a port, with shutdown, restrict and protect violation modes.' },
-          { term: 'Dynamic ARP Inspection', def: 'Validates ARP packets on untrusted ports against DHCP snooping bindings or ARP ACLs to stop ARP spoofing.' },
-          { term: 'IP Source Guard', def: 'Per-interface source address allowlist built from DHCP snooping bindings, optionally validating MAC as well as IP.' },
-          { term: 'Storm Control', def: 'Limits broadcast, multicast and unknown-unicast traffic on a switchport to contain floods.' },
-          { term: 'CoPP', def: 'Control Plane Policing. Rate-limits traffic destined to the device CPU using ACLs, class-maps, policy-maps and policing.' },
-          { term: 'Device Hardening', def: 'Reducing the attack surface of a device: strong secrets, SSH-only access, login rate limits, ACLs and disabled services.' },
-          { term: 'DHCP Snooping', def: 'Layer 2 feature that builds the IP to MAC binding table used by DAI and IP Source Guard.' },
-          { term: 'Control Plane', def: 'The plane that runs routing protocols and processes traffic addressed to the device.' },
-          { term: 'Data Plane', def: 'The plane that forwards transit traffic through the device.' },
-          { term: 'SSH', def: 'Encrypted remote management on TCP 22, replacing Telnet.' },
-          { term: 'SNMP', def: 'Monitoring protocol on UDP 161 and 162; version 3 adds authentication and privacy.' },
-          { term: 'NTP', def: 'Time synchronisation over UDP 123, needed for accurate log and certificate handling.' },
-          { term: 'Syslog', def: 'Centralised event logging, traditionally UDP 514, used for audit and troubleshooting.' },
-          { term: 'BGP', def: 'Path-vector routing protocol whose sessions can be protected with TCP MD5 or TTL security.' },
-          { term: 'Routing Loop', def: 'A cycle in forwarding or redistribution that storm control and TTL limits help contain.' }
-        ];
+ {
+  "term": "AAA",
+  "def": "Authentication, Authorization and Accounting. Identity, permission and audit trail, configured with aaa new-model and method lists."
+ },
+ {
+  "term": "TACACS+",
+  "def": "Cisco AAA protocol for device administration over TCP 49, with separate AAA functions, per-command authorization and body encryption."
+ },
+ {
+  "term": "RADIUS",
+  "def": "Open-standard AAA protocol for network access over UDP 1812 (authentication) and 1813 (accounting), encrypting only the password."
+ },
+ {
+  "term": "ACL",
+  "def": "Access Control List. Ordered permit and deny rules evaluated top down with first match winning and an implicit deny at the end."
+ },
+ {
+  "term": "Port Security",
+  "def": "Switchport feature limiting the source MAC addresses allowed on a port, with shutdown, restrict and protect violation modes."
+ },
+ {
+  "term": "Dynamic ARP Inspection",
+  "def": "Validates ARP packets on untrusted ports against DHCP snooping bindings or ARP ACLs to stop ARP spoofing."
+ },
+ {
+  "term": "IP Source Guard",
+  "def": "Per-interface source address allowlist built from DHCP snooping bindings, optionally validating MAC as well as IP."
+ },
+ {
+  "term": "Storm Control",
+  "def": "Limits broadcast, multicast and unknown-unicast traffic on a switchport to contain floods."
+ },
+ {
+  "term": "CoPP",
+  "def": "Control Plane Policing. Rate-limits traffic destined to the device CPU using ACLs, class-maps, policy-maps and policing."
+ },
+ {
+  "term": "Device Hardening",
+  "def": "Reducing the attack surface of a device: strong secrets, SSH-only access, login rate limits, ACLs and disabled services."
+ },
+ {
+  "term": "DHCP Snooping",
+  "def": "Layer 2 feature that builds the IP to MAC binding table used by DAI and IP Source Guard."
+ },
+ {
+  "term": "Control Plane",
+  "def": "The plane that runs routing protocols and processes traffic addressed to the device."
+ },
+ {
+  "term": "Data Plane",
+  "def": "The plane that forwards transit traffic through the device."
+ },
+ {
+  "term": "SSH",
+  "def": "Encrypted remote management on TCP 22, replacing Telnet."
+ },
+ {
+  "term": "SNMP",
+  "def": "Monitoring protocol on UDP 161 and 162; version 3 adds authentication and privacy."
+ },
+ {
+  "term": "NTP",
+  "def": "Time synchronisation over UDP 123, needed for accurate log and certificate handling."
+ },
+ {
+  "term": "Syslog",
+  "def": "Centralised event logging, traditionally UDP 514, used for audit and troubleshooting."
+ },
+ {
+  "term": "BGP",
+  "def": "Path-vector routing protocol whose sessions can be protected with TCP MD5 or TTL security."
+ },
+ {
+  "term": "Routing Loop",
+  "def": "A cycle in forwarding or redistribution that storm control and TTL limits help contain."
+ },
+ {
+  "term": "TrustSec",
+  "def": "Cisco's identity-based segmentation architecture. TrustSec assigns a security group tag (SGT) to traffic at ingress and enforces group-to-group permissions with SGACLs."
+ },
+ {
+  "term": "Security Group Tag",
+  "def": "A 16-bit identity tag used by TrustSec. It can be carried inline in the Ethernet frame or propagated as an IP-to-SGT mapping with SXP."
+ },
+ {
+  "term": "SGACL",
+  "def": "Security Group ACL. A TrustSec permission between a source security group and a destination security group, enforced on an inline enforcement device."
+ },
+ {
+  "term": "MACsec",
+  "def": "IEEE 802.1AE link-layer encryption and integrity protection. MACsec protects one Ethernet hop at a time and is keyed with MKA."
+ },
+ {
+  "term": "Next-Generation Firewall",
+  "def": "A stateful firewall that adds application awareness, intrusion prevention and user or identity policy beyond traditional port-based ACLs."
+ },
+ {
+  "term": "Endpoint Security",
+  "def": "Host-based protection such as antivirus, EDR, host firewall and posture assessment. It complements network security rather than replacing it."
+ },
+ {
+  "term": "Network Access Control",
+  "def": "An admission-control system that authenticates endpoints with 802.1X, MAB or guest portals and can apply posture, VLAN or SGT policy."
+ }
+];
 
         const quiz = [
-          { q: 'Which command enables AAA on a Cisco device?', options: ['aaa new-model', 'aaa enable', 'ip aaa', 'login aaa'], answer: 0, why: 'All AAA configuration starts with aaa new-model.' },
-          { q: 'What does authentication answer?', options: ['Who are you?', 'What may you do?', 'What did you do?', 'Where are you going?'], answer: 0, why: 'Authorization covers permission and accounting covers records.' },
-          { q: 'In aaa authorization commands 15, what does 15 mean?', options: ['Privilege level', 'Fifteen commands', 'Timeout seconds', 'Retry count'], answer: 0, why: 'It is the privilege level whose commands are being authorized.' },
-          { q: 'What does accounting do?', options: ['Records activity', 'Grants access', 'Encrypts the session', 'Assigns addresses'], answer: 0, why: 'Accounting only records; it does not authorize.' },
-          { q: 'TACACS+ uses which transport and port?', options: ['TCP 49', 'UDP 49', 'UDP 1812', 'TCP 1813'], answer: 0, why: 'TACACS+ runs over TCP 49.' },
-          { q: 'How much of a TACACS+ packet is encrypted?', options: ['The body', 'The whole IP packet', 'Only the password', 'Nothing'], answer: 0, why: 'The body is encrypted; the header stays visible.' },
-          { q: 'Which protocol supports per-command authorization?', options: ['TACACS+', 'RADIUS', 'LDAP', 'Kerberos'], answer: 0, why: 'TACACS+ separates functions and supports command-level control.' },
-          { q: 'RADIUS authentication uses which port?', options: ['UDP 1812', 'UDP 1813', 'TCP 49', 'UDP 1645'], answer: 0, why: '1812 authenticates and 1813 accounts.' },
-          { q: 'In RADIUS, who is the client?', options: ['The switch, AP or VPN gateway', 'The user laptop', 'The DNS server', 'The CA'], answer: 0, why: 'The network access server is the RADIUS client.' },
-          { q: 'What does RADIUS encrypt?', options: ['The password field', 'The whole packet', 'Nothing', 'Only accounting'], answer: 0, why: 'RADIUS protects the password, not the entire payload.' },
-          { q: 'Which is preferred for network access such as 802.1X?', options: ['RADIUS', 'TACACS+', 'SNMP', 'Syslog'], answer: 0, why: 'RADIUS is the open standard for network access.' },
-          { q: 'When two ACL lines both match, which is used?', options: ['The first one', 'The most specific one', 'The last one', 'Both'], answer: 0, why: 'ACLs are evaluated top down and stop at the first match.' },
-          { q: 'What happens to traffic that matches no ACL line?', options: ['It is denied', 'It is permitted', 'It is logged and permitted', 'It is queued'], answer: 0, why: 'Every ACL ends with an implicit deny.' },
-          { q: 'In a wildcard mask, what does a 0 bit mean?', options: ['Must match', 'Ignore', 'Invert', 'Deny'], answer: 0, why: '0 means the bit must match; 1 means ignore it.' },
-          { q: 'Which ACL type can match destination port?', options: ['Extended', 'Standard', 'Both', 'Neither'], answer: 0, why: 'Standard ACLs match source only; extended add destination, protocol and port.' },
-          { q: 'Where should an extended ACL be placed?', options: ['Near the source', 'Near the destination', 'On a loopback', 'Only inbound on VTY'], answer: 0, why: 'Extended ACLs filter unwanted traffic early when placed near the source.' },
-          { q: 'What is the default port-security maximum on a Cisco access port?', options: ['1', '2', '10', 'Unlimited'], answer: 0, why: 'The default secure MAC maximum is one.' },
-          { q: 'What is the default port-security violation mode?', options: ['Shutdown', 'Restrict', 'Protect', 'Log'], answer: 0, why: 'The default is shutdown, which err-disables the port.' },
-          { q: 'Which violation mode drops traffic silently?', options: ['Protect', 'Restrict', 'Shutdown', 'Trap'], answer: 0, why: 'Protect drops without logging or counters.' },
-          { q: 'Where do sticky MAC addresses appear?', options: ['Running-config', 'The ARP table', 'The routing table', 'The DHCP pool'], answer: 0, why: 'Sticky learning writes the MAC into the configuration.' },
-          { q: 'Which MAC type is normally lost on reload?', options: ['Dynamic', 'Static', 'Sticky saved to config', 'Reserved'], answer: 0, why: 'Dynamic secure MACs are not persisted.' },
-          { q: 'DAI is enabled at which scope?', options: ['Per VLAN', 'Per interface only', 'Globally only', 'Per VRF'], answer: 0, why: 'ip arp inspection vlan enables it per VLAN.' },
-          { q: 'What is the default DAI trust state of an interface?', options: ['Untrusted', 'Trusted', 'Disabled', 'Monitor'], answer: 0, why: 'Interfaces are untrusted until trusted explicitly.' },
-          { q: 'What normally supplies DAI with IP to MAC bindings?', options: ['DHCP snooping', 'ARP ACL', 'CDP', 'LLDP'], answer: 0, why: 'The DHCP snooping binding table is the usual source.' },
-          { q: 'Which hosts need an ARP ACL with DAI?', options: ['Static-IP hosts', 'DHCP clients', 'Wireless clients', 'Routers'], answer: 0, why: 'Hosts without DHCP bindings need ARP ACL entries.' },
-          { q: 'Which DAI check compares the Ethernet source MAC with the ARP sender MAC?', options: ['src-mac', 'dst-mac', 'ip', 'port'], answer: 0, why: 'src-mac validates the sender MAC consistency.' },
-          { q: 'What does ip verify source check?', options: ['Source IP', 'Destination IP', 'ARP contents', 'MAC only'], answer: 0, why: 'IP Source Guard validates the source address by default.' },
-          { q: 'What adds MAC validation to IP Source Guard?', options: ['port-security keyword', 'switchport port-security', 'arp inspection', 'dhcp snooping trust'], answer: 0, why: 'ip verify source port-security validates IP and MAC; it is not the same as enabling port security.' },
-          { q: 'Which command shows IP Source Guard bindings?', options: ['show ip source binding', 'show ip route', 'show mac address-table', 'show arp'], answer: 0, why: 'That command displays the source bindings.' },
-          { q: 'Storm control monitors which traffic types?', options: ['Broadcast, multicast, unknown unicast', 'All unicast', 'Only broadcast', 'Only multicast'], answer: 0, why: 'Known unicast is not part of storm control.' },
-          { q: 'What does Storm Control do by default when the threshold is exceeded?', options: ['Suppresses traffic', 'Shuts the port', 'Reboots the switch', 'Disables STP'], answer: 0, why: 'Default behaviour suppresses rather than shutting the port.' },
-          { q: 'What provides hysteresis in storm control?', options: ['Rising and falling thresholds', 'A single level', 'action trap', 'The errdisable timer'], answer: 0, why: 'Separate rising and falling thresholds prevent flapping.' },
-          { q: 'What does CoPP protect?', options: ['The control plane CPU', 'Transit traffic', 'The access edge', 'The ARP table'], answer: 0, why: 'CoPP rate-limits traffic destined to the device itself.' },
-          { q: 'Where is the CoPP policy applied?', options: ['control-plane service-policy input', 'An access port', 'A VLAN', 'A loopback'], answer: 0, why: 'The policy is attached under control-plane with service-policy input.' },
-          { q: 'Which QoS component defines the policing actions in CoPP?', options: ['Policy-map', 'Prefix-list', 'Route-map', 'ACL'], answer: 0, why: 'The policy-map holds the class actions including police.' },
-          { q: 'Which is better than enable password for storing a secret?', options: ['enable secret', 'service password-encryption', 'Type 7', 'Telnet'], answer: 0, why: 'enable secret uses a strong hash.' },
-          { q: 'What is Type 7 encoding?', options: ['Reversible obfuscation', 'Strong hashing', 'AES encryption', 'Certificate signing'], answer: 0, why: 'Type 7 can be reversed and is not real encryption.' },
-          { q: 'Which command slows brute-force login attempts?', options: ['login block-for', 'exec-timeout', 'logging synchronous', 'ip ssh version 2'], answer: 0, why: 'login block-for applies a quiet period after failed attempts.' },
-          { q: 'Which pair is the secure management replacement for Telnet and HTTP?', options: ['SSH and HTTPS', 'TFTP and SNMPv2c', 'FTP and LDAP', 'RADIUS and TACACS+'], answer: 0, why: 'SSH replaces Telnet and HTTPS replaces HTTP.' },
-          { q: 'Which SNMP version should management use?', options: ['SNMPv3', 'SNMPv2c', 'SNMPv1', 'Any'], answer: 0, why: 'SNMPv3 adds authentication and privacy; community strings are not encryption.' },
-          { q: 'Strict uRPF requires what?', options: ['Reverse path via the incoming interface', 'Source reachable through any interface', 'A BGP session', 'A static route'], answer: 0, why: 'Strict mode checks the reverse path against the receiving interface.' },
-          { q: 'Which mode suits asymmetric routing?', options: ['Loose uRPF', 'Strict uRPF', 'Both equally', 'Neither'], answer: 0, why: 'Loose mode only requires the source to be reachable somewhere.' },
-          { q: 'What does BGP TTL security do?', options: ['Restricts hop distance to peers', 'Encrypts BGP payload', 'Replaces TCP MD5', 'Authenticates users'], answer: 0, why: 'TTL security limits how far away a legitimate peer may be.' },
-          { q: 'Which mechanism authenticates an OSPF neighbour?', options: ['Message-digest authentication', 'TTL security', 'ARP ACL', 'Port security'], answer: 0, why: 'OSPF uses message-digest authentication on the interface or area.' }
-        ];
+ {
+  "q": "Which command enables AAA on a Cisco device?",
+  "options": [
+   "aaa enable",
+   "aaa new-model",
+   "ip aaa",
+   "login aaa"
+  ],
+  "answer": 1,
+  "why": "All AAA configuration starts with aaa new-model."
+ },
+ {
+  "q": "What does authentication answer?",
+  "options": [
+   "Who are you?",
+   "What may you do?",
+   "What did you do?",
+   "Where are you going?"
+  ],
+  "answer": 0,
+  "why": "Authorization covers permission and accounting covers records."
+ },
+ {
+  "q": "In aaa authorization commands 15, what does 15 mean?",
+  "options": [
+   "Fifteen commands",
+   "Timeout seconds",
+   "Retry count",
+   "Privilege level"
+  ],
+  "answer": 3,
+  "why": "It is the privilege level whose commands are being authorized."
+ },
+ {
+  "q": "What does accounting do?",
+  "options": [
+   "Grants access",
+   "Encrypts the session",
+   "Records activity",
+   "Assigns addresses"
+  ],
+  "answer": 2,
+  "why": "Accounting only records; it does not authorize."
+ },
+ {
+  "q": "TACACS+ uses which transport and port?",
+  "options": [
+   "UDP 49",
+   "TCP 49",
+   "UDP 1812",
+   "TCP 1813"
+  ],
+  "answer": 1,
+  "why": "TACACS+ runs over TCP 49."
+ },
+ {
+  "q": "How much of a TACACS+ packet is encrypted?",
+  "options": [
+   "The body",
+   "The whole IP packet",
+   "Only the password",
+   "Nothing"
+  ],
+  "answer": 0,
+  "why": "The body is encrypted; the header stays visible."
+ },
+ {
+  "q": "Which protocol supports per-command authorization?",
+  "options": [
+   "RADIUS",
+   "LDAP",
+   "Kerberos",
+   "TACACS+"
+  ],
+  "answer": 3,
+  "why": "TACACS+ separates functions and supports command-level control."
+ },
+ {
+  "q": "RADIUS authentication uses which port?",
+  "options": [
+   "UDP 1813",
+   "TCP 49",
+   "UDP 1812",
+   "UDP 1645"
+  ],
+  "answer": 2,
+  "why": "1812 authenticates and 1813 accounts."
+ },
+ {
+  "q": "In RADIUS, who is the client?",
+  "options": [
+   "The user laptop",
+   "The switch, AP or VPN gateway",
+   "The DNS server",
+   "The CA"
+  ],
+  "answer": 1,
+  "why": "The network access server is the RADIUS client."
+ },
+ {
+  "q": "What does RADIUS encrypt?",
+  "options": [
+   "The password field",
+   "The whole packet",
+   "Nothing",
+   "Only accounting"
+  ],
+  "answer": 0,
+  "why": "RADIUS protects the password, not the entire payload."
+ },
+ {
+  "q": "Which is preferred for network access such as 802.1X?",
+  "options": [
+   "TACACS+",
+   "SNMP",
+   "Syslog",
+   "RADIUS"
+  ],
+  "answer": 3,
+  "why": "RADIUS is the open standard for network access."
+ },
+ {
+  "q": "When two ACL lines both match, which is used?",
+  "options": [
+   "The most specific one",
+   "The last one",
+   "The first one",
+   "Both"
+  ],
+  "answer": 2,
+  "why": "ACLs are evaluated top down and stop at the first match."
+ },
+ {
+  "q": "What happens to traffic that matches no ACL line?",
+  "options": [
+   "It is permitted",
+   "It is denied",
+   "It is logged and permitted",
+   "It is queued"
+  ],
+  "answer": 1,
+  "why": "Every ACL ends with an implicit deny."
+ },
+ {
+  "q": "In a wildcard mask, what does a 0 bit mean?",
+  "options": [
+   "Must match",
+   "Ignore",
+   "Invert",
+   "Deny"
+  ],
+  "answer": 0,
+  "why": "0 means the bit must match; 1 means ignore it."
+ },
+ {
+  "q": "Which ACL type can match destination port?",
+  "options": [
+   "Standard",
+   "Both",
+   "Neither",
+   "Extended"
+  ],
+  "answer": 3,
+  "why": "Standard ACLs match source only; extended add destination, protocol and port."
+ },
+ {
+  "q": "Where should an extended ACL be placed?",
+  "options": [
+   "Near the destination",
+   "On a loopback",
+   "Near the source",
+   "Only inbound on VTY"
+  ],
+  "answer": 2,
+  "why": "Extended ACLs filter unwanted traffic early when placed near the source."
+ },
+ {
+  "q": "What is the default port-security maximum on a Cisco access port?",
+  "options": [
+   "2",
+   "1",
+   "10",
+   "Unlimited"
+  ],
+  "answer": 1,
+  "why": "The default secure MAC maximum is one."
+ },
+ {
+  "q": "What is the default port-security violation mode?",
+  "options": [
+   "Shutdown",
+   "Restrict",
+   "Protect",
+   "Log"
+  ],
+  "answer": 0,
+  "why": "The default is shutdown, which err-disables the port."
+ },
+ {
+  "q": "Which violation mode drops traffic silently?",
+  "options": [
+   "Restrict",
+   "Shutdown",
+   "Trap",
+   "Protect"
+  ],
+  "answer": 3,
+  "why": "Protect drops without logging or counters."
+ },
+ {
+  "q": "Where do sticky MAC addresses appear?",
+  "options": [
+   "The ARP table",
+   "The routing table",
+   "Running-config",
+   "The DHCP pool"
+  ],
+  "answer": 2,
+  "why": "Sticky learning writes the MAC into the configuration."
+ },
+ {
+  "q": "Which MAC type is normally lost on reload?",
+  "options": [
+   "Static",
+   "Dynamic",
+   "Sticky saved to config",
+   "Reserved"
+  ],
+  "answer": 1,
+  "why": "Dynamic secure MACs are not persisted."
+ },
+ {
+  "q": "DAI is enabled at which scope?",
+  "options": [
+   "Per VLAN",
+   "Per interface only",
+   "Globally only",
+   "Per VRF"
+  ],
+  "answer": 0,
+  "why": "ip arp inspection vlan enables it per VLAN."
+ },
+ {
+  "q": "What is the default DAI trust state of an interface?",
+  "options": [
+   "Trusted",
+   "Disabled",
+   "Monitor",
+   "Untrusted"
+  ],
+  "answer": 3,
+  "why": "Interfaces are untrusted until trusted explicitly."
+ },
+ {
+  "q": "What normally supplies DAI with IP to MAC bindings?",
+  "options": [
+   "ARP ACL",
+   "CDP",
+   "DHCP snooping",
+   "LLDP"
+  ],
+  "answer": 2,
+  "why": "The DHCP snooping binding table is the usual source."
+ },
+ {
+  "q": "Which hosts need an ARP ACL with DAI?",
+  "options": [
+   "DHCP clients",
+   "Static-IP hosts",
+   "Wireless clients",
+   "Routers"
+  ],
+  "answer": 1,
+  "why": "Hosts without DHCP bindings need ARP ACL entries."
+ },
+ {
+  "q": "Which DAI check compares the Ethernet source MAC with the ARP sender MAC?",
+  "options": [
+   "src-mac",
+   "dst-mac",
+   "ip",
+   "port"
+  ],
+  "answer": 0,
+  "why": "src-mac validates the sender MAC consistency."
+ },
+ {
+  "q": "What does ip verify source check?",
+  "options": [
+   "Destination IP",
+   "ARP contents",
+   "MAC only",
+   "Source IP"
+  ],
+  "answer": 3,
+  "why": "IP Source Guard validates the source address by default."
+ },
+ {
+  "q": "What adds MAC validation to IP Source Guard?",
+  "options": [
+   "switchport port-security",
+   "arp inspection",
+   "port-security keyword",
+   "dhcp snooping trust"
+  ],
+  "answer": 2,
+  "why": "ip verify source port-security validates IP and MAC; it is not the same as enabling port security."
+ },
+ {
+  "q": "Which command shows IP Source Guard bindings?",
+  "options": [
+   "show ip route",
+   "show ip source binding",
+   "show mac address-table",
+   "show arp"
+  ],
+  "answer": 1,
+  "why": "That command displays the source bindings."
+ },
+ {
+  "q": "Storm control monitors which traffic types?",
+  "options": [
+   "Broadcast, multicast, unknown unicast",
+   "All unicast",
+   "Only broadcast",
+   "Only multicast"
+  ],
+  "answer": 0,
+  "why": "Known unicast is not part of storm control."
+ },
+ {
+  "q": "What does Storm Control do by default when the threshold is exceeded?",
+  "options": [
+   "Shuts the port",
+   "Reboots the switch",
+   "Disables STP",
+   "Suppresses traffic"
+  ],
+  "answer": 3,
+  "why": "Default behaviour suppresses rather than shutting the port."
+ },
+ {
+  "q": "What provides hysteresis in storm control?",
+  "options": [
+   "A single level",
+   "action trap",
+   "Rising and falling thresholds",
+   "The errdisable timer"
+  ],
+  "answer": 2,
+  "why": "Separate rising and falling thresholds prevent flapping."
+ },
+ {
+  "q": "What does CoPP protect?",
+  "options": [
+   "Transit traffic",
+   "The control plane CPU",
+   "The access edge",
+   "The ARP table"
+  ],
+  "answer": 1,
+  "why": "CoPP rate-limits traffic destined to the device itself."
+ },
+ {
+  "q": "Where is the CoPP policy applied?",
+  "options": [
+   "control-plane service-policy input",
+   "An access port",
+   "A VLAN",
+   "A loopback"
+  ],
+  "answer": 0,
+  "why": "The policy is attached under control-plane with service-policy input."
+ },
+ {
+  "q": "Which QoS component defines the policing actions in CoPP?",
+  "options": [
+   "Prefix-list",
+   "Route-map",
+   "ACL",
+   "Policy-map"
+  ],
+  "answer": 3,
+  "why": "The policy-map holds the class actions including police."
+ },
+ {
+  "q": "Which is better than enable password for storing a secret?",
+  "options": [
+   "service password-encryption",
+   "Type 7",
+   "enable secret",
+   "Telnet"
+  ],
+  "answer": 2,
+  "why": "enable secret uses a strong hash."
+ },
+ {
+  "q": "What is Type 7 encoding?",
+  "options": [
+   "Strong hashing",
+   "Reversible obfuscation",
+   "AES encryption",
+   "Certificate signing"
+  ],
+  "answer": 1,
+  "why": "Type 7 can be reversed and is not real encryption."
+ },
+ {
+  "q": "Which command slows brute-force login attempts?",
+  "options": [
+   "login block-for",
+   "exec-timeout",
+   "logging synchronous",
+   "ip ssh version 2"
+  ],
+  "answer": 0,
+  "why": "login block-for applies a quiet period after failed attempts."
+ },
+ {
+  "q": "Which pair is the secure management replacement for Telnet and HTTP?",
+  "options": [
+   "TFTP and SNMPv2c",
+   "FTP and LDAP",
+   "RADIUS and TACACS+",
+   "SSH and HTTPS"
+  ],
+  "answer": 3,
+  "why": "SSH replaces Telnet and HTTPS replaces HTTP."
+ },
+ {
+  "q": "Which SNMP version should management use?",
+  "options": [
+   "SNMPv2c",
+   "SNMPv1",
+   "SNMPv3",
+   "Any"
+  ],
+  "answer": 2,
+  "why": "SNMPv3 adds authentication and privacy; community strings are not encryption."
+ },
+ {
+  "q": "Strict uRPF requires what?",
+  "options": [
+   "Source reachable through any interface",
+   "Reverse path via the incoming interface",
+   "A BGP session",
+   "A static route"
+  ],
+  "answer": 1,
+  "why": "Strict mode checks the reverse path against the receiving interface."
+ },
+ {
+  "q": "Which mode suits asymmetric routing?",
+  "options": [
+   "Loose uRPF",
+   "Strict uRPF",
+   "Both equally",
+   "Neither"
+  ],
+  "answer": 0,
+  "why": "Loose mode only requires the source to be reachable somewhere."
+ },
+ {
+  "q": "What does BGP TTL security do?",
+  "options": [
+   "Encrypts BGP payload",
+   "Replaces TCP MD5",
+   "Authenticates users",
+   "Restricts hop distance to peers"
+  ],
+  "answer": 3,
+  "why": "TTL security limits how far away a legitimate peer may be."
+ },
+ {
+  "q": "Which mechanism authenticates an OSPF neighbour?",
+  "options": [
+   "TTL security",
+   "ARP ACL",
+   "Message-digest authentication",
+   "Port security"
+  ],
+  "answer": 2,
+  "why": "OSPF uses message-digest authentication on the interface or area."
+ },
+ {
+  "q": "Which TrustSec field carries the identity of the source through the network?",
+  "options": [
+   "DSCP value",
+   "Security group tag",
+   "VLAN ID",
+   "MAC address"
+  ],
+  "answer": 1,
+  "why": "TrustSec classifies traffic into a security group tag (SGT). SGACLs then permit or deny traffic between groups."
+ },
+ {
+  "q": "A design needs encryption on a point-to-point Ethernet link between two switches. Which technology fits best?",
+  "options": [
+   "MACsec",
+   "IPsec transport mode",
+   "GRE",
+   "TLS"
+  ],
+  "answer": 0,
+  "why": "MACsec protects an Ethernet link hop by hop. IPsec would protect IP packets end to end, not the entire Layer 2 frame."
+ },
+ {
+  "q": "What is the main difference between NAC and an NGFW?",
+  "options": [
+   "NAC encrypts links; the NGFW routes packets",
+   "NAC replaces 802.1X; the NGFW replaces ACLs",
+   "They are the same function at different layers",
+   "NAC admits and postures endpoints; the NGFW inspects traffic"
+  ],
+  "answer": 3,
+  "why": "NAC controls whether a device gets on the network and whether it meets posture. The NGFW enforces stateful and application-aware traffic policy."
+ },
+ {
+  "q": "Which statement about SXP is correct?",
+  "options": [
+   "It encrypts the Ethernet frame",
+   "It replaces ISE as the policy server",
+   "It propagates IP-to-SGT mappings when inline tagging is unavailable",
+   "It is a routing protocol for SGT prefixes"
+  ],
+  "answer": 2,
+  "why": "SXP is the fallback transport for TrustSec mappings. It carries IP-to-SGT bindings; it does not encrypt data or replace ISE."
+ }
+];
 
         /* ---------------- Helpers ---------------- */
         const AMP = String.fromCharCode(38);

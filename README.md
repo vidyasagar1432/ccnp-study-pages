@@ -72,21 +72,21 @@ Everything is client-side, so `file://` works. It also works over HTTP
 | 13 | [Route Redistribution](pages/13-route-redistribution.html) | 8 | 24 questions |
 | 14 | [First Hop Redundancy](pages/14-first-hop-redundancy.html) | 5 | 20 questions |
 | 15 | [NAT](pages/15-nat.html) | 6 | 15 questions |
-| 16 | [Network Services](pages/16-network-services.html) | 19 | 44 questions |
-| 17 | [Security](pages/17-security.html) | 12 | 44 questions |
+| 16 | [Network Services](pages/16-network-services.html) | 19 | 46 questions |
+| 17 | [Security](pages/17-security.html) | 13 | 48 questions |
 | 18 | [VPN Technologies](pages/18-vpn-technologies.html) | 11 | 45 questions |
 | 19 | [Multicast](pages/19-multicast.html) | 9 | 44 questions |
 | 20 | [MPLS](pages/20-mpls.html) | 9 | 45 questions |
 | 21 | [QoS](pages/21-qos.html) | 12 | 51 questions |
-| 22 | [Wireless](pages/22-wireless.html) | 12 | 55 questions |
-| 23 | [Enterprise WAN](pages/23-enterprise-wan.html) | 11 | 55 questions |
-| 24 | [SDN & Automation](pages/24-sdn-automation.html) | 16 | 48 questions |
-| 25 | [Virtualization & Cloud](pages/25-virtualization-cloud.html) | 13 | 39 questions |
-| 26 | [Monitoring & Telemetry](pages/26-monitoring-telemetry.html) | 9 | 27 questions |
+| 22 | [Wireless](pages/22-wireless.html) | 13 | 59 questions |
+| 23 | [Enterprise WAN](pages/23-enterprise-wan.html) | 11 | 57 questions |
+| 24 | [SDN & Automation](pages/24-sdn-automation.html) | 17 | 45 questions |
+| 25 | [Virtualization & Cloud](pages/25-virtualization-cloud.html) | 13 | 35 questions |
+| 26 | [Monitoring & Telemetry](pages/26-monitoring-telemetry.html) | 9 | 29 questions |
 | 27 | [High Availability](pages/27-high-availability.html) | 8 | 24 questions |
-| 28 | [Cisco IOS and IOS XE](pages/28-cisco-ios-iosxe.html) | 11 | 33 questions |
-| 29 | [Troubleshooting](pages/29-troubleshooting.html) | 18 | 54 questions |
-| 30 | [Labs](pages/30-labs.html) | 16 | 48 questions |
+| 28 | [Cisco IOS and IOS XE](pages/28-cisco-ios-iosxe.html) | 11 | 29 questions |
+| 29 | [Troubleshooting](pages/29-troubleshooting.html) | 18 | 47 questions |
+| 30 | [Labs](pages/30-labs.html) | 16 | 40 questions |
 
 All 31 levels are now published. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:

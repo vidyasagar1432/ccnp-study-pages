@@ -590,1076 +590,3920 @@
         const { ref, computed } = Vue;
 
         /* ---------------- Content ---------------- */
-        const heroIntro = `**[[WLAN]]** is a wireless network built on **[[802.11]]**, where clients associate to an AP that advertises an **[[SSID]]** and a **[[BSSID]]**. Frames travel over **[[RF]]** in the 2.4, 5 and 6 GHz bands, using **[[Channels]]** that must be planned to avoid overlap. Enterprise networks centralize control on a **[[WLC]]** with **[[CAPWAP]]**, share client state through **[[Mobility]]** so **[[Roaming]]** stays seamless, and protect the air with **[[WPA2]]** or **[[WPA3]]**.`;
+        const heroIntro = "**[[WLAN]]** is a wireless network built on **[[802.11]]**, where clients associate to an AP that advertises an **[[SSID]]** and a **[[BSSID]]**. Frames travel over **[[RF]]** in the 2.4, 5 and 6 GHz bands, using **[[Channels]]** that must be planned to avoid overlap. Enterprise networks centralize control on a **[[WLC]]** with **[[CAPWAP]]**, share client state through **[[Mobility]]** so **[[Roaming]]** stays seamless, and protect the air with **[[WPA2]]** or **[[WPA3]]**.";
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'fund', title: 'WLAN',
-            blurb: 'Wireless LAN basics: shared RF, APs, controllers and service sets',
-            overview: 'A **[[WLAN]]** is a wireless network built on **[[802.11]]**. Clients associate to an access point that broadcasts a **[[BSSID|BSSID]]** and **[[SSID]]**, and frames travel over **[[RF]]** in the 2.4, 5 or 6 GHz bands. Enterprise WLANs centralize control on a **[[WLC]]** using **[[CAPWAP]]**, and split the work into control, data and management planes.',
-            keyIdea: 'A WLAN is 802.11 plus the AP and WLC architecture. RF is a shared, error-prone medium, which is why wireless design is about coverage, capacity and interference rather than cables.',
-            sections: [
-              { kind: 'table', h: 'WLAN versus wired LAN', cols: ['Aspect', 'Wired LAN', 'WLAN'], rows: [
-                ['**Medium**', 'Cable', 'Shared RF'],
-                ['**Access**', 'Plug in', 'Associate'],
-                ['**Errors**', 'Low', 'Interference and retries'],
-                ['**Movement**', 'Static', 'Roaming']
-              ]},
-              { kind: 'table', h: 'Components', cols: ['Component', 'Role'], rows: [
-                ['**Client**', 'Station, or STA'],
-                ['**AP**', 'Access point radio'],
-                ['**WLC**', 'Wireless controller'],
-                ['**Backend**', 'Wired network and services']
-              ]},
-              { kind: 'table', h: 'Bands and data rates', cols: ['Band', 'Notes'], rows: [
-                ['**2.4 GHz**', 'Long range, crowded'],
-                ['**5 GHz**', 'More channels, faster'],
-                ['**6 GHz**', 'Wi-Fi 6E and newer']
-              ]},
-              { kind: 'table', h: 'Service sets', cols: ['Term', 'Meaning'], rows: [
-                ['**BSS**', 'One AP radio plus its clients'],
-                ['**ESS**', 'Many BSSes under one SSID'],
-                ['**SSID**', 'Network name'],
-                ['**BSSID**', 'AP radio MAC address']
-              ]},
-              { kind: 'table', h: 'Control and data planes', cols: ['Plane', 'Where'], rows: [
-                ['**Control**', 'WLC'],
-                ['**Management**', 'WLC'],
-                ['**Data**', 'AP to WLC, or local at the AP']
-              ]},
-              { kind: 'table', h: 'Deployment models', cols: ['Model', 'Where'], rows: [
-                ['**Autonomous**', 'Standalone AP'],
-                ['**Centralized**', 'WLC plus CAPWAP'],
-                ['**Cloud**', 'Cloud-managed'],
-                ['**Mesh**', 'Wireless backhaul']
-              ]}
-            ],
-            commands: [
-              { label: 'Check WLAN and AP status', code:
-`show wlan summary
-show ap summary
-show ap config general` },
-              { label: 'Check policy and AP joins', code:
-`show wireless profile policy
-show ap join stats summary` },
-              { label: 'Check radios and clients', code:
-`show ap radio summary
-show wireless client summary` }
-            ],
-            traps: [
-              'A WLAN is **802.11 plus AP and WLC architecture**, not just an SSID.',
-              'RF is a **shared and error-prone** medium; wired assumptions do not carry over.',
-              'The enterprise model is **WLC plus CAPWAP**, not autonomous APs.',
-              '**BSS is one AP**, while **ESS is many BSSes under one SSID**.',
-              'The **data plane** may pass through the WLC or stay local at the AP.',
-              '5 and 6 GHz offer **more spectrum**, which is why they perform better under load.'
-            ],
-            table: {
-              cols: ['Item', 'WLAN'],
-              rows: [
-                ['Standard', '802.11'],
-                ['Bands', '2.4, 5 and 6 GHz'],
-                ['AP', 'Access point'],
-                ['WLC', 'Controller'],
-                ['SSID', 'Name'],
-                ['BSSID', 'Radio MAC'],
-                ['BSS', 'One AP'],
-                ['ESS', 'Many APs']
-              ]
-            },
-            related: [
-              { t: '02. 802.11', d: 'The IEEE standard family' },
-              { t: '07. WLC', d: 'Centralized control' },
-              { t: '08. CAPWAP', d: 'The AP to WLC protocol' }
-            ],
-            glossary: ['WLAN', '802.11', 'SSID', 'BSSID', 'WLC', 'CAPWAP', 'RF']
-          },
-          {
-            id: 't02', num: '02', group: 'fund', title: '802.11',
-            blurb: 'Frames, CSMA/CA and the amendment generations from b to ax',
-            overview: '**[[802.11]]** is the IEEE standard family for WLANs. It defines the MAC and PHY layers, the management frames that run association, and the amendment generations that add speed and bands. The exam tests frame types, the CSMA/CA access mechanism, and which amendment maps to which speed and band.',
-            keyIdea: 'Wireless uses CSMA/CA with ACKs because collisions cannot be detected. Management frames run discovery and association, while n is MIMO, ac is 5 GHz and ax is OFDMA with 6 GHz.',
-            sections: [
-              { kind: 'table', h: 'Frame types', cols: ['Type', 'Purpose'], rows: [
-                ['**Management**', 'Beacon, probe, authentication, association'],
-                ['**Control**', 'RTS, CTS and ACK'],
-                ['**Data**', 'Client payload']
-              ]},
-              { kind: 'table', h: 'CSMA/CA', cols: ['Step', 'Detail'], rows: [
-                ['**Listen**', 'Sense the channel'],
-                ['**Wait**', 'Random backoff after DIFS or AIFS'],
-                ['**Send**', 'Only when the medium is clear'],
-                ['**ACK**', 'Receiver confirms each frame']
-              ]},
-              { kind: 'table', h: 'Management frame flow', cols: ['Frame', 'Direction', 'Step'], rows: [
-                ['**Beacon**', 'AP to client', 'Discover'],
-                ['**Probe request and response**', 'Both', 'Search'],
-                ['**Authentication**', 'Both', 'Identity'],
-                ['**Association**', 'Both', 'Join the BSS']
-              ]},
-              { kind: 'table', h: 'Amendments', cols: ['Standard', 'Band', 'Max rate', 'Note'], rows: [
-                ['**802.11b**', '2.4 GHz', '11 Mbps', 'Legacy'],
-                ['**802.11a**', '5 GHz', '54 Mbps', 'Legacy'],
-                ['**802.11g**', '2.4 GHz', '54 Mbps', 'Legacy'],
-                ['**802.11n, Wi-Fi 4**', '2.4 and 5 GHz', '600 Mbps', 'MIMO'],
-                ['**802.11ac, Wi-Fi 5**', '5 GHz', 'About 1.7 Gbps', 'Wide channels'],
-                ['**802.11ax, Wi-Fi 6**', '2.4, 5 and 6 GHz', 'About 9.6 Gbps', 'OFDMA']
-              ]},
-              { kind: 'table', h: 'RTS and CTS', cols: ['Control frame', 'Use'], rows: [
-                ['**RTS**', 'Reserve the medium'],
-                ['**CTS**', 'Grant the reservation'],
-                ['**NAV**', 'Tell others how long to wait']
-              ]},
-              { kind: 'table', h: 'PHY versus MAC', cols: ['Layer', '802.11 part'], rows: [
-                ['**PHY**', 'OFDM, OFDMA and modulation'],
-                ['**MAC**', 'CSMA/CA and frames'],
-                ['**Security**', 'WPA2 and WPA3 above the MAC']
-              ]},
-              { kind: 'para', h: 'Why the ACK matters', p: 'A wireless station cannot hear a collision while it is transmitting, so **CSMA/CA** avoids collisions instead of detecting them. Every unicast data frame is **acknowledged**, and a missing ACK triggers a retransmission.' }
-            ],
-            commands: [
-              { label: 'Check radios and amendment state', code:
-`show ap radio summary
-show ap dot11 5ghz summary
-show ap config general` },
-              { label: 'Check clients and channel utilisation', code:
-`show wireless client summary
-show ap monitor` },
-              { label: 'Check rates and radio detail', code:
-`show ap dot11 24ghz summary
-show ap dot11 5ghz summary` }
-            ],
-            traps: [
-              'Wireless uses **CSMA/CA with ACKs** because collisions cannot be detected.',
-              '**Management frames** are beacon, probe, authentication and association.',
-              '**n is MIMO, ac is 5 GHz, and ax is OFDMA with 6 GHz**.',
-              '**RTS/CTS** mitigates the hidden node problem.',
-              'Beacons advertise the network roughly every **100 ms**.',
-              '**Control frames** such as ACK and CTS are not data frames.'
-            ],
-            table: {
-              cols: ['Item', '802.11'],
-              rows: [
-                ['Access', 'CSMA/CA'],
-                ['ACK', 'Receiver confirms'],
-                ['Frames', 'Management, control, data'],
-                ['n', 'MIMO'],
-                ['ac', '5 GHz'],
-                ['ax', 'OFDMA and 6 GHz'],
-                ['RTS/CTS', 'Hidden node'],
-                ['Beacon', 'About 100 ms']
-              ]
-            },
-            related: [
-              { t: '01. WLAN', d: 'The network it builds' },
-              { t: '05. Channels', d: 'Spectrum planning' },
-              { t: '06. RF', d: 'Radio fundamentals' }
-            ],
-            glossary: ['802.11', 'WLAN', 'Channels', 'RF', 'SSID']
-          },
-          {
-            id: 't03', num: '03', group: 'fund', title: 'SSID',
-            blurb: 'The network name and how it maps to a WLAN profile and VLAN',
-            overview: 'The **[[SSID]]** is the human-readable name of a wireless network, broadcast in beacons so clients can find and join it. One WLC can run many SSIDs mapped to different WLAN profiles, each with its own security, **[[VLAN]]** and QoS policy. The exam tests how the SSID connects to the WLAN profile and its policies.',
-            keyIdea: 'SSID is a name of up to 32 characters; BSSID is the AP radio MAC. Each SSID maps to its own WLAN profile, VLAN and security policy, and hiding it is not a security control.',
-            sections: [
-              { kind: 'table', h: 'What the SSID is', cols: ['Item', 'Detail'], rows: [
-                ['**Type**', 'ASCII name'],
-                ['**Length**', 'Up to 32 characters'],
-                ['**Broadcast**', 'Inside beacons'],
-                ['**Case**', 'Sensitive']
-              ]},
-              { kind: 'table', h: 'SSID versus BSSID', cols: ['Term', 'Type', 'Meaning'], rows: [
-                ['**SSID**', 'Name', 'Network identity'],
-                ['**BSSID**', 'MAC', 'Specific AP radio']
-              ]},
-              { kind: 'table', h: 'SSID to WLAN profile', cols: ['Layer', 'Definition'], rows: [
-                ['**SSID**', 'The name clients see'],
-                ['**WLAN profile**', 'Security and policy'],
-                ['**VLAN**', 'Where client traffic lands'],
-                ['**QoS and ACL**', 'Per-WLAN rules']
-              ]},
-              { kind: 'table', h: 'Multiple SSIDs', cols: ['SSID', 'Use'], rows: [
-                ['**Corp-Guest**', 'Guest isolation'],
-                ['**Corp-Corp**', '802.1X for employees'],
-                ['**Corp-IoT**', 'PSK plus a dedicated VLAN']
-              ]},
-              { kind: 'table', h: 'Broadcast versus hidden', cols: ['Mode', 'Behaviour'], rows: [
-                ['**Broadcast**', 'Beacon carries the SSID'],
-                ['**Hidden**', 'SSID withheld, but clients still probe']
-              ]},
-              { kind: 'code', h: 'WLC SSID example', code:
-`  wlan Corp-Guest 2 Guest-Data
-   security wpa psk ascii GuestPass1
-   no security wpa akm dot1x
-   vlan Guest
-   no shutdown` },
-              { kind: 'table', h: 'WLAN commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%wlan NAME id%%**', 'Create the WLAN'],
-                ['**%%security wpa psk%%**', 'Pre-shared key'],
-                ['**%%security dot1x%%**', 'Enterprise authentication'],
-                ['**%%vlan%%**', 'Map the VLAN'],
-                ['**%%no shutdown%%**', 'Enable the WLAN']
-              ]}
-            ],
-            commands: [
-              { label: 'Create and inspect a WLAN', code:
-`wlan Corp-Guest 2 Guest-Data
- security wpa psk ascii GuestPass1
- vlan Guest
- no shutdown
-show wlan summary
-show wlan id 2` },
-              { label: 'Check where the SSID is served', code:
-`show ap wlan summary
-show wireless profile policy` },
-              { label: 'Check client and AP detail', code:
-`show ap config general
-show wireless client summary` }
-            ],
-            traps: [
-              'The SSID is a **name of up to 32 characters**; the BSSID is a MAC address.',
-              'Each SSID maps to a **separate WLAN profile, VLAN and policy**.',
-              'A hidden SSID is **not a security measure**, because clients still probe for it.',
-              'SSIDs are advertised in **beacons**.',
-              'The WLC maps an SSID to **VLAN, security and QoS**.',
-              'On a WLC, the SSID is the **wireless side** of the WLAN profile.'
-            ],
-            table: {
-              cols: ['Item', 'SSID'],
-              rows: [
-                ['Type', 'Name'],
-                ['Length', '32 characters'],
-                ['Broadcast', 'Beacons'],
-                ['Compared with BSSID', 'MAC'],
-                ['Profile', 'WLAN'],
-                ['VLAN', 'Mapped'],
-                ['Hidden', 'Not secure'],
-                ['Multiple', 'One policy each']
-              ]
-            },
-            related: [
-              { t: '04. BSSID', d: 'The identity behind the name' },
-              { t: '07. WLC', d: 'Where profiles live' },
-              { t: '11. WPA2', d: 'Security on the WLAN' }
-            ],
-            glossary: ['SSID', 'BSSID', 'WLAN', 'VLAN', 'WLC']
-          },
-          {
-            id: 't04', num: '04', group: 'fund', title: 'BSSID',
-            blurb: 'The AP radio MAC, the basic service set and the extended service set',
-            overview: 'The **[[BSSID]]** is the MAC address of an AP radio, the unique identity behind every **[[SSID]]**. A BSS is one AP radio plus its associated clients, and a group of BSSes under the same SSID forms an ESS. The exam wants the split between SSID and BSSID, and between BSS and ESS.',
-            keyIdea: 'BSSID is a 48-bit AP radio MAC. BSS is one cell, ESS is many cells under one SSID, and clients send frames to the BSSID of their current AP.',
-            sections: [
-              { kind: 'table', h: 'BSSID basics', cols: ['Item', 'Detail'], rows: [
-                ['**Type**', '48-bit MAC'],
-                ['**Source**', 'AP radio'],
-                ['**Unique**', 'Per radio and band'],
-                ['**Frames**', 'Source of beacons']
-              ]},
-              { kind: 'table', h: 'BSS, the basic service set', cols: ['Element', 'Meaning'], rows: [
-                ['**BSS**', 'One AP radio plus clients'],
-                ['**BSSID**', 'The identity of that BSS'],
-                ['**Cell**', 'Coverage of one radio'],
-                ['**Isolation**', 'Each BSS is separate']
-              ]},
-              { kind: 'table', h: 'ESS, the extended service set', cols: ['Element', 'Meaning'], rows: [
-                ['**ESS**', 'Many BSSes under one SSID'],
-                ['**Roaming**', 'Movement between BSSes'],
-                ['**Seamless**', 'Same SSID and security'],
-                ['**Distribution**', 'Wired backbone']
-              ]},
-              { kind: 'table', h: 'The identity split', cols: ['Term', 'What', 'Example'], rows: [
-                ['**SSID**', 'Name clients see', 'CorpNet'],
-                ['**BSSID**', 'AP radio MAC', '00:1a:2b:3c:4d:5e'],
-                ['**BSS**', 'One cell', 'AP1'],
-                ['**ESS**', 'All cells', 'CorpNet everywhere']
-              ]},
-              { kind: 'table', h: 'Frames and the BSSID', cols: ['Frame', 'Uses BSSID'], rows: [
-                ['**Beacon**', 'Yes, as the source'],
-                ['**Probe response**', 'Yes'],
-                ['**Data to the AP**', 'Yes, as the destination'],
-                ['**Client frames**', 'Address the BSSID']
-              ]}
-            ],
-            commands: [
-              { label: 'Check BSSIDs and radios', code:
-`show ap radio summary
-show ap bssid
-show ap config general` },
-              { label: 'Check bands and clients', code:
-`show ap dot11 5ghz summary
-show wireless client summary` },
-              { label: 'Check AP detail for roaming', code:
-`show ap summary
-show wireless client summary` }
-            ],
-            traps: [
-              'The BSSID is the **AP radio MAC**; the SSID is the name.',
-              '**BSS** is one AP plus clients; **ESS** is many BSSes under one SSID.',
-              'The same SSID appears on **many BSSIDs** to support roaming.',
-              'Clients address frames **to the BSSID** of their AP.',
-              'Beacons are sent **from the BSSID**.',
-              'Each band on one AP has its **own BSSID**.'
-            ],
-            table: {
-              cols: ['Item', 'BSSID'],
-              rows: [
-                ['Type', 'MAC'],
-                ['Source', 'AP radio'],
-                ['BSS', 'One cell'],
-                ['ESS', 'Many BSSes'],
-                ['SSID', 'Name'],
-                ['Beacons', 'From the BSSID'],
-                ['Frames', 'To the BSSID'],
-                ['Roam', 'Between BSSes']
-              ]
-            },
-            related: [
-              { t: '03. SSID', d: 'The name clients see' },
-              { t: '10. Roaming', d: 'Movement between BSSes' },
-              { t: '09. Mobility', d: 'State across controllers' }
-            ],
-            glossary: ['BSSID', 'SSID', 'WLAN', 'Roaming']
-          },
-          {
-            id: 't05', num: '05', group: 'rf', title: 'Channels',
-            blurb: 'Non-overlapping channels, DFS, channel width and RRM',
-            overview: '**[[Channels]]** are the RF sub-bands that APs transmit on. Non-overlapping channels let nearby APs share spectrum without interfering, DFS adds radar-aware channels in 5 GHz, and channel width trades throughput for spectrum. The WLC uses RRM to tune channels and power automatically.',
-            keyIdea: 'In 2.4 GHz the non-overlapping set is 1, 6 and 11. In 5 GHz there is far more spectrum plus DFS channels, and wider channels are faster but consume more of it. RRM and TPC automate channel and power selection.',
-            sections: [
-              { kind: 'table', h: '2.4 GHz channels', cols: ['Band', 'Channels', 'Non-overlapping'], rows: [
-                ['**2.4 GHz**', '1 to 13, US 1 to 11', '1, 6 and 11'],
-                ['**Width**', '20 MHz', 'Spacing is 5 MHz']
-              ]},
-              { kind: 'table', h: '5 GHz channels', cols: ['Group', 'Notes'], rows: [
-                ['**5 GHz**', 'Many channels and wider options'],
-                ['**UNII**', '36 to 165'],
-                ['**DFS**', '52 to 144, radar aware'],
-                ['**Non-DFS**', '36, 40, 44, 48, 149 and up']
-              ]},
-              { kind: 'table', h: 'Channel widths', cols: ['Width', '2.4 GHz', '5 GHz'], rows: [
-                ['**20 MHz**', 'Standard', 'Standard'],
-                ['**40 MHz**', 'Bonded', 'Bonded'],
-                ['**80 and 160 MHz**', 'Not used', 'High speed']
-              ]},
-              { kind: 'table', h: 'DFS, dynamic frequency selection', cols: ['Item', 'Detail'], rows: [
-                ['**Purpose**', 'Avoid radar'],
-                ['**Check**', 'Listen before use'],
-                ['**Action**', 'Change channel on radar'],
-                ['**Impact**', 'Brief downtime during a move']
-              ]},
-              { kind: 'table', h: 'RRM, radio resource management', cols: ['Task', 'RRM action'], rows: [
-                ['**Channel**', 'Assign non-overlapping channels'],
-                ['**Power**', 'Adjust with TPC'],
-                ['**Coverage**', 'Detect coverage holes'],
-                ['**Interference**', 'Detect and avoid']
-              ]},
-              { kind: 'code', h: 'Channel and power configuration', code:
-`  ap dot11 5ghz rrm channel global
-  ap dot11 24ghz rrm channel global
-  ap dot11 5ghz rrm tx-power global` },
-              { kind: 'table', h: 'Channel commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%rrm channel global%%**', 'Let RRM pick channels'],
-                ['**%%rrm tx-power global%%**', 'Automatic transmit power'],
-                ['**%%ch-width%%**', 'Set channel width']
-              ]}
-            ],
-            commands: [
-              { label: 'Inspect channel plans', code:
-`show ap radio summary
-show ap dot11 5ghz summary
-show ap dot11 24ghz summary` },
-              { label: 'Check RRM and channel detail', code:
-`show ap config general
-show ap monitor channel` },
-              { label: 'Check DFS and interference', code:
-`show ap dot11 5ghz summary
-show ap monitor channel` }
-            ],
-            traps: [
-              'In 2.4 GHz, the non-overlapping channels are **1, 6 and 11**.',
-              '5 GHz offers **many channels plus DFS**, especially 52 to 144.',
-              'A wider channel is faster but leaves **fewer channels for neighbours**.',
-              '**RRM** automates channel selection, and **TPC** automates transmit power.',
-              'DFS channels **listen for radar** before and during use.',
-              'Overlapping channels cause **co-channel interference**, not more capacity.'
-            ],
-            table: {
-              cols: ['Item', 'Channels'],
-              rows: [
-                ['2.4 GHz', '1, 6 and 11'],
-                ['5 GHz', 'Many channels'],
-                ['DFS', 'Radar check'],
-                ['Widths', '20, 40, 80 and 160 MHz'],
-                ['RRM', 'Auto channel'],
-                ['TPC', 'Auto power'],
-                ['Overlap', 'Avoid'],
-                ['Validate', 'Monitor']
-              ]
-            },
-            related: [
-              { t: '06. RF', d: 'The physics behind the plan' },
-              { t: '02. 802.11', d: 'Channelisation' },
-              { t: '07. WLC', d: 'Where RRM runs' }
-            ],
-            glossary: ['Channels', '802.11', 'RF', 'WLAN']
-          },
-          {
-            id: 't06', num: '06', group: 'rf', title: 'RF',
-            blurb: 'RSSI, SNR, EIRP, cell size and site surveys',
-            overview: '**[[RF]]** physics decide whether Wi-Fi works: signal strength, signal-to-noise ratio, attenuation, interference and antenna behaviour. Design means understanding dBm, path loss, cell size and the capacity trade-offs, then validating the result with a site survey.',
-            keyIdea: 'RSSI is strength in dBm and SNR is cleanliness in dB. EIRP is transmit power plus antenna gain minus cable loss, and smaller cells trade coverage for capacity.',
-            sections: [
-              { kind: 'table', h: 'Key metrics', cols: ['Metric', 'Meaning'], rows: [
-                ['**RSSI**', 'Received signal strength in dBm'],
-                ['**SNR**', 'Signal-to-noise ratio in dB'],
-                ['**dBm**', 'Absolute power level'],
-                ['**EIRP**', 'Effective radiated power']
-              ]},
-              { kind: 'table', h: 'Signal behaviour', cols: ['Effect', 'Detail'], rows: [
-                ['**Attenuation**', 'Loss over distance'],
-                ['**Absorption**', 'Walls and people'],
-                ['**Reflection**', 'Multipath'],
-                ['**Interference**', 'Other radios and noise']
-              ]},
-              { kind: 'table', h: 'Cell size trade-offs', cols: ['Factor', 'Small cell', 'Large cell'], rows: [
-                ['**Capacity**', 'High, more APs', 'Low'],
-                ['**Interference**', 'Lower', 'Higher'],
-                ['**Coverage**', 'Less per AP', 'More per AP'],
-                ['**Cost**', 'Higher', 'Lower']
-              ]},
-              { kind: 'table', h: 'Power and EIRP', cols: ['Item', 'Formula or example'], rows: [
-                ['**dBm**', '10 times log10 of milliwatts'],
-                ['**EIRP**', 'Tx power plus antenna gain minus cable loss'],
-                ['**Example**', '20 dBm plus 3 dBi gives 23 dBm EIRP'],
-                ['**3 dB rule**', 'Doubles the power']
-              ]},
-              { kind: 'table', h: 'Site surveys', cols: ['Type', 'Purpose'], rows: [
-                ['**Passive**', 'Measure existing RF'],
-                ['**Active**', 'Test throughput and association'],
-                ['**Predictive**', 'Software model before install']
-              ]},
-              { kind: 'para', h: 'RRM feedback loop', p: 'RRM uses the RF data from the APs to tune **channels** and **power** (note 05). Weak SNR, high retries or coverage holes feed back into automated changes, but a site survey is still the way to validate the design.' }
-            ],
-            commands: [
-              { label: 'Check radio health and clients', code:
-`show ap radio summary
-show ap dot11 5ghz monitor
-show wireless client summary` },
-              { label: 'Check cabling and AP detail', code:
-`show ap monitor cable
-show ap config general` },
-              { label: 'Check noise and channel utilisation', code:
-`show ap dot11 5ghz summary
-show ap monitor channel` }
-            ],
-            traps: [
-              '**RSSI is strength in dBm; SNR is cleanliness in dB**.',
-              '**EIRP is transmit power plus antenna gain minus cable loss**.',
-              '**Smaller cells provide more capacity per area**.',
-              'Multipath and absorption reduce performance even when RSSI looks good.',
-              'A good SNR target is around **25 dB or better**.',
-              'A site survey validates coverage, interference and capacity.'
-            ],
-            table: {
-              cols: ['Item', 'RF'],
-              rows: [
-                ['Strength', 'RSSI'],
-                ['Cleanliness', 'SNR'],
-                ['Power', 'dBm'],
-                ['Radiated', 'EIRP'],
-                ['Loss', 'Distance and walls'],
-                ['Noise', 'Interference'],
-                ['Cells', 'Small means capacity'],
-                ['Validate', 'Site survey']
-              ]
-            },
-            related: [
-              { t: '05. Channels', d: 'Spectrum and interference' },
-              { t: '02. 802.11', d: 'Radio standard' },
-              { t: '07. WLC', d: 'RRM automation' }
-            ],
-            glossary: ['RF', 'Channels', '802.11', 'WLAN']
-          }
-        ,
-          {
-            id: 't07', num: '07', group: 'arch', title: 'WLC',
-            blurb: 'The controller brain: AP config, RRM, auth, roaming and modes',
-            overview: 'The **[[WLC]]** is the brain of a centralized WLAN. It configures APs, runs RRM, handles client authentication and roaming, and anchors the control plane through **[[CAPWAP]]**. APs are lightweight: the controller pushes their configuration, and in Local mode client data also passes through it.',
-            keyIdea: 'The WLC handles control and management; data may pass through it in Local mode or stay at the AP in FlexConnect. APs join by CAPWAP discovery, DTLS and a config push.',
-            sections: [
-              { kind: 'table', h: 'What the WLC does', cols: ['Function', 'Detail'], rows: [
-                ['**AP configuration**', 'Push profiles and software'],
-                ['**RRM**', 'Channels and power'],
-                ['**Authentication**', 'RADIUS and 802.1X'],
-                ['**Roaming**', 'Client handoff and state'],
-                ['**Management**', 'Monitoring and dashboards']
-              ]},
-              { kind: 'table', h: 'Architecture split', cols: ['Plane', 'Where'], rows: [
-                ['**Control**', 'WLC, over CAPWAP control'],
-                ['**Management**', 'WLC'],
-                ['**Data**', 'AP to WLC, or local at the AP']
-              ]},
-              { kind: 'table', h: 'AP modes', cols: ['Mode', 'Data path'], rows: [
-                ['**Local**', 'Client data goes to the WLC'],
-                ['**FlexConnect**', 'Data stays local at the AP'],
-                ['**Monitor**', 'Sensing only'],
-                ['**Sniffer**', 'Packet capture']
-              ]},
-              { kind: 'table', h: 'AP join process', cols: ['Step', 'Detail'], rows: [
-                ['**1 Discover**', 'DNS, broadcast or configured WLC address'],
-                ['**2 CAPWAP discovery**', 'Request and response'],
-                ['**3 DTLS**', 'Secure the control channel'],
-                ['**4 Config push**', 'AP receives settings and software']
-              ]},
-              { kind: 'table', h: 'WLC interfaces', cols: ['Interface', 'Use'], rows: [
-                ['**Management**', 'Administration and dashboard'],
-                ['**AP manager**', 'AP traffic'],
-                ['**Service**', 'Guest or shared services'],
-                ['**Dynamic**', 'Client VLANs']
-              ]},
-              { kind: 'table', h: 'WLC platforms', cols: ['Type', 'Example'], rows: [
-                ['**Appliance**', 'Catalyst 9800 series'],
-                ['**Embedded**', 'Catalyst switch controller'],
-                ['**Virtual**', 'vWLC'],
-                ['**Cloud**', 'Catalyst Center managed']
-              ]}
-            ],
-            commands: [
-              { label: 'Check AP joins and WLAN state', code:
-`show ap summary
-show ap join stats summary
-show wlan summary` },
-              { label: 'Check controller and client health', code:
-`show wireless stats
-show ap config general
-show wireless client summary` },
-              { label: 'Check AP mode and radios', code:
-`show ap config general
-show ap radio summary` }
-            ],
-            traps: [
-              'The WLC owns **control and management**; data can stay local in **FlexConnect**.',
-              'APs join via **CAPWAP discovery, DTLS and a config push**.',
-              '**RRM runs on the WLC**, not independently on each AP.',
-              '**Local mode** sends client data to the WLC; **FlexConnect** keeps it at the AP.',
-              'The Catalyst **9800 is the modern IOS-XE** controller.',
-              'APs are lightweight, so they depend on the controller for configuration.'
-            ],
-            table: {
-              cols: ['Item', 'WLC'],
-              rows: [
-                ['Role', 'Central control'],
-                ['Protocol', 'CAPWAP'],
-                ['Control plane', 'WLC'],
-                ['Data plane', 'WLC or FlexConnect'],
-                ['RRM', 'WLC'],
-                ['Authentication', 'RADIUS'],
-                ['Modes', 'Local and FlexConnect'],
-                ['Platform', '9800']
-              ]
-            },
-            related: [
-              { t: '08. CAPWAP', d: 'The AP to WLC tunnel' },
-              { t: '09. Mobility', d: 'Roaming across controllers' },
-              { t: '05. Channels', d: 'RRM tuning' }
-            ],
-            glossary: ['WLC', 'CAPWAP', 'WLAN', 'SSID', 'Mobility', 'Roaming']
-          },
-          {
-            id: 't08', num: '08', group: 'arch', title: 'CAPWAP',
-            blurb: 'Two tunnels, UDP 5246 and 5247, DTLS and the AP join sequence',
-            overview: '**[[CAPWAP]]** is the standard tunnel between an AP and a **[[WLC]]**. It carries control traffic such as configuration and statistics on UDP 5246, and in Local mode it also carries client data on UDP 5247. Control is protected by DTLS, and the ports are a frequent exam question.',
-            keyIdea: 'CAPWAP control is UDP 5246 and data is UDP 5247, with DTLS on control. Local mode tunnels data to the WLC; FlexConnect does not.',
-            sections: [
-              { kind: 'table', h: 'The two tunnels', cols: ['Tunnel', 'Port', 'Content'], rows: [
-                ['**Control**', 'UDP 5246', 'Configuration and monitoring'],
-                ['**Data**', 'UDP 5247', 'Client traffic in Local mode']
-              ]},
-              { kind: 'table', h: 'Security', cols: ['Layer', 'Detail'], rows: [
-                ['**DTLS**', 'Encrypts the control channel'],
-                ['**Data DTLS**', 'Optional for client data'],
-                ['**Join**', 'AP authenticity'],
-                ['**Result**', 'Secure AP to WLC path']
-              ]},
-              { kind: 'table', h: 'Discovery process', cols: ['Step', 'Detail'], rows: [
-                ['**1**', 'AP looks for a WLC by broadcast, multicast, DNS or hostname'],
-                ['**2**', 'Discovery request and response'],
-                ['**3**', 'Join request and response'],
-                ['**4**', 'Configuration push']
-              ]},
-              { kind: 'table', h: 'Modes and data path', cols: ['Mode', 'Data over CAPWAP'], rows: [
-                ['**Local**', 'Yes, client data goes to the WLC'],
-                ['**FlexConnect**', 'No, the AP switches it locally'],
-                ['**Monitor**', 'Control only']
-              ]},
-              { kind: 'table', h: 'Overhead and design', cols: ['Point', 'Detail'], rows: [
-                ['**WLC capacity**', 'Tunnels scale with AP count'],
-                ['**Path**', 'WLC must be reachable'],
-                ['**Hairpin**', 'Data goes AP to WLC to LAN'],
-                ['**Alternative**', 'FlexConnect for remote branches']
-              ]},
-              { kind: 'code', h: 'CAPWAP verification', code:
-`  show ap join stats summary
-  show ap capwap ip
-  show ap summary
-  show ap config general` }
-            ],
-            commands: [
-              { label: 'Verify AP join and CAPWAP addressing', code:
-`show ap join stats summary
-show ap capwap ip
-show ap summary` },
-              { label: 'Check AP config and uptime', code:
-`show ap config general
-show ap uptime` },
-              { label: 'Debug join problems', code:
-`debug capwap event
-show ap join stats summary` }
-            ],
-            traps: [
-              'CAPWAP control is **UDP 5246**; data is **UDP 5247**.',
-              'Control is secured with **DTLS**, and data DTLS is optional.',
-              '**Local mode** tunnels client data to the WLC; **FlexConnect** keeps it at the AP.',
-              'APs **discover, join and then receive config**.',
-              'CAPWAP replaced the older **LWAPP**.',
-              'Blocking **UDP 5246** breaks the control channel and the AP cannot stay joined.'
-            ],
-            table: {
-              cols: ['Item', 'CAPWAP'],
-              rows: [
-                ['Control', 'UDP 5246'],
-                ['Data', 'UDP 5247'],
-                ['Security', 'DTLS'],
-                ['Local', 'Data to WLC'],
-                ['FlexConnect', 'Data at AP'],
-                ['Discover', 'DNS, broadcast, multicast'],
-                ['Join', 'Then config'],
-                ['Legacy', 'LWAPP']
-              ]
-            },
-            related: [
-              { t: '07. WLC', d: 'The controller side' },
-              { t: '01. WLAN', d: 'AP architecture' },
-              { t: '09. Mobility', d: 'CAPWAP and roaming' }
-            ],
-            glossary: ['CAPWAP', 'WLC', 'WLAN', 'Mobility']
-          },
-          {
-            id: 't09', num: '09', group: 'arch', title: 'Mobility',
-            blurb: 'Mobility groups, anchor and foreign controllers, and L2 versus L3',
-            overview: '**[[Mobility|Wireless mobility]]** keeps a client session alive while it moves between APs and even between **[[WLC|WLCs]]**. Controllers join a mobility group, and an anchor controller keeps the session while a foreign controller serves the client. Roaming works because mobility state is shared.',
-            keyIdea: 'A mobility group shares client state across controllers. The anchor is the original WLC, the foreign is the current one, and an L3 roam needs anchor forwarding.',
-            sections: [
-              { kind: 'table', h: 'Mobility group', cols: ['Item', 'Detail'], rows: [
-                ['**Group**', 'WLCs that trust each other'],
-                ['**Exchange**', 'Client MAC, IP and security state'],
-                ['**Scalability**', 'Group membership'],
-                ['**Security**', 'Shared keys or certificates']
-              ]},
-              { kind: 'table', h: 'Roles during a roam', cols: ['Role', 'WLC', 'Job'], rows: [
-                ['**Anchor**', 'First WLC', 'Holds the session and subnet'],
-                ['**Foreign**', 'Current WLC', 'Serves the client'],
-                ['**Controller**', 'Group member', 'Coordinates state']
-              ]},
-              { kind: 'table', h: 'Mobility versus roaming', cols: ['Term', 'Scope'], rows: [
-                ['**Roaming**', 'Client moves between APs or BSSIDs'],
-                ['**Mobility**', 'Controller handoff and forwarding path'],
-                ['**Fast roam**', 'Low-latency handoff']
-              ]},
-              { kind: 'table', h: 'Layer 2 versus Layer 3 mobility', cols: ['Type', 'Subnet', 'Forwarding'], rows: [
-                ['**L2**', 'Same subnet', 'Normal switched path'],
-                ['**L3**', 'Different subnet', 'Anchor forwards traffic']
-              ]},
-              { kind: 'code', h: 'Mobility configuration', code:
-`  wireless mobility group name CORP
-  wireless mobility member 192.0.2.10
-  wireless mobility keepalive interval 30` },
-              { kind: 'table', h: 'Mobility commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%mobility group name%%**', 'Name the group'],
-                ['**%%mobility member%%**', 'Add a peer WLC'],
-                ['**%%keepalive%%**', 'Health check interval']
-              ]}
-            ],
-            commands: [
-              { label: 'Check group and peer state', code:
-`show wireless mobility summary
-show wireless mobility statistics` },
-              { label: 'Check a roaming client', code:
-`show wireless mobility client
-show wireless client summary` },
-              { label: 'Check AP and mobility detail', code:
-`show ap mobility summary
-show ap summary` }
-            ],
-            traps: [
-              'A **mobility group** shares client state across controllers.',
-              'The **anchor** is the original controller; the **foreign** is the current one.',
-              'An **L2 roam** stays in the same subnet; an **L3 roam** needs anchor forwarding.',
-              'Mobility is the infrastructure that makes **roaming** seamless.',
-              '`show wireless mobility summary` is the first mobility check.',
-              'If the mobility tunnel is down, a cross-controller roam can drop the session.'
-            ],
-            table: {
-              cols: ['Item', 'Mobility'],
-              rows: [
-                ['Group', 'Trusted WLCs'],
-                ['Anchor', 'Original WLC'],
-                ['Foreign', 'Current WLC'],
-                ['L2', 'Same subnet'],
-                ['L3', 'Anchor forwards'],
-                ['Keepalive', 'Health check'],
-                ['Roam', 'At AP level'],
-                ['Verify', 'Show wireless mobility']
-              ]
-            },
-            related: [
-              { t: '10. Roaming', d: 'The client-side event' },
-              { t: '07. WLC', d: 'Controller coordination' },
-              { t: '08. CAPWAP', d: 'The transport underneath' }
-            ],
-            glossary: ['Mobility', 'Roaming', 'WLC', 'CAPWAP', 'DHCP']
-          },
-          {
-            id: 't10', num: '10', group: 'arch', title: 'Roaming',
-            blurb: 'L2 and L3 roams, 802.11r/k/v and the sticky client problem',
-            overview: '**[[Roaming]]** is a client moving from one AP or BSS to another while keeping its session. Roams differ by scope and speed: Layer 2 versus Layer 3, intra-controller versus inter-controller, and 802.11r fast transition for a low-latency handoff. Roaming depends on **[[Mobility]]** sharing the client state.',
-            keyIdea: 'Reassociation happens at the new BSSID. 802.11r pre-distributes keys, k provides neighbour reports, and v assists the transition. Sticky clients are fixed with steering plus k/v/r.',
-            sections: [
-              { kind: 'table', h: 'Roaming types', cols: ['Type', 'Scope'], rows: [
-                ['**L2**', 'Same subnet, normal switching'],
-                ['**L3**', 'Different subnet, anchor forwarding'],
-                ['**Intra-WLC**', 'Same controller'],
-                ['**Inter-WLC**', 'Across controllers']
-              ]},
-              { kind: 'table', h: 'The handoff moment', cols: ['Step', 'Detail'], rows: [
-                ['**1**', 'Client reassociates to the new AP'],
-                ['**2**', 'WLC and mobility update state'],
-                ['**3**', 'Frames follow the client'],
-                ['**4**', 'Old AP releases the client']
-              ]},
-              { kind: 'table', h: '802.11r fast transition', cols: ['Item', 'Detail'], rows: [
-                ['**What**', 'Pre-authenticated PMK'],
-                ['**FT**', 'Fast transition'],
-                ['**Result**', 'Handoff in milliseconds'],
-                ['**Use**', 'Voice and real-time traffic']
-              ]},
-              { kind: 'table', h: '802.11k and 802.11v', cols: ['Standard', 'Detail'], rows: [
-                ['**802.11k**', 'Neighbour reports'],
-                ['**802.11v**', 'BSS transition assistance'],
-                ['**Result**', 'Better AP choice']
-              ]},
-              { kind: 'table', h: 'Sticky clients', cols: ['Problem', 'Cause', 'Fix'], rows: [
-                ['**Clings to a weak AP**', 'RSSI threshold', '802.11v and steering'],
-                ['**Poor RF use**', 'No steering', 'Band steering'],
-                ['**Slow roam**', 'No fast transition', '802.11r']
-              ]},
-              { kind: 'table', h: 'Requirements for seamless roaming', cols: ['Need', 'Mechanism'], rows: [
-                ['**Same SSID**', 'ESS'],
-                ['**Same security**', 'PMK and 802.1X'],
-                ['**State sharing**', 'Mobility group'],
-                ['**Fast keys**', '802.11r']
-              ]}
-            ],
-            commands: [
-              { label: 'Check client roaming state', code:
-`show wireless client summary
-show wireless client mac <MAC>
-show ap summary` },
-              { label: 'Check mobility view of the client', code:
-`show wireless mobility client
-show wireless mobility summary` },
-              { label: 'Trace reassociation events', code:
-`debug dot11
-show wireless client summary` }
-            ],
-            traps: [
-              'An **L2 roam stays in the same subnet**, while an **L3 roam uses the anchor**.',
-              '**802.11r is fast transition with pre-distributed keys**; k and v assist roaming.',
-              '**Intra-WLC** and **inter-WLC** roams use different paths.',
-              'A **sticky client** is fixed with steering and 802.11k/v/r.',
-              'Seamless roaming needs the **same SSID, security and shared state**.',
-              'The client **reassociates to the new BSSID** during a roam.'
-            ],
-            table: {
-              cols: ['Item', 'Roaming'],
-              rows: [
-                ['L2', 'Same subnet'],
-                ['L3', 'Anchor path'],
-                ['Intra-WLC', 'One controller'],
-                ['Inter-WLC', 'Mobility group'],
-                ['802.11r', 'Fast keys'],
-                ['802.11k/v', 'Neighbour and assist'],
-                ['Sticky', 'Band steering'],
-                ['Seamless', 'Same SSID and security']
-              ]
-            },
-            related: [
-              { t: '09. Mobility', d: 'State sharing across WLCs' },
-              { t: '04. BSSID', d: 'The target of reassociation' },
-              { t: '11. WPA2', d: 'Security that must stay consistent' }
-            ],
-            glossary: ['Roaming', 'Mobility', 'BSSID', 'WLAN', 'WLC']
-          },
-          {
-            id: 't11', num: '11', group: 'sec', title: 'WPA2',
-            blurb: 'AES-CCMP, PSK versus 802.1X, and the 4-way handshake',
-            overview: '**[[WPA2]]** is the long-standing Wi-Fi security standard. It uses AES-CCMP for encryption and either 802.1X enterprise authentication or a pre-shared key for personal networks. The exam tests the two modes, the 4-way handshake, and why a static PSK is a weak point.',
-            keyIdea: 'WPA2 is AES-CCMP, not TKIP. Personal uses a PSK, enterprise uses 802.1X and RADIUS, and the 4-way handshake derives the PTK from the PMK and both nonces.',
-            sections: [
-              { kind: 'table', h: 'WPA2 modes', cols: ['Mode', 'Authentication', 'Use'], rows: [
-                ['**Personal**', 'PSK passphrase', 'Small networks'],
-                ['**Enterprise**', '802.1X and RADIUS', 'Corporate networks']
-              ]},
-              { kind: 'table', h: 'Encryption, AES-CCMP', cols: ['Item', 'Detail'], rows: [
-                ['**Cipher**', 'AES'],
-                ['**Protocol**', 'CCMP'],
-                ['**Key**', 'Per-session PTK'],
-                ['**Standard**', 'IEEE 802.11i']
-              ]},
-              { kind: 'table', h: 'The 4-way handshake', cols: ['Step', 'Detail'], rows: [
-                ['**1**', 'AP sends ANonce'],
-                ['**2**', 'Client sends SNonce and MIC'],
-                ['**3**', 'AP confirms and installs the key'],
-                ['**4**', 'Client confirms']
-              ]},
-              { kind: 'table', h: 'PSK weakness', cols: ['Item', 'Detail'], rows: [
-                ['**PMK source**', 'The passphrase'],
-                ['**Attack**', 'Offline dictionary guessing'],
-                ['**Risk**', 'Shared and static'],
-                ['**Rotation**', 'Rarely changed']
-              ]},
-              { kind: 'table', h: 'Enterprise 802.1X flow', cols: ['Stage', 'Protocol'], rows: [
-                ['**Authentication**', 'EAP over 802.1X'],
-                ['**Server**', 'RADIUS'],
-                ['**Key**', 'MSK becomes the PMK'],
-                ['**Session**', 'PTK']
-              ]},
-              { kind: 'code', h: 'WPA2 WLC configuration', code:
-`  wlan CorpData 1 Corp
-   security wpa akm dot1x
-   security dot1x server-auth
-   no security wpa akm psk
-   security wpa ccmp` },
-              { kind: 'table', h: 'WPA2 commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%akm dot1x%%**', 'Enterprise authentication'],
-                ['**%%akm psk%%**', 'Personal authentication'],
-                ['**%%ccmp%%**', 'AES encryption']
-              ]}
-            ],
-            commands: [
-              { label: 'Check the WLAN security profile', code:
-`show wlan summary
-show wlan id 1` },
-              { label: 'Check clients and associations', code:
-`show wireless client summary
-show dot11 associations` },
-              { label: 'Check authentication detail', code:
-`show auth-list
-show wireless client summary` }
-            ],
-            traps: [
-              'WPA2 uses **AES-CCMP**, not TKIP.',
-              'Personal is **PSK**; enterprise is **802.1X with RADIUS**.',
-              'The **4-way handshake** derives the PTK from the PMK and both nonces.',
-              'A static PSK is exposed to **offline dictionary attacks**.',
-              'The **MSK from RADIUS becomes the PMK** in enterprise mode.',
-              'WPA2 is defined by **IEEE 802.11i**.'
-            ],
-            table: {
-              cols: ['Item', 'WPA2'],
-              rows: [
-                ['Cipher', 'AES-CCMP'],
-                ['Personal', 'PSK'],
-                ['Enterprise', '802.1X'],
-                ['Handshake', '4-way'],
-                ['PTK', 'ANonce and SNonce'],
-                ['PMK', 'Passphrase or MSK'],
-                ['Weak point', 'PSK'],
-                ['Standard', '802.11i']
-              ]
-            },
-            related: [
-              { t: '12. WPA3', d: 'The successor' },
-              { t: '03. SSID', d: 'Security per WLAN' },
-              { t: '02. 802.11', d: 'Wireless standards' }
-            ],
-            glossary: ['WPA2', 'WPA3', 'AAA', 'RADIUS', 'SSID']
-          },
-          {
-            id: 't12', num: '12', group: 'sec', title: 'WPA3',
-            blurb: 'SAE, forward secrecy, mandatory PMF and 192-bit enterprise',
-            overview: '**[[WPA3]]** is the security upgrade over **[[WPA2]]**. SAE replaces the PSK exchange with a dictionary-resistant authentication, forward secrecy protects past traffic, and protected management frames harden the air. Enterprise mode adds an optional 192-bit suite for high-assurance networks.',
-            keyIdea: 'WPA3 Personal uses SAE, which defeats offline dictionary attacks. PMF is mandatory, forward secrecy protects old sessions, and transition mode keeps legacy clients working at a security cost.',
-            sections: [
-              { kind: 'table', h: 'WPA3 Personal, SAE', cols: ['Item', 'Detail'], rows: [
-                ['**Handshake**', 'SAE, also called dragonfly'],
-                ['**Dictionary attack**', 'Offline guessing prevented'],
-                ['**Forward secrecy**', 'Yes'],
-                ['**Result**', 'Stronger per-session keys']
-              ]},
-              { kind: 'table', h: 'WPA3 Enterprise', cols: ['Aspect', 'Detail'], rows: [
-                ['**Authentication**', '802.1X and RADIUS'],
-                ['**Suite**', '192-bit CNSA'],
-                ['**Certificates**', 'Server and client'],
-                ['**Result**', 'High-assurance security']
-              ]},
-              { kind: 'table', h: 'PMF, protected management frames', cols: ['Item', 'Detail'], rows: [
-                ['**What**', 'Protects management frames'],
-                ['**Against**', 'Deauthentication and forgery'],
-                ['**In WPA3**', 'Mandatory'],
-                ['**Benefit**', 'Safer roaming and association']
-              ]},
-              { kind: 'table', h: 'WPA3 versus WPA2', cols: ['Feature', 'WPA2', 'WPA3'], rows: [
-                ['**Personal**', 'PSK 4-way', 'SAE'],
-                ['**Dictionary attack**', 'Vulnerable', 'Resistant'],
-                ['**Forward secrecy**', 'No', 'Yes'],
-                ['**PMF**', 'Optional', 'Mandatory'],
-                ['**Enterprise**', '802.1X', '802.1X plus 192-bit']
-              ]},
-              { kind: 'table', h: 'Transition mode', cols: ['Mode', 'Detail'], rows: [
-                ['**WPA3-only**', 'Most secure, but legacy clients cannot join'],
-                ['**Transition**', 'Allows WPA2 and WPA3 clients'],
-                ['**Risk**', 'Mixed mode keeps the weaker WPA2 exposure']
-              ]},
-              { kind: 'code', h: 'WPA3 WLC configuration', code:
-`  wlan Secure 3 SecureData
-   security wpa psk sae
-   security pmf
-   security wpa ccmp` },
-              { kind: 'table', h: 'WPA3 commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%akm sae%%**', 'WPA3 personal'],
-                ['**%%pmf%%**', 'Protected management frames'],
-                ['**%%ccmp%%**', 'AES encryption']
-              ]}
-            ],
-            commands: [
-              { label: 'Check the WPA3 WLAN', code:
-`show wlan summary
-show wlan id 3` },
-              { label: 'Check client security state', code:
-`show wireless client summary
-show ap dot11 5ghz security` },
-              { label: 'Check PMF and authentication', code:
-`show auth-list
-show wlan id 3` }
-            ],
-            traps: [
-              'WPA3 Personal uses **SAE**, which defeats offline dictionary attacks.',
-              'WPA3 adds **forward secrecy and mandatory PMF**.',
-              'WPA3 Enterprise uses **802.1X with an optional 192-bit suite**.',
-              '**Transition mode** keeps legacy WPA2 clients working at a security cost.',
-              'SAE replaces the **PSK authentication** in WPA3 Personal.',
-              'PMF protects **management frames** such as deauthentication.'
-            ],
-            table: {
-              cols: ['Item', 'WPA3'],
-              rows: [
-                ['Personal', 'SAE'],
-                ['Enterprise', '802.1X and 192-bit'],
-                ['Forward secrecy', 'Yes'],
-                ['PMF', 'Mandatory'],
-                ['Dictionary attack', 'Stopped'],
-                ['Legacy', 'Transition mode'],
-                ['Encryption', 'AES-based'],
-                ['Compared with WPA2', 'Hardened']
-              ]
-            },
-            related: [
-              { t: '11. WPA2', d: 'The predecessor' },
-              { t: '03. SSID', d: 'Per-WLAN security' },
-              { t: '10. Roaming', d: 'Fast transition and PMF' }
-            ],
-            glossary: ['WPA3', 'WPA2', 'AAA', 'RADIUS', 'WLAN']
-          }
-        ];
+ {
+  "id": "t01",
+  "num": "01",
+  "group": "fund",
+  "title": "WLAN",
+  "blurb": "Wireless LAN basics: shared RF, APs, controllers and service sets",
+  "overview": "A **[[WLAN]]** is a wireless network built on **[[802.11]]**. Clients associate to an access point that broadcasts a **[[BSSID|BSSID]]** and **[[SSID]]**, and frames travel over **[[RF]]** in the 2.4, 5 or 6 GHz bands. Enterprise WLANs centralize control on a **[[WLC]]** using **[[CAPWAP]]**, and split the work into control, data and management planes.",
+  "keyIdea": "A WLAN is 802.11 plus the AP and WLC architecture. RF is a shared, error-prone medium, which is why wireless design is about coverage, capacity and interference rather than cables.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "WLAN versus wired LAN",
+    "cols": [
+     "Aspect",
+     "Wired LAN",
+     "WLAN"
+    ],
+    "rows": [
+     [
+      "**Medium**",
+      "Cable",
+      "Shared RF"
+     ],
+     [
+      "**Access**",
+      "Plug in",
+      "Associate"
+     ],
+     [
+      "**Errors**",
+      "Low",
+      "Interference and retries"
+     ],
+     [
+      "**Movement**",
+      "Static",
+      "Roaming"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Components",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "**Client**",
+      "Station, or STA"
+     ],
+     [
+      "**AP**",
+      "Access point radio"
+     ],
+     [
+      "**WLC**",
+      "Wireless controller"
+     ],
+     [
+      "**Backend**",
+      "Wired network and services"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Bands and data rates",
+    "cols": [
+     "Band",
+     "Notes"
+    ],
+    "rows": [
+     [
+      "**2.4 GHz**",
+      "Long range, crowded"
+     ],
+     [
+      "**5 GHz**",
+      "More channels, faster"
+     ],
+     [
+      "**6 GHz**",
+      "Wi-Fi 6E and newer"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Service sets",
+    "cols": [
+     "Term",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**BSS**",
+      "One AP radio plus its clients"
+     ],
+     [
+      "**ESS**",
+      "Many BSSes under one SSID"
+     ],
+     [
+      "**SSID**",
+      "Network name"
+     ],
+     [
+      "**BSSID**",
+      "AP radio MAC address"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Control and data planes",
+    "cols": [
+     "Plane",
+     "Where"
+    ],
+    "rows": [
+     [
+      "**Control**",
+      "WLC"
+     ],
+     [
+      "**Management**",
+      "WLC"
+     ],
+     [
+      "**Data**",
+      "AP to WLC, or local at the AP"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Deployment models",
+    "cols": [
+     "Model",
+     "Where"
+    ],
+    "rows": [
+     [
+      "**Autonomous**",
+      "Standalone AP"
+     ],
+     [
+      "**Centralized**",
+      "WLC plus CAPWAP"
+     ],
+     [
+      "**Cloud**",
+      "Cloud-managed"
+     ],
+     [
+      "**Mesh**",
+      "Wireless backhaul"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check WLAN and AP status",
+    "code": "show wlan summary\nshow ap summary\nshow ap config general"
+   },
+   {
+    "label": "Check policy and AP joins",
+    "code": "show wireless profile policy\nshow ap join stats summary"
+   },
+   {
+    "label": "Check radios and clients",
+    "code": "show ap radio summary\nshow wireless client summary"
+   }
+  ],
+  "traps": [
+   "A WLAN is **802.11 plus AP and WLC architecture**, not just an SSID.",
+   "RF is a **shared and error-prone** medium; wired assumptions do not carry over.",
+   "The enterprise model is **WLC plus CAPWAP**, not autonomous APs.",
+   "**BSS is one AP**, while **ESS is many BSSes under one SSID**.",
+   "The **data plane** may pass through the WLC or stay local at the AP.",
+   "5 and 6 GHz offer **more spectrum**, which is why they perform better under load."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "WLAN"
+   ],
+   "rows": [
+    [
+     "Standard",
+     "802.11"
+    ],
+    [
+     "Bands",
+     "2.4, 5 and 6 GHz"
+    ],
+    [
+     "AP",
+     "Access point"
+    ],
+    [
+     "WLC",
+     "Controller"
+    ],
+    [
+     "SSID",
+     "Name"
+    ],
+    [
+     "BSSID",
+     "Radio MAC"
+    ],
+    [
+     "BSS",
+     "One AP"
+    ],
+    [
+     "ESS",
+     "Many APs"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. 802.11",
+    "d": "The IEEE standard family"
+   },
+   {
+    "t": "07. WLC",
+    "d": "Centralized control"
+   },
+   {
+    "t": "08. CAPWAP",
+    "d": "The AP to WLC protocol"
+   }
+  ],
+  "glossary": [
+   "WLAN",
+   "802.11",
+   "SSID",
+   "BSSID",
+   "WLC",
+   "CAPWAP",
+   "RF"
+  ]
+ },
+ {
+  "id": "t02",
+  "num": "02",
+  "group": "fund",
+  "title": "802.11",
+  "blurb": "Frames, CSMA/CA and the amendment generations from b to ax",
+  "overview": "**[[802.11]]** is the IEEE standard family for WLANs. It defines the MAC and PHY layers, the management frames that run association, and the amendment generations that add speed and bands. The exam tests frame types, the CSMA/CA access mechanism, and which amendment maps to which speed and band.",
+  "keyIdea": "Wireless uses CSMA/CA with ACKs because collisions cannot be detected. Management frames run discovery and association, while n is MIMO, ac is 5 GHz and ax is OFDMA with 6 GHz.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Frame types",
+    "cols": [
+     "Type",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**Management**",
+      "Beacon, probe, authentication, association"
+     ],
+     [
+      "**Control**",
+      "RTS, CTS and ACK"
+     ],
+     [
+      "**Data**",
+      "Client payload"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "CSMA/CA",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Listen**",
+      "Sense the channel"
+     ],
+     [
+      "**Wait**",
+      "Random backoff after DIFS or AIFS"
+     ],
+     [
+      "**Send**",
+      "Only when the medium is clear"
+     ],
+     [
+      "**ACK**",
+      "Receiver confirms each frame"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Management frame flow",
+    "cols": [
+     "Frame",
+     "Direction",
+     "Step"
+    ],
+    "rows": [
+     [
+      "**Beacon**",
+      "AP to client",
+      "Discover"
+     ],
+     [
+      "**Probe request and response**",
+      "Both",
+      "Search"
+     ],
+     [
+      "**Authentication**",
+      "Both",
+      "Identity"
+     ],
+     [
+      "**Association**",
+      "Both",
+      "Join the BSS"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Amendments",
+    "cols": [
+     "Standard",
+     "Band",
+     "Max rate",
+     "Note"
+    ],
+    "rows": [
+     [
+      "**802.11b**",
+      "2.4 GHz",
+      "11 Mbps",
+      "Legacy"
+     ],
+     [
+      "**802.11a**",
+      "5 GHz",
+      "54 Mbps",
+      "Legacy"
+     ],
+     [
+      "**802.11g**",
+      "2.4 GHz",
+      "54 Mbps",
+      "Legacy"
+     ],
+     [
+      "**802.11n, Wi-Fi 4**",
+      "2.4 and 5 GHz",
+      "600 Mbps",
+      "MIMO"
+     ],
+     [
+      "**802.11ac, Wi-Fi 5**",
+      "5 GHz",
+      "About 1.7 Gbps",
+      "Wide channels"
+     ],
+     [
+      "**802.11ax, Wi-Fi 6**",
+      "2.4, 5 and 6 GHz",
+      "About 9.6 Gbps",
+      "OFDMA"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "RTS and CTS",
+    "cols": [
+     "Control frame",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**RTS**",
+      "Reserve the medium"
+     ],
+     [
+      "**CTS**",
+      "Grant the reservation"
+     ],
+     [
+      "**NAV**",
+      "Tell others how long to wait"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PHY versus MAC",
+    "cols": [
+     "Layer",
+     "802.11 part"
+    ],
+    "rows": [
+     [
+      "**PHY**",
+      "OFDM, OFDMA and modulation"
+     ],
+     [
+      "**MAC**",
+      "CSMA/CA and frames"
+     ],
+     [
+      "**Security**",
+      "WPA2 and WPA3 above the MAC"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Why the ACK matters",
+    "p": "A wireless station cannot hear a collision while it is transmitting, so **CSMA/CA** avoids collisions instead of detecting them. Every unicast data frame is **acknowledged**, and a missing ACK triggers a retransmission."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check radios and amendment state",
+    "code": "show ap radio summary\nshow ap dot11 5ghz summary\nshow ap config general"
+   },
+   {
+    "label": "Check clients and channel utilisation",
+    "code": "show wireless client summary\nshow ap monitor"
+   },
+   {
+    "label": "Check rates and radio detail",
+    "code": "show ap dot11 24ghz summary\nshow ap dot11 5ghz summary"
+   }
+  ],
+  "traps": [
+   "Wireless uses **CSMA/CA with ACKs** because collisions cannot be detected.",
+   "**Management frames** are beacon, probe, authentication and association.",
+   "**n is MIMO, ac is 5 GHz, and ax is OFDMA with 6 GHz**.",
+   "**RTS/CTS** mitigates the hidden node problem.",
+   "Beacons advertise the network roughly every **100 ms**.",
+   "**Control frames** such as ACK and CTS are not data frames."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "802.11"
+   ],
+   "rows": [
+    [
+     "Access",
+     "CSMA/CA"
+    ],
+    [
+     "ACK",
+     "Receiver confirms"
+    ],
+    [
+     "Frames",
+     "Management, control, data"
+    ],
+    [
+     "n",
+     "MIMO"
+    ],
+    [
+     "ac",
+     "5 GHz"
+    ],
+    [
+     "ax",
+     "OFDMA and 6 GHz"
+    ],
+    [
+     "RTS/CTS",
+     "Hidden node"
+    ],
+    [
+     "Beacon",
+     "About 100 ms"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. WLAN",
+    "d": "The network it builds"
+   },
+   {
+    "t": "05. Channels",
+    "d": "Spectrum planning"
+   },
+   {
+    "t": "06. RF",
+    "d": "Radio fundamentals"
+   }
+  ],
+  "glossary": [
+   "802.11",
+   "WLAN",
+   "Channels",
+   "RF",
+   "SSID"
+  ]
+ },
+ {
+  "id": "t03",
+  "num": "03",
+  "group": "fund",
+  "title": "SSID",
+  "blurb": "The network name and how it maps to a WLAN profile and VLAN",
+  "overview": "The **[[SSID]]** is the human-readable name of a wireless network, broadcast in beacons so clients can find and join it. One WLC can run many SSIDs mapped to different WLAN profiles, each with its own security, **[[VLAN]]** and QoS policy. The exam tests how the SSID connects to the WLAN profile and its policies.",
+  "keyIdea": "SSID is a name of up to 32 characters; BSSID is the AP radio MAC. Each SSID maps to its own WLAN profile, VLAN and security policy, and hiding it is not a security control.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What the SSID is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Type**",
+      "ASCII name"
+     ],
+     [
+      "**Length**",
+      "Up to 32 characters"
+     ],
+     [
+      "**Broadcast**",
+      "Inside beacons"
+     ],
+     [
+      "**Case**",
+      "Sensitive"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SSID versus BSSID",
+    "cols": [
+     "Term",
+     "Type",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**SSID**",
+      "Name",
+      "Network identity"
+     ],
+     [
+      "**BSSID**",
+      "MAC",
+      "Specific AP radio"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SSID to WLAN profile",
+    "cols": [
+     "Layer",
+     "Definition"
+    ],
+    "rows": [
+     [
+      "**SSID**",
+      "The name clients see"
+     ],
+     [
+      "**WLAN profile**",
+      "Security and policy"
+     ],
+     [
+      "**VLAN**",
+      "Where client traffic lands"
+     ],
+     [
+      "**QoS and ACL**",
+      "Per-WLAN rules"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Multiple SSIDs",
+    "cols": [
+     "SSID",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**Corp-Guest**",
+      "Guest isolation"
+     ],
+     [
+      "**Corp-Corp**",
+      "802.1X for employees"
+     ],
+     [
+      "**Corp-IoT**",
+      "PSK plus a dedicated VLAN"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Broadcast versus hidden",
+    "cols": [
+     "Mode",
+     "Behaviour"
+    ],
+    "rows": [
+     [
+      "**Broadcast**",
+      "Beacon carries the SSID"
+     ],
+     [
+      "**Hidden**",
+      "SSID withheld, but clients still probe"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "WLC SSID example",
+    "code": "  wlan Corp-Guest 2 Guest-Data\n   security wpa psk ascii GuestPass1\n   no security wpa akm dot1x\n   vlan Guest\n   no shutdown"
+   },
+   {
+    "kind": "table",
+    "h": "WLAN commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%wlan NAME id%%**",
+      "Create the WLAN"
+     ],
+     [
+      "**%%security wpa psk%%**",
+      "Pre-shared key"
+     ],
+     [
+      "**%%security dot1x%%**",
+      "Enterprise authentication"
+     ],
+     [
+      "**%%vlan%%**",
+      "Map the VLAN"
+     ],
+     [
+      "**%%no shutdown%%**",
+      "Enable the WLAN"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Create and inspect a WLAN",
+    "code": "wlan Corp-Guest 2 Guest-Data\n security wpa psk ascii GuestPass1\n vlan Guest\n no shutdown\nshow wlan summary\nshow wlan id 2"
+   },
+   {
+    "label": "Check where the SSID is served",
+    "code": "show ap wlan summary\nshow wireless profile policy"
+   },
+   {
+    "label": "Check client and AP detail",
+    "code": "show ap config general\nshow wireless client summary"
+   }
+  ],
+  "traps": [
+   "The SSID is a **name of up to 32 characters**; the BSSID is a MAC address.",
+   "Each SSID maps to a **separate WLAN profile, VLAN and policy**.",
+   "A hidden SSID is **not a security measure**, because clients still probe for it.",
+   "SSIDs are advertised in **beacons**.",
+   "The WLC maps an SSID to **VLAN, security and QoS**.",
+   "On a WLC, the SSID is the **wireless side** of the WLAN profile."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SSID"
+   ],
+   "rows": [
+    [
+     "Type",
+     "Name"
+    ],
+    [
+     "Length",
+     "32 characters"
+    ],
+    [
+     "Broadcast",
+     "Beacons"
+    ],
+    [
+     "Compared with BSSID",
+     "MAC"
+    ],
+    [
+     "Profile",
+     "WLAN"
+    ],
+    [
+     "VLAN",
+     "Mapped"
+    ],
+    [
+     "Hidden",
+     "Not secure"
+    ],
+    [
+     "Multiple",
+     "One policy each"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. BSSID",
+    "d": "The identity behind the name"
+   },
+   {
+    "t": "07. WLC",
+    "d": "Where profiles live"
+   },
+   {
+    "t": "11. WPA2",
+    "d": "Security on the WLAN"
+   }
+  ],
+  "glossary": [
+   "SSID",
+   "BSSID",
+   "WLAN",
+   "VLAN",
+   "WLC"
+  ]
+ },
+ {
+  "id": "t04",
+  "num": "04",
+  "group": "fund",
+  "title": "BSSID",
+  "blurb": "The AP radio MAC, the basic service set and the extended service set",
+  "overview": "The **[[BSSID]]** is the MAC address of an AP radio, the unique identity behind every **[[SSID]]**. A BSS is one AP radio plus its associated clients, and a group of BSSes under the same SSID forms an ESS. The exam wants the split between SSID and BSSID, and between BSS and ESS.",
+  "keyIdea": "BSSID is a 48-bit AP radio MAC. BSS is one cell, ESS is many cells under one SSID, and clients send frames to the BSSID of their current AP.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "BSSID basics",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Type**",
+      "48-bit MAC"
+     ],
+     [
+      "**Source**",
+      "AP radio"
+     ],
+     [
+      "**Unique**",
+      "Per radio and band"
+     ],
+     [
+      "**Frames**",
+      "Source of beacons"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "BSS, the basic service set",
+    "cols": [
+     "Element",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**BSS**",
+      "One AP radio plus clients"
+     ],
+     [
+      "**BSSID**",
+      "The identity of that BSS"
+     ],
+     [
+      "**Cell**",
+      "Coverage of one radio"
+     ],
+     [
+      "**Isolation**",
+      "Each BSS is separate"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "ESS, the extended service set",
+    "cols": [
+     "Element",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**ESS**",
+      "Many BSSes under one SSID"
+     ],
+     [
+      "**Roaming**",
+      "Movement between BSSes"
+     ],
+     [
+      "**Seamless**",
+      "Same SSID and security"
+     ],
+     [
+      "**Distribution**",
+      "Wired backbone"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The identity split",
+    "cols": [
+     "Term",
+     "What",
+     "Example"
+    ],
+    "rows": [
+     [
+      "**SSID**",
+      "Name clients see",
+      "CorpNet"
+     ],
+     [
+      "**BSSID**",
+      "AP radio MAC",
+      "00:1a:2b:3c:4d:5e"
+     ],
+     [
+      "**BSS**",
+      "One cell",
+      "AP1"
+     ],
+     [
+      "**ESS**",
+      "All cells",
+      "CorpNet everywhere"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Frames and the BSSID",
+    "cols": [
+     "Frame",
+     "Uses BSSID"
+    ],
+    "rows": [
+     [
+      "**Beacon**",
+      "Yes, as the source"
+     ],
+     [
+      "**Probe response**",
+      "Yes"
+     ],
+     [
+      "**Data to the AP**",
+      "Yes, as the destination"
+     ],
+     [
+      "**Client frames**",
+      "Address the BSSID"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check BSSIDs and radios",
+    "code": "show ap radio summary\nshow ap bssid\nshow ap config general"
+   },
+   {
+    "label": "Check bands and clients",
+    "code": "show ap dot11 5ghz summary\nshow wireless client summary"
+   },
+   {
+    "label": "Check AP detail for roaming",
+    "code": "show ap summary\nshow wireless client summary"
+   }
+  ],
+  "traps": [
+   "The BSSID is the **AP radio MAC**; the SSID is the name.",
+   "**BSS** is one AP plus clients; **ESS** is many BSSes under one SSID.",
+   "The same SSID appears on **many BSSIDs** to support roaming.",
+   "Clients address frames **to the BSSID** of their AP.",
+   "Beacons are sent **from the BSSID**.",
+   "Each band on one AP has its **own BSSID**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "BSSID"
+   ],
+   "rows": [
+    [
+     "Type",
+     "MAC"
+    ],
+    [
+     "Source",
+     "AP radio"
+    ],
+    [
+     "BSS",
+     "One cell"
+    ],
+    [
+     "ESS",
+     "Many BSSes"
+    ],
+    [
+     "SSID",
+     "Name"
+    ],
+    [
+     "Beacons",
+     "From the BSSID"
+    ],
+    [
+     "Frames",
+     "To the BSSID"
+    ],
+    [
+     "Roam",
+     "Between BSSes"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. SSID",
+    "d": "The name clients see"
+   },
+   {
+    "t": "10. Roaming",
+    "d": "Movement between BSSes"
+   },
+   {
+    "t": "09. Mobility",
+    "d": "State across controllers"
+   }
+  ],
+  "glossary": [
+   "BSSID",
+   "SSID",
+   "WLAN",
+   "Roaming"
+  ]
+ },
+ {
+  "id": "t05",
+  "num": "05",
+  "group": "rf",
+  "title": "Channels",
+  "blurb": "Non-overlapping channels, DFS, channel width and RRM",
+  "overview": "**[[Channels]]** are the RF sub-bands that APs transmit on. Non-overlapping channels let nearby APs share spectrum without interfering, DFS adds radar-aware channels in 5 GHz, and channel width trades throughput for spectrum. The WLC uses RRM to tune channels and power automatically.",
+  "keyIdea": "In 2.4 GHz the non-overlapping set is 1, 6 and 11. In 5 GHz there is far more spectrum plus DFS channels, and wider channels are faster but consume more of it. RRM and TPC automate channel and power selection.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "2.4 GHz channels",
+    "cols": [
+     "Band",
+     "Channels",
+     "Non-overlapping"
+    ],
+    "rows": [
+     [
+      "**2.4 GHz**",
+      "1 to 13, US 1 to 11",
+      "1, 6 and 11"
+     ],
+     [
+      "**Width**",
+      "20 MHz",
+      "Spacing is 5 MHz"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "5 GHz channels",
+    "cols": [
+     "Group",
+     "Notes"
+    ],
+    "rows": [
+     [
+      "**5 GHz**",
+      "Many channels and wider options"
+     ],
+     [
+      "**UNII**",
+      "36 to 165"
+     ],
+     [
+      "**DFS**",
+      "52 to 144, radar aware"
+     ],
+     [
+      "**Non-DFS**",
+      "36, 40, 44, 48, 149 and up"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Channel widths",
+    "cols": [
+     "Width",
+     "2.4 GHz",
+     "5 GHz"
+    ],
+    "rows": [
+     [
+      "**20 MHz**",
+      "Standard",
+      "Standard"
+     ],
+     [
+      "**40 MHz**",
+      "Bonded",
+      "Bonded"
+     ],
+     [
+      "**80 and 160 MHz**",
+      "Not used",
+      "High speed"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "DFS, dynamic frequency selection",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Purpose**",
+      "Avoid radar"
+     ],
+     [
+      "**Check**",
+      "Listen before use"
+     ],
+     [
+      "**Action**",
+      "Change channel on radar"
+     ],
+     [
+      "**Impact**",
+      "Brief downtime during a move"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "RRM, radio resource management",
+    "cols": [
+     "Task",
+     "RRM action"
+    ],
+    "rows": [
+     [
+      "**Channel**",
+      "Assign non-overlapping channels"
+     ],
+     [
+      "**Power**",
+      "Adjust with TPC"
+     ],
+     [
+      "**Coverage**",
+      "Detect coverage holes"
+     ],
+     [
+      "**Interference**",
+      "Detect and avoid"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Channel and power configuration",
+    "code": "  ap dot11 5ghz rrm channel global\n  ap dot11 24ghz rrm channel global\n  ap dot11 5ghz rrm tx-power global"
+   },
+   {
+    "kind": "table",
+    "h": "Channel commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%rrm channel global%%**",
+      "Let RRM pick channels"
+     ],
+     [
+      "**%%rrm tx-power global%%**",
+      "Automatic transmit power"
+     ],
+     [
+      "**%%ch-width%%**",
+      "Set channel width"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Inspect channel plans",
+    "code": "show ap radio summary\nshow ap dot11 5ghz summary\nshow ap dot11 24ghz summary"
+   },
+   {
+    "label": "Check RRM and channel detail",
+    "code": "show ap config general\nshow ap monitor channel"
+   },
+   {
+    "label": "Check DFS and interference",
+    "code": "show ap dot11 5ghz summary\nshow ap monitor channel"
+   }
+  ],
+  "traps": [
+   "In 2.4 GHz, the non-overlapping channels are **1, 6 and 11**.",
+   "5 GHz offers **many channels plus DFS**, especially 52 to 144.",
+   "A wider channel is faster but leaves **fewer channels for neighbours**.",
+   "**RRM** automates channel selection, and **TPC** automates transmit power.",
+   "DFS channels **listen for radar** before and during use.",
+   "Overlapping channels cause **co-channel interference**, not more capacity."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Channels"
+   ],
+   "rows": [
+    [
+     "2.4 GHz",
+     "1, 6 and 11"
+    ],
+    [
+     "5 GHz",
+     "Many channels"
+    ],
+    [
+     "DFS",
+     "Radar check"
+    ],
+    [
+     "Widths",
+     "20, 40, 80 and 160 MHz"
+    ],
+    [
+     "RRM",
+     "Auto channel"
+    ],
+    [
+     "TPC",
+     "Auto power"
+    ],
+    [
+     "Overlap",
+     "Avoid"
+    ],
+    [
+     "Validate",
+     "Monitor"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. RF",
+    "d": "The physics behind the plan"
+   },
+   {
+    "t": "02. 802.11",
+    "d": "Channelisation"
+   },
+   {
+    "t": "07. WLC",
+    "d": "Where RRM runs"
+   }
+  ],
+  "glossary": [
+   "Channels",
+   "802.11",
+   "RF",
+   "WLAN"
+  ]
+ },
+ {
+  "id": "t06",
+  "num": "06",
+  "group": "rf",
+  "title": "RF",
+  "blurb": "RSSI, SNR, EIRP, cell size and site surveys",
+  "overview": "**[[RF]]** physics decide whether Wi-Fi works: signal strength, signal-to-noise ratio, attenuation, interference and antenna behaviour. Design means understanding dBm, path loss, cell size and the capacity trade-offs, then validating the result with a site survey.",
+  "keyIdea": "RSSI is strength in dBm and SNR is cleanliness in dB. EIRP is transmit power plus antenna gain minus cable loss, and smaller cells trade coverage for capacity.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Key metrics",
+    "cols": [
+     "Metric",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**RSSI**",
+      "Received signal strength in dBm"
+     ],
+     [
+      "**SNR**",
+      "Signal-to-noise ratio in dB"
+     ],
+     [
+      "**dBm**",
+      "Absolute power level"
+     ],
+     [
+      "**EIRP**",
+      "Effective radiated power"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Signal behaviour",
+    "cols": [
+     "Effect",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Attenuation**",
+      "Loss over distance"
+     ],
+     [
+      "**Absorption**",
+      "Walls and people"
+     ],
+     [
+      "**Reflection**",
+      "Multipath"
+     ],
+     [
+      "**Interference**",
+      "Other radios and noise"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Cell size trade-offs",
+    "cols": [
+     "Factor",
+     "Small cell",
+     "Large cell"
+    ],
+    "rows": [
+     [
+      "**Capacity**",
+      "High, more APs",
+      "Low"
+     ],
+     [
+      "**Interference**",
+      "Lower",
+      "Higher"
+     ],
+     [
+      "**Coverage**",
+      "Less per AP",
+      "More per AP"
+     ],
+     [
+      "**Cost**",
+      "Higher",
+      "Lower"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Power and EIRP",
+    "cols": [
+     "Item",
+     "Formula or example"
+    ],
+    "rows": [
+     [
+      "**dBm**",
+      "10 times log10 of milliwatts"
+     ],
+     [
+      "**EIRP**",
+      "Tx power plus antenna gain minus cable loss"
+     ],
+     [
+      "**Example**",
+      "20 dBm plus 3 dBi gives 23 dBm EIRP"
+     ],
+     [
+      "**3 dB rule**",
+      "Doubles the power"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Site surveys",
+    "cols": [
+     "Type",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**Passive**",
+      "Measure existing RF"
+     ],
+     [
+      "**Active**",
+      "Test throughput and association"
+     ],
+     [
+      "**Predictive**",
+      "Software model before install"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "RRM feedback loop",
+    "p": "RRM uses the RF data from the APs to tune **channels** and **power** (note 05). Weak SNR, high retries or coverage holes feed back into automated changes, but a site survey is still the way to validate the design."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check radio health and clients",
+    "code": "show ap radio summary\nshow ap dot11 5ghz monitor\nshow wireless client summary"
+   },
+   {
+    "label": "Check cabling and AP detail",
+    "code": "show ap monitor cable\nshow ap config general"
+   },
+   {
+    "label": "Check noise and channel utilisation",
+    "code": "show ap dot11 5ghz summary\nshow ap monitor channel"
+   }
+  ],
+  "traps": [
+   "**RSSI is strength in dBm; SNR is cleanliness in dB**.",
+   "**EIRP is transmit power plus antenna gain minus cable loss**.",
+   "**Smaller cells provide more capacity per area**.",
+   "Multipath and absorption reduce performance even when RSSI looks good.",
+   "A good SNR target is around **25 dB or better**.",
+   "A site survey validates coverage, interference and capacity."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "RF"
+   ],
+   "rows": [
+    [
+     "Strength",
+     "RSSI"
+    ],
+    [
+     "Cleanliness",
+     "SNR"
+    ],
+    [
+     "Power",
+     "dBm"
+    ],
+    [
+     "Radiated",
+     "EIRP"
+    ],
+    [
+     "Loss",
+     "Distance and walls"
+    ],
+    [
+     "Noise",
+     "Interference"
+    ],
+    [
+     "Cells",
+     "Small means capacity"
+    ],
+    [
+     "Validate",
+     "Site survey"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Channels",
+    "d": "Spectrum and interference"
+   },
+   {
+    "t": "02. 802.11",
+    "d": "Radio standard"
+   },
+   {
+    "t": "07. WLC",
+    "d": "RRM automation"
+   }
+  ],
+  "glossary": [
+   "RF",
+   "Channels",
+   "802.11",
+   "WLAN"
+  ]
+ },
+ {
+  "id": "t07",
+  "num": "07",
+  "group": "arch",
+  "title": "WLC",
+  "blurb": "The controller brain: AP config, RRM, auth, roaming and modes",
+  "overview": "The **[[WLC]]** is the brain of a centralized WLAN. It configures APs, runs RRM, handles client authentication and roaming, and anchors the control plane through **[[CAPWAP]]**. APs are lightweight: the controller pushes their configuration, and in Local mode client data also passes through it.",
+  "keyIdea": "The WLC handles control and management; data may pass through it in Local mode or stay at the AP in FlexConnect. APs join by CAPWAP discovery, DTLS and a config push.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What the WLC does",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**AP configuration**",
+      "Push profiles and software"
+     ],
+     [
+      "**RRM**",
+      "Channels and power"
+     ],
+     [
+      "**Authentication**",
+      "RADIUS and 802.1X"
+     ],
+     [
+      "**Roaming**",
+      "Client handoff and state"
+     ],
+     [
+      "**Management**",
+      "Monitoring and dashboards"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Architecture split",
+    "cols": [
+     "Plane",
+     "Where"
+    ],
+    "rows": [
+     [
+      "**Control**",
+      "WLC, over CAPWAP control"
+     ],
+     [
+      "**Management**",
+      "WLC"
+     ],
+     [
+      "**Data**",
+      "AP to WLC, or local at the AP"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "AP modes",
+    "cols": [
+     "Mode",
+     "Data path"
+    ],
+    "rows": [
+     [
+      "**Local**",
+      "Client data goes to the WLC"
+     ],
+     [
+      "**FlexConnect**",
+      "Data stays local at the AP"
+     ],
+     [
+      "**Monitor**",
+      "Sensing only"
+     ],
+     [
+      "**Sniffer**",
+      "Packet capture"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "AP join process",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1 Discover**",
+      "DNS, broadcast or configured WLC address"
+     ],
+     [
+      "**2 CAPWAP discovery**",
+      "Request and response"
+     ],
+     [
+      "**3 DTLS**",
+      "Secure the control channel"
+     ],
+     [
+      "**4 Config push**",
+      "AP receives settings and software"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "WLC interfaces",
+    "cols": [
+     "Interface",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**Management**",
+      "Administration and dashboard"
+     ],
+     [
+      "**AP manager**",
+      "AP traffic"
+     ],
+     [
+      "**Service**",
+      "Guest or shared services"
+     ],
+     [
+      "**Dynamic**",
+      "Client VLANs"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "WLC platforms",
+    "cols": [
+     "Type",
+     "Example"
+    ],
+    "rows": [
+     [
+      "**Appliance**",
+      "Catalyst 9800 series"
+     ],
+     [
+      "**Embedded**",
+      "Catalyst switch controller"
+     ],
+     [
+      "**Virtual**",
+      "vWLC"
+     ],
+     [
+      "**Cloud**",
+      "Catalyst Center managed"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check AP joins and WLAN state",
+    "code": "show ap summary\nshow ap join stats summary\nshow wlan summary"
+   },
+   {
+    "label": "Check controller and client health",
+    "code": "show wireless stats\nshow ap config general\nshow wireless client summary"
+   },
+   {
+    "label": "Check AP mode and radios",
+    "code": "show ap config general\nshow ap radio summary"
+   }
+  ],
+  "traps": [
+   "The WLC owns **control and management**; data can stay local in **FlexConnect**.",
+   "APs join via **CAPWAP discovery, DTLS and a config push**.",
+   "**RRM runs on the WLC**, not independently on each AP.",
+   "**Local mode** sends client data to the WLC; **FlexConnect** keeps it at the AP.",
+   "The Catalyst **9800 is the modern IOS-XE** controller.",
+   "APs are lightweight, so they depend on the controller for configuration."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "WLC"
+   ],
+   "rows": [
+    [
+     "Role",
+     "Central control"
+    ],
+    [
+     "Protocol",
+     "CAPWAP"
+    ],
+    [
+     "Control plane",
+     "WLC"
+    ],
+    [
+     "Data plane",
+     "WLC or FlexConnect"
+    ],
+    [
+     "RRM",
+     "WLC"
+    ],
+    [
+     "Authentication",
+     "RADIUS"
+    ],
+    [
+     "Modes",
+     "Local and FlexConnect"
+    ],
+    [
+     "Platform",
+     "9800"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. CAPWAP",
+    "d": "The AP to WLC tunnel"
+   },
+   {
+    "t": "09. Mobility",
+    "d": "Roaming across controllers"
+   },
+   {
+    "t": "05. Channels",
+    "d": "RRM tuning"
+   }
+  ],
+  "glossary": [
+   "WLC",
+   "CAPWAP",
+   "WLAN",
+   "SSID",
+   "Mobility",
+   "Roaming"
+  ]
+ },
+ {
+  "id": "t08",
+  "num": "08",
+  "group": "arch",
+  "title": "CAPWAP",
+  "blurb": "Two tunnels, UDP 5246 and 5247, DTLS and the AP join sequence",
+  "overview": "**[[CAPWAP]]** is the standard tunnel between an AP and a **[[WLC]]**. It carries control traffic such as configuration and statistics on UDP 5246, and in Local mode it also carries client data on UDP 5247. Control is protected by DTLS, and the ports are a frequent exam question.",
+  "keyIdea": "CAPWAP control is UDP 5246 and data is UDP 5247, with DTLS on control. Local mode tunnels data to the WLC; FlexConnect does not.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The two tunnels",
+    "cols": [
+     "Tunnel",
+     "Port",
+     "Content"
+    ],
+    "rows": [
+     [
+      "**Control**",
+      "UDP 5246",
+      "Configuration and monitoring"
+     ],
+     [
+      "**Data**",
+      "UDP 5247",
+      "Client traffic in Local mode"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Security",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**DTLS**",
+      "Encrypts the control channel"
+     ],
+     [
+      "**Data DTLS**",
+      "Optional for client data"
+     ],
+     [
+      "**Join**",
+      "AP authenticity"
+     ],
+     [
+      "**Result**",
+      "Secure AP to WLC path"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Discovery process",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "AP looks for a WLC by broadcast, multicast, DNS or hostname"
+     ],
+     [
+      "**2**",
+      "Discovery request and response"
+     ],
+     [
+      "**3**",
+      "Join request and response"
+     ],
+     [
+      "**4**",
+      "Configuration push"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Modes and data path",
+    "cols": [
+     "Mode",
+     "Data over CAPWAP"
+    ],
+    "rows": [
+     [
+      "**Local**",
+      "Yes, client data goes to the WLC"
+     ],
+     [
+      "**FlexConnect**",
+      "No, the AP switches it locally"
+     ],
+     [
+      "**Monitor**",
+      "Control only"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Overhead and design",
+    "cols": [
+     "Point",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**WLC capacity**",
+      "Tunnels scale with AP count"
+     ],
+     [
+      "**Path**",
+      "WLC must be reachable"
+     ],
+     [
+      "**Hairpin**",
+      "Data goes AP to WLC to LAN"
+     ],
+     [
+      "**Alternative**",
+      "FlexConnect for remote branches"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "CAPWAP verification",
+    "code": "  show ap join stats summary\n  show ap capwap ip\n  show ap summary\n  show ap config general"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Verify AP join and CAPWAP addressing",
+    "code": "show ap join stats summary\nshow ap capwap ip\nshow ap summary"
+   },
+   {
+    "label": "Check AP config and uptime",
+    "code": "show ap config general\nshow ap uptime"
+   },
+   {
+    "label": "Debug join problems",
+    "code": "debug capwap event\nshow ap join stats summary"
+   }
+  ],
+  "traps": [
+   "CAPWAP control is **UDP 5246**; data is **UDP 5247**.",
+   "Control is secured with **DTLS**, and data DTLS is optional.",
+   "**Local mode** tunnels client data to the WLC; **FlexConnect** keeps it at the AP.",
+   "APs **discover, join and then receive config**.",
+   "CAPWAP replaced the older **LWAPP**.",
+   "Blocking **UDP 5246** breaks the control channel and the AP cannot stay joined."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "CAPWAP"
+   ],
+   "rows": [
+    [
+     "Control",
+     "UDP 5246"
+    ],
+    [
+     "Data",
+     "UDP 5247"
+    ],
+    [
+     "Security",
+     "DTLS"
+    ],
+    [
+     "Local",
+     "Data to WLC"
+    ],
+    [
+     "FlexConnect",
+     "Data at AP"
+    ],
+    [
+     "Discover",
+     "DNS, broadcast, multicast"
+    ],
+    [
+     "Join",
+     "Then config"
+    ],
+    [
+     "Legacy",
+     "LWAPP"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. WLC",
+    "d": "The controller side"
+   },
+   {
+    "t": "01. WLAN",
+    "d": "AP architecture"
+   },
+   {
+    "t": "09. Mobility",
+    "d": "CAPWAP and roaming"
+   }
+  ],
+  "glossary": [
+   "CAPWAP",
+   "WLC",
+   "WLAN",
+   "Mobility"
+  ]
+ },
+ {
+  "id": "t09",
+  "num": "09",
+  "group": "arch",
+  "title": "Mobility",
+  "blurb": "Mobility groups, anchor and foreign controllers, and L2 versus L3",
+  "overview": "**[[Mobility|Wireless mobility]]** keeps a client session alive while it moves between APs and even between **[[WLC|WLCs]]**. Controllers join a mobility group, and an anchor controller keeps the session while a foreign controller serves the client. Roaming works because mobility state is shared.",
+  "keyIdea": "A mobility group shares client state across controllers. The anchor is the original WLC, the foreign is the current one, and an L3 roam needs anchor forwarding.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Mobility group",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Group**",
+      "WLCs that trust each other"
+     ],
+     [
+      "**Exchange**",
+      "Client MAC, IP and security state"
+     ],
+     [
+      "**Scalability**",
+      "Group membership"
+     ],
+     [
+      "**Security**",
+      "Shared keys or certificates"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Roles during a roam",
+    "cols": [
+     "Role",
+     "WLC",
+     "Job"
+    ],
+    "rows": [
+     [
+      "**Anchor**",
+      "First WLC",
+      "Holds the session and subnet"
+     ],
+     [
+      "**Foreign**",
+      "Current WLC",
+      "Serves the client"
+     ],
+     [
+      "**Controller**",
+      "Group member",
+      "Coordinates state"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Mobility versus roaming",
+    "cols": [
+     "Term",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "**Roaming**",
+      "Client moves between APs or BSSIDs"
+     ],
+     [
+      "**Mobility**",
+      "Controller handoff and forwarding path"
+     ],
+     [
+      "**Fast roam**",
+      "Low-latency handoff"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Layer 2 versus Layer 3 mobility",
+    "cols": [
+     "Type",
+     "Subnet",
+     "Forwarding"
+    ],
+    "rows": [
+     [
+      "**L2**",
+      "Same subnet",
+      "Normal switched path"
+     ],
+     [
+      "**L3**",
+      "Different subnet",
+      "Anchor forwards traffic"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Mobility configuration",
+    "code": "  wireless mobility group name CORP\n  wireless mobility member 192.0.2.10\n  wireless mobility keepalive interval 30"
+   },
+   {
+    "kind": "table",
+    "h": "Mobility commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%mobility group name%%**",
+      "Name the group"
+     ],
+     [
+      "**%%mobility member%%**",
+      "Add a peer WLC"
+     ],
+     [
+      "**%%keepalive%%**",
+      "Health check interval"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check group and peer state",
+    "code": "show wireless mobility summary\nshow wireless mobility statistics"
+   },
+   {
+    "label": "Check a roaming client",
+    "code": "show wireless mobility client\nshow wireless client summary"
+   },
+   {
+    "label": "Check AP and mobility detail",
+    "code": "show ap mobility summary\nshow ap summary"
+   }
+  ],
+  "traps": [
+   "A **mobility group** shares client state across controllers.",
+   "The **anchor** is the original controller; the **foreign** is the current one.",
+   "An **L2 roam** stays in the same subnet; an **L3 roam** needs anchor forwarding.",
+   "Mobility is the infrastructure that makes **roaming** seamless.",
+   "`show wireless mobility summary` is the first mobility check.",
+   "If the mobility tunnel is down, a cross-controller roam can drop the session."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Mobility"
+   ],
+   "rows": [
+    [
+     "Group",
+     "Trusted WLCs"
+    ],
+    [
+     "Anchor",
+     "Original WLC"
+    ],
+    [
+     "Foreign",
+     "Current WLC"
+    ],
+    [
+     "L2",
+     "Same subnet"
+    ],
+    [
+     "L3",
+     "Anchor forwards"
+    ],
+    [
+     "Keepalive",
+     "Health check"
+    ],
+    [
+     "Roam",
+     "At AP level"
+    ],
+    [
+     "Verify",
+     "Show wireless mobility"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. Roaming",
+    "d": "The client-side event"
+   },
+   {
+    "t": "07. WLC",
+    "d": "Controller coordination"
+   },
+   {
+    "t": "08. CAPWAP",
+    "d": "The transport underneath"
+   }
+  ],
+  "glossary": [
+   "Mobility",
+   "Roaming",
+   "WLC",
+   "CAPWAP",
+   "DHCP"
+  ]
+ },
+ {
+  "id": "t10",
+  "num": "10",
+  "group": "arch",
+  "title": "Roaming",
+  "blurb": "L2 and L3 roams, 802.11r/k/v and the sticky client problem",
+  "overview": "**[[Roaming]]** is a client moving from one AP or BSS to another while keeping its session. Roams differ by scope and speed: Layer 2 versus Layer 3, intra-controller versus inter-controller, and 802.11r fast transition for a low-latency handoff. Roaming depends on **[[Mobility]]** sharing the client state.",
+  "keyIdea": "Reassociation happens at the new BSSID. 802.11r pre-distributes keys, k provides neighbour reports, and v assists the transition. Sticky clients are fixed with steering plus k/v/r.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Roaming types",
+    "cols": [
+     "Type",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "**L2**",
+      "Same subnet, normal switching"
+     ],
+     [
+      "**L3**",
+      "Different subnet, anchor forwarding"
+     ],
+     [
+      "**Intra-WLC**",
+      "Same controller"
+     ],
+     [
+      "**Inter-WLC**",
+      "Across controllers"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The handoff moment",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "Client reassociates to the new AP"
+     ],
+     [
+      "**2**",
+      "WLC and mobility update state"
+     ],
+     [
+      "**3**",
+      "Frames follow the client"
+     ],
+     [
+      "**4**",
+      "Old AP releases the client"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "802.11r fast transition",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**What**",
+      "Pre-authenticated PMK"
+     ],
+     [
+      "**FT**",
+      "Fast transition"
+     ],
+     [
+      "**Result**",
+      "Handoff in milliseconds"
+     ],
+     [
+      "**Use**",
+      "Voice and real-time traffic"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "802.11k and 802.11v",
+    "cols": [
+     "Standard",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**802.11k**",
+      "Neighbour reports"
+     ],
+     [
+      "**802.11v**",
+      "BSS transition assistance"
+     ],
+     [
+      "**Result**",
+      "Better AP choice"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Sticky clients",
+    "cols": [
+     "Problem",
+     "Cause",
+     "Fix"
+    ],
+    "rows": [
+     [
+      "**Clings to a weak AP**",
+      "RSSI threshold",
+      "802.11v and steering"
+     ],
+     [
+      "**Poor RF use**",
+      "No steering",
+      "Band steering"
+     ],
+     [
+      "**Slow roam**",
+      "No fast transition",
+      "802.11r"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Requirements for seamless roaming",
+    "cols": [
+     "Need",
+     "Mechanism"
+    ],
+    "rows": [
+     [
+      "**Same SSID**",
+      "ESS"
+     ],
+     [
+      "**Same security**",
+      "PMK and 802.1X"
+     ],
+     [
+      "**State sharing**",
+      "Mobility group"
+     ],
+     [
+      "**Fast keys**",
+      "802.11r"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check client roaming state",
+    "code": "show wireless client summary\nshow wireless client mac <MAC>\nshow ap summary"
+   },
+   {
+    "label": "Check mobility view of the client",
+    "code": "show wireless mobility client\nshow wireless mobility summary"
+   },
+   {
+    "label": "Trace reassociation events",
+    "code": "debug dot11\nshow wireless client summary"
+   }
+  ],
+  "traps": [
+   "An **L2 roam stays in the same subnet**, while an **L3 roam uses the anchor**.",
+   "**802.11r is fast transition with pre-distributed keys**; k and v assist roaming.",
+   "**Intra-WLC** and **inter-WLC** roams use different paths.",
+   "A **sticky client** is fixed with steering and 802.11k/v/r.",
+   "Seamless roaming needs the **same SSID, security and shared state**.",
+   "The client **reassociates to the new BSSID** during a roam."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Roaming"
+   ],
+   "rows": [
+    [
+     "L2",
+     "Same subnet"
+    ],
+    [
+     "L3",
+     "Anchor path"
+    ],
+    [
+     "Intra-WLC",
+     "One controller"
+    ],
+    [
+     "Inter-WLC",
+     "Mobility group"
+    ],
+    [
+     "802.11r",
+     "Fast keys"
+    ],
+    [
+     "802.11k/v",
+     "Neighbour and assist"
+    ],
+    [
+     "Sticky",
+     "Band steering"
+    ],
+    [
+     "Seamless",
+     "Same SSID and security"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. Mobility",
+    "d": "State sharing across WLCs"
+   },
+   {
+    "t": "04. BSSID",
+    "d": "The target of reassociation"
+   },
+   {
+    "t": "11. WPA2",
+    "d": "Security that must stay consistent"
+   }
+  ],
+  "glossary": [
+   "Roaming",
+   "Mobility",
+   "BSSID",
+   "WLAN",
+   "WLC"
+  ]
+ },
+ {
+  "id": "t11",
+  "num": "11",
+  "group": "sec",
+  "title": "WPA2",
+  "blurb": "AES-CCMP, PSK versus 802.1X, and the 4-way handshake",
+  "overview": "**[[WPA2]]** is the long-standing Wi-Fi security standard. It uses AES-CCMP for encryption and either 802.1X enterprise authentication or a pre-shared key for personal networks. The exam tests the two modes, the 4-way handshake, and why a static PSK is a weak point.",
+  "keyIdea": "WPA2 is AES-CCMP, not TKIP. Personal uses a PSK, enterprise uses 802.1X and RADIUS, and the 4-way handshake derives the PTK from the PMK and both nonces.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "WPA2 modes",
+    "cols": [
+     "Mode",
+     "Authentication",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**Personal**",
+      "PSK passphrase",
+      "Small networks"
+     ],
+     [
+      "**Enterprise**",
+      "802.1X and RADIUS",
+      "Corporate networks"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Encryption, AES-CCMP",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Cipher**",
+      "AES"
+     ],
+     [
+      "**Protocol**",
+      "CCMP"
+     ],
+     [
+      "**Key**",
+      "Per-session PTK"
+     ],
+     [
+      "**Standard**",
+      "IEEE 802.11i"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The 4-way handshake",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**1**",
+      "AP sends ANonce"
+     ],
+     [
+      "**2**",
+      "Client sends SNonce and MIC"
+     ],
+     [
+      "**3**",
+      "AP confirms and installs the key"
+     ],
+     [
+      "**4**",
+      "Client confirms"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PSK weakness",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**PMK source**",
+      "The passphrase"
+     ],
+     [
+      "**Attack**",
+      "Offline dictionary guessing"
+     ],
+     [
+      "**Risk**",
+      "Shared and static"
+     ],
+     [
+      "**Rotation**",
+      "Rarely changed"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Enterprise 802.1X flow",
+    "cols": [
+     "Stage",
+     "Protocol"
+    ],
+    "rows": [
+     [
+      "**Authentication**",
+      "EAP over 802.1X"
+     ],
+     [
+      "**Server**",
+      "RADIUS"
+     ],
+     [
+      "**Key**",
+      "MSK becomes the PMK"
+     ],
+     [
+      "**Session**",
+      "PTK"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "WPA2 WLC configuration",
+    "code": "  wlan CorpData 1 Corp\n   security wpa akm dot1x\n   security dot1x server-auth\n   no security wpa akm psk\n   security wpa ccmp"
+   },
+   {
+    "kind": "table",
+    "h": "WPA2 commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%akm dot1x%%**",
+      "Enterprise authentication"
+     ],
+     [
+      "**%%akm psk%%**",
+      "Personal authentication"
+     ],
+     [
+      "**%%ccmp%%**",
+      "AES encryption"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check the WLAN security profile",
+    "code": "show wlan summary\nshow wlan id 1"
+   },
+   {
+    "label": "Check clients and associations",
+    "code": "show wireless client summary\nshow dot11 associations"
+   },
+   {
+    "label": "Check authentication detail",
+    "code": "show auth-list\nshow wireless client summary"
+   }
+  ],
+  "traps": [
+   "WPA2 uses **AES-CCMP**, not TKIP.",
+   "Personal is **PSK**; enterprise is **802.1X with RADIUS**.",
+   "The **4-way handshake** derives the PTK from the PMK and both nonces.",
+   "A static PSK is exposed to **offline dictionary attacks**.",
+   "The **MSK from RADIUS becomes the PMK** in enterprise mode.",
+   "WPA2 is defined by **IEEE 802.11i**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "WPA2"
+   ],
+   "rows": [
+    [
+     "Cipher",
+     "AES-CCMP"
+    ],
+    [
+     "Personal",
+     "PSK"
+    ],
+    [
+     "Enterprise",
+     "802.1X"
+    ],
+    [
+     "Handshake",
+     "4-way"
+    ],
+    [
+     "PTK",
+     "ANonce and SNonce"
+    ],
+    [
+     "PMK",
+     "Passphrase or MSK"
+    ],
+    [
+     "Weak point",
+     "PSK"
+    ],
+    [
+     "Standard",
+     "802.11i"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "12. WPA3",
+    "d": "The successor"
+   },
+   {
+    "t": "03. SSID",
+    "d": "Security per WLAN"
+   },
+   {
+    "t": "02. 802.11",
+    "d": "Wireless standards"
+   }
+  ],
+  "glossary": [
+   "WPA2",
+   "WPA3",
+   "AAA",
+   "RADIUS",
+   "SSID"
+  ]
+ },
+ {
+  "id": "t12",
+  "num": "12",
+  "group": "sec",
+  "title": "WPA3",
+  "blurb": "SAE, forward secrecy, mandatory PMF and 192-bit enterprise",
+  "overview": "**[[WPA3]]** is the security upgrade over **[[WPA2]]**. SAE replaces the PSK exchange with a dictionary-resistant authentication, forward secrecy protects past traffic, and protected management frames harden the air. Enterprise mode adds an optional 192-bit suite for high-assurance networks.",
+  "keyIdea": "WPA3 Personal uses SAE, which defeats offline dictionary attacks. PMF is mandatory, forward secrecy protects old sessions, and transition mode keeps legacy clients working at a security cost.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "WPA3 Personal, SAE",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Handshake**",
+      "SAE, also called dragonfly"
+     ],
+     [
+      "**Dictionary attack**",
+      "Offline guessing prevented"
+     ],
+     [
+      "**Forward secrecy**",
+      "Yes"
+     ],
+     [
+      "**Result**",
+      "Stronger per-session keys"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "WPA3 Enterprise",
+    "cols": [
+     "Aspect",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**Authentication**",
+      "802.1X and RADIUS"
+     ],
+     [
+      "**Suite**",
+      "192-bit CNSA"
+     ],
+     [
+      "**Certificates**",
+      "Server and client"
+     ],
+     [
+      "**Result**",
+      "High-assurance security"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PMF, protected management frames",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**What**",
+      "Protects management frames"
+     ],
+     [
+      "**Against**",
+      "Deauthentication and forgery"
+     ],
+     [
+      "**In WPA3**",
+      "Mandatory"
+     ],
+     [
+      "**Benefit**",
+      "Safer roaming and association"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "WPA3 versus WPA2",
+    "cols": [
+     "Feature",
+     "WPA2",
+     "WPA3"
+    ],
+    "rows": [
+     [
+      "**Personal**",
+      "PSK 4-way",
+      "SAE"
+     ],
+     [
+      "**Dictionary attack**",
+      "Vulnerable",
+      "Resistant"
+     ],
+     [
+      "**Forward secrecy**",
+      "No",
+      "Yes"
+     ],
+     [
+      "**PMF**",
+      "Optional",
+      "Mandatory"
+     ],
+     [
+      "**Enterprise**",
+      "802.1X",
+      "802.1X plus 192-bit"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Transition mode",
+    "cols": [
+     "Mode",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "**WPA3-only**",
+      "Most secure, but legacy clients cannot join"
+     ],
+     [
+      "**Transition**",
+      "Allows WPA2 and WPA3 clients"
+     ],
+     [
+      "**Risk**",
+      "Mixed mode keeps the weaker WPA2 exposure"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "WPA3 WLC configuration",
+    "code": "  wlan Secure 3 SecureData\n   security wpa psk sae\n   security pmf\n   security wpa ccmp"
+   },
+   {
+    "kind": "table",
+    "h": "WPA3 commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%akm sae%%**",
+      "WPA3 personal"
+     ],
+     [
+      "**%%pmf%%**",
+      "Protected management frames"
+     ],
+     [
+      "**%%ccmp%%**",
+      "AES encryption"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Check the WPA3 WLAN",
+    "code": "show wlan summary\nshow wlan id 3"
+   },
+   {
+    "label": "Check client security state",
+    "code": "show wireless client summary\nshow ap dot11 5ghz security"
+   },
+   {
+    "label": "Check PMF and authentication",
+    "code": "show auth-list\nshow wlan id 3"
+   }
+  ],
+  "traps": [
+   "WPA3 Personal uses **SAE**, which defeats offline dictionary attacks.",
+   "WPA3 adds **forward secrecy and mandatory PMF**.",
+   "WPA3 Enterprise uses **802.1X with an optional 192-bit suite**.",
+   "**Transition mode** keeps legacy WPA2 clients working at a security cost.",
+   "SAE replaces the **PSK authentication** in WPA3 Personal.",
+   "PMF protects **management frames** such as deauthentication."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "WPA3"
+   ],
+   "rows": [
+    [
+     "Personal",
+     "SAE"
+    ],
+    [
+     "Enterprise",
+     "802.1X and 192-bit"
+    ],
+    [
+     "Forward secrecy",
+     "Yes"
+    ],
+    [
+     "PMF",
+     "Mandatory"
+    ],
+    [
+     "Dictionary attack",
+     "Stopped"
+    ],
+    [
+     "Legacy",
+     "Transition mode"
+    ],
+    [
+     "Encryption",
+     "AES-based"
+    ],
+    [
+     "Compared with WPA2",
+     "Hardened"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. WPA2",
+    "d": "The predecessor"
+   },
+   {
+    "t": "03. SSID",
+    "d": "Per-WLAN security"
+   },
+   {
+    "t": "10. Roaming",
+    "d": "Fast transition and PMF"
+   }
+  ],
+  "glossary": [
+   "WPA3",
+   "WPA2",
+   "AAA",
+   "RADIUS",
+   "WLAN"
+  ]
+ },
+ {
+  "id": "t13",
+  "num": "13",
+  "group": "sec",
+  "title": "Wireless Segmentation & Design",
+  "blurb": "RF profiles, site and policy tags, SSID-to-VLAN mapping, SGTs, guest separation, client density and location services",
+  "overview": "Cisco Catalyst wireless scales configuration with reusable objects: **[[RF Profile|RF profiles]]**, **[[Site Tag|site tags]]**, **[[Policy Tag|policy tags]]** and AP join profiles. Segmentation then separates user groups with **[[VLAN]]** mapping, **[[Security Group Tag|SGTs]]**, guest anchors or local switching, while the design must account for **[[Client Density|client density]]**, roaming and **[[Location Services|location services]]**.",
+  "keyIdea": "Tags bind a WLAN policy to an AP site; VLANs and SGTs separate traffic; RF profiles and site surveys make the design work at scale.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Configuration objects on Catalyst 9800",
+    "cols": [
+     "Object",
+     "What it controls",
+     "Why it matters"
+    ],
+    "rows": [
+     [
+      "**RF profile**",
+      "Radio settings such as data rates, power and channel plan",
+      "Reuse one RF policy across many APs"
+     ],
+     [
+      "**Site tag**",
+      "Which AP join profile and site settings an AP uses",
+      "Maps an AP to its physical site"
+     ],
+     [
+      "**Policy tag**",
+      "Which WLANs are offered and how they are applied",
+      "Maps SSIDs to a site or AP group"
+     ],
+     [
+      "**AP join profile**",
+      "CAPWAP, management and AP-specific settings",
+      "Controls how the AP joins and behaves"
+     ],
+     [
+      "**Flex profile**",
+      "Local switching, VLAN and fallback behaviour",
+      "Branch APs can switch traffic locally"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Segmentation options",
+    "cols": [
+     "Method",
+     "Separates by",
+     "Best used for"
+    ],
+    "rows": [
+     [
+      "**VLAN mapping**",
+      "Layer 2 broadcast domain",
+      "Corporate, guest, voice and IoT SSIDs"
+     ],
+     [
+      "**SGT**",
+      "Identity group",
+      "Policy that follows the user or device"
+     ],
+     [
+      "**Guest anchor**",
+      "Traffic path and policy",
+      "DMZ guest traffic and provider separation"
+     ],
+     [
+      "**FlexConnect local switching**",
+      "Local branch data path",
+      "Branch traffic that should not hairpin to the WLC"
+     ],
+     [
+      "**AP group**",
+      "AP and WLAN scope",
+      "Different SSIDs by building or floor"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Design inputs",
+    "cols": [
+     "Input",
+     "Question to answer",
+     "Design effect"
+    ],
+    "rows": [
+     [
+      "**Client density**",
+      "How many clients and how much throughput per area?",
+      "AP count, channel width, band steering and cell size"
+     ],
+     [
+      "**Location services**",
+      "Do you need real-time tracking or presence?",
+      "AP placement, hyperlocation and RF visibility"
+     ],
+     [
+      "**Roaming**",
+      "Is mobility Layer 2 or Layer 3?",
+      "Mobility group, anchor and controller placement"
+     ],
+     [
+      "**Coverage**",
+      "Where is coverage required, including outdoor areas?",
+      "Site survey, external antennas and AP models"
+     ],
+     [
+      "**Interference**",
+      "What other RF sources and neighbours exist?",
+      "Channel plan, DFS and transmit power"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "How the tag flow works",
+    "items": [
+     {
+      "t": "AP joins",
+      "d": "The AP discovers the WLC with CAPWAP and receives its configuration."
+     },
+     {
+      "t": "Site tag",
+      "d": "The site tag selects the AP join profile and site-specific behaviour."
+     },
+     {
+      "t": "Policy tag",
+      "d": "The policy tag selects which WLANs are offered at that site."
+     },
+     {
+      "t": "WLAN policy",
+      "d": "Each WLAN maps to a VLAN, interface, security policy and optionally an SGT."
+     },
+     {
+      "t": "Enforcement",
+      "d": "The wired network applies VLAN, ACL or SGT policy after the wireless frame is bridged."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Catalyst 9800 configuration sketch",
+    "code": "wireless tag policy POLICY-CORP\n wlan CORP policy POLICY-CORP\n!\nwireless tag site SITE-HQ\n ap-profile AP-JOIN-HQ\n!\nwireless profile flex FLEX-BRANCH\n local-switching\n!\nshow wireless tag policy summary\nshow wireless tag site summary\nshow ap config general"
+   },
+   {
+    "kind": "list",
+    "h": "Design and verification checks",
+    "items": [
+     {
+      "t": "Check the data path",
+      "d": "Confirm whether traffic is centrally switched, locally switched or anchored before troubleshooting VLANs."
+     },
+     {
+      "t": "Check the tag binding",
+      "d": "A WLAN that is configured but not offered usually has a policy-tag or AP-group mismatch."
+     },
+     {
+      "t": "Check the RF design",
+      "d": "High density needs smaller cells, more APs and careful channel reuse, not just higher transmit power."
+     },
+     {
+      "t": "Check guest separation",
+      "d": "Guest traffic should use a dedicated VLAN or anchor and an explicit ACL or firewall policy."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Tag and WLAN binding",
+    "code": "wireless tag policy POLICY-CORP\n wlan CORP policy POLICY-CORP\nwireless tag site SITE-HQ\n ap-profile AP-JOIN-HQ"
+   },
+   {
+    "label": "FlexConnect local switching",
+    "code": "wireless profile flex FLEX-BRANCH\n local-switching\ninterface GigabitEthernet1/0/1\n switchport mode trunk"
+   },
+   {
+    "label": "Verification",
+    "code": "show wireless tag policy summary\nshow wireless tag site summary\nshow ap config general\nshow wireless client summary\nshow wlan summary"
+   }
+  ],
+  "traps": [
+   "**A policy tag selects WLANs; a site tag selects the AP join profile and site behaviour.**",
+   "**A WLAN configured on the controller is not offered until the policy tag and AP group match.**",
+   "**RF profiles control radio parameters, not SSID or VLAN policy.**",
+   "**FlexConnect local switching changes the data path, not just the management path.**",
+   "**Client density is about usable throughput per area, not the number of clients alone.**",
+   "**Guest separation needs a dedicated VLAN or anchor plus policy; hiding the SSID is not segmentation.**"
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "RF profile",
+     "Radio parameters"
+    ],
+    [
+     "Site tag",
+     "AP join profile and site"
+    ],
+    [
+     "Policy tag",
+     "WLAN offering"
+    ],
+    [
+     "AP join profile",
+     "CAPWAP and AP settings"
+    ],
+    [
+     "Flex profile",
+     "Local switching and fallback"
+    ],
+    [
+     "Guest traffic",
+     "Dedicated VLAN or anchor"
+    ],
+    [
+     "Identity segmentation",
+     "SGT or VLAN"
+    ],
+    [
+     "Density design",
+     "Throughput per area"
+    ],
+    [
+     "Location design",
+     "AP placement and RF visibility"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. SSID",
+    "d": "WLAN profiles and SSID mapping"
+   },
+   {
+    "t": "07. WLC",
+    "d": "Controller architecture and AP join"
+   },
+   {
+    "t": "11. WPA2",
+    "d": "Enterprise authentication and encryption"
+   }
+  ],
+  "glossary": [
+   "RF Profile",
+   "Site Tag",
+   "Policy Tag",
+   "Client Density",
+   "Location Services",
+   "WLAN",
+   "VLAN",
+   "CAPWAP",
+   "Security Group Tag"
+  ]
+ }
+];
 
-        const GROUPS = [
-          { key: 'fund', label: 'WLAN Fundamentals', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
-          { key: 'rf', label: 'RF & Channels', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
-          { key: 'arch', label: 'Architecture & Mobility', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' },
-          { key: 'sec', label: 'Security', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' }
-        ];
+        const GROUPS = [{"key":"fund","label":"WLAN Fundamentals","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"rf","label":"RF & Channels","chip":"bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300","dot":"bg-sky-600","bullet":"text-sky-600 dark:text-sky-400"},{"key":"arch","label":"Architecture & Mobility","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"},{"key":"sec","label":"Security","chip":"bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300","dot":"bg-amber-600","bullet":"text-amber-600 dark:text-amber-400"}];
+
         const groups = GROUPS;
+
         const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
 
         const glossary = [
-          { term: 'WLAN', def: 'Wireless LAN. A network built on IEEE 802.11 where clients associate to access points over shared radio spectrum.' },
-          { term: '802.11', def: 'The IEEE standard family for wireless LANs. It defines the MAC and PHY layers, management frames, and the a, b, g, n, ac and ax amendments.' },
-          { term: 'SSID', def: 'Service Set Identifier. The human-readable wireless network name, up to 32 characters, advertised in beacons.' },
-          { term: 'BSSID', def: 'Basic Service Set Identifier. The 48-bit MAC address of one AP radio, which identifies a specific BSS.' },
-          { term: 'Channels', def: 'The RF sub-bands APs transmit on. In 2.4 GHz the non-overlapping set is 1, 6 and 11; 5 GHz adds many channels including DFS.' },
-          { term: 'RF', def: 'Radio frequency. The shared wireless medium, described by signal strength, noise, attenuation, interference and antenna behaviour.' },
-          { term: 'WLC', def: 'Wireless LAN Controller. The central device that configures APs, runs RRM, handles authentication and coordinates roaming.' },
-          { term: 'CAPWAP', def: 'Control And Provisioning of Wireless Access Points. The AP to WLC protocol, using UDP 5246 for control and UDP 5247 for data.' },
-          { term: 'Mobility', def: 'The controller-side infrastructure that shares client state across WLCs so sessions survive movement between APs and subnets.' },
-          { term: 'Roaming', def: 'A client moving from one AP or BSS to another while keeping its session, using reassociation and shared mobility state.' },
-          { term: 'WPA2', def: 'Wi-Fi Protected Access 2. The 802.11i security standard using AES-CCMP, with PSK or 802.1X authentication and a 4-way handshake.' },
-          { term: 'WPA3', def: 'Wi-Fi Protected Access 3. The newer standard using SAE for personal networks, forward secrecy, mandatory PMF and optional 192-bit enterprise security.' },
-          { term: 'VLAN', def: 'Virtual LAN. A Layer 2 broadcast domain, mapped per SSID or WLAN profile so wireless clients land in the right network.' },
-          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol. It supplies client IP addresses, and mobility must preserve the address across a roam where possible.' },
-          { term: 'RADIUS', def: 'Remote Authentication Dial-In User Service. The AAA server used by WPA2 and WPA3 enterprise for 802.1X authentication and key material.' },
-          { term: 'AAA', def: 'Authentication, Authorization and Accounting. The framework behind enterprise wireless identity, normally implemented with RADIUS.' }
-        ];
+ {
+  "term": "WLAN",
+  "def": "Wireless LAN. A network built on IEEE 802.11 where clients associate to access points over shared radio spectrum."
+ },
+ {
+  "term": "802.11",
+  "def": "The IEEE standard family for wireless LANs. It defines the MAC and PHY layers, management frames, and the a, b, g, n, ac and ax amendments."
+ },
+ {
+  "term": "SSID",
+  "def": "Service Set Identifier. The human-readable wireless network name, up to 32 characters, advertised in beacons."
+ },
+ {
+  "term": "BSSID",
+  "def": "Basic Service Set Identifier. The 48-bit MAC address of one AP radio, which identifies a specific BSS."
+ },
+ {
+  "term": "Channels",
+  "def": "The RF sub-bands APs transmit on. In 2.4 GHz the non-overlapping set is 1, 6 and 11; 5 GHz adds many channels including DFS."
+ },
+ {
+  "term": "RF",
+  "def": "Radio frequency. The shared wireless medium, described by signal strength, noise, attenuation, interference and antenna behaviour."
+ },
+ {
+  "term": "WLC",
+  "def": "Wireless LAN Controller. The central device that configures APs, runs RRM, handles authentication and coordinates roaming."
+ },
+ {
+  "term": "CAPWAP",
+  "def": "Control And Provisioning of Wireless Access Points. The AP to WLC protocol, using UDP 5246 for control and UDP 5247 for data."
+ },
+ {
+  "term": "Mobility",
+  "def": "The controller-side infrastructure that shares client state across WLCs so sessions survive movement between APs and subnets."
+ },
+ {
+  "term": "Roaming",
+  "def": "A client moving from one AP or BSS to another while keeping its session, using reassociation and shared mobility state."
+ },
+ {
+  "term": "WPA2",
+  "def": "Wi-Fi Protected Access 2. The 802.11i security standard using AES-CCMP, with PSK or 802.1X authentication and a 4-way handshake."
+ },
+ {
+  "term": "WPA3",
+  "def": "Wi-Fi Protected Access 3. The newer standard using SAE for personal networks, forward secrecy, mandatory PMF and optional 192-bit enterprise security."
+ },
+ {
+  "term": "VLAN",
+  "def": "Virtual LAN. A Layer 2 broadcast domain, mapped per SSID or WLAN profile so wireless clients land in the right network."
+ },
+ {
+  "term": "DHCP",
+  "def": "Dynamic Host Configuration Protocol. It supplies client IP addresses, and mobility must preserve the address across a roam where possible."
+ },
+ {
+  "term": "RADIUS",
+  "def": "Remote Authentication Dial-In User Service. The AAA server used by WPA2 and WPA3 enterprise for 802.1X authentication and key material."
+ },
+ {
+  "term": "AAA",
+  "def": "Authentication, Authorization and Accounting. The framework behind enterprise wireless identity, normally implemented with RADIUS."
+ },
+ {
+  "term": "RF Profile",
+  "def": "A reusable set of radio parameters such as data rates, transmit power and channel settings that can be applied to many access points."
+ },
+ {
+  "term": "Site Tag",
+  "def": "A Catalyst wireless configuration object that associates an access point with a site and an AP join profile."
+ },
+ {
+  "term": "Policy Tag",
+  "def": "A Catalyst wireless configuration object that determines which WLANs are offered to a site or AP group."
+ },
+ {
+  "term": "Client Density",
+  "def": "The number of clients and the aggregate throughput required in a given area. High density is a capacity design problem, not simply a coverage problem."
+ },
+ {
+  "term": "Location Services",
+  "def": "Wireless features that locate clients, tags or assets using AP radio measurements, often used for presence, tracking and analytics."
+ },
+ {
+  "term": "Security Group Tag",
+  "def": "A 16-bit identity tag used by TrustSec. It is assigned at ingress and enforced by SGACLs, either inline in the frame or through SXP."
+ }
+];
 
         const quiz = [
-          { q: 'Which standard family defines wireless LANs?', options: ['802.11', '802.1Q', '802.3', '802.1X'], answer: 0, why: 'The IEEE 802.11 family defines WLAN MAC and PHY behaviour.' },
-          { q: 'What kind of medium is wireless RF?', options: ['Dedicated and lossless', 'Shared and error-prone', 'Full duplex only', 'Optical'], answer: 1, why: 'All nearby radios share the medium, so interference and retries are normal.' },
-          { q: 'What is a BSS?', options: ['All APs under one SSID', 'A controller cluster', 'One AP radio and its clients', 'A VLAN interface'], answer: 2, why: 'A basic service set is one AP radio plus associated clients.' },
-          { q: 'What is an ESS?', options: ['One AP with no clients', 'A single controller port', 'A management frame', 'Many BSSes under one SSID'], answer: 3, why: 'The extended service set groups BSSes so clients can roam under one SSID.' },
-          { q: 'What is the SSID?', options: ['The wireless network name', 'The AP radio MAC', 'The controller IP', 'The VLAN tag'], answer: 0, why: 'The SSID is the human-readable network name advertised in beacons.' },
-          { q: 'What is the BSSID?', options: ['The network name', 'The AP radio MAC address', 'The client IP address', 'The WLC serial number'], answer: 1, why: 'The BSSID is the 48-bit MAC of a specific AP radio.' },
-          { q: 'What is the maximum SSID length?', options: ['16 characters', '64 characters', '32 characters', '128 characters'], answer: 2, why: 'An SSID can be up to 32 characters long.' },
-          { q: 'Is hiding an SSID a security control?', options: ['Yes, it encrypts traffic', 'Yes, it blocks association', 'Only on 6 GHz', 'No, clients still probe for it'], answer: 3, why: 'Hidden SSIDs are not security; clients reveal the name in probes.' },
-          { q: 'How often is a beacon typically sent?', options: ['About every 100 ms', 'Every 1 second', 'Every 10 seconds', 'Only on association'], answer: 0, why: 'Beacons advertise the BSS about ten times per second.' },
-          { q: 'Which access method does 802.11 use?', options: ['CSMA/CD', 'CSMA/CA with ACKs', 'Token passing', 'Polling only'], answer: 1, why: 'Wireless avoids collisions and confirms unicast frames with ACKs.' },
-          { q: 'Why does 802.11 use ACKs?', options: ['To encrypt frames', 'To assign IP addresses', 'It cannot detect collisions while transmitting', 'To select channels'], answer: 2, why: 'A station cannot hear a collision during transmission, so the receiver acknowledges frames.' },
-          { q: 'Which frames run discovery and association?', options: ['Data frames', 'Control frames', 'QoS frames', 'Management frames'], answer: 3, why: 'Beacon, probe, authentication and association are management frames.' },
-          { q: 'What problem does RTS/CTS mitigate?', options: ['The hidden node problem', 'IP address exhaustion', 'Channel bonding', 'VLAN mismatch'], answer: 0, why: 'RTS/CTS reserves the medium so hidden stations know to wait.' },
-          { q: 'Which amendment introduced MIMO?', options: ['802.11a', '802.11n', '802.11g', '802.11b'], answer: 1, why: '802.11n, or Wi-Fi 4, added MIMO and dual-band operation.' },
-          { q: 'Which band is central to 802.11ac?', options: ['2.4 GHz', '6 GHz', '5 GHz', '900 MHz'], answer: 2, why: '802.11ac, or Wi-Fi 5, operates in 5 GHz with wide channels.' },
-          { q: 'Which feature is associated with 802.11ax?', options: ['MIMO only', 'TKIP', 'Frame relay', 'OFDMA and 6 GHz'], answer: 3, why: 'Wi-Fi 6 adds OFDMA and extends to 6 GHz in Wi-Fi 6E.' },
-          { q: 'Which 2.4 GHz channels are non-overlapping in the US?', options: ['1, 6 and 11', '1, 2 and 3', '36, 40 and 44', '52, 56 and 60'], answer: 0, why: 'The common non-overlapping 2.4 GHz plan is 1, 6 and 11.' },
-          { q: 'What is the channel spacing in 2.4 GHz?', options: ['20 MHz', '5 MHz', '40 MHz', '100 MHz'], answer: 1, why: '2.4 GHz channels are spaced 5 MHz apart, which is why they overlap.' },
-          { q: 'Why do DFS channels require extra care?', options: ['They are encrypted', 'They only support 802.11b', 'They must avoid radar', 'They cannot carry voice'], answer: 2, why: 'DFS channels listen for radar and must vacate when radar is detected.' },
-          { q: 'What is the trade-off of a wider channel?', options: ['More channels but lower speed', 'No effect on throughput', 'It removes the need for RRM', 'More throughput but fewer channels'], answer: 3, why: 'Bonding channels raises throughput but consumes more spectrum.' },
-          { q: 'What does RRM automate?', options: ['Channel and power selection', 'Client DHCP addressing', 'WPA3 key exchange', 'VLAN assignment'], answer: 0, why: 'Radio resource management tunes channels, power and coverage.' },
-          { q: 'What does TPC adjust?', options: ['Channel width', 'Transmit power', 'SSID length', 'Roaming threshold'], answer: 1, why: 'Transmit power control adjusts AP power to balance coverage and interference.' },
-          { q: 'What does RSSI measure?', options: ['Signal-to-noise ratio', 'Throughput', 'Received signal strength', 'Channel width'], answer: 2, why: 'RSSI is the received signal level, usually expressed in dBm.' },
-          { q: 'What does SNR measure?', options: ['Signal compared with throughput', 'Power compared with antenna gain', 'Clients compared with APs', 'Signal compared with noise'], answer: 3, why: 'SNR is the difference between signal and noise in dB.' },
-          { q: 'What SNR is generally considered good?', options: ['About 25 dB or better', 'About 3 dB', 'About 5 dB', 'Zero dB'], answer: 0, why: 'A margin around 25 dB supports higher data rates and stability.' },
-          { q: 'How is EIRP calculated?', options: ['Tx power minus antenna gain', 'Tx power plus antenna gain minus cable loss', 'RSSI plus SNR', 'Channel width times clients'], answer: 1, why: 'EIRP combines radio power, antenna gain and cable loss.' },
-          { q: 'What does an increase of 3 dB represent?', options: ['Ten times the power', 'Half the power', 'Double the power', 'No change'], answer: 2, why: 'A 3 dB change doubles or halves power; 10 dB is a tenfold change.' },
-          { q: 'What is the capacity effect of smaller cells?', options: ['Less capacity per area', 'No effect', 'Only lower security', 'More capacity per area'], answer: 3, why: 'More APs create smaller cells and reuse spectrum for more aggregate capacity.' },
-          { q: 'What is a site survey used for?', options: ['Validating coverage and interference', 'Assigning IP addresses', 'Configuring WPA3', 'Replacing a WLC'], answer: 0, why: 'A survey validates RF coverage, interference and capacity before or after deployment.' },
-          { q: 'What is the main role of a WLC?', options: ['Layer 2 switching only', 'Centralized control of APs', 'Internet routing', 'DHCP relay only'], answer: 1, why: 'The WLC configures APs, runs RRM, handles authentication and coordinates roaming.' },
-          { q: 'Which UDP port carries CAPWAP control?', options: ['5247', '1812', '5246', '4789'], answer: 2, why: 'CAPWAP control uses UDP 5246.' },
-          { q: 'Which UDP port carries CAPWAP data?', options: ['5246', '443', '4500', '5247'], answer: 3, why: 'CAPWAP data uses UDP 5247 in Local mode.' },
-          { q: 'How is CAPWAP control protected?', options: ['DTLS', 'TKIP', 'IPsec ESP only', 'Plain text'], answer: 0, why: 'DTLS encrypts the CAPWAP control channel, and data DTLS is optional.' },
-          { q: 'In Local mode, where does client data go?', options: ['Only to the local switch', 'Through the WLC', 'Directly to the internet', 'Nowhere'], answer: 1, why: 'Local mode tunnels client data to the WLC over CAPWAP.' },
-          { q: 'In FlexConnect mode, where does client data go?', options: ['Through the WLC', 'Through the mobility anchor', 'It stays local at the AP', 'To the RADIUS server'], answer: 2, why: 'FlexConnect switches client data locally, which suits remote branches.' },
-          { q: 'What is the correct AP join order?', options: ['Receive config, discover, join', 'Join, discover, reboot', 'Authenticate, route, discover', 'Discover, join, receive config'], answer: 3, why: 'The AP discovers a WLC, joins it and then receives its configuration.' },
-          { q: 'Which controller platform is the modern IOS-XE model?', options: ['Catalyst 9800', 'Aironet 1200', 'Cat 2960', 'ASA 5505'], answer: 0, why: 'The Catalyst 9800 series runs IOS-XE and is the current WLC family.' },
-          { q: 'What does a mobility group share?', options: ['Only AP firmware', 'Client state across WLCs', 'Only VLANs', 'Only DHCP scopes'], answer: 1, why: 'Mobility group members exchange client MAC, IP, security and roaming state.' },
-          { q: 'Which controller is the anchor during a roam?', options: ['The current WLC', 'The RADIUS server', 'The original WLC', 'The core switch'], answer: 2, why: 'The anchor holds the original session and forwards traffic for an L3 roam.' },
-          { q: 'Which controller is the foreign during a roam?', options: ['The original WLC', 'The DHCP server', 'The AP itself', 'The current WLC'], answer: 3, why: 'The foreign controller is the one currently serving the client.' },
-          { q: 'What scope does an L2 roam have?', options: ['The same subnet', 'A different subnet', 'A different mobility group', 'A different SSID'], answer: 0, why: 'An L2 roam keeps the client in the same subnet and uses normal switching.' },
-          { q: 'What does an L3 roam require?', options: ['A new SSID', 'Anchor forwarding', 'A new PSK', 'A new BSSID only'], answer: 1, why: 'When the subnet changes, the anchor controller forwards traffic for the client.' },
-          { q: 'What does 802.11r provide?', options: ['Neighbour reports', 'Band steering', 'Fast transition with pre-distributed keys', 'DFS radar detection'], answer: 2, why: '802.11r pre-authenticates and distributes keys for a fast reassociation.' },
-          { q: 'What does 802.11k provide?', options: ['Fast keys', 'Transmit power control', 'SAE authentication', 'Neighbour reports'], answer: 3, why: '802.11k gives clients neighbour reports so they can choose an AP.' },
-          { q: 'What does 802.11v provide?', options: ['BSS transition assistance', 'AES encryption', 'Channel bonding', 'CAPWAP discovery'], answer: 0, why: '802.11v helps steer clients to a better AP with transition management.' },
-          { q: 'How do you fix a sticky client?', options: ['Disable all SSIDs', 'Band steering plus 802.11k/v/r', 'Use TKIP', 'Remove the WLC'], answer: 1, why: 'Steering and the k/v/r standards encourage a client to move to a better AP.' },
-          { q: 'Which encryption does WPA2 use?', options: ['TKIP', 'WEP', 'AES-CCMP', 'DES'], answer: 2, why: 'WPA2 uses AES with CCMP; TKIP belongs to WPA1.' },
-          { q: 'How many messages are in the WPA2 handshake?', options: ['Two', 'Three', 'Six', 'Four'], answer: 3, why: 'The 4-way handshake derives and confirms the pairwise transient key.' },
-          { q: 'Which authentication does WPA2 Enterprise use?', options: ['802.1X with RADIUS', 'A shared PSK only', 'WEP keys', 'No authentication'], answer: 0, why: 'Enterprise mode uses 802.1X and a RADIUS server for per-user authentication.' },
-          { q: 'What is the main weakness of WPA2 Personal?', options: ['No encryption', 'Offline dictionary attacks on the PSK', 'No SSID', 'No roaming'], answer: 1, why: 'A captured handshake allows offline guessing of a weak pre-shared key.' },
-          { q: 'What replaces the PSK handshake in WPA3 Personal?', options: ['TKIP', 'WEP', 'SAE', 'CAPWAP'], answer: 2, why: 'Simultaneous Authentication of Equals resists offline dictionary attacks.' },
-          { q: 'What is the status of PMF in WPA3?', options: ['Optional', 'Disabled', 'Only on 2.4 GHz', 'Mandatory'], answer: 3, why: 'Protected management frames are required in WPA3.' },
-          { q: 'Does WPA3 provide forward secrecy?', options: ['Yes', 'No', 'Only in transition mode', 'Only with TKIP'], answer: 0, why: 'WPA3 protects past sessions even if a future key is compromised.' },
-          { q: 'What does WPA3 transition mode allow?', options: ['Only WPA3 clients', 'WPA2 clients to join', 'No encryption', 'WEP clients'], answer: 1, why: 'Transition mode supports both WPA2 and WPA3 clients during migration.' },
-          { q: 'What enterprise suite does WPA3 optionally add?', options: ['64-bit', 'WEP 40-bit', '192-bit', 'TKIP'], answer: 2, why: 'WPA3 Enterprise can use a 192-bit CNSA suite for high-assurance networks.' }
-        ];
+ {
+  "q": "Which standard family defines wireless LANs?",
+  "options": [
+   "802.1Q",
+   "802.11",
+   "802.3",
+   "802.1X"
+  ],
+  "answer": 1,
+  "why": "The IEEE 802.11 family defines WLAN MAC and PHY behaviour."
+ },
+ {
+  "q": "What kind of medium is wireless RF?",
+  "options": [
+   "Shared and error-prone",
+   "Dedicated and lossless",
+   "Full duplex only",
+   "Optical"
+  ],
+  "answer": 0,
+  "why": "All nearby radios share the medium, so interference and retries are normal."
+ },
+ {
+  "q": "What is a BSS?",
+  "options": [
+   "All APs under one SSID",
+   "A controller cluster",
+   "A VLAN interface",
+   "One AP radio and its clients"
+  ],
+  "answer": 3,
+  "why": "A basic service set is one AP radio plus associated clients."
+ },
+ {
+  "q": "What is an ESS?",
+  "options": [
+   "One AP with no clients",
+   "A single controller port",
+   "Many BSSes under one SSID",
+   "A management frame"
+  ],
+  "answer": 2,
+  "why": "The extended service set groups BSSes so clients can roam under one SSID."
+ },
+ {
+  "q": "What is the SSID?",
+  "options": [
+   "The AP radio MAC",
+   "The wireless network name",
+   "The controller IP",
+   "The VLAN tag"
+  ],
+  "answer": 1,
+  "why": "The SSID is the human-readable network name advertised in beacons."
+ },
+ {
+  "q": "What is the BSSID?",
+  "options": [
+   "The AP radio MAC address",
+   "The network name",
+   "The client IP address",
+   "The WLC serial number"
+  ],
+  "answer": 0,
+  "why": "The BSSID is the 48-bit MAC of a specific AP radio."
+ },
+ {
+  "q": "What is the maximum SSID length?",
+  "options": [
+   "16 characters",
+   "64 characters",
+   "128 characters",
+   "32 characters"
+  ],
+  "answer": 3,
+  "why": "An SSID can be up to 32 characters long."
+ },
+ {
+  "q": "Is hiding an SSID a security control?",
+  "options": [
+   "Yes, it encrypts traffic",
+   "Yes, it blocks association",
+   "No, clients still probe for it",
+   "Only on 6 GHz"
+  ],
+  "answer": 2,
+  "why": "Hidden SSIDs are not security; clients reveal the name in probes."
+ },
+ {
+  "q": "How often is a beacon typically sent?",
+  "options": [
+   "Every 1 second",
+   "About every 100 ms",
+   "Every 10 seconds",
+   "Only on association"
+  ],
+  "answer": 1,
+  "why": "Beacons advertise the BSS about ten times per second."
+ },
+ {
+  "q": "Which access method does 802.11 use?",
+  "options": [
+   "CSMA/CA with ACKs",
+   "CSMA/CD",
+   "Token passing",
+   "Polling only"
+  ],
+  "answer": 0,
+  "why": "Wireless avoids collisions and confirms unicast frames with ACKs."
+ },
+ {
+  "q": "Why does 802.11 use ACKs?",
+  "options": [
+   "To encrypt frames",
+   "To assign IP addresses",
+   "To select channels",
+   "It cannot detect collisions while transmitting"
+  ],
+  "answer": 3,
+  "why": "A station cannot hear a collision during transmission, so the receiver acknowledges frames."
+ },
+ {
+  "q": "Which frames run discovery and association?",
+  "options": [
+   "Data frames",
+   "Control frames",
+   "Management frames",
+   "QoS frames"
+  ],
+  "answer": 2,
+  "why": "Beacon, probe, authentication and association are management frames."
+ },
+ {
+  "q": "What problem does RTS/CTS mitigate?",
+  "options": [
+   "IP address exhaustion",
+   "The hidden node problem",
+   "Channel bonding",
+   "VLAN mismatch"
+  ],
+  "answer": 1,
+  "why": "RTS/CTS reserves the medium so hidden stations know to wait."
+ },
+ {
+  "q": "Which amendment introduced MIMO?",
+  "options": [
+   "802.11n",
+   "802.11a",
+   "802.11g",
+   "802.11b"
+  ],
+  "answer": 0,
+  "why": "802.11n, or Wi-Fi 4, added MIMO and dual-band operation."
+ },
+ {
+  "q": "Which band is central to 802.11ac?",
+  "options": [
+   "2.4 GHz",
+   "6 GHz",
+   "900 MHz",
+   "5 GHz"
+  ],
+  "answer": 3,
+  "why": "802.11ac, or Wi-Fi 5, operates in 5 GHz with wide channels."
+ },
+ {
+  "q": "Which feature is associated with 802.11ax?",
+  "options": [
+   "MIMO only",
+   "TKIP",
+   "OFDMA and 6 GHz",
+   "Frame relay"
+  ],
+  "answer": 2,
+  "why": "Wi-Fi 6 adds OFDMA and extends to 6 GHz in Wi-Fi 6E."
+ },
+ {
+  "q": "Which 2.4 GHz channels are non-overlapping in the US?",
+  "options": [
+   "1, 2 and 3",
+   "1, 6 and 11",
+   "36, 40 and 44",
+   "52, 56 and 60"
+  ],
+  "answer": 1,
+  "why": "The common non-overlapping 2.4 GHz plan is 1, 6 and 11."
+ },
+ {
+  "q": "What is the channel spacing in 2.4 GHz?",
+  "options": [
+   "5 MHz",
+   "20 MHz",
+   "40 MHz",
+   "100 MHz"
+  ],
+  "answer": 0,
+  "why": "2.4 GHz channels are spaced 5 MHz apart, which is why they overlap."
+ },
+ {
+  "q": "Why do DFS channels require extra care?",
+  "options": [
+   "They are encrypted",
+   "They only support 802.11b",
+   "They cannot carry voice",
+   "They must avoid radar"
+  ],
+  "answer": 3,
+  "why": "DFS channels listen for radar and must vacate when radar is detected."
+ },
+ {
+  "q": "What is the trade-off of a wider channel?",
+  "options": [
+   "More channels but lower speed",
+   "No effect on throughput",
+   "More throughput but fewer channels",
+   "It removes the need for RRM"
+  ],
+  "answer": 2,
+  "why": "Bonding channels raises throughput but consumes more spectrum."
+ },
+ {
+  "q": "What does RRM automate?",
+  "options": [
+   "Client DHCP addressing",
+   "Channel and power selection",
+   "WPA3 key exchange",
+   "VLAN assignment"
+  ],
+  "answer": 1,
+  "why": "Radio resource management tunes channels, power and coverage."
+ },
+ {
+  "q": "What does TPC adjust?",
+  "options": [
+   "Transmit power",
+   "Channel width",
+   "SSID length",
+   "Roaming threshold"
+  ],
+  "answer": 0,
+  "why": "Transmit power control adjusts AP power to balance coverage and interference."
+ },
+ {
+  "q": "What does RSSI measure?",
+  "options": [
+   "Signal-to-noise ratio",
+   "Throughput",
+   "Channel width",
+   "Received signal strength"
+  ],
+  "answer": 3,
+  "why": "RSSI is the received signal level, usually expressed in dBm."
+ },
+ {
+  "q": "What does SNR measure?",
+  "options": [
+   "Signal compared with throughput",
+   "Power compared with antenna gain",
+   "Signal compared with noise",
+   "Clients compared with APs"
+  ],
+  "answer": 2,
+  "why": "SNR is the difference between signal and noise in dB."
+ },
+ {
+  "q": "What SNR is generally considered good?",
+  "options": [
+   "About 3 dB",
+   "About 25 dB or better",
+   "About 5 dB",
+   "Zero dB"
+  ],
+  "answer": 1,
+  "why": "A margin around 25 dB supports higher data rates and stability."
+ },
+ {
+  "q": "How is EIRP calculated?",
+  "options": [
+   "Tx power plus antenna gain minus cable loss",
+   "Tx power minus antenna gain",
+   "RSSI plus SNR",
+   "Channel width times clients"
+  ],
+  "answer": 0,
+  "why": "EIRP combines radio power, antenna gain and cable loss."
+ },
+ {
+  "q": "What does an increase of 3 dB represent?",
+  "options": [
+   "Ten times the power",
+   "Half the power",
+   "No change",
+   "Double the power"
+  ],
+  "answer": 3,
+  "why": "A 3 dB change doubles or halves power; 10 dB is a tenfold change."
+ },
+ {
+  "q": "What is the capacity effect of smaller cells?",
+  "options": [
+   "Less capacity per area",
+   "No effect",
+   "More capacity per area",
+   "Only lower security"
+  ],
+  "answer": 2,
+  "why": "More APs create smaller cells and reuse spectrum for more aggregate capacity."
+ },
+ {
+  "q": "What is a site survey used for?",
+  "options": [
+   "Assigning IP addresses",
+   "Validating coverage and interference",
+   "Configuring WPA3",
+   "Replacing a WLC"
+  ],
+  "answer": 1,
+  "why": "A survey validates RF coverage, interference and capacity before or after deployment."
+ },
+ {
+  "q": "What is the main role of a WLC?",
+  "options": [
+   "Centralized control of APs",
+   "Layer 2 switching only",
+   "Internet routing",
+   "DHCP relay only"
+  ],
+  "answer": 0,
+  "why": "The WLC configures APs, runs RRM, handles authentication and coordinates roaming."
+ },
+ {
+  "q": "Which UDP port carries CAPWAP control?",
+  "options": [
+   "5247",
+   "1812",
+   "4789",
+   "5246"
+  ],
+  "answer": 3,
+  "why": "CAPWAP control uses UDP 5246."
+ },
+ {
+  "q": "Which UDP port carries CAPWAP data?",
+  "options": [
+   "5246",
+   "443",
+   "5247",
+   "4500"
+  ],
+  "answer": 2,
+  "why": "CAPWAP data uses UDP 5247 in Local mode."
+ },
+ {
+  "q": "How is CAPWAP control protected?",
+  "options": [
+   "TKIP",
+   "DTLS",
+   "IPsec ESP only",
+   "Plain text"
+  ],
+  "answer": 1,
+  "why": "DTLS encrypts the CAPWAP control channel, and data DTLS is optional."
+ },
+ {
+  "q": "In Local mode, where does client data go?",
+  "options": [
+   "Through the WLC",
+   "Only to the local switch",
+   "Directly to the internet",
+   "Nowhere"
+  ],
+  "answer": 0,
+  "why": "Local mode tunnels client data to the WLC over CAPWAP."
+ },
+ {
+  "q": "In FlexConnect mode, where does client data go?",
+  "options": [
+   "Through the WLC",
+   "Through the mobility anchor",
+   "To the RADIUS server",
+   "It stays local at the AP"
+  ],
+  "answer": 3,
+  "why": "FlexConnect switches client data locally, which suits remote branches."
+ },
+ {
+  "q": "What is the correct AP join order?",
+  "options": [
+   "Receive config, discover, join",
+   "Join, discover, reboot",
+   "Discover, join, receive config",
+   "Authenticate, route, discover"
+  ],
+  "answer": 2,
+  "why": "The AP discovers a WLC, joins it and then receives its configuration."
+ },
+ {
+  "q": "Which controller platform is the modern IOS-XE model?",
+  "options": [
+   "Aironet 1200",
+   "Catalyst 9800",
+   "Cat 2960",
+   "ASA 5505"
+  ],
+  "answer": 1,
+  "why": "The Catalyst 9800 series runs IOS-XE and is the current WLC family."
+ },
+ {
+  "q": "What does a mobility group share?",
+  "options": [
+   "Client state across WLCs",
+   "Only AP firmware",
+   "Only VLANs",
+   "Only DHCP scopes"
+  ],
+  "answer": 0,
+  "why": "Mobility group members exchange client MAC, IP, security and roaming state."
+ },
+ {
+  "q": "Which controller is the anchor during a roam?",
+  "options": [
+   "The current WLC",
+   "The RADIUS server",
+   "The core switch",
+   "The original WLC"
+  ],
+  "answer": 3,
+  "why": "The anchor holds the original session and forwards traffic for an L3 roam."
+ },
+ {
+  "q": "Which controller is the foreign during a roam?",
+  "options": [
+   "The original WLC",
+   "The DHCP server",
+   "The current WLC",
+   "The AP itself"
+  ],
+  "answer": 2,
+  "why": "The foreign controller is the one currently serving the client."
+ },
+ {
+  "q": "What scope does an L2 roam have?",
+  "options": [
+   "A different subnet",
+   "The same subnet",
+   "A different mobility group",
+   "A different SSID"
+  ],
+  "answer": 1,
+  "why": "An L2 roam keeps the client in the same subnet and uses normal switching."
+ },
+ {
+  "q": "What does an L3 roam require?",
+  "options": [
+   "Anchor forwarding",
+   "A new SSID",
+   "A new PSK",
+   "A new BSSID only"
+  ],
+  "answer": 0,
+  "why": "When the subnet changes, the anchor controller forwards traffic for the client."
+ },
+ {
+  "q": "What does 802.11r provide?",
+  "options": [
+   "Neighbour reports",
+   "Band steering",
+   "DFS radar detection",
+   "Fast transition with pre-distributed keys"
+  ],
+  "answer": 3,
+  "why": "802.11r pre-authenticates and distributes keys for a fast reassociation."
+ },
+ {
+  "q": "What does 802.11k provide?",
+  "options": [
+   "Fast keys",
+   "Transmit power control",
+   "Neighbour reports",
+   "SAE authentication"
+  ],
+  "answer": 2,
+  "why": "802.11k gives clients neighbour reports so they can choose an AP."
+ },
+ {
+  "q": "What does 802.11v provide?",
+  "options": [
+   "AES encryption",
+   "BSS transition assistance",
+   "Channel bonding",
+   "CAPWAP discovery"
+  ],
+  "answer": 1,
+  "why": "802.11v helps steer clients to a better AP with transition management."
+ },
+ {
+  "q": "How do you fix a sticky client?",
+  "options": [
+   "Band steering plus 802.11k/v/r",
+   "Disable all SSIDs",
+   "Use TKIP",
+   "Remove the WLC"
+  ],
+  "answer": 0,
+  "why": "Steering and the k/v/r standards encourage a client to move to a better AP."
+ },
+ {
+  "q": "Which encryption does WPA2 use?",
+  "options": [
+   "TKIP",
+   "WEP",
+   "DES",
+   "AES-CCMP"
+  ],
+  "answer": 3,
+  "why": "WPA2 uses AES with CCMP; TKIP belongs to WPA1."
+ },
+ {
+  "q": "How many messages are in the WPA2 handshake?",
+  "options": [
+   "Two",
+   "Three",
+   "Four",
+   "Six"
+  ],
+  "answer": 2,
+  "why": "The 4-way handshake derives and confirms the pairwise transient key."
+ },
+ {
+  "q": "Which authentication does WPA2 Enterprise use?",
+  "options": [
+   "A shared PSK only",
+   "802.1X with RADIUS",
+   "WEP keys",
+   "No authentication"
+  ],
+  "answer": 1,
+  "why": "Enterprise mode uses 802.1X and a RADIUS server for per-user authentication."
+ },
+ {
+  "q": "What is the main weakness of WPA2 Personal?",
+  "options": [
+   "Offline dictionary attacks on the PSK",
+   "No encryption",
+   "No SSID",
+   "No roaming"
+  ],
+  "answer": 0,
+  "why": "A captured handshake allows offline guessing of a weak pre-shared key."
+ },
+ {
+  "q": "What replaces the PSK handshake in WPA3 Personal?",
+  "options": [
+   "TKIP",
+   "WEP",
+   "CAPWAP",
+   "SAE"
+  ],
+  "answer": 3,
+  "why": "Simultaneous Authentication of Equals resists offline dictionary attacks."
+ },
+ {
+  "q": "What is the status of PMF in WPA3?",
+  "options": [
+   "Optional",
+   "Disabled",
+   "Mandatory",
+   "Only on 2.4 GHz"
+  ],
+  "answer": 2,
+  "why": "Protected management frames are required in WPA3."
+ },
+ {
+  "q": "Does WPA3 provide forward secrecy?",
+  "options": [
+   "No",
+   "Yes",
+   "Only in transition mode",
+   "Only with TKIP"
+  ],
+  "answer": 1,
+  "why": "WPA3 protects past sessions even if a future key is compromised."
+ },
+ {
+  "q": "What does WPA3 transition mode allow?",
+  "options": [
+   "WPA2 clients to join",
+   "Only WPA3 clients",
+   "No encryption",
+   "WEP clients"
+  ],
+  "answer": 0,
+  "why": "Transition mode supports both WPA2 and WPA3 clients during migration."
+ },
+ {
+  "q": "What enterprise suite does WPA3 optionally add?",
+  "options": [
+   "64-bit",
+   "WEP 40-bit",
+   "TKIP",
+   "192-bit"
+  ],
+  "answer": 3,
+  "why": "WPA3 Enterprise can use a 192-bit CNSA suite for high-assurance networks."
+ },
+ {
+  "q": "Which Catalyst 9800 object determines which WLANs are offered at a site?",
+  "options": [
+   "RF profile",
+   "Site tag",
+   "Policy tag",
+   "Flex profile"
+  ],
+  "answer": 2,
+  "why": "The policy tag binds WLANs to a site or AP group. The site tag selects the AP join profile and site behaviour."
+ },
+ {
+  "q": "A branch AP should switch client traffic locally instead of tunneling it to the WLC. Which feature is required?",
+  "options": [
+   "Guest anchor",
+   "FlexConnect local switching",
+   "MAC filtering",
+   "Passive client steering"
+  ],
+  "answer": 1,
+  "why": "FlexConnect local switching keeps the data path at the branch. Central switching would hairpin client traffic through the WLC."
+ },
+ {
+  "q": "What is the best first check when a configured WLAN is not visible to clients at one site?",
+  "options": [
+   "Verify the policy tag and AP group binding",
+   "Increase the AP transmit power",
+   "Change the WLC management VLAN",
+   "Disable all RF profiles"
+  ],
+  "answer": 0,
+  "why": "A WLAN must be selected by the policy tag and offered to the AP group. RF changes will not make an unbound WLAN appear."
+ },
+ {
+  "q": "Which statement about high-density wireless design is correct?",
+  "options": [
+   "It is solved only by increasing transmit power",
+   "It requires disabling 5 GHz",
+   "It is independent of client behaviour",
+   "It is a capacity problem requiring more cells and channel reuse"
+  ],
+  "answer": 3,
+  "why": "High density needs more usable cells, proper channel reuse and client steering. Maximum power increases interference and cell overlap."
+ }
+];
 
         /* ---------------- Helpers ---------------- */
         const AMP = String.fromCharCode(38);

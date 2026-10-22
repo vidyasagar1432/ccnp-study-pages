@@ -590,1227 +590,3351 @@
         const { ref, computed } = Vue;
 
         /* ---------------- Content ---------------- */
-        const heroIntro = `**[[DHCP]]**, **[[DNS]]**, **[[NTP]]**, **[[SNMP]]** and **[[Syslog]]** are the services every network depends on, and the exam tests their ports, message flows and failure modes. This level also covers the file, web, remote-access and communication protocols you are expected to recognise on sight.`;
+        const heroIntro = "**[[DHCP]]**, **[[DNS]]**, **[[NTP]]**, **[[SNMP]]** and **[[Syslog]]** are the services every network depends on, and the exam tests their ports, message flows and failure modes. This level also covers the file, web, remote-access and communication protocols you are expected to recognise on sight.";
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'addr', title: 'DHCP',
-            blurb: 'DORA, UDP 67/68, lease timers T1 and T2, pools and options',
-            overview: '**[[DHCP]] (Dynamic Host Configuration Protocol)** automatically supplies hosts with an IP address, mask, default gateway, DNS servers, domain name and lease duration. The server listens on **UDP 67**, the client on **UDP 68**, and the four-message exchange is remembered as **DORA**.',
-            keyIdea: 'DORA: Discover, Offer, Request, Acknowledge. T1 renews at 50%, T2 rebinds at 87.5%.',
-            sections: [
-              { kind: 'table', h: 'Ports and roles', cols: ['Item', 'Value'], rows: [
-                ['Server port', '**UDP 67**'],
-                ['Client port', '**UDP 68**'],
-                ['First message', 'DHCPDISCOVER (broadcast)'],
-                ['Lease renewal', 'T1 = 50% of lease'],
-                ['Rebind', 'T2 = 87.5% of lease']
-              ]},
-              { kind: 'code', h: 'DORA exchange', code:
-`  Client                          Server
-    | DHCPDISCOVER (broadcast)  ->   |
-    | <-  DHCPOFFER                  |
-    | DHCPREQUEST (broadcast)   ->   |
-    | <-  DHCPACK                    |` },
-              { kind: 'table', h: 'Message types', cols: ['Message', 'Purpose'], rows: [
-                ['DISCOVER', 'Client looks for a server'],
-                ['OFFER', 'Server proposes an address'],
-                ['REQUEST', 'Client asks for the offered address'],
-                ['ACK', 'Server confirms the lease'],
-                ['NAK', 'Server refuses (wrong subnet or lease lost)'],
-                ['RELEASE', 'Client gives the address back'],
-                ['DECLINE', 'Client rejects an address already in use']
-              ]},
-              { kind: 'code', h: 'Server configuration', code:
-`  ip dhcp excluded-address 10.1.1.1 10.1.1.10
-  !
-  ip dhcp pool LAN
-   network 10.1.1.0 255.255.255.0
-   default-router 10.1.1.1
-   dns-server 10.1.1.53
-   lease 0 8` },
-              { kind: 'para', h: 'Options', p: '**Option 53** is the message type, **Option 54** is the server identifier, and **Option 82** is the relay agent information added by a relay.' },
-              { kind: 'code', h: 'Verification', code:
-`  show ip dhcp binding
-  show ip dhcp pool
-  show ip dhcp server statistics` }
-            ],
-            commands: [
-              { label: 'Exclude and build a pool', code:
-`ip dhcp excluded-address 10.1.1.1 10.1.1.10
-ip dhcp pool LAN
- network 10.1.1.0 255.255.255.0
- default-router 10.1.1.1
- dns-server 10.1.1.53` },
-              { label: 'Verify leases', code:
-`show ip dhcp binding\nshow ip dhcp server statistics` }
-            ],
-            traps: [
-              '**UDP 67 is the server, UDP 68 is the client.**',
-              'DORA is **Discover, Offer, Request, ACK**.',
-              'DISCOVER starts as a **broadcast** and does not cross a Layer 3 boundary.',
-              '**T1 = 50%** renews with the original server; **T2 = 87.5%** rebinds with any server.',
-              '**%%ip dhcp excluded-address%%** is global config, not part of the pool.',
-              'Choose the gateway with **%%default-router%%** and DNS with **%%dns-server%%**.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Server / client port', 'UDP 67 / UDP 68'],
-                ['Exchange', 'Discover, Offer, Request, ACK'],
-                ['T1 / T2', '50% / 87.5% of the lease'],
-                ['Gateway option', 'default-router'],
-                ['DNS option', 'dns-server'],
-                ['Relay option', 'Option 82'],
-                ['Message type option', 'Option 53'],
-                ['Exclusion', 'ip dhcp excluded-address (global)']
-              ]
-            },
-            related: [
-              { t: '02. DHCP Snooping', d: 'Stop rogue servers' },
-              { t: '03. DHCP Relay', d: 'Serve remote subnets' }
-            ],
-            glossary: ['DHCP', 'DHCP Relay']
-          },
-          {
-            id: 't02', num: '02', group: 'addr', title: 'DHCP Snooping',
-            blurb: 'Trusted and untrusted ports, the binding table, rate limits and starvation',
-            overview: '**[[DHCP Snooping]]** is a **Layer 2 switch security feature** that blocks DHCP server messages arriving on client-facing ports. It builds a **binding database** of MAC, IP, VLAN, interface and lease that **[[Dynamic ARP Inspection]]** and **[[IP Source Guard]]** can reuse.',
-            keyIdea: 'Untrusted by default. Trust only the port toward the real server or relay.',
-            sections: [
-              { kind: 'table', h: 'Port model', cols: ['Port type', 'Behaviour'], rows: [
-                ['**Trusted**', 'May receive DHCP server messages (OFFER, ACK, NAK)'],
-                ['**Untrusted**', 'Server messages are dropped; only client messages allowed'],
-                ['Default state', '**Untrusted**']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip dhcp snooping
-  ip dhcp snooping vlan 10,20
-  !
-  interface GigabitEthernet0/1
-   ip dhcp snooping trust
-  !
-  interface GigabitEthernet0/2
-   ip dhcp snooping limit rate 10` },
-              { kind: 'table', h: 'What it checks', cols: ['Check', 'Why'], rows: [
-                ['Server messages on untrusted port', 'Blocks rogue DHCP servers'],
-                ['Binding table entries', 'Feeds DAI and IP Source Guard'],
-                ['Rate limit', 'Mitigates DHCP starvation'],
-                ['Option 82', 'Circuit ID and Remote ID identify the port']
-              ]},
-              { kind: 'para', h: 'Starvation', p: 'A **DHCP starvation** attack exhausts the pool with bogus MAC addresses. **Rate limiting** slows it down, but rate limiting is not the same thing as starvation detection.' },
-              { kind: 'code', h: 'Verification', code:
-`  show ip dhcp snooping
-  show ip dhcp snooping binding
-  show ip dhcp snooping statistics` }
-            ],
-            commands: [
-              { label: 'Enable snooping', code:
-`ip dhcp snooping\nip dhcp snooping vlan 10\ninterface GigabitEthernet0/1\n ip dhcp snooping trust` },
-              { label: 'Verify bindings', code:
-`show ip dhcp snooping binding` }
-            ],
-            traps: [
-              'DHCP snooping is a **Layer 2 switch feature**.',
-              'Ports are **untrusted by default**; trust only toward the server/relay.',
-              '**DHCPOFFER, DHCPACK and DHCPNAK** are server-originated messages.',
-              'The **binding database** feeds **DAI** and **IP Source Guard**.',
-              '**Rate limiting** mitigates starvation but is not detection.',
-              'Global enable plus **per-VLAN** enable are both required.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Layer', 'Layer 2 switch feature'],
-                ['Default port state', 'Untrusted'],
-                ['Trusted toward', 'Legitimate DHCP server or relay'],
-                ['Binding contents', 'MAC, IP, VLAN, interface, lease'],
-                ['Consumers', 'DAI, IP Source Guard'],
-                ['Option 82', 'Circuit ID and Remote ID'],
-                ['Attack mitigated', 'DHCP starvation (via rate limit)'],
-                ['Global command', 'ip dhcp snooping']
-              ]
-            },
-            related: [
-              { t: '01. DHCP', d: 'The protocol being protected' },
-              { t: '03. DHCP Relay', d: 'What you trust toward' }
-            ],
-            glossary: ['DHCP Snooping', 'DHCP', 'Dynamic ARP Inspection', 'IP Source Guard']
-          },
-          {
-            id: 't03', num: '03', group: 'addr', title: 'DHCP Relay',
-            blurb: 'ip helper-address, giaddr, and serving clients in another subnet',
-            overview: '**[[DHCP Relay]]** forwards DHCP broadcasts across a Layer 3 boundary. A client-facing interface configured with **%%ip helper-address%%** becomes a relay agent: it forwards the request toward the server and fills in **%%giaddr%%** so the server can pick the right scope.',
-            keyIdea: 'ip helper-address goes on the client-facing interface; giaddr tells the server which subnet the client lives in.',
-            sections: [
-              { kind: 'code', h: 'Why it exists', code:
-`  Broadcasts do not cross routers.
-  Client VLAN 10 -> router -> DHCP server in VLAN 99
+ {
+  "id": "t01",
+  "num": "01",
+  "group": "addr",
+  "title": "DHCP",
+  "blurb": "DORA, UDP 67/68, lease timers T1 and T2, pools and options",
+  "overview": "**[[DHCP]] (Dynamic Host Configuration Protocol)** automatically supplies hosts with an IP address, mask, default gateway, DNS servers, domain name and lease duration. The server listens on **UDP 67**, the client on **UDP 68**, and the four-message exchange is remembered as **DORA**.",
+  "keyIdea": "DORA: Discover, Offer, Request, Acknowledge. T1 renews at 50%, T2 rebinds at 87.5%.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Ports and roles",
+    "cols": [
+     "Item",
+     "Value"
+    ],
+    "rows": [
+     [
+      "Server port",
+      "**UDP 67**"
+     ],
+     [
+      "Client port",
+      "**UDP 68**"
+     ],
+     [
+      "First message",
+      "DHCPDISCOVER (broadcast)"
+     ],
+     [
+      "Lease renewal",
+      "T1 = 50% of lease"
+     ],
+     [
+      "Rebind",
+      "T2 = 87.5% of lease"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "DORA exchange",
+    "code": "  Client                          Server\n    | DHCPDISCOVER (broadcast)  ->   |\n    | <-  DHCPOFFER                  |\n    | DHCPREQUEST (broadcast)   ->   |\n    | <-  DHCPACK                    |"
+   },
+   {
+    "kind": "table",
+    "h": "Message types",
+    "cols": [
+     "Message",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "DISCOVER",
+      "Client looks for a server"
+     ],
+     [
+      "OFFER",
+      "Server proposes an address"
+     ],
+     [
+      "REQUEST",
+      "Client asks for the offered address"
+     ],
+     [
+      "ACK",
+      "Server confirms the lease"
+     ],
+     [
+      "NAK",
+      "Server refuses (wrong subnet or lease lost)"
+     ],
+     [
+      "RELEASE",
+      "Client gives the address back"
+     ],
+     [
+      "DECLINE",
+      "Client rejects an address already in use"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Server configuration",
+    "code": "  ip dhcp excluded-address 10.1.1.1 10.1.1.10\n  !\n  ip dhcp pool LAN\n   network 10.1.1.0 255.255.255.0\n   default-router 10.1.1.1\n   dns-server 10.1.1.53\n   lease 0 8"
+   },
+   {
+    "kind": "para",
+    "h": "Options",
+    "p": "**Option 53** is the message type, **Option 54** is the server identifier, and **Option 82** is the relay agent information added by a relay."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip dhcp binding\n  show ip dhcp pool\n  show ip dhcp server statistics"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Exclude and build a pool",
+    "code": "ip dhcp excluded-address 10.1.1.1 10.1.1.10\nip dhcp pool LAN\n network 10.1.1.0 255.255.255.0\n default-router 10.1.1.1\n dns-server 10.1.1.53"
+   },
+   {
+    "label": "Verify leases",
+    "code": "show ip dhcp binding\nshow ip dhcp server statistics"
+   }
+  ],
+  "traps": [
+   "**UDP 67 is the server, UDP 68 is the client.**",
+   "DORA is **Discover, Offer, Request, ACK**.",
+   "DISCOVER starts as a **broadcast** and does not cross a Layer 3 boundary.",
+   "**T1 = 50%** renews with the original server; **T2 = 87.5%** rebinds with any server.",
+   "**%%ip dhcp excluded-address%%** is global config, not part of the pool.",
+   "Choose the gateway with **%%default-router%%** and DNS with **%%dns-server%%**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Server / client port",
+     "UDP 67 / UDP 68"
+    ],
+    [
+     "Exchange",
+     "Discover, Offer, Request, ACK"
+    ],
+    [
+     "T1 / T2",
+     "50% / 87.5% of the lease"
+    ],
+    [
+     "Gateway option",
+     "default-router"
+    ],
+    [
+     "DNS option",
+     "dns-server"
+    ],
+    [
+     "Relay option",
+     "Option 82"
+    ],
+    [
+     "Message type option",
+     "Option 53"
+    ],
+    [
+     "Exclusion",
+     "ip dhcp excluded-address (global)"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. DHCP Snooping",
+    "d": "Stop rogue servers"
+   },
+   {
+    "t": "03. DHCP Relay",
+    "d": "Serve remote subnets"
+   }
+  ],
+  "glossary": [
+   "DHCP",
+   "DHCP Relay"
+  ]
+ },
+ {
+  "id": "t02",
+  "num": "02",
+  "group": "addr",
+  "title": "DHCP Snooping",
+  "blurb": "Trusted and untrusted ports, the binding table, rate limits and starvation",
+  "overview": "**[[DHCP Snooping]]** is a **Layer 2 switch security feature** that blocks DHCP server messages arriving on client-facing ports. It builds a **binding database** of MAC, IP, VLAN, interface and lease that **[[Dynamic ARP Inspection]]** and **[[IP Source Guard]]** can reuse.",
+  "keyIdea": "Untrusted by default. Trust only the port toward the real server or relay.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Port model",
+    "cols": [
+     "Port type",
+     "Behaviour"
+    ],
+    "rows": [
+     [
+      "**Trusted**",
+      "May receive DHCP server messages (OFFER, ACK, NAK)"
+     ],
+     [
+      "**Untrusted**",
+      "Server messages are dropped; only client messages allowed"
+     ],
+     [
+      "Default state",
+      "**Untrusted**"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  ip dhcp snooping\n  ip dhcp snooping vlan 10,20\n  !\n  interface GigabitEthernet0/1\n   ip dhcp snooping trust\n  !\n  interface GigabitEthernet0/2\n   ip dhcp snooping limit rate 10"
+   },
+   {
+    "kind": "table",
+    "h": "What it checks",
+    "cols": [
+     "Check",
+     "Why"
+    ],
+    "rows": [
+     [
+      "Server messages on untrusted port",
+      "Blocks rogue DHCP servers"
+     ],
+     [
+      "Binding table entries",
+      "Feeds DAI and IP Source Guard"
+     ],
+     [
+      "Rate limit",
+      "Mitigates DHCP starvation"
+     ],
+     [
+      "Option 82",
+      "Circuit ID and Remote ID identify the port"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Starvation",
+    "p": "A **DHCP starvation** attack exhausts the pool with bogus MAC addresses. **Rate limiting** slows it down, but rate limiting is not the same thing as starvation detection."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip dhcp snooping\n  show ip dhcp snooping binding\n  show ip dhcp snooping statistics"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable snooping",
+    "code": "ip dhcp snooping\nip dhcp snooping vlan 10\ninterface GigabitEthernet0/1\n ip dhcp snooping trust"
+   },
+   {
+    "label": "Verify bindings",
+    "code": "show ip dhcp snooping binding"
+   }
+  ],
+  "traps": [
+   "DHCP snooping is a **Layer 2 switch feature**.",
+   "Ports are **untrusted by default**; trust only toward the server/relay.",
+   "**DHCPOFFER, DHCPACK and DHCPNAK** are server-originated messages.",
+   "The **binding database** feeds **DAI** and **IP Source Guard**.",
+   "**Rate limiting** mitigates starvation but is not detection.",
+   "Global enable plus **per-VLAN** enable are both required."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Layer",
+     "Layer 2 switch feature"
+    ],
+    [
+     "Default port state",
+     "Untrusted"
+    ],
+    [
+     "Trusted toward",
+     "Legitimate DHCP server or relay"
+    ],
+    [
+     "Binding contents",
+     "MAC, IP, VLAN, interface, lease"
+    ],
+    [
+     "Consumers",
+     "DAI, IP Source Guard"
+    ],
+    [
+     "Option 82",
+     "Circuit ID and Remote ID"
+    ],
+    [
+     "Attack mitigated",
+     "DHCP starvation (via rate limit)"
+    ],
+    [
+     "Global command",
+     "ip dhcp snooping"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. DHCP",
+    "d": "The protocol being protected"
+   },
+   {
+    "t": "03. DHCP Relay",
+    "d": "What you trust toward"
+   }
+  ],
+  "glossary": [
+   "DHCP Snooping",
+   "DHCP",
+   "Dynamic ARP Inspection",
+   "IP Source Guard"
+  ]
+ },
+ {
+  "id": "t03",
+  "num": "03",
+  "group": "addr",
+  "title": "DHCP Relay",
+  "blurb": "ip helper-address, giaddr, and serving clients in another subnet",
+  "overview": "**[[DHCP Relay]]** forwards DHCP broadcasts across a Layer 3 boundary. A client-facing interface configured with **%%ip helper-address%%** becomes a relay agent: it forwards the request toward the server and fills in **%%giaddr%%** so the server can pick the right scope.",
+  "keyIdea": "ip helper-address goes on the client-facing interface; giaddr tells the server which subnet the client lives in.",
+  "sections": [
+   {
+    "kind": "code",
+    "h": "Why it exists",
+    "code": "  Broadcasts do not cross routers.\n  Client VLAN 10 -> router -> DHCP server in VLAN 99\n\n  Without relay: no answer."
+   },
+   {
+    "kind": "table",
+    "h": "Relay concepts",
+    "cols": [
+     "Term",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**%%giaddr%%**",
+      "Gateway IP address, the client-facing interface address"
+     ],
+     [
+      "**Option 82**",
+      "Extra relay information: Circuit ID and Remote ID"
+     ],
+     [
+      "Helper address",
+      "Destination the relay forwards to"
+     ],
+     [
+      "Server choice",
+      "Uses giaddr to select the pool/scope"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  interface GigabitEthernet0/0.10\n   encapsulation dot1Q 10\n   ip address 10.1.10.1 255.255.255.0\n   ip helper-address 10.1.99.10"
+   },
+   {
+    "kind": "para",
+    "h": "Not just DHCP",
+    "p": "**%%ip helper-address%%** forwards several UDP broadcast services by default, including TFTP and DNS, and can be tuned with **%%ip forward-protocol%%**."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip interface GigabitEthernet0/0.10\n  show running-config | include helper"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configure relay",
+    "code": "interface GigabitEthernet0/0.10\n ip helper-address 10.1.99.10"
+   },
+   {
+    "label": "Verify",
+    "code": "show running-config | include helper"
+   }
+  ],
+  "traps": [
+   "Configure **%%ip helper-address%%** on the **client-facing** Layer 3 interface.",
+   "**%%giaddr%%** and **Option 82** are not the same thing.",
+   "A helper forwards **more than DHCP** unless you restrict protocols.",
+   "Multiple helpers are **not** DHCP failover; that is a server feature.",
+   "The interface address becomes the **giaddr**.",
+   "The server still needs a **route back** to the relay."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Command",
+     "ip helper-address SERVER-IP"
+    ],
+    [
+     "Placed on",
+     "Client-facing Layer 3 interface or SVI"
+    ],
+    [
+     "giaddr",
+     "Client subnet identifier"
+    ],
+    [
+     "Option 82",
+     "Relay agent information"
+    ],
+    [
+     "Also forwards",
+     "Other UDP broadcasts (TFTP, DNS)"
+    ],
+    [
+     "Requirement",
+     "Layer 3 reachability to the server"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. DHCP",
+    "d": "The messages being relayed"
+   },
+   {
+    "t": "02. DHCP Snooping",
+    "d": "Trust joint design"
+   }
+  ],
+  "glossary": [
+   "DHCP Relay",
+   "DHCP"
+  ]
+ },
+ {
+  "id": "t04",
+  "num": "04",
+  "group": "addr",
+  "title": "DNS",
+  "blurb": "Recursive vs iterative, hierarchy, and the record types worth memorising",
+  "overview": "**[[DNS]]** resolves names to addresses. Queries normally use **UDP 53**, while **TCP 53** carries zone transfers and exchanges that cannot complete over UDP. Resolution is hierarchical: root, TLD, then the authoritative server, usually via a recursive resolver.",
+  "keyIdea": "Recursive = resolver does the work. Iterative = server gives a referral. A = IPv4, AAAA = IPv6, PTR = reverse.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Query types",
+    "cols": [
+     "Type",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**Recursive**",
+      "Resolver returns the final answer for the client"
+     ],
+     [
+      "**Iterative**",
+      "Server returns the best information or a referral"
+     ],
+     [
+      "Caching",
+      "Controlled by the record TTL"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Hierarchy",
+    "code": "  Client\n    | recursive query\n    v\n  Recursive resolver\n    | iterative queries\n    v\n  Root -> TLD -> Authoritative server"
+   },
+   {
+    "kind": "table",
+    "h": "Record types",
+    "cols": [
+     "Record",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**A**",
+      "IPv4 address"
+     ],
+     [
+      "**AAAA**",
+      "IPv6 address"
+     ],
+     [
+      "**CNAME**",
+      "Alias to another hostname"
+     ],
+     [
+      "**MX**",
+      "Mail server plus preference (lower wins)"
+     ],
+     [
+      "**PTR**",
+      "Reverse lookup"
+     ],
+     [
+      "**NS**",
+      "Delegated nameserver"
+     ],
+     [
+      "**SRV**",
+      "Service discovery"
+     ],
+     [
+      "**SOA**",
+      "Zone authority information"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Device configuration",
+    "code": "  ip name-server 10.1.1.53\n  ip domain lookup\n  ip domain name example.com"
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show hosts\n  nslookup example.com"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Point the device at DNS",
+    "code": "ip name-server 10.1.1.53\nip domain lookup\nip domain name example.com"
+   },
+   {
+    "label": "Verify resolution",
+    "code": "show hosts"
+   }
+  ],
+  "traps": [
+   "**UDP 53** for queries, **TCP 53** for zone transfers.",
+   "**Recursive** returns the final answer; **iterative** returns a referral.",
+   "**Lower MX preference wins.**",
+   "**PTR** is reverse lookup, **CNAME** is an alias.",
+   "**%%no ip domain lookup%%** disables resolution on the device.",
+   "TTL controls caching, not the record type."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Ports",
+     "UDP 53, TCP 53"
+    ],
+    [
+     "Recursive",
+     "Resolver chases the answer"
+    ],
+    [
+     "Iterative",
+     "Referral to the next server"
+    ],
+    [
+     "IPv4 record",
+     "A"
+    ],
+    [
+     "IPv6 record",
+     "AAAA"
+    ],
+    [
+     "Reverse record",
+     "PTR"
+    ],
+    [
+     "Mail record",
+     "MX (lower preference better)"
+    ],
+    [
+     "Device command",
+     "ip name-server"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. DHCP",
+    "d": "Hands out DNS servers"
+   },
+   {
+    "t": "05. NTP",
+    "d": "Other infrastructure service"
+   }
+  ],
+  "glossary": [
+   "DNS",
+   "DHCP"
+  ]
+ },
+ {
+  "id": "t05",
+  "num": "05",
+  "group": "addr",
+  "title": "NTP & PTP",
+  "blurb": "UDP 123 strata and authentication, plus IEEE 1588 PTP clock roles and precision design",
+  "overview": "**[[NTP]]** synchronises clocks over **UDP 123** using a **stratum** hierarchy. Accurate time matters for log timestamps, troubleshooting, certificates and authentication. **[[PTP]]** adds hardware-timestamped sub-microsecond precision for telecom, finance and industrial networks.",
+  "keyIdea": "NTP uses a stratum hierarchy over UDP 123; PTP uses grandmaster, boundary, transparent and ordinary clocks for sub-microsecond precision.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Stratum hierarchy",
+    "cols": [
+     "Stratum",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**0**",
+      "Reference clock (GPS, atomic)"
+     ],
+     [
+      "**1**",
+      "Server directly synchronised to stratum 0"
+     ],
+     [
+      "**2+**",
+      "One greater than the selected source"
+     ],
+     [
+      "**16**",
+      "Unsynchronised or unusable"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Operating modes",
+    "cols": [
+     "Mode",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Client/server",
+      "Device syncs to a server"
+     ],
+     [
+      "Peer",
+      "Peers can sync to each other"
+     ],
+     [
+      "Master",
+      "Device serves its own clock at a configured stratum"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  ntp server 10.1.1.5\n  ntp source Loopback0\n  !\n  ntp authentication-key 1 md5 SECRET\n  ntp trusted-key 1\n  ntp authenticate\n  ntp server 10.1.1.5 key 1"
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ntp status\n  show ntp associations\n  show clock"
+   },
+   {
+    "kind": "table",
+    "h": "NTP versus PTP",
+    "cols": [
+     "Aspect",
+     "NTP",
+     "PTP"
+    ],
+    "rows": [
+     [
+      "Primary use",
+      "General-purpose time synchronisation",
+      "Sub-microsecond synchronisation for telecom, finance, industrial and packet networks"
+     ],
+     [
+      "Transport",
+      "UDP 123",
+      "Ethernet multicast or UDP 319/320, depending on the profile"
+     ],
+     [
+      "Typical accuracy",
+      "Milliseconds over a LAN/WAN",
+      "Sub-microsecond with hardware timestamping"
+     ],
+     [
+      "Clock model",
+      "Stratum hierarchy",
+      "Grandmaster, boundary, transparent and ordinary clocks"
+     ],
+     [
+      "Security",
+      "Symmetric-key authentication",
+      "Depends on the profile and boundary-clock design"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PTP clock roles",
+    "cols": [
+     "Role",
+     "What it does",
+     "Exam cue"
+    ],
+    "rows": [
+     [
+      "**Grandmaster**",
+      "Source of time for the PTP domain",
+      "Best clock, usually GPS-backed"
+     ],
+     [
+      "**Ordinary clock**",
+      "Has one PTP port and can be master or slave",
+      "Endpoint-style clock"
+     ],
+     [
+      "**Boundary clock**",
+      "Has multiple PTP ports and relays time between segments",
+      "Resets the hierarchy at each boundary"
+     ],
+     [
+      "**Transparent clock**",
+      "Measures and corrects residence time in a switch",
+      "Does not become a master or slave"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "PTP design and configuration notes",
+    "items": [
+     {
+      "t": "Domain",
+      "d": "All clocks that exchange time must use the same PTP domain."
+     },
+     {
+      "t": "Hardware timestamping",
+      "d": "Accuracy depends on timestamping close to the PHY, not in software."
+     },
+     {
+      "t": "Boundary versus transparent",
+      "d": "Boundary clocks terminate and regenerate PTP; transparent clocks forward it and correct delay."
+     },
+     {
+      "t": "Platform support",
+      "d": "IOS XE PTP syntax and supported roles vary by platform, so verify the command reference for the device."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "PTP configuration sketch",
+    "code": "! Choose the role supported by the platform:\n! Boundary clock\nptp clock boundary domain 0\n! Ordinary clock\nptp clock ordinary domain 0\n!\nshow ptp clock\nshow ptp parent\nshow ptp port"
+   }
+  ],
+  "commands": [
+   {
+    "label": "NTP client configuration",
+    "code": "ntp server 10.1.1.5\nntp source Loopback0"
+   },
+   {
+    "label": "NTP authentication",
+    "code": "ntp authentication-key 1 md5 SECRET\nntp trusted-key 1\nntp authenticate\nntp server 10.1.1.5 key 1"
+   },
+   {
+    "label": "PTP configuration sketch",
+    "code": "! Choose one role per device\nptp clock boundary domain 0\n! or\nptp clock ordinary domain 0"
+   },
+   {
+    "label": "Verify time synchronisation",
+    "code": "show ntp status\nshow ntp associations\nshow ptp clock\nshow ptp parent"
+   }
+  ],
+  "traps": [
+   "**NTP uses UDP 123.**",
+   "**Stratum 0** is the reference clock; **stratum 1** is directly attached.",
+   "A synced device is normally **one stratum above its source**.",
+   "**Stratum 16** means unsynchronised.",
+   "Lower stratum is preferred but does not decide every selection.",
+   "An asterisk beside a peer in **%%show ntp associations%%** marks the selected source."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "UDP 123"
+    ],
+    [
+     "Stratum 0",
+     "Reference clock"
+    ],
+    [
+     "Stratum 1",
+     "Directly attached server"
+    ],
+    [
+     "Stratum 16",
+     "Unsynchronised"
+    ],
+    [
+     "Server command",
+     "ntp server IP"
+    ],
+    [
+     "Peer command",
+     "ntp peer IP"
+    ],
+    [
+     "Serve local clock",
+     "ntp master N"
+    ],
+    [
+     "Source address",
+     "ntp source Loopback0"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. Syslog",
+    "d": "Needs accurate timestamps"
+   },
+   {
+    "t": "11. HTTPS",
+    "d": "Certificates depend on time"
+   }
+  ],
+  "glossary": [
+   "NTP",
+   "Syslog"
+  ]
+ },
+ {
+  "id": "t06",
+  "num": "06",
+  "group": "addr",
+  "title": "SNMP",
+  "blurb": "UDP 161/162, communities versus v3 users, traps versus informs",
+  "overview": "**[[SNMP]]** monitors and manages devices. Requests and responses use **UDP 161**, notifications use **UDP 162**. Versions 1 and 2c rely on community strings, which are **not encryption**; **SNMPv3** adds users, authentication and privacy.",
+  "keyIdea": "161 request/response, 162 notifications. TRAP is unacknowledged, INFORM is acknowledged.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Versions",
+    "cols": [
+     "Version",
+     "Security"
+    ],
+    "rows": [
+     [
+      "v1",
+      "Community string, cleartext"
+     ],
+     [
+      "v2c",
+      "Community string, adds GETBULK and informs"
+     ],
+     [
+      "**v3**",
+      "Users, **authNoPriv** or **authPriv**"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Operations",
+    "cols": [
+     "Operation",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**GET**",
+      "Read one object"
+     ],
+     [
+      "**GETNEXT**",
+      "Walk the MIB tree"
+     ],
+     [
+      "**GETBULK**",
+      "Bulk retrieval, v2 and later"
+     ],
+     [
+      "**SET**",
+      "Write a writable object"
+     ],
+     [
+      "**TRAP**",
+      "Notification, no acknowledgement"
+     ],
+     [
+      "**INFORM**",
+      "Notification with acknowledgement"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  snmp-server community READONLY ro\n  snmp-server host 10.1.1.20 version 2c READONLY\n  !\n  snmp-server group ADMINS v3 priv\n  snmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS"
+   },
+   {
+    "kind": "para",
+    "h": "MIB and OID",
+    "p": "A **MIB** organises managed objects and an **OID** addresses one object in that tree. The Cisco enterprise OID is **%%1.3.6.1.4.1.9%%**."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show snmp\n  show snmp user\n  show snmp group"
+   }
+  ],
+  "commands": [
+   {
+    "label": "v2c basics",
+    "code": "snmp-server community READONLY ro\nsnmp-server host 10.1.1.20 version 2c READONLY"
+   },
+   {
+    "label": "v3 user",
+    "code": "snmp-server group ADMINS v3 priv\nsnmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS"
+   },
+   {
+    "label": "Verify",
+    "code": "show snmp\nshow snmp user"
+   }
+  ],
+  "traps": [
+   "**UDP 161** requests, **UDP 162** notifications.",
+   "Community strings are **not encryption**.",
+   "**TRAP** has no acknowledgement; **INFORM** does.",
+   "**GETBULK** is v2 and later, never v1.",
+   "**authNoPriv** authenticates only; **authPriv** encrypts too.",
+   "SNMPv3 uses **users and groups**, not communities."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Request port",
+     "UDP 161"
+    ],
+    [
+     "Notification port",
+     "UDP 162"
+    ],
+    [
+     "v1 / v2c security",
+     "Community string (cleartext)"
+    ],
+    [
+     "v3 security",
+     "Users, auth and priv"
+    ],
+    [
+     "TRAP vs INFORM",
+     "No ack vs ack"
+    ],
+    [
+     "GETBULK",
+     "v2 and later"
+    ],
+    [
+     "MIB vs OID",
+     "Structure vs identifier"
+    ],
+    [
+     "Cisco OID",
+     "1.3.6.1.4.1.9"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. Syslog",
+    "d": "The other monitoring path"
+   },
+   {
+    "t": "05. NTP",
+    "d": "Timestamps for events"
+   }
+  ],
+  "glossary": [
+   "SNMP",
+   "Syslog"
+  ]
+ },
+ {
+  "id": "t07",
+  "num": "07",
+  "group": "addr",
+  "title": "Syslog",
+  "blurb": "Severity 0-7, thresholds, remote hosts and local buffers",
+  "overview": "**[[Syslog]]** transports event messages from devices to a collector, commonly over **UDP 514**. Cisco severities run **0 to 7**, where **0** is the most severe and **7** is debugging. A threshold includes that level and everything numerically lower.",
+  "keyIdea": "Severity 0 is an emergency, 7 is debug. logging trap 4 sends 0 through 4.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Severity levels",
+    "cols": [
+     "Level",
+     "Name",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**0**",
+      "Emergency",
+      "System unusable"
+     ],
+     [
+      "**1**",
+      "Alert",
+      "Immediate action needed"
+     ],
+     [
+      "**2**",
+      "Critical",
+      "Critical condition"
+     ],
+     [
+      "**3**",
+      "Error",
+      "Error condition"
+     ],
+     [
+      "**4**",
+      "Warning",
+      "Warning condition"
+     ],
+     [
+      "**5**",
+      "Notification",
+      "Normal but significant"
+     ],
+     [
+      "**6**",
+      "Informational",
+      "Informational"
+     ],
+     [
+      "**7**",
+      "Debugging",
+      "Most verbose"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  logging host 10.1.1.30\n  logging trap 4\n  logging source-interface Loopback0\n  logging buffered 16384\n  service timestamps log datetime msec"
+   },
+   {
+    "kind": "para",
+    "h": "Where logs go",
+    "p": "**%%logging buffered%%** keeps messages in RAM, **%%logging console%%** controls the console, and **%%logging monitor%%** controls VTY display, which also needs **%%terminal monitor%%** in the session."
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show logging\n  clear logging"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Send to a collector",
+    "code": "logging host 10.1.1.30\nlogging trap 4\nlogging source-interface Loopback0"
+   },
+   {
+    "label": "Local buffer and timestamps",
+    "code": "logging buffered 16384\nservice timestamps log datetime msec"
+   },
+   {
+    "label": "Verify",
+    "code": "show logging"
+   }
+  ],
+  "traps": [
+   "Traditional Cisco syslog uses **UDP 514**.",
+   "Severity **0 is most severe**, **7 is debug**.",
+   "A threshold includes that level and all **lower numbers**.",
+   "**%%logging trap 4%%** sends **0 through 4**.",
+   "**%%logging buffered%%** is local RAM, not a remote server.",
+   "**%%terminal monitor%%** is needed to see logs on a VTY."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Transport",
+     "UDP 514"
+    ],
+    [
+     "Severity range",
+     "0 to 7"
+    ],
+    [
+     "Most severe",
+     "0 emergency"
+    ],
+    [
+     "Most verbose",
+     "7 debugging"
+    ],
+    [
+     "Threshold",
+     "Selected level and lower numbers"
+    ],
+    [
+     "Remote host",
+     "logging host IP"
+    ],
+    [
+     "Local storage",
+     "logging buffered"
+    ],
+    [
+     "Timestamps",
+     "service timestamps log datetime msec"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. NTP",
+    "d": "Accurate log times"
+   },
+   {
+    "t": "06. SNMP",
+    "d": "Polling versus logging"
+   }
+  ],
+  "glossary": [
+   "Syslog",
+   "NTP",
+   "SNMP"
+  ]
+ },
+ {
+  "id": "t08",
+  "num": "08",
+  "group": "web",
+  "title": "FTP",
+  "blurb": "TCP 21 control, 20 active data, passive mode, and cleartext credentials",
+  "overview": "**[[FTP]]** transfers files over **TCP** with separate **control** and **data** connections. The control channel is **TCP 21**; in **active mode** the server sources data from **TCP 20**, while **passive mode** uses a dynamic high port on the server. Credentials and payload are cleartext.",
+  "keyIdea": "Control and data are separate connections. Active: server connects out. Passive: client connects in.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Ports",
+    "cols": [
+     "Port",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**TCP 21**",
+      "Control connection"
+     ],
+     [
+      "**TCP 20**",
+      "Server source port for active-mode data"
+     ],
+     [
+      "Dynamic high port",
+      "Passive-mode data listener"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Modes",
+    "cols": [
+     "Mode",
+     "Who initiates data",
+     "Common problem"
+    ],
+    "rows": [
+     [
+      "**Active**",
+      "Server toward client",
+      "Client firewall or NAT blocks it"
+     ],
+     [
+      "**Passive**",
+      "Client toward server",
+      "Server passive range blocked"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Cisco file transfer",
+    "code": "  copy ftp: flash:\n  copy running-config ftp://user:pass@10.1.1.20/r1.cfg\n  ip ftp username netops\n  ip ftp password SECRET"
+   },
+   {
+    "kind": "table",
+    "h": "Secure relatives",
+    "cols": [
+     "Protocol",
+     "Underlay"
+    ],
+    "rows": [
+     [
+      "**FTPS**",
+      "FTP plus TLS"
+     ],
+     [
+      "**SFTP**",
+      "SSH-based transfer, not FTP at all"
+     ],
+     [
+      "**SCP**",
+      "SSH copy, TCP 22"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Set credentials and copy",
+    "code": "ip ftp username netops\nip ftp password SECRET\ncopy running-config ftp://10.1.1.20/r1.cfg"
+   },
+   {
+    "label": "Verify",
+    "code": "show running-config | include ftp"
+   }
+  ],
+  "traps": [
+   "**TCP 21 is control**, not data.",
+   "**TCP 20** is the server source port in **active** mode.",
+   "Passive mode uses a **dynamic server port**.",
+   "Credentials and data are **cleartext**.",
+   "**SFTP is not FTP** — it runs over SSH.",
+   "TCP 21 open does **not** guarantee transfers work."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Control port",
+     "TCP 21"
+    ],
+    [
+     "Active data port",
+     "TCP 20 (server source)"
+    ],
+    [
+     "Passive data port",
+     "Dynamic server port"
+    ],
+    [
+     "Encryption",
+     "None"
+    ],
+    [
+     "FTPS",
+     "FTP over TLS"
+    ],
+    [
+     "SFTP",
+     "SSH-based, not FTP"
+    ],
+    [
+     "Direction",
+     "Both control and data needed"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. TFTP",
+    "d": "The UDP cousin"
+   },
+   {
+    "t": "12. SSH",
+    "d": "Carries SCP and SFTP"
+   }
+  ],
+  "glossary": [
+   "FTP",
+   "TFTP",
+   "SSH"
+  ]
+ },
+ {
+  "id": "t09",
+  "num": "09",
+  "group": "web",
+  "title": "TFTP",
+  "blurb": "UDP 69, RRQ and WRQ, and why it is everywhere in Cisco operations",
+  "overview": "**[[TFTP]]** is a minimal, connectionless file transfer protocol over **UDP 69**. It has no authentication, encryption or directory listing, which is exactly why it is used for IOS images, configuration backups and IP phone firmware on trusted networks.",
+  "keyIdea": "UDP 69, RRQ to read, WRQ to write, DATA and ACK blocks, no security at all.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Basics",
+    "cols": [
+     "Item",
+     "TFTP"
+    ],
+    "rows": [
+     [
+      "Transport",
+      "**UDP**"
+     ],
+     [
+      "Well-known port",
+      "**69**"
+     ],
+     [
+      "Authentication",
+      "None"
+     ],
+     [
+      "Encryption",
+      "None"
+     ],
+     [
+      "Directory listing",
+      "None"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Exchange",
+    "code": "  Client --RRQ--> Server\n  Server --DATA block 1--> Client\n  Client --ACK 1--> Server\n  ... repeat per block until the last one"
+   },
+   {
+    "kind": "code",
+    "h": "Cisco usage",
+    "code": "  copy running-config tftp:\n  copy tftp: flash:\n  archive\n   path tftp://10.1.1.20/$h-$t"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Backup and restore",
+    "code": "copy running-config tftp:\ncopy tftp: flash:"
+   }
+  ],
+  "traps": [
+   "**TFTP is UDP 69**, not TCP.",
+   "No authentication, no encryption, no listing.",
+   "**RRQ** reads a file, **WRQ** writes one.",
+   "Data moves in acknowledged blocks.",
+   "The transfer port moves to a dynamic port after the first exchange.",
+   "TFTP is fine on a trusted management network, not the internet."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Transport",
+     "UDP"
+    ],
+    [
+     "Port",
+     "69"
+    ],
+    [
+     "Read request",
+     "RRQ"
+    ],
+    [
+     "Write request",
+     "WRQ"
+    ],
+    [
+     "Security",
+     "None"
+    ],
+    [
+     "Typical use",
+     "IOS images, config backups, phone firmware"
+    ],
+    [
+     "Contrast with FTP",
+     "FTP uses TCP 21 control"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. FTP",
+    "d": "TCP-based alternative"
+   },
+   {
+    "t": "01. DHCP",
+    "d": "Helper addresses also forward TFTP"
+   }
+  ],
+  "glossary": [
+   "TFTP",
+   "FTP",
+   "DHCP"
+  ]
+ },
+ {
+  "id": "t10",
+  "num": "10",
+  "group": "web",
+  "title": "HTTP",
+  "blurb": "TCP 80, request and response, status classes and the device web server",
+  "overview": "**[[HTTP]]** is the stateless request and response protocol of the web on **TCP 80**. On Cisco devices it is also the embedded web server used for GUI and REST management, which is why the exam pairs it with **[[HTTPS]]**.",
+  "keyIdea": "TCP 80, stateless, methods GET and POST, status 2xx success, 4xx client, 5xx server.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Methods",
+    "cols": [
+     "Method",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**GET**",
+      "Retrieve a resource"
+     ],
+     [
+      "**POST**",
+      "Submit data"
+     ],
+     [
+      "**PUT**",
+      "Replace a resource"
+     ],
+     [
+      "**DELETE**",
+      "Remove a resource"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Status classes",
+    "cols": [
+     "Class",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**2xx**",
+      "Success"
+     ],
+     [
+      "**3xx**",
+      "Redirect"
+     ],
+     [
+      "**4xx**",
+      "Client error"
+     ],
+     [
+      "**5xx**",
+      "Server error"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Cisco web management",
+    "code": "  ip http server\n  ip http authentication local\n  ip http access-class 10\n  ip http secure-server"
+   },
+   {
+    "kind": "para",
+    "h": "Why not plain HTTP",
+    "p": "Plain HTTP sends credentials and session data in cleartext. Management should use **%%ip http secure-server%%** so the GUI and REST API run over TLS."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable web management",
+    "code": "ip http server\nip http authentication local\nip http access-class 10"
+   },
+   {
+    "label": "Verify",
+    "code": "show running-config | include ip http"
+   }
+  ],
+  "traps": [
+   "HTTP is **TCP 80**; HTTPS is **443**.",
+   "HTTP is **stateless** — each request stands alone.",
+   "**2xx** success, **4xx** client, **5xx** server.",
+   "Device management should use **HTTPS**, not HTTP.",
+   "An access-class is part of the management stack, not optional polish.",
+   "Status 404 is a client error, not a server error."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 80"
+    ],
+    [
+     "Model",
+     "Request and response"
+    ],
+    [
+     "State",
+     "Stateless"
+    ],
+    [
+     "Methods",
+     "GET, POST, PUT, DELETE"
+    ],
+    [
+     "Success",
+     "2xx"
+    ],
+    [
+     "Client error",
+     "4xx"
+    ],
+    [
+     "Server error",
+     "5xx"
+    ],
+    [
+     "Secure twin",
+     "HTTPS on 443"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. HTTPS",
+    "d": "The secure version"
+   },
+   {
+    "t": "12. SSH",
+    "d": "CLI equivalent"
+   }
+  ],
+  "glossary": [
+   "HTTP",
+   "HTTPS"
+  ]
+ },
+ {
+  "id": "t11",
+  "num": "11",
+  "group": "web",
+  "title": "HTTPS",
+  "blurb": "TCP 443, TLS, trustpoints, and why certificates need correct time",
+  "overview": "**[[HTTPS]]** is **HTTP over TLS** on **TCP 443**. It encrypts the management session and authenticates the server with a certificate, which is why the device needs an RSA keypair and a trustpoint, and why clock accuracy matters.",
+  "keyIdea": "443, TLS, certificate-based server authentication. Generate RSA keys, then enable ip http secure-server.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "HTTP versus HTTPS",
+    "cols": [
+     "Layer",
+     "HTTP",
+     "HTTPS"
+    ],
+    "rows": [
+     [
+      "Port",
+      "80",
+      "**443**"
+     ],
+     [
+      "Encryption",
+      "None",
+      "**TLS record**"
+     ],
+     [
+      "Server auth",
+      "None",
+      "**Certificate**"
+     ],
+     [
+      "Typical use",
+      "Legacy GUI",
+      "Management and REST"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "  crypto key generate rsa modulus 2048\n  !\n  crypto pki trustpoint HTTPS-TP\n   enrollment selfsigned\n   subject-name CN=r1.example.com\n   revocation-check none\n   rsakeypair HTTPS-TP\n  !\n  crypto pki enroll HTTPS-TP\n  ip http secure-server"
+   },
+   {
+    "kind": "para",
+    "h": "Time matters",
+    "p": "Certificate validity is checked against the clock. If **[[NTP]]** is wrong, a valid certificate can appear expired or not yet valid."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable secure server",
+    "code": "crypto key generate rsa modulus 2048\nip http secure-server"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip http server secure status"
+   }
+  ],
+  "traps": [
+   "**HTTPS is TCP 443**; HTTP is 80.",
+   "An **RSA keypair is required** before the secure server works.",
+   "**%%ip http secure-server%%** enables it; **%%ip http server%%** is the insecure twin.",
+   "Server authentication uses a **certificate**.",
+   "Bad clock equals bad certificate validation — fix **NTP**.",
+   "Web GUI and REST access should always be HTTPS."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 443"
+    ],
+    [
+     "Underlay",
+     "TLS"
+    ],
+    [
+     "Cisco command",
+     "ip http secure-server"
+    ],
+    [
+     "Key requirement",
+     "RSA keypair"
+    ],
+    [
+     "Authentication",
+     "Certificate"
+    ],
+    [
+     "Certificate source",
+     "Self-signed or CA"
+    ],
+    [
+     "Depends on",
+     "Accurate time via NTP"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. HTTP",
+    "d": "The insecure original"
+   },
+   {
+    "t": "05. NTP",
+    "d": "Certificate validity"
+   },
+   {
+    "t": "12. SSH",
+    "d": "Other encrypted management path"
+   }
+  ],
+  "glossary": [
+   "HTTPS",
+   "HTTP",
+   "NTP",
+   "SSH"
+  ]
+ },
+ {
+  "id": "t12",
+  "num": "12",
+  "group": "remote",
+  "title": "SSH",
+  "blurb": "TCP 22, key generation, VTY restriction and SCP",
+  "overview": "**[[SSH]]** provides encrypted CLI access on **TCP 22**. It gives confidentiality, integrity, server authentication via host keys and user authentication via local or AAA credentials. On IOS you set a hostname and domain, generate RSA keys, force version 2 and restrict VTY lines.",
+  "keyIdea": "TCP 22. Hostname plus domain, generate RSA keys, ip ssh version 2, transport input ssh.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What SSH provides",
+    "cols": [
+     "Property",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Confidentiality",
+      "Session is encrypted"
+     ],
+     [
+      "Integrity",
+      "Tampering is detected"
+     ],
+     [
+      "Server authentication",
+      "Host keys prove the device identity"
+     ],
+     [
+      "User authentication",
+      "Password, public key or AAA"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Enable SSH",
+    "code": "  hostname R1\n  ip domain name example.com\n  crypto key generate rsa modulus 2048\n  ip ssh version 2\n  !\n  username netops privilege 15 secret SECRET\n  line vty 0 15\n   login local\n   transport input ssh"
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "  show ip ssh\n  show ssh\n  show crypto key mypubkey rsa"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Enable SSHv2",
+    "code": "hostname R1\nip domain name example.com\ncrypto key generate rsa modulus 2048\nip ssh version 2"
+   },
+   {
+    "label": "Restrict VTY to SSH",
+    "code": "line vty 0 15\n login local\n transport input ssh"
+   },
+   {
+    "label": "Verify",
+    "code": "show ip ssh"
+   }
+  ],
+  "traps": [
+   "**SSH is TCP 22**; Telnet is 23.",
+   "A **hostname and domain name** are needed before generating RSA keys.",
+   "**%%transport input ssh%%** also blocks Telnet on those lines.",
+   "**SCP rides SSH on TCP 22.**",
+   "SSH server and client are separate roles.",
+   "An ACL blocking TCP 22 breaks SSH even when configured correctly."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 22"
+    ],
+    [
+     "Version to force",
+     "SSHv2"
+    ],
+    [
+     "Key command",
+     "crypto key generate rsa"
+    ],
+    [
+     "Prerequisite",
+     "Hostname and domain name"
+    ],
+    [
+     "VTY command",
+     "transport input ssh"
+    ],
+    [
+     "Auth option",
+     "login local or AAA"
+    ],
+    [
+     "Secure copy",
+     "SCP over TCP 22"
+    ],
+    [
+     "Replaces",
+     "Telnet"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "13. Telnet",
+    "d": "The insecure original"
+   },
+   {
+    "t": "08. FTP",
+    "d": "Where SFTP fits"
+   }
+  ],
+  "glossary": [
+   "SSH",
+   "Telnet",
+   "FTP"
+  ]
+ },
+ {
+  "id": "t13",
+  "num": "13",
+  "group": "remote",
+  "title": "Telnet",
+  "blurb": "TCP 23, unencrypted CLI, and why transport input ssh matters",
+  "overview": "**[[Telnet]]** is a legacy remote terminal protocol on **TCP 23**. It carries commands, output and credentials in cleartext, so anything on the path can read the session. **[[SSH]]** is the replacement and **%%transport input ssh%%** removes Telnet from the VTY lines.",
+  "keyIdea": "TCP 23 and no encryption. If the question asks for secure CLI access, the answer is SSH.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Telnet versus SSH",
+    "cols": [
+     "Item",
+     "Telnet",
+     "SSH"
+    ],
+    "rows": [
+     [
+      "Port",
+      "**23**",
+      "**22**"
+     ],
+     [
+      "Encryption",
+      "None",
+      "**Yes**"
+     ],
+     [
+      "Credentials",
+      "Cleartext",
+      "Encrypted"
+     ],
+     [
+      "Server auth",
+      "None",
+      "Host keys"
+     ],
+     [
+      "Status",
+      "Legacy",
+      "Preferred"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Disable Telnet on VTY lines",
+    "code": "  line vty 0 15\n   transport input ssh"
+   },
+   {
+    "kind": "para",
+    "h": "Why it lingers",
+    "p": "Telnet survives in labs and legacy console servers, and it is still useful for testing whether a TCP port is open, but it should not carry administrative credentials on a production network."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Remove Telnet access",
+    "code": "line vty 0 15\n transport input ssh"
+   },
+   {
+    "label": "Verify",
+    "code": "show running-config | section line vty"
+   }
+  ],
+  "traps": [
+   "**Telnet is TCP 23**; SSH is 22, FTP control is 21.",
+   "Telnet is **unencrypted** end to end.",
+   "**%%transport input ssh%%** allows SSH and denies Telnet.",
+   "Telnet has no server authentication.",
+   "Secure CLI means SSH, not Telnet over a VPN.",
+   "Closing the VTY to Telnet does not close the console port."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 23"
+    ],
+    [
+     "Encryption",
+     "None"
+    ],
+    [
+     "Credentials",
+     "Cleartext"
+    ],
+    [
+     "Replacement",
+     "SSH on TCP 22"
+    ],
+    [
+     "VTY command",
+     "transport input ssh"
+    ],
+    [
+     "Typical use today",
+     "Labs and legacy console servers"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "12. SSH",
+    "d": "The secure replacement"
+   },
+   {
+    "t": "08. FTP",
+    "d": "Also cleartext by default"
+   }
+  ],
+  "glossary": [
+   "Telnet",
+   "SSH"
+  ]
+ },
+ {
+  "id": "t14",
+  "num": "14",
+  "group": "comm",
+  "title": "SMTP",
+  "blurb": "TCP 25 relay, 587 submission, 465 SMTPS, and store-and-forward",
+  "overview": "**[[SMTP]]** sends and relays mail between servers on **TCP 25**, with **587** for authenticated submission and **465** for SMTP over TLS. It is a push protocol: mail is stored on the server and later pulled by clients with **[[POP3]]** or **[[IMAP]]**.",
+  "keyIdea": "SMTP pushes mail. 4xx is temporary, 5xx is permanent. The dot ends the DATA section.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Ports",
+    "cols": [
+     "Port",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**TCP 25**",
+      "Server-to-server relay"
+     ],
+     [
+      "**TCP 587**",
+      "Client submission with authentication"
+     ],
+     [
+      "**TCP 465**",
+      "SMTPS, TLS from the start"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "A session",
+    "code": "  EHLO client.example.com\n  MAIL FROM:<alice@example.com>\n  RCPT TO:<bob@example.com>\n  DATA\n  Subject: hello\n  ...body...\n  .\n  QUIT"
+   },
+   {
+    "kind": "table",
+    "h": "Where it fits",
+    "cols": [
+     "Hop",
+     "Protocol"
+    ],
+    "rows": [
+     [
+      "Client to server submission",
+      "SMTP 587"
+     ],
+     [
+      "Server to server relay",
+      "SMTP 25"
+     ],
+     [
+      "Client retrieval",
+      "POP3 or IMAP"
+     ]
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "Open relays",
+    "p": "A server that relays mail for anyone is an **open relay**, the classic spam vector and a favourite exam trap. Relay should require authentication or a trusted network."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Cisco mail server (legacy)",
+    "code": "mail-server 10.1.1.25"
+   },
+   {
+    "label": "Verify",
+    "code": "show running-config | include mail-server"
+   }
+  ],
+  "traps": [
+   "**SMTP is TCP 25** for relay, **587** for submission, **465** for SMTPS.",
+   "SMTP **pushes**; POP3 and IMAP **pull**.",
+   "A single **dot** ends the DATA section.",
+   "**4xx is transient, 5xx is permanent.**",
+   "Open relays are an abuse risk.",
+   "Mail is stored on the server until a client retrieves it."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Ports",
+     "25, 587, 465"
+    ],
+    [
+     "Direction",
+     "Push and send"
+    ],
+    [
+     "Client retrieval",
+     "POP3 or IMAP"
+    ],
+    [
+     "Data terminator",
+     "A single dot"
+    ],
+    [
+     "4xx / 5xx",
+     "Transient / permanent"
+    ],
+    [
+     "Risk",
+     "Open relay"
+    ],
+    [
+     "Store and forward",
+     "Yes"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "15. POP3",
+    "d": "Download and delete"
+   },
+   {
+    "t": "16. IMAP",
+    "d": "Keep and sync"
+   }
+  ],
+  "glossary": [
+   "SMTP",
+   "POP3",
+   "IMAP"
+  ]
+ },
+ {
+  "id": "t15",
+  "num": "15",
+  "group": "comm",
+  "title": "POP3",
+  "blurb": "TCP 110, 995 secure, download-and-delete, single-device model",
+  "overview": "**[[POP3]]** downloads mail from a server to one client on **TCP 110**, or **995** with TLS. Mail is typically deleted from the server after download, which suits a single device but breaks multi-device synchronisation.",
+  "keyIdea": "110 plain, 995 secure, download and delete. Use IMAP when several devices need the same mailbox.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Model",
+    "cols": [
+     "Aspect",
+     "POP3"
+    ],
+    "rows": [
+     [
+      "Port",
+      "**TCP 110**"
+     ],
+     [
+      "Secure port",
+      "**TCP 995**"
+     ],
+     [
+      "Storage",
+      "Client local"
+     ],
+     [
+      "Delete after download",
+      "**Default behaviour**"
+     ],
+     [
+      "Sync across devices",
+      "**No**"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Session flow",
+    "code": "  USER alice\n  PASS SECRET\n  STAT\n  LIST\n  RETR 1\n  DELE 1\n  QUIT   <- deletion is committed here"
+   },
+   {
+    "kind": "para",
+    "h": "The deletion detail",
+    "p": "Messages marked with **DELE** are only removed when the session ends with **QUIT**. Aborting the session leaves the mailbox intact."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Typical ports to permit",
+    "code": "! POP3 plain\npermit tcp any host 10.1.1.25 eq 110\n! POP3 over TLS\npermit tcp any host 10.1.1.25 eq 995"
+   }
+  ],
+  "traps": [
+   "**POP3 is TCP 110**; secure is **995**.",
+   "Default behaviour is **download and delete**.",
+   "**No synchronisation** across devices.",
+   "**IMAP** is the multi-device answer.",
+   "DELE only commits at **QUIT**.",
+   "One mailbox is effectively one client at a time."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 110"
+    ],
+    [
+     "Secure port",
+     "TCP 995"
+    ],
+    [
+     "Storage",
+     "Client local"
+    ],
+    [
+     "Delete",
+     "After download"
+    ],
+    [
+     "Sync",
+     "None"
+    ],
+    [
+     "Contrast",
+     "IMAP keeps mail on the server"
+    ],
+    [
+     "Delete commit",
+     "At QUIT"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "14. SMTP",
+    "d": "How mail arrives"
+   },
+   {
+    "t": "16. IMAP",
+    "d": "The synchronised alternative"
+   }
+  ],
+  "glossary": [
+   "POP3",
+   "SMTP",
+   "IMAP"
+  ]
+ },
+ {
+  "id": "t16",
+  "num": "16",
+  "group": "comm",
+  "title": "IMAP",
+  "blurb": "TCP 143, 993 secure, server-side storage and folder sync",
+  "overview": "**[[IMAP]]** keeps mail on the server on **TCP 143**, or **993** with TLS, and synchronises folders, read state and messages across clients. It adds server-side search and partial fetch, making it the choice for multi-device users.",
+  "keyIdea": "143 plain, 993 secure, mail stays on the server and syncs everywhere.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "IMAP versus POP3",
+    "cols": [
+     "Aspect",
+     "IMAP",
+     "POP3"
+    ],
+    "rows": [
+     [
+      "Port",
+      "**143** (993 TLS)",
+      "110 (995 TLS)"
+     ],
+     [
+      "Storage",
+      "**Server**",
+      "Client local"
+     ],
+     [
+      "Folders",
+      "**Server-side**",
+      "Limited"
+     ],
+     [
+      "Multi-device sync",
+      "**Yes**",
+      "No"
+     ],
+     [
+      "Search",
+      "**Server-side**",
+      "No"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Session flavour",
+    "code": "  a1 LOGIN alice SECRET\n  a2 LIST \"\" \"*\"\n  a3 SELECT INBOX\n  a4 FETCH 1 BODY[]\n  a5 LOGOUT"
+   },
+   {
+    "kind": "para",
+    "h": "Why it scales better",
+    "p": "Because the mailbox lives on the server, a phone, laptop and web client all see the same folders and read state. The cost is server storage and a dependency on connectivity."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Ports to permit",
+    "code": "permit tcp any host 10.1.1.25 eq 143\npermit tcp any host 10.1.1.25 eq 993"
+   }
+  ],
+  "traps": [
+   "**IMAP is TCP 143**; secure is **993**.",
+   "Mail **stays on the server**.",
+   "IMAP is **online and synchronised**; POP3 is offline and download-based.",
+   "Folders and server-side SEARCH are IMAP features.",
+   "Multi-device sync is the reason to choose IMAP.",
+   "Deleting in one client syncs to the others."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 143"
+    ],
+    [
+     "Secure port",
+     "TCP 993"
+    ],
+    [
+     "Storage",
+     "Server"
+    ],
+    [
+     "Sync",
+     "Multi-device"
+    ],
+    [
+     "Search",
+     "Server-side"
+    ],
+    [
+     "Folders",
+     "Server-side"
+    ],
+    [
+     "Contrast",
+     "POP3 downloads and deletes"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "15. POP3",
+    "d": "The download alternative"
+   },
+   {
+    "t": "14. SMTP",
+    "d": "How mail arrives"
+   }
+  ],
+  "glossary": [
+   "IMAP",
+   "POP3",
+   "SMTP"
+  ]
+ },
+ {
+  "id": "t17",
+  "num": "17",
+  "group": "comm",
+  "title": "LDAP",
+  "blurb": "TCP 389, LDAPS 636, the DIT, DNs and search filters",
+  "overview": "**[[LDAP]]** is the protocol used to query and manage directory services such as **Active Directory** or OpenLDAP. It runs on **TCP 389**, can be protected with StartTLS on 389, and uses **636** for LDAPS where TLS starts with the connection. Data lives in a hierarchical **Directory Information Tree**.",
+  "keyIdea": "LDAP is a protocol, Active Directory is a directory service. 389 plain or StartTLS, 636 LDAPS.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Ports",
+    "cols": [
+     "Port",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**TCP 389**",
+      "LDAP, optionally upgraded with StartTLS"
+     ],
+     [
+      "**TCP 636**",
+      "LDAPS, TLS from the start"
+     ],
+     [
+      "**TCP 3268**",
+      "AD Global Catalog"
+     ],
+     [
+      "**TCP 3269**",
+      "AD Global Catalog over TLS"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Structure",
+    "cols": [
+     "Term",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**DIT**",
+      "Directory Information Tree"
+     ],
+     [
+      "**DN**",
+      "Distinguished Name, the full path to an entry"
+     ],
+     [
+      "**RDN**",
+      "Relative Distinguished Name, one component"
+     ],
+     [
+      "**Schema**",
+      "Defines allowed object classes and attributes"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Operations and filters",
+    "code": "  BIND     authenticate the session\n  SEARCH   look up entries\n  COMPARE  test an attribute value\n  ADD / MODIFY / DELETE\n\n  (&(objectClass=user)(department=netops))   AND\n  (|(title=engineer)(title=architect))       OR"
+   },
+   {
+    "kind": "para",
+    "h": "Where it fits in the exam",
+    "p": "Cisco devices can use LDAP through AAA or a web GUI login against a directory. The recurring trap is confusing the **protocol** with the **directory product**."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Ports to permit",
+    "code": "permit tcp any host 10.1.1.40 eq 389\npermit tcp any host 10.1.1.40 eq 636"
+   }
+  ],
+  "traps": [
+   "**LDAP is a protocol**; Active Directory is a directory service.",
+   "**TCP 389** is LDAP, **TCP 636** is LDAPS.",
+   "**StartTLS** protects LDAP while staying on 389.",
+   "**3268 and 3269** are the AD Global Catalog ports.",
+   "A **BIND** establishes the session but is not always password authentication.",
+   "Filter operators: **%%&%% is AND, %%|%% is OR**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Port",
+     "TCP 389"
+    ],
+    [
+     "Secure port",
+     "TCP 636 (LDAPS)"
+    ],
+    [
+     "StartTLS",
+     "Upgrades 389 in place"
+    ],
+    [
+     "AD Global Catalog",
+     "3268 / 3269"
+    ],
+    [
+     "Structure",
+     "Directory Information Tree"
+    ],
+    [
+     "Entry name",
+     "Distinguished Name"
+    ],
+    [
+     "Session start",
+     "BIND"
+    ],
+    [
+     "Filter operators",
+     "& AND, | OR"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. DNS",
+    "d": "Another hierarchical naming system"
+   },
+   {
+    "t": "12. SSH",
+    "d": "AAA-backed login"
+   }
+  ],
+  "glossary": [
+   "LDAP",
+   "DNS",
+   "SSH"
+  ]
+ },
+ {
+  "id": "t18",
+  "num": "18",
+  "group": "comm",
+  "title": "SIP",
+  "blurb": "Signaling on 5060, TLS on 5061, and SDP for media negotiation",
+  "overview": "**[[SIP]]** is the **signaling** protocol for voice and unified communications on **TCP or UDP 5060**, with **5061** for TLS. It locates users, sets up and tears down sessions, but carries **no voice** — that is **[[RTP]]**. **SDP** inside SIP negotiates the media parameters.",
+  "keyIdea": "SIP signals, RTP carries. 5060 plain, 5061 TLS. Audio flows endpoint to endpoint after the ACK.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "SIP versus RTP",
+    "cols": [
+     "Protocol",
+     "Job",
+     "Port"
+    ],
+    "rows": [
+     [
+      "**SIP**",
+      "Signaling and call setup",
+      "**5060 / 5061 TLS**"
+     ],
+     [
+      "**RTP**",
+      "Media payload",
+      "Dynamic, even, 16384 and above"
+     ],
+     [
+      "**RTCP**",
+      "Media statistics",
+      "RTP port plus one"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Methods",
+    "cols": [
+     "Method",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**INVITE**",
+      "Start a session"
+     ],
+     [
+      "**ACK**",
+      "Confirm the final response"
+     ],
+     [
+      "**BYE**",
+      "End the session"
+     ],
+     [
+      "**REGISTER**",
+      "Bind a user to a location"
+     ],
+     [
+      "**CANCEL**",
+      "Abort a pending request"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Call flow",
+    "code": "  INVITE  ->  proxy  ->  callee\n  180 Ringing\n  200 OK\n  ACK\n  <-- RTP flows directly between endpoints -->"
+   },
+   {
+    "kind": "para",
+    "h": "The NAT symptom",
+    "p": "NAT usually breaks the **media path**, not signaling. The call rings and connects, but audio is one-way or absent. Fix it with a media relay or by pinning RTP through a gateway."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Ports to permit",
+    "code": "permit udp any any range 16384 32767\npermit tcp any host 10.1.1.60 eq 5060\npermit tcp any host 10.1.1.60 eq 5061"
+   }
+  ],
+  "traps": [
+   "**SIP is signaling on 5060**; RTP carries the audio.",
+   "Methods are text and HTTP-like: INVITE, ACK, BYE, REGISTER.",
+   "Media flows **directly between endpoints** after the ACK.",
+   "NAT breaks the **media** first — one-way audio is the clue.",
+   "**5061** is SIP over TLS.",
+   "SDP inside SIP negotiates codecs and addresses."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Ports",
+     "5060, 5061 TLS"
+    ],
+    [
+     "Job",
+     "Signaling"
+    ],
+    [
+     "Media",
+     "RTP"
+    ],
+    [
+     "Methods",
+     "INVITE, ACK, BYE, REGISTER"
+    ],
+    [
+     "Media negotiation",
+     "SDP"
+    ],
+    [
+     "NAT symptom",
+     "One-way audio"
+    ],
+    [
+     "Transport",
+     "TCP or UDP 5060"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "19. RTP",
+    "d": "The media half"
+   },
+   {
+    "t": "03. DHCP Relay",
+    "d": "Where giaddr shows up"
+   }
+  ],
+  "glossary": [
+   "SIP",
+   "RTP"
+  ]
+ },
+ {
+  "id": "t19",
+  "num": "19",
+  "group": "comm",
+  "title": "RTP",
+  "blurb": "UDP media with sequence numbers, timestamps, and RTCP alongside",
+  "overview": "**[[RTP]]** carries the actual voice and video for real-time sessions over **UDP**, using sequence numbers, timestamps and payload types. **RTCP** is its control companion, reporting QoS statistics such as jitter and loss.",
+  "keyIdea": "RTP is media over UDP on even ports from 16384, RTCP is odd and one port up. It never retransmits.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The trio",
+    "cols": [
+     "Protocol",
+     "Function",
+     "Port"
+    ],
+    "rows": [
+     [
+      "**SIP**",
+      "Signaling",
+      "5060 / 5061"
+     ],
+     [
+      "**RTP**",
+      "Media payload",
+      "Even, 16384 and above"
+     ],
+     [
+      "**RTCP**",
+      "Control and QoS stats",
+      "Odd, RTP port plus one"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Header fields",
+    "cols": [
+     "Field",
+     "Use"
+    ],
+    "rows": [
+     [
+      "**Sequence number**",
+      "Detects loss and reordering"
+     ],
+     [
+      "**Timestamp**",
+      "Drives playout and jitter calculation"
+     ],
+     [
+      "**Payload type**",
+      "Identifies the codec"
+     ],
+     [
+      "**SSRC**",
+      "Identifies the stream"
+     ]
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Why UDP",
+    "code": "  Voice cannot wait for a retransmit.\n  Lost packet -> conceal and move on.\n\n  DSCP EF marks the voice queue."
+   },
+   {
+    "kind": "para",
+    "h": "QoS link",
+    "p": "Voice is marked **DSCP EF (46)** and placed in the priority queue. **Jitter** and loss hurt call quality more than raw bandwidth does."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Mark and queue voice",
+    "code": "class-map match-any VOICE\n match dscp ef\npolicy-map WAN\n class VOICE\n  priority percent 20\ninterface GigabitEthernet0/1\n service-policy output WAN"
+   }
+  ],
+  "traps": [
+   "**RTP is media over UDP**; RTCP is control on the next port.",
+   "RTP **never retransmits** — freshness beats reliability.",
+   "**DSCP EF** marks voice traffic.",
+   "Jitter, not bandwidth, is the usual voice killer.",
+   "SIP sets up, **RTP carries**.",
+   "Ports are **even from 16384**, with RTCP odd."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Key point"
+   ],
+   "rows": [
+    [
+     "Job",
+     "Media payload"
+    ],
+    [
+     "Transport",
+     "UDP"
+    ],
+    [
+     "Ports",
+     "Even, 16384 and above"
+    ],
+    [
+     "RTCP",
+     "Odd, port plus one"
+    ],
+    [
+     "Header fields",
+     "Sequence, timestamp, payload type, SSRC"
+    ],
+    [
+     "Retransmission",
+     "None"
+    ],
+    [
+     "Voice marking",
+     "DSCP EF"
+    ],
+    [
+     "Quality enemy",
+     "Jitter and loss"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "18. SIP",
+    "d": "The signaling half"
+   },
+   {
+    "t": "11. HTTPS",
+    "d": "Another TLS-protected service"
+   }
+  ],
+  "glossary": [
+   "RTP",
+   "SIP"
+  ]
+ }
+];
 
-  Without relay: no answer.` },
-              { kind: 'table', h: 'Relay concepts', cols: ['Term', 'Meaning'], rows: [
-                ['**%%giaddr%%**', 'Gateway IP address, the client-facing interface address'],
-                ['**Option 82**', 'Extra relay information: Circuit ID and Remote ID'],
-                ['Helper address', 'Destination the relay forwards to'],
-                ['Server choice', 'Uses giaddr to select the pool/scope']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  interface GigabitEthernet0/0.10
-   encapsulation dot1Q 10
-   ip address 10.1.10.1 255.255.255.0
-   ip helper-address 10.1.99.10` },
-              { kind: 'para', h: 'Not just DHCP', p: '**%%ip helper-address%%** forwards several UDP broadcast services by default, including TFTP and DNS, and can be tuned with **%%ip forward-protocol%%**.' },
-              { kind: 'code', h: 'Verification', code:
-`  show ip interface GigabitEthernet0/0.10
-  show running-config | include helper` }
-            ],
-            commands: [
-              { label: 'Configure relay', code:
-`interface GigabitEthernet0/0.10\n ip helper-address 10.1.99.10` },
-              { label: 'Verify', code:
-`show running-config | include helper` }
-            ],
-            traps: [
-              'Configure **%%ip helper-address%%** on the **client-facing** Layer 3 interface.',
-              '**%%giaddr%%** and **Option 82** are not the same thing.',
-              'A helper forwards **more than DHCP** unless you restrict protocols.',
-              'Multiple helpers are **not** DHCP failover; that is a server feature.',
-              'The interface address becomes the **giaddr**.',
-              'The server still needs a **route back** to the relay.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Command', 'ip helper-address SERVER-IP'],
-                ['Placed on', 'Client-facing Layer 3 interface or SVI'],
-                ['giaddr', 'Client subnet identifier'],
-                ['Option 82', 'Relay agent information'],
-                ['Also forwards', 'Other UDP broadcasts (TFTP, DNS)'],
-                ['Requirement', 'Layer 3 reachability to the server']
-              ]
-            },
-            related: [
-              { t: '01. DHCP', d: 'The messages being relayed' },
-              { t: '02. DHCP Snooping', d: 'Trust joint design' }
-            ],
-            glossary: ['DHCP Relay', 'DHCP']
-          },
-          {
-            id: 't04', num: '04', group: 'addr', title: 'DNS',
-            blurb: 'Recursive vs iterative, hierarchy, and the record types worth memorising',
-            overview: '**[[DNS]]** resolves names to addresses. Queries normally use **UDP 53**, while **TCP 53** carries zone transfers and exchanges that cannot complete over UDP. Resolution is hierarchical: root, TLD, then the authoritative server, usually via a recursive resolver.',
-            keyIdea: 'Recursive = resolver does the work. Iterative = server gives a referral. A = IPv4, AAAA = IPv6, PTR = reverse.',
-            sections: [
-              { kind: 'table', h: 'Query types', cols: ['Type', 'Meaning'], rows: [
-                ['**Recursive**', 'Resolver returns the final answer for the client'],
-                ['**Iterative**', 'Server returns the best information or a referral'],
-                ['Caching', 'Controlled by the record TTL']
-              ]},
-              { kind: 'code', h: 'Hierarchy', code:
-`  Client
-    | recursive query
-    v
-  Recursive resolver
-    | iterative queries
-    v
-  Root -> TLD -> Authoritative server` },
-              { kind: 'table', h: 'Record types', cols: ['Record', 'Purpose'], rows: [
-                ['**A**', 'IPv4 address'],
-                ['**AAAA**', 'IPv6 address'],
-                ['**CNAME**', 'Alias to another hostname'],
-                ['**MX**', 'Mail server plus preference (lower wins)'],
-                ['**PTR**', 'Reverse lookup'],
-                ['**NS**', 'Delegated nameserver'],
-                ['**SRV**', 'Service discovery'],
-                ['**SOA**', 'Zone authority information']
-              ]},
-              { kind: 'code', h: 'Device configuration', code:
-`  ip name-server 10.1.1.53
-  ip domain lookup
-  ip domain name example.com` },
-              { kind: 'code', h: 'Verification', code:
-`  show hosts
-  nslookup example.com` }
-            ],
-            commands: [
-              { label: 'Point the device at DNS', code:
-`ip name-server 10.1.1.53\nip domain lookup\nip domain name example.com` },
-              { label: 'Verify resolution', code:
-`show hosts` }
-            ],
-            traps: [
-              '**UDP 53** for queries, **TCP 53** for zone transfers.',
-              '**Recursive** returns the final answer; **iterative** returns a referral.',
-              '**Lower MX preference wins.**',
-              '**PTR** is reverse lookup, **CNAME** is an alias.',
-              '**%%no ip domain lookup%%** disables resolution on the device.',
-              'TTL controls caching, not the record type.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Ports', 'UDP 53, TCP 53'],
-                ['Recursive', 'Resolver chases the answer'],
-                ['Iterative', 'Referral to the next server'],
-                ['IPv4 record', 'A'],
-                ['IPv6 record', 'AAAA'],
-                ['Reverse record', 'PTR'],
-                ['Mail record', 'MX (lower preference better)'],
-                ['Device command', 'ip name-server']
-              ]
-            },
-            related: [
-              { t: '01. DHCP', d: 'Hands out DNS servers' },
-              { t: '05. NTP', d: 'Other infrastructure service' }
-            ],
-            glossary: ['DNS', 'DHCP']
-          },
-          {
-            id: 't05', num: '05', group: 'addr', title: 'NTP',
-            blurb: 'UDP 123, stratum levels, modes, authentication and verification',
-            overview: '**[[NTP]]** synchronises clocks over **UDP 123** using a **stratum** hierarchy. Accurate time matters for log timestamps, troubleshooting, certificates and authentication.',
-            keyIdea: 'Stratum 0 is the reference clock, stratum 1 is directly attached, and stratum 16 means unsynchronised.',
-            sections: [
-              { kind: 'table', h: 'Stratum hierarchy', cols: ['Stratum', 'Meaning'], rows: [
-                ['**0**', 'Reference clock (GPS, atomic)'],
-                ['**1**', 'Server directly synchronised to stratum 0'],
-                ['**2+**', 'One greater than the selected source'],
-                ['**16**', 'Unsynchronised or unusable']
-              ]},
-              { kind: 'table', h: 'Operating modes', cols: ['Mode', 'Use'], rows: [
-                ['Client/server', 'Device syncs to a server'],
-                ['Peer', 'Peers can sync to each other'],
-                ['Master', 'Device serves its own clock at a configured stratum']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ntp server 10.1.1.5
-  ntp source Loopback0
-  !
-  ntp authentication-key 1 md5 SECRET
-  ntp trusted-key 1
-  ntp authenticate
-  ntp server 10.1.1.5 key 1` },
-              { kind: 'code', h: 'Verification', code:
-`  show ntp status
-  show ntp associations
-  show clock` }
-            ],
-            commands: [
-              { label: 'Client configuration', code:
-`ntp server 10.1.1.5\nntp source Loopback0` },
-              { label: 'Authenticated client', code:
-`ntp authentication-key 1 md5 SECRET\nntp trusted-key 1\nntp authenticate\nntp server 10.1.1.5 key 1` },
-              { label: 'Verify', code:
-`show ntp status\nshow ntp associations` }
-            ],
-            traps: [
-              '**NTP uses UDP 123.**',
-              '**Stratum 0** is the reference clock; **stratum 1** is directly attached.',
-              'A synced device is normally **one stratum above its source**.',
-              '**Stratum 16** means unsynchronised.',
-              'Lower stratum is preferred but does not decide every selection.',
-              'An asterisk beside a peer in **%%show ntp associations%%** marks the selected source.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'UDP 123'],
-                ['Stratum 0', 'Reference clock'],
-                ['Stratum 1', 'Directly attached server'],
-                ['Stratum 16', 'Unsynchronised'],
-                ['Server command', 'ntp server IP'],
-                ['Peer command', 'ntp peer IP'],
-                ['Serve local clock', 'ntp master N'],
-                ['Source address', 'ntp source Loopback0']
-              ]
-            },
-            related: [
-              { t: '07. Syslog', d: 'Needs accurate timestamps' },
-              { t: '11. HTTPS', d: 'Certificates depend on time' }
-            ],
-            glossary: ['NTP', 'Syslog']
-          },
-          {
-            id: 't06', num: '06', group: 'addr', title: 'SNMP',
-            blurb: 'UDP 161/162, communities versus v3 users, traps versus informs',
-            overview: '**[[SNMP]]** monitors and manages devices. Requests and responses use **UDP 161**, notifications use **UDP 162**. Versions 1 and 2c rely on community strings, which are **not encryption**; **SNMPv3** adds users, authentication and privacy.',
-            keyIdea: '161 request/response, 162 notifications. TRAP is unacknowledged, INFORM is acknowledged.',
-            sections: [
-              { kind: 'table', h: 'Versions', cols: ['Version', 'Security'], rows: [
-                ['v1', 'Community string, cleartext'],
-                ['v2c', 'Community string, adds GETBULK and informs'],
-                ['**v3**', 'Users, **authNoPriv** or **authPriv**']
-              ]},
-              { kind: 'table', h: 'Operations', cols: ['Operation', 'Purpose'], rows: [
-                ['**GET**', 'Read one object'],
-                ['**GETNEXT**', 'Walk the MIB tree'],
-                ['**GETBULK**', 'Bulk retrieval, v2 and later'],
-                ['**SET**', 'Write a writable object'],
-                ['**TRAP**', 'Notification, no acknowledgement'],
-                ['**INFORM**', 'Notification with acknowledgement']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  snmp-server community READONLY ro
-  snmp-server host 10.1.1.20 version 2c READONLY
-  !
-  snmp-server group ADMINS v3 priv
-  snmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS` },
-              { kind: 'para', h: 'MIB and OID', p: 'A **MIB** organises managed objects and an **OID** addresses one object in that tree. The Cisco enterprise OID is **%%1.3.6.1.4.1.9%%**.' },
-              { kind: 'code', h: 'Verification', code:
-`  show snmp
-  show snmp user
-  show snmp group` }
-            ],
-            commands: [
-              { label: 'v2c basics', code:
-`snmp-server community READONLY ro\nsnmp-server host 10.1.1.20 version 2c READONLY` },
-              { label: 'v3 user', code:
-`snmp-server group ADMINS v3 priv\nsnmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS` },
-              { label: 'Verify', code:
-`show snmp\nshow snmp user` }
-            ],
-            traps: [
-              '**UDP 161** requests, **UDP 162** notifications.',
-              'Community strings are **not encryption**.',
-              '**TRAP** has no acknowledgement; **INFORM** does.',
-              '**GETBULK** is v2 and later, never v1.',
-              '**authNoPriv** authenticates only; **authPriv** encrypts too.',
-              'SNMPv3 uses **users and groups**, not communities.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Request port', 'UDP 161'],
-                ['Notification port', 'UDP 162'],
-                ['v1 / v2c security', 'Community string (cleartext)'],
-                ['v3 security', 'Users, auth and priv'],
-                ['TRAP vs INFORM', 'No ack vs ack'],
-                ['GETBULK', 'v2 and later'],
-                ['MIB vs OID', 'Structure vs identifier'],
-                ['Cisco OID', '1.3.6.1.4.1.9']
-              ]
-            },
-            related: [
-              { t: '07. Syslog', d: 'The other monitoring path' },
-              { t: '05. NTP', d: 'Timestamps for events' }
-            ],
-            glossary: ['SNMP', 'Syslog']
-          },
-          {
-            id: 't07', num: '07', group: 'addr', title: 'Syslog',
-            blurb: 'Severity 0-7, thresholds, remote hosts and local buffers',
-            overview: '**[[Syslog]]** transports event messages from devices to a collector, commonly over **UDP 514**. Cisco severities run **0 to 7**, where **0** is the most severe and **7** is debugging. A threshold includes that level and everything numerically lower.',
-            keyIdea: 'Severity 0 is an emergency, 7 is debug. logging trap 4 sends 0 through 4.',
-            sections: [
-              { kind: 'table', h: 'Severity levels', cols: ['Level', 'Name', 'Meaning'], rows: [
-                ['**0**', 'Emergency', 'System unusable'],
-                ['**1**', 'Alert', 'Immediate action needed'],
-                ['**2**', 'Critical', 'Critical condition'],
-                ['**3**', 'Error', 'Error condition'],
-                ['**4**', 'Warning', 'Warning condition'],
-                ['**5**', 'Notification', 'Normal but significant'],
-                ['**6**', 'Informational', 'Informational'],
-                ['**7**', 'Debugging', 'Most verbose']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  logging host 10.1.1.30
-  logging trap 4
-  logging source-interface Loopback0
-  logging buffered 16384
-  service timestamps log datetime msec` },
-              { kind: 'para', h: 'Where logs go', p: '**%%logging buffered%%** keeps messages in RAM, **%%logging console%%** controls the console, and **%%logging monitor%%** controls VTY display, which also needs **%%terminal monitor%%** in the session.' },
-              { kind: 'code', h: 'Verification', code:
-`  show logging
-  clear logging` }
-            ],
-            commands: [
-              { label: 'Send to a collector', code:
-`logging host 10.1.1.30\nlogging trap 4\nlogging source-interface Loopback0` },
-              { label: 'Local buffer and timestamps', code:
-`logging buffered 16384\nservice timestamps log datetime msec` },
-              { label: 'Verify', code:
-`show logging` }
-            ],
-            traps: [
-              'Traditional Cisco syslog uses **UDP 514**.',
-              'Severity **0 is most severe**, **7 is debug**.',
-              'A threshold includes that level and all **lower numbers**.',
-              '**%%logging trap 4%%** sends **0 through 4**.',
-              '**%%logging buffered%%** is local RAM, not a remote server.',
-              '**%%terminal monitor%%** is needed to see logs on a VTY.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Transport', 'UDP 514'],
-                ['Severity range', '0 to 7'],
-                ['Most severe', '0 emergency'],
-                ['Most verbose', '7 debugging'],
-                ['Threshold', 'Selected level and lower numbers'],
-                ['Remote host', 'logging host IP'],
-                ['Local storage', 'logging buffered'],
-                ['Timestamps', 'service timestamps log datetime msec']
-              ]
-            },
-            related: [
-              { t: '05. NTP', d: 'Accurate log times' },
-              { t: '06. SNMP', d: 'Polling versus logging' }
-            ],
-            glossary: ['Syslog', 'NTP', 'SNMP']
-          },
-          {
-            id: 't08', num: '08', group: 'web', title: 'FTP',
-            blurb: 'TCP 21 control, 20 active data, passive mode, and cleartext credentials',
-            overview: '**[[FTP]]** transfers files over **TCP** with separate **control** and **data** connections. The control channel is **TCP 21**; in **active mode** the server sources data from **TCP 20**, while **passive mode** uses a dynamic high port on the server. Credentials and payload are cleartext.',
-            keyIdea: 'Control and data are separate connections. Active: server connects out. Passive: client connects in.',
-            sections: [
-              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
-                ['**TCP 21**', 'Control connection'],
-                ['**TCP 20**', 'Server source port for active-mode data'],
-                ['Dynamic high port', 'Passive-mode data listener']
-              ]},
-              { kind: 'table', h: 'Modes', cols: ['Mode', 'Who initiates data', 'Common problem'], rows: [
-                ['**Active**', 'Server toward client', 'Client firewall or NAT blocks it'],
-                ['**Passive**', 'Client toward server', 'Server passive range blocked']
-              ]},
-              { kind: 'code', h: 'Cisco file transfer', code:
-`  copy ftp: flash:
-  copy running-config ftp://user:pass@10.1.1.20/r1.cfg
-  ip ftp username netops
-  ip ftp password SECRET` },
-              { kind: 'table', h: 'Secure relatives', cols: ['Protocol', 'Underlay'], rows: [
-                ['**FTPS**', 'FTP plus TLS'],
-                ['**SFTP**', 'SSH-based transfer, not FTP at all'],
-                ['**SCP**', 'SSH copy, TCP 22']
-              ]}
-            ],
-            commands: [
-              { label: 'Set credentials and copy', code:
-`ip ftp username netops\nip ftp password SECRET\ncopy running-config ftp://10.1.1.20/r1.cfg` },
-              { label: 'Verify', code:
-`show running-config | include ftp` }
-            ],
-            traps: [
-              '**TCP 21 is control**, not data.',
-              '**TCP 20** is the server source port in **active** mode.',
-              'Passive mode uses a **dynamic server port**.',
-              'Credentials and data are **cleartext**.',
-              '**SFTP is not FTP** — it runs over SSH.',
-              'TCP 21 open does **not** guarantee transfers work.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Control port', 'TCP 21'],
-                ['Active data port', 'TCP 20 (server source)'],
-                ['Passive data port', 'Dynamic server port'],
-                ['Encryption', 'None'],
-                ['FTPS', 'FTP over TLS'],
-                ['SFTP', 'SSH-based, not FTP'],
-                ['Direction', 'Both control and data needed']
-              ]
-            },
-            related: [
-              { t: '09. TFTP', d: 'The UDP cousin' },
-              { t: '12. SSH', d: 'Carries SCP and SFTP' }
-            ],
-            glossary: ['FTP', 'TFTP', 'SSH']
-          },
-          {
-            id: 't09', num: '09', group: 'web', title: 'TFTP',
-            blurb: 'UDP 69, RRQ and WRQ, and why it is everywhere in Cisco operations',
-            overview: '**[[TFTP]]** is a minimal, connectionless file transfer protocol over **UDP 69**. It has no authentication, encryption or directory listing, which is exactly why it is used for IOS images, configuration backups and IP phone firmware on trusted networks.',
-            keyIdea: 'UDP 69, RRQ to read, WRQ to write, DATA and ACK blocks, no security at all.',
-            sections: [
-              { kind: 'table', h: 'Basics', cols: ['Item', 'TFTP'], rows: [
-                ['Transport', '**UDP**'],
-                ['Well-known port', '**69**'],
-                ['Authentication', 'None'],
-                ['Encryption', 'None'],
-                ['Directory listing', 'None']
-              ]},
-              { kind: 'code', h: 'Exchange', code:
-`  Client --RRQ--> Server
-  Server --DATA block 1--> Client
-  Client --ACK 1--> Server
-  ... repeat per block until the last one` },
-              { kind: 'code', h: 'Cisco usage', code:
-`  copy running-config tftp:
-  copy tftp: flash:
-  archive
-   path tftp://10.1.1.20/$h-$t` }
-            ],
-            commands: [
-              { label: 'Backup and restore', code:
-`copy running-config tftp:\ncopy tftp: flash:` }
-            ],
-            traps: [
-              '**TFTP is UDP 69**, not TCP.',
-              'No authentication, no encryption, no listing.',
-              '**RRQ** reads a file, **WRQ** writes one.',
-              'Data moves in acknowledged blocks.',
-              'The transfer port moves to a dynamic port after the first exchange.',
-              'TFTP is fine on a trusted management network, not the internet.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Transport', 'UDP'],
-                ['Port', '69'],
-                ['Read request', 'RRQ'],
-                ['Write request', 'WRQ'],
-                ['Security', 'None'],
-                ['Typical use', 'IOS images, config backups, phone firmware'],
-                ['Contrast with FTP', 'FTP uses TCP 21 control']
-              ]
-            },
-            related: [
-              { t: '08. FTP', d: 'TCP-based alternative' },
-              { t: '01. DHCP', d: 'Helper addresses also forward TFTP' }
-            ],
-            glossary: ['TFTP', 'FTP', 'DHCP']
-          },
-          {
-            id: 't10', num: '10', group: 'web', title: 'HTTP',
-            blurb: 'TCP 80, request and response, status classes and the device web server',
-            overview: '**[[HTTP]]** is the stateless request and response protocol of the web on **TCP 80**. On Cisco devices it is also the embedded web server used for GUI and REST management, which is why the exam pairs it with **[[HTTPS]]**.',
-            keyIdea: 'TCP 80, stateless, methods GET and POST, status 2xx success, 4xx client, 5xx server.',
-            sections: [
-              { kind: 'table', h: 'Methods', cols: ['Method', 'Use'], rows: [
-                ['**GET**', 'Retrieve a resource'],
-                ['**POST**', 'Submit data'],
-                ['**PUT**', 'Replace a resource'],
-                ['**DELETE**', 'Remove a resource']
-              ]},
-              { kind: 'table', h: 'Status classes', cols: ['Class', 'Meaning'], rows: [
-                ['**2xx**', 'Success'],
-                ['**3xx**', 'Redirect'],
-                ['**4xx**', 'Client error'],
-                ['**5xx**', 'Server error']
-              ]},
-              { kind: 'code', h: 'Cisco web management', code:
-`  ip http server
-  ip http authentication local
-  ip http access-class 10
-  ip http secure-server` },
-              { kind: 'para', h: 'Why not plain HTTP', p: 'Plain HTTP sends credentials and session data in cleartext. Management should use **%%ip http secure-server%%** so the GUI and REST API run over TLS.' }
-            ],
-            commands: [
-              { label: 'Enable web management', code:
-`ip http server\nip http authentication local\nip http access-class 10` },
-              { label: 'Verify', code:
-`show running-config | include ip http` }
-            ],
-            traps: [
-              'HTTP is **TCP 80**; HTTPS is **443**.',
-              'HTTP is **stateless** — each request stands alone.',
-              '**2xx** success, **4xx** client, **5xx** server.',
-              'Device management should use **HTTPS**, not HTTP.',
-              'An access-class is part of the management stack, not optional polish.',
-              'Status 404 is a client error, not a server error.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 80'],
-                ['Model', 'Request and response'],
-                ['State', 'Stateless'],
-                ['Methods', 'GET, POST, PUT, DELETE'],
-                ['Success', '2xx'],
-                ['Client error', '4xx'],
-                ['Server error', '5xx'],
-                ['Secure twin', 'HTTPS on 443']
-              ]
-            },
-            related: [
-              { t: '11. HTTPS', d: 'The secure version' },
-              { t: '12. SSH', d: 'CLI equivalent' }
-            ],
-            glossary: ['HTTP', 'HTTPS']
-          },
-          {
-            id: 't11', num: '11', group: 'web', title: 'HTTPS',
-            blurb: 'TCP 443, TLS, trustpoints, and why certificates need correct time',
-            overview: '**[[HTTPS]]** is **HTTP over TLS** on **TCP 443**. It encrypts the management session and authenticates the server with a certificate, which is why the device needs an RSA keypair and a trustpoint, and why clock accuracy matters.',
-            keyIdea: '443, TLS, certificate-based server authentication. Generate RSA keys, then enable ip http secure-server.',
-            sections: [
-              { kind: 'table', h: 'HTTP versus HTTPS', cols: ['Layer', 'HTTP', 'HTTPS'], rows: [
-                ['Port', '80', '**443**'],
-                ['Encryption', 'None', '**TLS record**'],
-                ['Server auth', 'None', '**Certificate**'],
-                ['Typical use', 'Legacy GUI', 'Management and REST']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  crypto key generate rsa modulus 2048
-  !
-  crypto pki trustpoint HTTPS-TP
-   enrollment selfsigned
-   subject-name CN=r1.example.com
-   revocation-check none
-   rsakeypair HTTPS-TP
-  !
-  crypto pki enroll HTTPS-TP
-  ip http secure-server` },
-              { kind: 'para', h: 'Time matters', p: 'Certificate validity is checked against the clock. If **[[NTP]]** is wrong, a valid certificate can appear expired or not yet valid.' }
-            ],
-            commands: [
-              { label: 'Enable secure server', code:
-`crypto key generate rsa modulus 2048\nip http secure-server` },
-              { label: 'Verify', code:
-`show ip http server secure status` }
-            ],
-            traps: [
-              '**HTTPS is TCP 443**; HTTP is 80.',
-              'An **RSA keypair is required** before the secure server works.',
-              '**%%ip http secure-server%%** enables it; **%%ip http server%%** is the insecure twin.',
-              'Server authentication uses a **certificate**.',
-              'Bad clock equals bad certificate validation — fix **NTP**.',
-              'Web GUI and REST access should always be HTTPS.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 443'],
-                ['Underlay', 'TLS'],
-                ['Cisco command', 'ip http secure-server'],
-                ['Key requirement', 'RSA keypair'],
-                ['Authentication', 'Certificate'],
-                ['Certificate source', 'Self-signed or CA'],
-                ['Depends on', 'Accurate time via NTP']
-              ]
-            },
-            related: [
-              { t: '10. HTTP', d: 'The insecure original' },
-              { t: '05. NTP', d: 'Certificate validity' },
-              { t: '12. SSH', d: 'Other encrypted management path' }
-            ],
-            glossary: ['HTTPS', 'HTTP', 'NTP', 'SSH']
-          },
-          {
-            id: 't12', num: '12', group: 'remote', title: 'SSH',
-            blurb: 'TCP 22, key generation, VTY restriction and SCP',
-            overview: '**[[SSH]]** provides encrypted CLI access on **TCP 22**. It gives confidentiality, integrity, server authentication via host keys and user authentication via local or AAA credentials. On IOS you set a hostname and domain, generate RSA keys, force version 2 and restrict VTY lines.',
-            keyIdea: 'TCP 22. Hostname plus domain, generate RSA keys, ip ssh version 2, transport input ssh.',
-            sections: [
-              { kind: 'table', h: 'What SSH provides', cols: ['Property', 'Meaning'], rows: [
-                ['Confidentiality', 'Session is encrypted'],
-                ['Integrity', 'Tampering is detected'],
-                ['Server authentication', 'Host keys prove the device identity'],
-                ['User authentication', 'Password, public key or AAA']
-              ]},
-              { kind: 'code', h: 'Enable SSH', code:
-`  hostname R1
-  ip domain name example.com
-  crypto key generate rsa modulus 2048
-  ip ssh version 2
-  !
-  username netops privilege 15 secret SECRET
-  line vty 0 15
-   login local
-   transport input ssh` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip ssh
-  show ssh
-  show crypto key mypubkey rsa` }
-            ],
-            commands: [
-              { label: 'Enable SSHv2', code:
-`hostname R1\nip domain name example.com\ncrypto key generate rsa modulus 2048\nip ssh version 2` },
-              { label: 'Restrict VTY to SSH', code:
-`line vty 0 15\n login local\n transport input ssh` },
-              { label: 'Verify', code:
-`show ip ssh` }
-            ],
-            traps: [
-              '**SSH is TCP 22**; Telnet is 23.',
-              'A **hostname and domain name** are needed before generating RSA keys.',
-              '**%%transport input ssh%%** also blocks Telnet on those lines.',
-              '**SCP rides SSH on TCP 22.**',
-              'SSH server and client are separate roles.',
-              'An ACL blocking TCP 22 breaks SSH even when configured correctly.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 22'],
-                ['Version to force', 'SSHv2'],
-                ['Key command', 'crypto key generate rsa'],
-                ['Prerequisite', 'Hostname and domain name'],
-                ['VTY command', 'transport input ssh'],
-                ['Auth option', 'login local or AAA'],
-                ['Secure copy', 'SCP over TCP 22'],
-                ['Replaces', 'Telnet']
-              ]
-            },
-            related: [
-              { t: '13. Telnet', d: 'The insecure original' },
-              { t: '08. FTP', d: 'Where SFTP fits' }
-            ],
-            glossary: ['SSH', 'Telnet', 'FTP']
-          },
-          {
-            id: 't13', num: '13', group: 'remote', title: 'Telnet',
-            blurb: 'TCP 23, unencrypted CLI, and why transport input ssh matters',
-            overview: '**[[Telnet]]** is a legacy remote terminal protocol on **TCP 23**. It carries commands, output and credentials in cleartext, so anything on the path can read the session. **[[SSH]]** is the replacement and **%%transport input ssh%%** removes Telnet from the VTY lines.',
-            keyIdea: 'TCP 23 and no encryption. If the question asks for secure CLI access, the answer is SSH.',
-            sections: [
-              { kind: 'table', h: 'Telnet versus SSH', cols: ['Item', 'Telnet', 'SSH'], rows: [
-                ['Port', '**23**', '**22**'],
-                ['Encryption', 'None', '**Yes**'],
-                ['Credentials', 'Cleartext', 'Encrypted'],
-                ['Server auth', 'None', 'Host keys'],
-                ['Status', 'Legacy', 'Preferred']
-              ]},
-              { kind: 'code', h: 'Disable Telnet on VTY lines', code:
-`  line vty 0 15
-   transport input ssh` },
-              { kind: 'para', h: 'Why it lingers', p: 'Telnet survives in labs and legacy console servers, and it is still useful for testing whether a TCP port is open, but it should not carry administrative credentials on a production network.' }
-            ],
-            commands: [
-              { label: 'Remove Telnet access', code:
-`line vty 0 15\n transport input ssh` },
-              { label: 'Verify', code:
-`show running-config | section line vty` }
-            ],
-            traps: [
-              '**Telnet is TCP 23**; SSH is 22, FTP control is 21.',
-              'Telnet is **unencrypted** end to end.',
-              '**%%transport input ssh%%** allows SSH and denies Telnet.',
-              'Telnet has no server authentication.',
-              'Secure CLI means SSH, not Telnet over a VPN.',
-              'Closing the VTY to Telnet does not close the console port.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 23'],
-                ['Encryption', 'None'],
-                ['Credentials', 'Cleartext'],
-                ['Replacement', 'SSH on TCP 22'],
-                ['VTY command', 'transport input ssh'],
-                ['Typical use today', 'Labs and legacy console servers']
-              ]
-            },
-            related: [
-              { t: '12. SSH', d: 'The secure replacement' },
-              { t: '08. FTP', d: 'Also cleartext by default' }
-            ],
-            glossary: ['Telnet', 'SSH']
-          },
-          {
-            id: 't14', num: '14', group: 'comm', title: 'SMTP',
-            blurb: 'TCP 25 relay, 587 submission, 465 SMTPS, and store-and-forward',
-            overview: '**[[SMTP]]** sends and relays mail between servers on **TCP 25**, with **587** for authenticated submission and **465** for SMTP over TLS. It is a push protocol: mail is stored on the server and later pulled by clients with **[[POP3]]** or **[[IMAP]]**.',
-            keyIdea: 'SMTP pushes mail. 4xx is temporary, 5xx is permanent. The dot ends the DATA section.',
-            sections: [
-              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
-                ['**TCP 25**', 'Server-to-server relay'],
-                ['**TCP 587**', 'Client submission with authentication'],
-                ['**TCP 465**', 'SMTPS, TLS from the start']
-              ]},
-              { kind: 'code', h: 'A session', code:
-`  EHLO client.example.com
-  MAIL FROM:<alice@example.com>
-  RCPT TO:<bob@example.com>
-  DATA
-  Subject: hello
-  ...body...
-  .
-  QUIT` },
-              { kind: 'table', h: 'Where it fits', cols: ['Hop', 'Protocol'], rows: [
-                ['Client to server submission', 'SMTP 587'],
-                ['Server to server relay', 'SMTP 25'],
-                ['Client retrieval', 'POP3 or IMAP']
-              ]},
-              { kind: 'para', h: 'Open relays', p: 'A server that relays mail for anyone is an **open relay**, the classic spam vector and a favourite exam trap. Relay should require authentication or a trusted network.' }
-            ],
-            commands: [
-              { label: 'Cisco mail server (legacy)', code:
-`mail-server 10.1.1.25` },
-              { label: 'Verify', code:
-`show running-config | include mail-server` }
-            ],
-            traps: [
-              '**SMTP is TCP 25** for relay, **587** for submission, **465** for SMTPS.',
-              'SMTP **pushes**; POP3 and IMAP **pull**.',
-              'A single **dot** ends the DATA section.',
-              '**4xx is transient, 5xx is permanent.**',
-              'Open relays are an abuse risk.',
-              'Mail is stored on the server until a client retrieves it.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Ports', '25, 587, 465'],
-                ['Direction', 'Push and send'],
-                ['Client retrieval', 'POP3 or IMAP'],
-                ['Data terminator', 'A single dot'],
-                ['4xx / 5xx', 'Transient / permanent'],
-                ['Risk', 'Open relay'],
-                ['Store and forward', 'Yes']
-              ]
-            },
-            related: [
-              { t: '15. POP3', d: 'Download and delete' },
-              { t: '16. IMAP', d: 'Keep and sync' }
-            ],
-            glossary: ['SMTP', 'POP3', 'IMAP']
-          },
-          {
-            id: 't15', num: '15', group: 'comm', title: 'POP3',
-            blurb: 'TCP 110, 995 secure, download-and-delete, single-device model',
-            overview: '**[[POP3]]** downloads mail from a server to one client on **TCP 110**, or **995** with TLS. Mail is typically deleted from the server after download, which suits a single device but breaks multi-device synchronisation.',
-            keyIdea: '110 plain, 995 secure, download and delete. Use IMAP when several devices need the same mailbox.',
-            sections: [
-              { kind: 'table', h: 'Model', cols: ['Aspect', 'POP3'], rows: [
-                ['Port', '**TCP 110**'],
-                ['Secure port', '**TCP 995**'],
-                ['Storage', 'Client local'],
-                ['Delete after download', '**Default behaviour**'],
-                ['Sync across devices', '**No**']
-              ]},
-              { kind: 'code', h: 'Session flow', code:
-`  USER alice
-  PASS SECRET
-  STAT
-  LIST
-  RETR 1
-  DELE 1
-  QUIT   <- deletion is committed here` },
-              { kind: 'para', h: 'The deletion detail', p: 'Messages marked with **DELE** are only removed when the session ends with **QUIT**. Aborting the session leaves the mailbox intact.' }
-            ],
-            commands: [
-              { label: 'Typical ports to permit', code:
-`! POP3 plain\npermit tcp any host 10.1.1.25 eq 110\n! POP3 over TLS\npermit tcp any host 10.1.1.25 eq 995` }
-            ],
-            traps: [
-              '**POP3 is TCP 110**; secure is **995**.',
-              'Default behaviour is **download and delete**.',
-              '**No synchronisation** across devices.',
-              '**IMAP** is the multi-device answer.',
-              'DELE only commits at **QUIT**.',
-              'One mailbox is effectively one client at a time.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 110'],
-                ['Secure port', 'TCP 995'],
-                ['Storage', 'Client local'],
-                ['Delete', 'After download'],
-                ['Sync', 'None'],
-                ['Contrast', 'IMAP keeps mail on the server'],
-                ['Delete commit', 'At QUIT']
-              ]
-            },
-            related: [
-              { t: '14. SMTP', d: 'How mail arrives' },
-              { t: '16. IMAP', d: 'The synchronised alternative' }
-            ],
-            glossary: ['POP3', 'SMTP', 'IMAP']
-          },
-          {
-            id: 't16', num: '16', group: 'comm', title: 'IMAP',
-            blurb: 'TCP 143, 993 secure, server-side storage and folder sync',
-            overview: '**[[IMAP]]** keeps mail on the server on **TCP 143**, or **993** with TLS, and synchronises folders, read state and messages across clients. It adds server-side search and partial fetch, making it the choice for multi-device users.',
-            keyIdea: '143 plain, 993 secure, mail stays on the server and syncs everywhere.',
-            sections: [
-              { kind: 'table', h: 'IMAP versus POP3', cols: ['Aspect', 'IMAP', 'POP3'], rows: [
-                ['Port', '**143** (993 TLS)', '110 (995 TLS)'],
-                ['Storage', '**Server**', 'Client local'],
-                ['Folders', '**Server-side**', 'Limited'],
-                ['Multi-device sync', '**Yes**', 'No'],
-                ['Search', '**Server-side**', 'No']
-              ]},
-              { kind: 'code', h: 'Session flavour', code:
-`  a1 LOGIN alice SECRET
-  a2 LIST "" "*"
-  a3 SELECT INBOX
-  a4 FETCH 1 BODY[]
-  a5 LOGOUT` },
-              { kind: 'para', h: 'Why it scales better', p: 'Because the mailbox lives on the server, a phone, laptop and web client all see the same folders and read state. The cost is server storage and a dependency on connectivity.' }
-            ],
-            commands: [
-              { label: 'Ports to permit', code:
-`permit tcp any host 10.1.1.25 eq 143\npermit tcp any host 10.1.1.25 eq 993` }
-            ],
-            traps: [
-              '**IMAP is TCP 143**; secure is **993**.',
-              'Mail **stays on the server**.',
-              'IMAP is **online and synchronised**; POP3 is offline and download-based.',
-              'Folders and server-side SEARCH are IMAP features.',
-              'Multi-device sync is the reason to choose IMAP.',
-              'Deleting in one client syncs to the others.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 143'],
-                ['Secure port', 'TCP 993'],
-                ['Storage', 'Server'],
-                ['Sync', 'Multi-device'],
-                ['Search', 'Server-side'],
-                ['Folders', 'Server-side'],
-                ['Contrast', 'POP3 downloads and deletes']
-              ]
-            },
-            related: [
-              { t: '15. POP3', d: 'The download alternative' },
-              { t: '14. SMTP', d: 'How mail arrives' }
-            ],
-            glossary: ['IMAP', 'POP3', 'SMTP']
-          },
-          {
-            id: 't17', num: '17', group: 'comm', title: 'LDAP',
-            blurb: 'TCP 389, LDAPS 636, the DIT, DNs and search filters',
-            overview: '**[[LDAP]]** is the protocol used to query and manage directory services such as **Active Directory** or OpenLDAP. It runs on **TCP 389**, can be protected with StartTLS on 389, and uses **636** for LDAPS where TLS starts with the connection. Data lives in a hierarchical **Directory Information Tree**.',
-            keyIdea: 'LDAP is a protocol, Active Directory is a directory service. 389 plain or StartTLS, 636 LDAPS.',
-            sections: [
-              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
-                ['**TCP 389**', 'LDAP, optionally upgraded with StartTLS'],
-                ['**TCP 636**', 'LDAPS, TLS from the start'],
-                ['**TCP 3268**', 'AD Global Catalog'],
-                ['**TCP 3269**', 'AD Global Catalog over TLS']
-              ]},
-              { kind: 'table', h: 'Structure', cols: ['Term', 'Meaning'], rows: [
-                ['**DIT**', 'Directory Information Tree'],
-                ['**DN**', 'Distinguished Name, the full path to an entry'],
-                ['**RDN**', 'Relative Distinguished Name, one component'],
-                ['**Schema**', 'Defines allowed object classes and attributes']
-              ]},
-              { kind: 'code', h: 'Operations and filters', code:
-`  BIND     authenticate the session
-  SEARCH   look up entries
-  COMPARE  test an attribute value
-  ADD / MODIFY / DELETE
+        const GROUPS = [{"key":"addr","label":"Addressing & Management","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"web","label":"File & Web","chip":"bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300","dot":"bg-sky-600","bullet":"text-sky-600 dark:text-sky-400"},{"key":"remote","label":"Remote Management","chip":"bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300","dot":"bg-amber-600","bullet":"text-amber-600 dark:text-amber-400"},{"key":"comm","label":"Email & Communication","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
 
-  (&(objectClass=user)(department=netops))   AND
-  (|(title=engineer)(title=architect))       OR` },
-              { kind: 'para', h: 'Where it fits in the exam', p: 'Cisco devices can use LDAP through AAA or a web GUI login against a directory. The recurring trap is confusing the **protocol** with the **directory product**.' }
-            ],
-            commands: [
-              { label: 'Ports to permit', code:
-`permit tcp any host 10.1.1.40 eq 389\npermit tcp any host 10.1.1.40 eq 636` }
-            ],
-            traps: [
-              '**LDAP is a protocol**; Active Directory is a directory service.',
-              '**TCP 389** is LDAP, **TCP 636** is LDAPS.',
-              '**StartTLS** protects LDAP while staying on 389.',
-              '**3268 and 3269** are the AD Global Catalog ports.',
-              'A **BIND** establishes the session but is not always password authentication.',
-              'Filter operators: **%%&%% is AND, %%|%% is OR**.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Port', 'TCP 389'],
-                ['Secure port', 'TCP 636 (LDAPS)'],
-                ['StartTLS', 'Upgrades 389 in place'],
-                ['AD Global Catalog', '3268 / 3269'],
-                ['Structure', 'Directory Information Tree'],
-                ['Entry name', 'Distinguished Name'],
-                ['Session start', 'BIND'],
-                ['Filter operators', '& AND, | OR']
-              ]
-            },
-            related: [
-              { t: '04. DNS', d: 'Another hierarchical naming system' },
-              { t: '12. SSH', d: 'AAA-backed login' }
-            ],
-            glossary: ['LDAP', 'DNS', 'SSH']
-          },
-          {
-            id: 't18', num: '18', group: 'comm', title: 'SIP',
-            blurb: 'Signaling on 5060, TLS on 5061, and SDP for media negotiation',
-            overview: '**[[SIP]]** is the **signaling** protocol for voice and unified communications on **TCP or UDP 5060**, with **5061** for TLS. It locates users, sets up and tears down sessions, but carries **no voice** — that is **[[RTP]]**. **SDP** inside SIP negotiates the media parameters.',
-            keyIdea: 'SIP signals, RTP carries. 5060 plain, 5061 TLS. Audio flows endpoint to endpoint after the ACK.',
-            sections: [
-              { kind: 'table', h: 'SIP versus RTP', cols: ['Protocol', 'Job', 'Port'], rows: [
-                ['**SIP**', 'Signaling and call setup', '**5060 / 5061 TLS**'],
-                ['**RTP**', 'Media payload', 'Dynamic, even, 16384 and above'],
-                ['**RTCP**', 'Media statistics', 'RTP port plus one']
-              ]},
-              { kind: 'table', h: 'Methods', cols: ['Method', 'Purpose'], rows: [
-                ['**INVITE**', 'Start a session'],
-                ['**ACK**', 'Confirm the final response'],
-                ['**BYE**', 'End the session'],
-                ['**REGISTER**', 'Bind a user to a location'],
-                ['**CANCEL**', 'Abort a pending request']
-              ]},
-              { kind: 'code', h: 'Call flow', code:
-`  INVITE  ->  proxy  ->  callee
-  180 Ringing
-  200 OK
-  ACK
-  <-- RTP flows directly between endpoints -->` },
-              { kind: 'para', h: 'The NAT symptom', p: 'NAT usually breaks the **media path**, not signaling. The call rings and connects, but audio is one-way or absent. Fix it with a media relay or by pinning RTP through a gateway.' }
-            ],
-            commands: [
-              { label: 'Ports to permit', code:
-`permit udp any any range 16384 32767\npermit tcp any host 10.1.1.60 eq 5060\npermit tcp any host 10.1.1.60 eq 5061` }
-            ],
-            traps: [
-              '**SIP is signaling on 5060**; RTP carries the audio.',
-              'Methods are text and HTTP-like: INVITE, ACK, BYE, REGISTER.',
-              'Media flows **directly between endpoints** after the ACK.',
-              'NAT breaks the **media** first — one-way audio is the clue.',
-              '**5061** is SIP over TLS.',
-              'SDP inside SIP negotiates codecs and addresses.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Ports', '5060, 5061 TLS'],
-                ['Job', 'Signaling'],
-                ['Media', 'RTP'],
-                ['Methods', 'INVITE, ACK, BYE, REGISTER'],
-                ['Media negotiation', 'SDP'],
-                ['NAT symptom', 'One-way audio'],
-                ['Transport', 'TCP or UDP 5060']
-              ]
-            },
-            related: [
-              { t: '19. RTP', d: 'The media half' },
-              { t: '03. DHCP Relay', d: 'Where giaddr shows up' }
-            ],
-            glossary: ['SIP', 'RTP']
-          },
-          {
-            id: 't19', num: '19', group: 'comm', title: 'RTP',
-            blurb: 'UDP media with sequence numbers, timestamps, and RTCP alongside',
-            overview: '**[[RTP]]** carries the actual voice and video for real-time sessions over **UDP**, using sequence numbers, timestamps and payload types. **RTCP** is its control companion, reporting QoS statistics such as jitter and loss.',
-            keyIdea: 'RTP is media over UDP on even ports from 16384, RTCP is odd and one port up. It never retransmits.',
-            sections: [
-              { kind: 'table', h: 'The trio', cols: ['Protocol', 'Function', 'Port'], rows: [
-                ['**SIP**', 'Signaling', '5060 / 5061'],
-                ['**RTP**', 'Media payload', 'Even, 16384 and above'],
-                ['**RTCP**', 'Control and QoS stats', 'Odd, RTP port plus one']
-              ]},
-              { kind: 'table', h: 'Header fields', cols: ['Field', 'Use'], rows: [
-                ['**Sequence number**', 'Detects loss and reordering'],
-                ['**Timestamp**', 'Drives playout and jitter calculation'],
-                ['**Payload type**', 'Identifies the codec'],
-                ['**SSRC**', 'Identifies the stream']
-              ]},
-              { kind: 'code', h: 'Why UDP', code:
-`  Voice cannot wait for a retransmit.
-  Lost packet -> conceal and move on.
-
-  DSCP EF marks the voice queue.` },
-              { kind: 'para', h: 'QoS link', p: 'Voice is marked **DSCP EF (46)** and placed in the priority queue. **Jitter** and loss hurt call quality more than raw bandwidth does.' }
-            ],
-            commands: [
-              { label: 'Mark and queue voice', code:
-`class-map match-any VOICE\n match dscp ef\npolicy-map WAN\n class VOICE\n  priority percent 20\ninterface GigabitEthernet0/1\n service-policy output WAN` }
-            ],
-            traps: [
-              '**RTP is media over UDP**; RTCP is control on the next port.',
-              'RTP **never retransmits** — freshness beats reliability.',
-              '**DSCP EF** marks voice traffic.',
-              'Jitter, not bandwidth, is the usual voice killer.',
-              'SIP sets up, **RTP carries**.',
-              'Ports are **even from 16384**, with RTCP odd.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Job', 'Media payload'],
-                ['Transport', 'UDP'],
-                ['Ports', 'Even, 16384 and above'],
-                ['RTCP', 'Odd, port plus one'],
-                ['Header fields', 'Sequence, timestamp, payload type, SSRC'],
-                ['Retransmission', 'None'],
-                ['Voice marking', 'DSCP EF'],
-                ['Quality enemy', 'Jitter and loss']
-              ]
-            },
-            related: [
-              { t: '18. SIP', d: 'The signaling half' },
-              { t: '11. HTTPS', d: 'Another TLS-protected service' }
-            ],
-            glossary: ['RTP', 'SIP']
-          }
-        ];
-
-        const GROUPS = [
-          { key: 'addr', label: 'Addressing & Management', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
-          { key: 'web', label: 'File & Web', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
-          { key: 'remote', label: 'Remote Management', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
-          { key: 'comm', label: 'Email & Communication', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
-        ];
         const groups = GROUPS;
+
         const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
 
         const glossary = [
-          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol. UDP 67 server and UDP 68 client, DORA exchange, leases with T1 at 50% and T2 at 87.5%.' },
-          { term: 'DHCP Snooping', def: 'Layer 2 switch security feature that blocks DHCP server messages on untrusted ports and builds a binding database.' },
-          { term: 'DHCP Relay', def: 'Forwards DHCP between subnets using ip helper-address and fills giaddr so the server picks the right scope.' },
-          { term: 'Dynamic ARP Inspection', def: 'Validates ARP packets against the DHCP snooping binding table to stop ARP spoofing.' },
-          { term: 'IP Source Guard', def: 'Filters traffic using the DHCP snooping binding table to stop source address spoofing.' },
-          { term: 'DNS', def: 'Domain Name System. Resolves names to addresses over UDP 53 and TCP 53, with A, AAAA, CNAME, MX, PTR, NS, SRV and SOA records.' },
-          { term: 'NTP', def: 'Network Time Protocol. Synchronises clocks over UDP 123 using a stratum hierarchy from reference clock to client.' },
-          { term: 'SNMP', def: 'Simple Network Management Protocol. UDP 161 for requests, UDP 162 for notifications; v3 adds authentication and privacy.' },
-          { term: 'Syslog', def: 'Event logging transport, traditionally UDP 514, with Cisco severities 0 (emergency) through 7 (debugging).' },
-          { term: 'FTP', def: 'File Transfer Protocol. TCP 21 control and separate data connection, TCP 20 in active mode, cleartext credentials.' },
-          { term: 'TFTP', def: 'Trivial File Transfer Protocol. UDP 69 with RRQ and WRQ, no authentication or encryption.' },
-          { term: 'HTTP', def: 'Stateless web request and response protocol on TCP 80, using methods such as GET and POST.' },
-          { term: 'HTTPS', def: 'HTTP over TLS on TCP 443, authenticating the server with a certificate.' },
-          { term: 'SSH', def: 'Secure Shell. Encrypted CLI access on TCP 22, replacing Telnet, and the transport for SCP.' },
-          { term: 'Telnet', def: 'Legacy unencrypted remote terminal protocol on TCP 23.' },
-          { term: 'SMTP', def: 'Simple Mail Transfer Protocol. Pushes and relays mail on TCP 25, with 587 for submission and 465 for SMTPS.' },
-          { term: 'POP3', def: 'Post Office Protocol v3. TCP 110 or 995 secure, downloads mail and typically deletes it from the server.' },
-          { term: 'IMAP', def: 'Internet Message Access Protocol. TCP 143 or 993 secure, keeps mail on the server and synchronises across devices.' },
-          { term: 'LDAP', def: 'Lightweight Directory Access Protocol. TCP 389 with optional StartTLS, TCP 636 for LDAPS, querying a Directory Information Tree.' },
-          { term: 'SIP', def: 'Session Initiation Protocol. Signaling for voice and video on 5060, or 5061 with TLS, negotiating media with SDP.' },
-          { term: 'RTP', def: 'Real-time Transport Protocol. Carries media over UDP on even ports from 16384, with RTCP on the next odd port.' }
-        ];
+ {
+  "term": "DHCP",
+  "def": "Dynamic Host Configuration Protocol. UDP 67 server and UDP 68 client, DORA exchange, leases with T1 at 50% and T2 at 87.5%."
+ },
+ {
+  "term": "DHCP Snooping",
+  "def": "Layer 2 switch security feature that blocks DHCP server messages on untrusted ports and builds a binding database."
+ },
+ {
+  "term": "DHCP Relay",
+  "def": "Forwards DHCP between subnets using ip helper-address and fills giaddr so the server picks the right scope."
+ },
+ {
+  "term": "Dynamic ARP Inspection",
+  "def": "Validates ARP packets against the DHCP snooping binding table to stop ARP spoofing."
+ },
+ {
+  "term": "IP Source Guard",
+  "def": "Filters traffic using the DHCP snooping binding table to stop source address spoofing."
+ },
+ {
+  "term": "DNS",
+  "def": "Domain Name System. Resolves names to addresses over UDP 53 and TCP 53, with A, AAAA, CNAME, MX, PTR, NS, SRV and SOA records."
+ },
+ {
+  "term": "NTP",
+  "def": "Network Time Protocol. Synchronises clocks over UDP 123 using a stratum hierarchy from reference clock to client."
+ },
+ {
+  "term": "SNMP",
+  "def": "Simple Network Management Protocol. UDP 161 for requests, UDP 162 for notifications; v3 adds authentication and privacy."
+ },
+ {
+  "term": "Syslog",
+  "def": "Event logging transport, traditionally UDP 514, with Cisco severities 0 (emergency) through 7 (debugging)."
+ },
+ {
+  "term": "FTP",
+  "def": "File Transfer Protocol. TCP 21 control and separate data connection, TCP 20 in active mode, cleartext credentials."
+ },
+ {
+  "term": "TFTP",
+  "def": "Trivial File Transfer Protocol. UDP 69 with RRQ and WRQ, no authentication or encryption."
+ },
+ {
+  "term": "HTTP",
+  "def": "Stateless web request and response protocol on TCP 80, using methods such as GET and POST."
+ },
+ {
+  "term": "HTTPS",
+  "def": "HTTP over TLS on TCP 443, authenticating the server with a certificate."
+ },
+ {
+  "term": "SSH",
+  "def": "Secure Shell. Encrypted CLI access on TCP 22, replacing Telnet, and the transport for SCP."
+ },
+ {
+  "term": "Telnet",
+  "def": "Legacy unencrypted remote terminal protocol on TCP 23."
+ },
+ {
+  "term": "SMTP",
+  "def": "Simple Mail Transfer Protocol. Pushes and relays mail on TCP 25, with 587 for submission and 465 for SMTPS."
+ },
+ {
+  "term": "POP3",
+  "def": "Post Office Protocol v3. TCP 110 or 995 secure, downloads mail and typically deletes it from the server."
+ },
+ {
+  "term": "IMAP",
+  "def": "Internet Message Access Protocol. TCP 143 or 993 secure, keeps mail on the server and synchronises across devices."
+ },
+ {
+  "term": "LDAP",
+  "def": "Lightweight Directory Access Protocol. TCP 389 with optional StartTLS, TCP 636 for LDAPS, querying a Directory Information Tree."
+ },
+ {
+  "term": "SIP",
+  "def": "Session Initiation Protocol. Signaling for voice and video on 5060, or 5061 with TLS, negotiating media with SDP."
+ },
+ {
+  "term": "RTP",
+  "def": "Real-time Transport Protocol. Carries media over UDP on even ports from 16384, with RTCP on the next odd port."
+ },
+ {
+  "term": "PTP",
+  "def": "Precision Time Protocol (IEEE 1588) synchronises clocks with hardware timestamping and sub-microsecond accuracy. It uses grandmaster, boundary, transparent and ordinary clock roles, unlike NTP's stratum hierarchy."
+ }
+];
 
         const quiz = [
-          { q: 'Which port does a DHCP server listen on?', options: ['UDP 67', 'UDP 68', 'TCP 67', 'UDP 69'], answer: 0, why: 'The server uses UDP 67; the client uses UDP 68.' },
-          { q: 'What does DORA stand for?', options: ['Discover, Offer, Request, Acknowledge', 'Detect, Open, Route, Assign', 'Discover, Open, Reply, Accept', 'Dynamic, Offer, Renew, Acknowledge'], answer: 0, why: 'The four-message DHCP exchange.' },
-          { q: 'At what percentage of the lease does T1 fire?', options: ['50%', '87.5%', '75%', '100%'], answer: 0, why: 'T1 is 50% (renew), T2 is 87.5% (rebind).' },
-          { q: 'Where should ip helper-address be configured?', options: ['Client-facing Layer 3 interface', 'DHCP server interface', 'Any loopback', 'The DHCP pool'], answer: 0, why: 'The relay sits on the client-facing interface so it can fill giaddr.' },
-          { q: 'What does giaddr tell the DHCP server?', options: ['The client subnet', 'The DNS server address', 'The lease duration', 'The MAC address'], answer: 0, why: 'giaddr identifies the subnet so the server can select the scope.' },
-          { q: 'DHCP snooping ports are by default?', options: ['Untrusted', 'Trusted', 'Disabled', 'Trunking'], answer: 0, why: 'All ports start untrusted; you trust only the path to the server.' },
-          { q: 'Which feature uses the DHCP snooping binding table?', options: ['Dynamic ARP Inspection', 'OSPF', 'NTP', 'SNMP'], answer: 0, why: 'DAI and IP Source Guard both consume the binding table.' },
-          { q: 'Rate limiting on DHCP snooping primarily mitigates?', options: ['DHCP starvation', 'ARP spoofing', 'DNS tunnelling', 'VLAN hopping'], answer: 0, why: 'Rate limits slow pool exhaustion attacks.' },
-          { q: 'Which protocol and port carries standard DNS queries?', options: ['UDP 53', 'TCP 53', 'UDP 123', 'TCP 389'], answer: 0, why: 'Queries use UDP 53; TCP 53 is for zone transfers and large exchanges.' },
-          { q: 'Which DNS record maps a name to IPv6?', options: ['AAAA', 'A', 'PTR', 'MX'], answer: 0, why: 'A is IPv4 and AAAA is IPv6.' },
-          { q: 'With MX records, which preference is preferred?', options: ['Lower', 'Higher', 'Either', 'Only 0'], answer: 0, why: 'A lower MX preference is preferred.' },
-          { q: 'What does a recursive DNS resolver do?', options: ['Returns the final answer', 'Returns only a referral', 'Caches nothing', 'Forwards to the client'], answer: 0, why: 'Iterative queries return referrals; recursive resolution returns the answer.' },
-          { q: 'NTP uses which transport port?', options: ['UDP 123', 'UDP 161', 'TCP 123', 'UDP 514'], answer: 0, why: 'NTP runs over UDP 123.' },
-          { q: 'What is stratum 1 in NTP?', options: ['Directly synchronised to a reference clock', 'The reference clock itself', 'An unsynchronised source', 'A client only'], answer: 0, why: 'Stratum 0 is the reference clock; stratum 1 is directly attached to it.' },
-          { q: 'What does stratum 16 indicate?', options: ['Unsynchronised', 'Highly accurate', 'Reference clock', 'Broadcast mode'], answer: 0, why: 'Stratum 16 means the source is unsynchronised and unusable.' },
-          { q: 'Which SNMP operation requires an acknowledgement?', options: ['INFORM', 'TRAP', 'GET', 'SET'], answer: 0, why: 'INFORM is acknowledged; TRAP is fire and forget.' },
-          { q: 'Which SNMP version introduced GETBULK?', options: ['v2', 'v1', 'v3 only', 'v2c only with informs'], answer: 0, why: 'GETBULK arrived with SNMPv2.' },
-          { q: 'What does SNMPv3 authPriv provide?', options: ['Authentication and encryption', 'Authentication only', 'Community strings', 'Read-only access'], answer: 0, why: 'authNoPriv is authentication only; authPriv adds privacy.' },
-          { q: 'Which syslog severity is the most severe?', options: ['0', '7', '4', '1'], answer: 0, why: '0 is emergency, the most severe; 7 is debugging.' },
-          { q: 'What does logging trap 4 send?', options: ['Levels 0 through 4', 'Only level 4', 'Levels 4 through 7', 'All levels'], answer: 0, why: 'A threshold includes that level and everything numerically lower.' },
-          { q: 'FTP active mode uses which server source port for data?', options: ['TCP 20', 'TCP 21', 'TCP 22', 'UDP 69'], answer: 0, why: 'The control channel is 21; active-mode data comes from TCP 20.' },
-          { q: 'In passive FTP, who initiates the data connection?', options: ['The client', 'The server', 'Neither', 'The firewall'], answer: 0, why: 'Passive mode has the client connect to a server-chosen port.' },
-          { q: 'TFTP runs over which transport?', options: ['UDP 69', 'TCP 69', 'UDP 21', 'TCP 21'], answer: 0, why: 'TFTP is connectionless over UDP 69.' },
-          { q: 'What does an RRQ do in TFTP?', options: ['Requests a file to read', 'Writes a file', 'Deletes a file', 'Lists a directory'], answer: 0, why: 'RRQ reads, WRQ writes.' },
-          { q: 'Which HTTP status class means client error?', options: ['4xx', '2xx', '3xx', '5xx'], answer: 0, why: '2xx success, 3xx redirect, 4xx client error, 5xx server error.' },
-          { q: 'HTTPS uses which port?', options: ['TCP 443', 'TCP 80', 'TCP 22', 'UDP 443'], answer: 0, why: 'HTTPS is HTTP over TLS on TCP 443.' },
-          { q: 'What must exist before enabling the Cisco secure web server?', options: ['An RSA keypair', 'A BGP session', 'A DHCP pool', 'An NTP master'], answer: 0, why: 'The secure server needs a keypair and trustpoint.' },
-          { q: 'Which command restricts VTY lines to SSH only?', options: ['transport input ssh', 'login local', 'ip ssh version 2', 'crypto key generate rsa'], answer: 0, why: 'transport input ssh permits SSH and denies Telnet.' },
-          { q: 'Telnet uses which port?', options: ['TCP 23', 'TCP 22', 'TCP 21', 'UDP 23'], answer: 0, why: 'Telnet is TCP 23 and unencrypted.' },
-          { q: 'SMTP server-to-server relay uses which port?', options: ['TCP 25', 'TCP 587', 'TCP 465', 'TCP 110'], answer: 0, why: '25 is relay, 587 submission, 465 SMTPS.' },
-          { q: 'Which protocol pushes mail between servers?', options: ['SMTP', 'POP3', 'IMAP', 'LDAP'], answer: 0, why: 'SMTP pushes; POP3 and IMAP pull.' },
-          { q: 'What terminates the SMTP DATA section?', options: ['A single dot', 'QUIT', 'A blank line', 'END'], answer: 0, why: 'A line with a single dot ends the message body.' },
-          { q: 'POP3 default behaviour is to?', options: ['Download and delete', 'Keep and sync', 'Push to the server', 'Index on the server'], answer: 0, why: 'POP3 downloads and typically removes mail from the server.' },
-          { q: 'Which port is POP3 over TLS?', options: ['TCP 995', 'TCP 993', 'TCP 465', 'TCP 110'], answer: 0, why: 'POP3S is 995; IMAPS is 993.' },
-          { q: 'Why choose IMAP over POP3?', options: ['Mail stays on the server and syncs', 'It encrypts by default', 'It uses UDP', 'It deletes mail faster'], answer: 0, why: 'IMAP keeps mail on the server so multiple devices stay in sync.' },
-          { q: 'LDAP uses which port?', options: ['TCP 389', 'TCP 636', 'TCP 3268', 'UDP 389'], answer: 0, why: 'LDAP is 389; LDAPS is 636.' },
-          { q: 'Which pair describes the LDAP structure?', options: ['DIT and DN', 'MIB and OID', 'A and AAAA', 'AVG and AVF'], answer: 0, why: 'The Directory Information Tree holds entries named by Distinguished Names.' },
-          { q: 'In an LDAP filter, what does the ampersand mean?', options: ['AND', 'OR', 'NOT', 'Wildcard'], answer: 0, why: 'Ampersand is AND and pipe is OR.' },
-          { q: 'SIP is responsible for?', options: ['Signaling and session setup', 'Carrying voice media', 'Reporting jitter statistics', 'Translating addresses'], answer: 0, why: 'SIP signals; RTP carries the media.' },
-          { q: 'Which SIP method ends an established session?', options: ['BYE', 'INVITE', 'REGISTER', 'ACK'], answer: 0, why: 'INVITE starts, ACK confirms, BYE ends.' },
-          { q: 'A one-way audio problem after NAT usually means?', options: ['The media path is broken', 'Signaling never reached the proxy', 'DNS failed', 'The codec is unsupported'], answer: 0, why: 'Signaling often succeeds while RTP cannot traverse NAT.' },
-          { q: 'RTP typically uses which transport?', options: ['UDP', 'TCP', 'SCTP', 'ICMP'], answer: 0, why: 'RTP uses UDP so it can skip retransmissions.' },
-          { q: 'RTCP normally uses which port?', options: ['RTP port plus one', 'RTP port minus one', '5060', 'TCP 162'], answer: 0, why: 'RTCP is the next odd port after the even RTP port.' },
-          { q: 'Which DSCP marking is used for voice?', options: ['EF', 'AF11', 'CS1', 'Default'], answer: 0, why: 'Expedited Forwarding is the standard voice marking.' }
-        ];
+ {
+  "q": "Which port does a DHCP server listen on?",
+  "options": [
+   "UDP 68",
+   "UDP 67",
+   "TCP 67",
+   "UDP 69"
+  ],
+  "answer": 1,
+  "why": "The server uses UDP 67; the client uses UDP 68."
+ },
+ {
+  "q": "What does DORA stand for?",
+  "options": [
+   "Discover, Offer, Request, Acknowledge",
+   "Detect, Open, Route, Assign",
+   "Discover, Open, Reply, Accept",
+   "Dynamic, Offer, Renew, Acknowledge"
+  ],
+  "answer": 0,
+  "why": "The four-message DHCP exchange."
+ },
+ {
+  "q": "At what percentage of the lease does T1 fire?",
+  "options": [
+   "87.5%",
+   "75%",
+   "100%",
+   "50%"
+  ],
+  "answer": 3,
+  "why": "T1 is 50% (renew), T2 is 87.5% (rebind)."
+ },
+ {
+  "q": "Where should ip helper-address be configured?",
+  "options": [
+   "DHCP server interface",
+   "Any loopback",
+   "Client-facing Layer 3 interface",
+   "The DHCP pool"
+  ],
+  "answer": 2,
+  "why": "The relay sits on the client-facing interface so it can fill giaddr."
+ },
+ {
+  "q": "What does giaddr tell the DHCP server?",
+  "options": [
+   "The DNS server address",
+   "The client subnet",
+   "The lease duration",
+   "The MAC address"
+  ],
+  "answer": 1,
+  "why": "giaddr identifies the subnet so the server can select the scope."
+ },
+ {
+  "q": "DHCP snooping ports are by default?",
+  "options": [
+   "Untrusted",
+   "Trusted",
+   "Disabled",
+   "Trunking"
+  ],
+  "answer": 0,
+  "why": "All ports start untrusted; you trust only the path to the server."
+ },
+ {
+  "q": "Which feature uses the DHCP snooping binding table?",
+  "options": [
+   "OSPF",
+   "NTP",
+   "SNMP",
+   "Dynamic ARP Inspection"
+  ],
+  "answer": 3,
+  "why": "DAI and IP Source Guard both consume the binding table."
+ },
+ {
+  "q": "Rate limiting on DHCP snooping primarily mitigates?",
+  "options": [
+   "ARP spoofing",
+   "DNS tunnelling",
+   "DHCP starvation",
+   "VLAN hopping"
+  ],
+  "answer": 2,
+  "why": "Rate limits slow pool exhaustion attacks."
+ },
+ {
+  "q": "Which protocol and port carries standard DNS queries?",
+  "options": [
+   "TCP 53",
+   "UDP 53",
+   "UDP 123",
+   "TCP 389"
+  ],
+  "answer": 1,
+  "why": "Queries use UDP 53; TCP 53 is for zone transfers and large exchanges."
+ },
+ {
+  "q": "Which DNS record maps a name to IPv6?",
+  "options": [
+   "AAAA",
+   "A",
+   "PTR",
+   "MX"
+  ],
+  "answer": 0,
+  "why": "A is IPv4 and AAAA is IPv6."
+ },
+ {
+  "q": "With MX records, which preference is preferred?",
+  "options": [
+   "Higher",
+   "Either",
+   "Only 0",
+   "Lower"
+  ],
+  "answer": 3,
+  "why": "A lower MX preference is preferred."
+ },
+ {
+  "q": "What does a recursive DNS resolver do?",
+  "options": [
+   "Returns only a referral",
+   "Caches nothing",
+   "Returns the final answer",
+   "Forwards to the client"
+  ],
+  "answer": 2,
+  "why": "Iterative queries return referrals; recursive resolution returns the answer."
+ },
+ {
+  "q": "NTP uses which transport port?",
+  "options": [
+   "UDP 161",
+   "UDP 123",
+   "TCP 123",
+   "UDP 514"
+  ],
+  "answer": 1,
+  "why": "NTP runs over UDP 123."
+ },
+ {
+  "q": "What is stratum 1 in NTP?",
+  "options": [
+   "Directly synchronised to a reference clock",
+   "The reference clock itself",
+   "An unsynchronised source",
+   "A client only"
+  ],
+  "answer": 0,
+  "why": "Stratum 0 is the reference clock; stratum 1 is directly attached to it."
+ },
+ {
+  "q": "What does stratum 16 indicate?",
+  "options": [
+   "Highly accurate",
+   "Reference clock",
+   "Broadcast mode",
+   "Unsynchronised"
+  ],
+  "answer": 3,
+  "why": "Stratum 16 means the source is unsynchronised and unusable."
+ },
+ {
+  "q": "Which SNMP operation requires an acknowledgement?",
+  "options": [
+   "TRAP",
+   "GET",
+   "INFORM",
+   "SET"
+  ],
+  "answer": 2,
+  "why": "INFORM is acknowledged; TRAP is fire and forget."
+ },
+ {
+  "q": "Which SNMP version introduced GETBULK?",
+  "options": [
+   "v1",
+   "v2",
+   "v3 only",
+   "v2c only with informs"
+  ],
+  "answer": 1,
+  "why": "GETBULK arrived with SNMPv2."
+ },
+ {
+  "q": "What does SNMPv3 authPriv provide?",
+  "options": [
+   "Authentication and encryption",
+   "Authentication only",
+   "Community strings",
+   "Read-only access"
+  ],
+  "answer": 0,
+  "why": "authNoPriv is authentication only; authPriv adds privacy."
+ },
+ {
+  "q": "Which syslog severity is the most severe?",
+  "options": [
+   "7",
+   "4",
+   "1",
+   "0"
+  ],
+  "answer": 3,
+  "why": "0 is emergency, the most severe; 7 is debugging."
+ },
+ {
+  "q": "What does logging trap 4 send?",
+  "options": [
+   "Only level 4",
+   "Levels 4 through 7",
+   "Levels 0 through 4",
+   "All levels"
+  ],
+  "answer": 2,
+  "why": "A threshold includes that level and everything numerically lower."
+ },
+ {
+  "q": "FTP active mode uses which server source port for data?",
+  "options": [
+   "TCP 21",
+   "TCP 20",
+   "TCP 22",
+   "UDP 69"
+  ],
+  "answer": 1,
+  "why": "The control channel is 21; active-mode data comes from TCP 20."
+ },
+ {
+  "q": "In passive FTP, who initiates the data connection?",
+  "options": [
+   "The client",
+   "The server",
+   "Neither",
+   "The firewall"
+  ],
+  "answer": 0,
+  "why": "Passive mode has the client connect to a server-chosen port."
+ },
+ {
+  "q": "TFTP runs over which transport?",
+  "options": [
+   "TCP 69",
+   "UDP 21",
+   "TCP 21",
+   "UDP 69"
+  ],
+  "answer": 3,
+  "why": "TFTP is connectionless over UDP 69."
+ },
+ {
+  "q": "What does an RRQ do in TFTP?",
+  "options": [
+   "Writes a file",
+   "Deletes a file",
+   "Requests a file to read",
+   "Lists a directory"
+  ],
+  "answer": 2,
+  "why": "RRQ reads, WRQ writes."
+ },
+ {
+  "q": "Which HTTP status class means client error?",
+  "options": [
+   "2xx",
+   "4xx",
+   "3xx",
+   "5xx"
+  ],
+  "answer": 1,
+  "why": "2xx success, 3xx redirect, 4xx client error, 5xx server error."
+ },
+ {
+  "q": "HTTPS uses which port?",
+  "options": [
+   "TCP 443",
+   "TCP 80",
+   "TCP 22",
+   "UDP 443"
+  ],
+  "answer": 0,
+  "why": "HTTPS is HTTP over TLS on TCP 443."
+ },
+ {
+  "q": "What must exist before enabling the Cisco secure web server?",
+  "options": [
+   "A BGP session",
+   "A DHCP pool",
+   "An NTP master",
+   "An RSA keypair"
+  ],
+  "answer": 3,
+  "why": "The secure server needs a keypair and trustpoint."
+ },
+ {
+  "q": "Which command restricts VTY lines to SSH only?",
+  "options": [
+   "login local",
+   "ip ssh version 2",
+   "transport input ssh",
+   "crypto key generate rsa"
+  ],
+  "answer": 2,
+  "why": "transport input ssh permits SSH and denies Telnet."
+ },
+ {
+  "q": "Telnet uses which port?",
+  "options": [
+   "TCP 22",
+   "TCP 23",
+   "TCP 21",
+   "UDP 23"
+  ],
+  "answer": 1,
+  "why": "Telnet is TCP 23 and unencrypted."
+ },
+ {
+  "q": "SMTP server-to-server relay uses which port?",
+  "options": [
+   "TCP 25",
+   "TCP 587",
+   "TCP 465",
+   "TCP 110"
+  ],
+  "answer": 0,
+  "why": "25 is relay, 587 submission, 465 SMTPS."
+ },
+ {
+  "q": "Which protocol pushes mail between servers?",
+  "options": [
+   "POP3",
+   "IMAP",
+   "LDAP",
+   "SMTP"
+  ],
+  "answer": 3,
+  "why": "SMTP pushes; POP3 and IMAP pull."
+ },
+ {
+  "q": "What terminates the SMTP DATA section?",
+  "options": [
+   "QUIT",
+   "A blank line",
+   "A single dot",
+   "END"
+  ],
+  "answer": 2,
+  "why": "A line with a single dot ends the message body."
+ },
+ {
+  "q": "POP3 default behaviour is to?",
+  "options": [
+   "Keep and sync",
+   "Download and delete",
+   "Push to the server",
+   "Index on the server"
+  ],
+  "answer": 1,
+  "why": "POP3 downloads and typically removes mail from the server."
+ },
+ {
+  "q": "Which port is POP3 over TLS?",
+  "options": [
+   "TCP 995",
+   "TCP 993",
+   "TCP 465",
+   "TCP 110"
+  ],
+  "answer": 0,
+  "why": "POP3S is 995; IMAPS is 993."
+ },
+ {
+  "q": "Why choose IMAP over POP3?",
+  "options": [
+   "It encrypts by default",
+   "It uses UDP",
+   "It deletes mail faster",
+   "Mail stays on the server and syncs"
+  ],
+  "answer": 3,
+  "why": "IMAP keeps mail on the server so multiple devices stay in sync."
+ },
+ {
+  "q": "LDAP uses which port?",
+  "options": [
+   "TCP 636",
+   "TCP 3268",
+   "TCP 389",
+   "UDP 389"
+  ],
+  "answer": 2,
+  "why": "LDAP is 389; LDAPS is 636."
+ },
+ {
+  "q": "Which pair describes the LDAP structure?",
+  "options": [
+   "MIB and OID",
+   "DIT and DN",
+   "A and AAAA",
+   "AVG and AVF"
+  ],
+  "answer": 1,
+  "why": "The Directory Information Tree holds entries named by Distinguished Names."
+ },
+ {
+  "q": "In an LDAP filter, what does the ampersand mean?",
+  "options": [
+   "AND",
+   "OR",
+   "NOT",
+   "Wildcard"
+  ],
+  "answer": 0,
+  "why": "Ampersand is AND and pipe is OR."
+ },
+ {
+  "q": "SIP is responsible for?",
+  "options": [
+   "Carrying voice media",
+   "Reporting jitter statistics",
+   "Translating addresses",
+   "Signaling and session setup"
+  ],
+  "answer": 3,
+  "why": "SIP signals; RTP carries the media."
+ },
+ {
+  "q": "Which SIP method ends an established session?",
+  "options": [
+   "INVITE",
+   "REGISTER",
+   "BYE",
+   "ACK"
+  ],
+  "answer": 2,
+  "why": "INVITE starts, ACK confirms, BYE ends."
+ },
+ {
+  "q": "A one-way audio problem after NAT usually means?",
+  "options": [
+   "Signaling never reached the proxy",
+   "The media path is broken",
+   "DNS failed",
+   "The codec is unsupported"
+  ],
+  "answer": 1,
+  "why": "Signaling often succeeds while RTP cannot traverse NAT."
+ },
+ {
+  "q": "RTP typically uses which transport?",
+  "options": [
+   "UDP",
+   "TCP",
+   "SCTP",
+   "ICMP"
+  ],
+  "answer": 0,
+  "why": "RTP uses UDP so it can skip retransmissions."
+ },
+ {
+  "q": "RTCP normally uses which port?",
+  "options": [
+   "RTP port minus one",
+   "5060",
+   "TCP 162",
+   "RTP port plus one"
+  ],
+  "answer": 3,
+  "why": "RTCP is the next odd port after the even RTP port."
+ },
+ {
+  "q": "Which DSCP marking is used for voice?",
+  "options": [
+   "AF11",
+   "CS1",
+   "EF",
+   "Default"
+  ],
+  "answer": 2,
+  "why": "Expedited Forwarding is the standard voice marking."
+ },
+ {
+  "q": "Which statement distinguishes PTP from NTP?",
+  "options": [
+   "PTP uses TCP port 123",
+   "PTP uses hardware timestamping for sub-microsecond accuracy",
+   "NTP uses a grandmaster clock",
+   "NTP is always more accurate than PTP"
+  ],
+  "answer": 1,
+  "why": "PTP (IEEE 1588) is designed for precise hardware-timestamped synchronisation. NTP is general-purpose and typically millisecond-level."
+ },
+ {
+  "q": "Which PTP clock forwards time and corrects for residence delay without becoming a master or slave?",
+  "options": [
+   "Transparent clock",
+   "Boundary clock",
+   "Grandmaster",
+   "Ordinary clock"
+  ],
+  "answer": 0,
+  "why": "A transparent clock measures the time spent in the device and corrects the packet. A boundary clock terminates PTP and regenerates it."
+ }
+];
 
         /* ---------------- Helpers ---------------- */
         const AMP = String.fromCharCode(38);
