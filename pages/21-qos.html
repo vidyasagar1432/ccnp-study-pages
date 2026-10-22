@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QoS — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 21 QoS: classification and marking, policing and shaping, queuing and WRED, DiffServ and IntServ, MQC, LLQ and CBWFQ, DSCP PHB values, and trust boundaries.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">QoS — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">QOS</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">QoS</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 21</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 21</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">12 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 21 &mdash; QoS</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Classify and mark at the edge, police and shape the rate, queue with CBWFQ and LLQ, then avoid collapse with WRED. DiffServ, IntServ, MQC and the DSCP PHB values tie the model together.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        QoS &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 21 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[QoS]]** decides which packets get better treatment when the network is busy. It starts with **[[QoS Classification|classification]]** and **[[QoS Marking|marking]]** at the **[[Trust Boundary|trust boundary]]**, then meters traffic with **[[Policing]]** and **[[Shaping]]**, schedules it with **[[Queuing]]**, **[[CBWFQ]]** and **[[LLQ]]**, and avoids collapse with **[[WRED]]**. **[[DiffServ]]** scales that per-class model using **[[DSCP]]**, while **[[IntServ]]** reserves per-flow resources with RSVP, and **[[MQC]]** is the CLI that ties it all together.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'traffic', title: 'Classification',
+            blurb: 'Identify traffic by DSCP, CoS, ACL or application before anything else',
+            overview: '**[[QoS Classification|Classification]]** is the QoS act of identifying which traffic gets which treatment. It groups packets using fields such as **[[DSCP]]**, IP precedence, 802.1p CoS, **[[ACL|ACLs]]** or application signatures. Classification is always the first step, because marking, policing and queuing need something to act on.',
+            keyIdea: 'Classification reads and groups; marking writes. Classify once at the edge, set the trust boundary there, and let the core trust the result.',
+            sections: [
+              { kind: 'table', h: 'What we classify on', cols: ['Field', 'Layer', 'Notes'], rows: [
+                ['**DSCP**', 'L3', '6 bits'],
+                ['**IP precedence**', 'L3', '3 bits'],
+                ['**802.1p CoS**', 'L2', '3 bits'],
+                ['**ACL**', 'L3 and L4', 'Match IP addresses and ports'],
+                ['**NBAR**', 'L7', 'Application recognition']
+              ]},
+              { kind: 'table', h: 'Trust boundaries', cols: ['Point', 'Trust state'], rows: [
+                ['**Access edge**', 'Untrusted, so re-mark'],
+                ['**Core**', 'Trusted, keep DSCP'],
+                ['**Ingress switch**', 'Classify and mark'],
+                ['**Camera or phone port**', 'Set CoS and DSCP']
+              ]},
+              { kind: 'table', h: 'Trust versus classify', cols: ['Mode', 'Action'], rows: [
+                ['**Trust**', 'Accept the existing CoS or DSCP'],
+                ['**Classify**', 'Match the traffic, then act']
+              ]},
+              { kind: 'table', h: 'Classification tools', cols: ['Tool', 'Match basis'], rows: [
+                ['**class-map**', 'Match criteria'],
+                ['**ACL**', 'IP addresses and ports'],
+                ['**NBAR**', 'Application signature'],
+                ['**PBR route-map**', 'Match conditions for policy routing']
+              ]},
+              { kind: 'code', h: 'class-map example', code:
+`  class-map match-any VOICE
+   match dscp ef
+  !
+  class-map match-any BULK
+   match access-group name BULK` },
+              { kind: 'table', h: 'class-map match logic', cols: ['Keyword', 'Logic'], rows: [
+                ['**%%match-all%%**', 'Every criterion must match'],
+                ['**%%match-any%%**', 'Any one criterion is enough']
+              ]},
+              { kind: 'para', h: 'Where classification happens', p: 'Classify on **ingress** at routers and switches, with NBAR usually on edge devices. Classify **once at the edge**, then trust the marking in the core instead of repeating the work at every hop.' }
+            ],
+            commands: [
+              { label: 'Build class maps for voice and bulk traffic', code:
+`class-map match-any VOICE\n match dscp ef\nclass-map match-any BULK\n match access-group name BULK` },
+              { label: 'Verify the class maps', code:
+`show class-map\nshow policy-map` },
+              { label: 'Reference a policy that uses the classes', code:
+`policy-map EDGE\n class VOICE\n  priority 128\n class BULK\n  bandwidth 1000` }
+            ],
+            traps: [
+              'Classification **identifies** traffic; marking **writes** the value.',
+              'The **trust boundary** decides whose markings are believed.',
+              'Know **%%match-any%%** versus **%%match-all%%** in a class-map.',
+              'NBAR classifies at **Layer 7** using application signatures.',
+              'Classify at the **edge**; the core should trust the result.',
+              'An ACL match is **Layer 3 and 4**, not application-aware.'
+            ],
+            table: {
+              cols: ['Item', 'Classification'],
+              rows: [
+                ['What', 'Identify traffic'],
+                ['Fields', 'DSCP, CoS, ACL, NBAR'],
+                ['Trust', 'Edge decision'],
+                ['Tool', 'class-map'],
+                ['Match', 'match-all or match-any'],
+                ['NBAR', 'Layer 7'],
+                ['Place', 'Ingress edge'],
+                ['Order', 'Before marking']
+              ]
+            },
+            related: [
+              { t: '02. Marking', d: 'The step that follows' },
+              { t: '07. DiffServ', d: 'The architecture it feeds' },
+              { t: '09. Modular QoS CLI', d: 'Where class maps live' }
+            ],
+            glossary: ['QoS Classification', 'DSCP', 'QoS Marking', 'MQC', 'Trust Boundary', 'ACL']
+          },
+          {
+            id: 't02', num: '02', group: 'traffic', title: 'Marking',
+            blurb: 'Write DSCP, CoS or precedence so every hop sees the same class',
+            overview: '**[[QoS Marking|Marking]]** writes a QoS value into the packet or frame so downstream devices can treat it consistently. Markers exist at Layer 2 as 802.1p CoS, at Layer 3 as IP precedence or **[[DSCP]]**, and in **[[MPLS]]** as the EXP bits. The core trusts that marking instead of reclassifying every packet.',
+            keyIdea: 'DSCP is the modern 6-bit L3 marker. EF is voice, AF4x and AF3x are video, CS6 is control, and the core trusts what the edge wrote.',
+            sections: [
+              { kind: 'table', h: 'Marking locations', cols: ['Layer', 'Field', 'Bits'], rows: [
+                ['**L2**', '802.1p CoS', '3'],
+                ['**L3**', 'IP precedence', '3'],
+                ['**L3**', 'DSCP', '6'],
+                ['**MPLS**', 'EXP', '3']
+              ]},
+              { kind: 'table', h: 'DSCP versus IP precedence', cols: ['Item', 'IP precedence', 'DSCP'], rows: [
+                ['Bits', '3', '6'],
+                ['Classes', '8', '64'],
+                ['Default', 'CS0', 'BE'],
+                ['Modern use', 'Legacy', 'Preferred']
+              ]},
+              { kind: 'table', h: 'Common DSCP values', cols: ['DSCP', 'Value', 'Use'], rows: [
+                ['**EF**', '46', 'Voice'],
+                ['**AF41**', '34', 'Video conference'],
+                ['**AF31**', '26', 'Video stream'],
+                ['**AF21**', '18', 'Bulk and signalling'],
+                ['**CS0**', '0', 'Best effort'],
+                ['**CS6 and CS7**', '48 and 56', 'Control']
+              ]},
+              { kind: 'code', h: 'Marking configuration', code:
+`  policy-map MARK-VOICE
+   class VOICE
+    set dscp ef
+  !
+  class-map match-all VIDEO
+   match dscp af41
+  policy-map MARK-VIDEO
+   class VIDEO
+    set dscp af41` },
+              { kind: 'table', h: 'Marking commands', cols: ['Command', 'Effect'], rows: [
+                ['**%%set dscp%%**', 'Write DSCP'],
+                ['**%%set precedence%%**', 'Write IP precedence'],
+                ['**%%set cos%%**', 'Write CoS']
+              ]},
+              { kind: 'table', h: 'Trusting markings', cols: ['Device', 'Action'], rows: [
+                ['**Edge**', 'Set or re-mark'],
+                ['**Core**', 'Trust and do not re-mark'],
+                ['**L2 to L3 boundary**', 'Map CoS to DSCP']
+              ]}
+            ],
+            commands: [
+              { label: 'Mark voice and video at the edge', code:
+`policy-map MARK\n class VOICE\n  set dscp ef\n class VIDEO\n  set dscp af41` },
+              { label: 'Verify marking policy', code:
+`show policy-map\nshow class-map\nshow run policy-map` },
+              { label: 'Check switch marking and trust', code:
+`show mls qos interface\nshow mls qos maps cos-dscp` }
+            ],
+            traps: [
+              'Marking **writes**; classification **reads**.',
+              '**DSCP is 6 bits and 64 values**; precedence is 3 bits and 8 values.',
+              '**EF is voice**, AF4x and AF3x are video, and **CS6 is control**.',
+              'Set DSCP at the **edge**, then trust it in the **core**.',
+              'Use **%%set dscp%%**, **%%set cos%%** or **%%set precedence%%** to write a value.',
+              'CoS and DSCP need a **mapping table** when traffic crosses L2 to L3.'
+            ],
+            table: {
+              cols: ['Item', 'Marking'],
+              rows: [
+                ['L2', '802.1p CoS'],
+                ['L3', 'DSCP'],
+                ['DSCP bits', '6'],
+                ['Voice', 'EF'],
+                ['Video conference', 'AF41'],
+                ['Video stream', 'AF31'],
+                ['Control', 'CS6'],
+                ['Core', 'Trust']
+              ]
+            },
+            related: [
+              { t: '01. Classification', d: 'The step before marking' },
+              { t: '07. DiffServ', d: 'DSCP marking model' },
+              { t: '12. QoS Marking & Trust Boundaries', d: 'Where trust is set' }
+            ],
+            glossary: ['QoS Marking', 'DSCP', 'Trust Boundary', 'DiffServ', 'MPLS']
+          },
+          {
+            id: 't03', num: '03', group: 'traffic', title: 'Policing',
+            blurb: 'Drop or re-mark excess traffic with a token bucket',
+            overview: '**[[Policing]]** enforces a rate by dropping or re-marking excess traffic, without buffering it. It uses the **token bucket** model and can work on ingress or egress. It is burst-sensitive, adds no delay, and is commonly used to meter customer or class rates.',
+            keyIdea: 'Policing drops or re-marks and never buffers. Token buckets use CIR, Bc and Be, with conform, exceed and violate outcomes.',
+            sections: [
+              { kind: 'table', h: 'Policing versus shaping', cols: ['Aspect', 'Policing', 'Shaping'], rows: [
+                ['Excess', 'Drop or re-mark', 'Buffer'],
+                ['Delay', 'None', 'Adds delay'],
+                ['Location', 'Ingress or egress', 'Egress only'],
+                ['Burst', 'Drops', 'Smooths'],
+                ['Use', 'Meter and enforce', 'Line-rate smoothing']
+              ]},
+              { kind: 'table', h: 'Token bucket basics', cols: ['Token', 'Meaning'], rows: [
+                ['**CIR**', 'Fill rate in bits per second'],
+                ['**Bc**', 'Committed burst'],
+                ['**Be**', 'Excess burst'],
+                ['**Conform**', 'Tokens were available'],
+                ['**Exceed**', 'No committed tokens']
+              ]},
+              { kind: 'table', h: 'Actions', cols: ['Action', 'When'], rows: [
+                ['**Transmit**', 'Packet conforms'],
+                ['**Drop**', 'Packet violates'],
+                ['**Set DSCP then transmit**', 'Packet exceeds and is re-marked']
+              ]},
+              { kind: 'code', h: 'Policer configuration', code:
+`  policy-map POLICE-DATA
+   class BULK
+    police cir 1000000 bc 200000 be 200000
+     conform-action transmit
+     exceed-action drop
+     violate-action drop
+  !
+  interface GigabitEthernet0/1
+   service-policy input POLICE-DATA` },
+              { kind: 'table', h: 'Policer commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%police cir%%**', 'Committed rate'],
+                ['**%%bc%%** and **%%be%%**', 'Burst sizes'],
+                ['**%%conform-action%%**', 'Action when tokens are available'],
+                ['**%%exceed-action%%**', 'Action when tokens are short']
+              ]},
+              { kind: 'table', h: 'Multi-action policing', cols: ['State', 'Token condition', 'Action'], rows: [
+                ['**Conform**', 'Bc available', 'Transmit'],
+                ['**Exceed**', 'Be available', 'Re-mark'],
+                ['**Violate**', 'No tokens', 'Drop']
+              ]},
+              { kind: 'table', h: 'Where policing is used', cols: ['Use', 'Reason'], rows: [
+                ['**Customer rate limit**', 'Enforce the SLA'],
+                ['**Bandwidth control**', 'Meter classes'],
+                ['**Mark-down**', 'Re-mark traffic over rate'],
+                ['**Ingress protection**', 'Stop floods']
+              ]}
+            ],
+            commands: [
+              { label: 'Configure a policer', code:
+`policy-map POLICE-DATA\n class BULK\n  police cir 1000000 bc 200000 be 200000\n   conform-action transmit\n   exceed-action drop\n   violate-action drop` },
+              { label: 'Attach it on ingress', code:
+`interface GigabitEthernet0/1\n service-policy input POLICE-DATA` },
+              { label: 'Verify policing counters', code:
+`show policy-map\nshow policy-map interface\nshow policy-map interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              'Policing **drops or re-marks** excess traffic and never buffers.',
+              'It works **on ingress or egress**; shaping is egress only.',
+              'The token bucket uses **CIR, Bc and Be**.',
+              'The three outcomes are **conform, exceed and violate**.',
+              'Use **%%service-policy input%%** when policing incoming traffic.',
+              'Re-mark and transmit is gentler than dropping the excess.'
+            ],
+            table: {
+              cols: ['Item', 'Policing'],
+              rows: [
+                ['Excess', 'Drop or re-mark'],
+                ['Delay', 'None'],
+                ['Location', 'Ingress or egress'],
+                ['Bucket', 'Token bucket'],
+                ['CIR', 'Rate'],
+                ['Bursts', 'Bc and Be'],
+                ['Actions', 'Conform, exceed, violate'],
+                ['Attach', 'service-policy']
+              ]
+            },
+            related: [
+              { t: '04. Shaping', d: 'The buffering contrast' },
+              { t: '06. Congestion Avoidance', d: 'Other drop decisions' },
+              { t: '09. Modular QoS CLI', d: 'How policies are attached' }
+            ],
+            glossary: ['Policing', 'Shaping', 'MQC', 'QoS Classification']
+          },
+          {
+            id: 't04', num: '04', group: 'traffic', title: 'Shaping',
+            blurb: 'Buffer the excess, smooth the rate, and avoid downstream drops',
+            overview: '**[[Shaping]]** smooths traffic to a rate by buffering excess instead of dropping it. It works **egress only** and adds delay, which makes it ideal for aligning to a subscribed line rate or a downstream policer without wasting packets. The exam constantly contrasts it with **[[Policing]]**.',
+            keyIdea: 'Shaping buffers and adds delay on egress. Use shape average for the normal token bucket, shape peak to allow Be, and hierarchical policies for parent and child rates.',
+            sections: [
+              { kind: 'table', h: 'Shaping model', cols: ['Item', 'Meaning'], rows: [
+                ['**CIR**', 'Shaped rate'],
+                ['**Bc**', 'Committed burst'],
+                ['**Be**', 'Excess burst'],
+                ['**Queue**', 'Buffers the excess'],
+                ['**Delay**', 'Added latency']
+              ]},
+              { kind: 'table', h: 'Shaping versus policing', cols: ['Aspect', 'Shaping', 'Policing'], rows: [
+                ['Excess', 'Buffer', 'Drop or re-mark'],
+                ['Delay', 'Adds', 'None'],
+                ['Location', 'Egress', 'Ingress or egress'],
+                ['Rate', 'Smooth', 'Meter'],
+                ['Loss', 'Low', 'High']
+              ]},
+              { kind: 'table', h: 'Why shape', cols: ['Reason', 'Detail'], rows: [
+                ['**Access line**', 'Align to the subscribed CIR'],
+                ['**Avoid drops**', 'Do not exceed a downstream policer'],
+                ['**Fairness**', 'Smooth bursts'],
+                ['**Downstream**', 'Do not flood the next device']
+              ]},
+              { kind: 'code', h: 'Shaping configuration', code:
+`  policy-map SHAPE-LINK
+   class class-default
+    shape average 10000000
+  !
+  interface GigabitEthernet0/1
+   service-policy output SHAPE-LINK` },
+              { kind: 'table', h: 'Shaping commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%shape average%%**', 'Token bucket with Bc and Be'],
+                ['**%%shape peak%%**', 'Allow use of Be'],
+                ['**%%service-policy output%%**', 'Attach on egress']
+              ]},
+              { kind: 'table', h: 'Hierarchical shaping', cols: ['Level', 'Policy'], rows: [
+                ['**Parent**', 'Total rate, for example 10 Mbps'],
+                ['**Child**', 'Per-class sub-rates'],
+                ['**Result**', 'Class buckets inside the shaped link']
+              ]}
+            ],
+            commands: [
+              { label: 'Shape the aggregate egress rate', code:
+`policy-map SHAPE-LINK\n class class-default\n  shape average 10000000\ninterface GigabitEthernet0/1\n service-policy output SHAPE-LINK` },
+              { label: 'Verify shaping and queues', code:
+`show policy-map interface\nshow policy-map interface GigabitEthernet0/1\nshow queueing` },
+              { label: 'Check the physical interface', code:
+`show interface GigabitEthernet0/1\nshow policy-map interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              'Shaping **buffers**; policing **drops**.',
+              'Shaping is **egress only** and adds **delay**.',
+              'Know **%%shape average%%** versus **%%shape peak%%**.',
+              '**Hierarchical shaping** nests a child policy inside a parent.',
+              'For access-rate smoothing, **shape**, do not police.',
+              'A shaping queue holds the excess until the token bucket allows it out.'
+            ],
+            table: {
+              cols: ['Item', 'Shaping'],
+              rows: [
+                ['Excess', 'Buffer'],
+                ['Delay', 'Adds'],
+                ['Location', 'Egress'],
+                ['Default', 'shape average'],
+                ['Peak', 'Uses Be'],
+                ['Access', 'Align to CIR'],
+                ['Hierarchy', 'Parent and child'],
+                ['Show', 'show policy-map interface']
+              ]
+            },
+            related: [
+              { t: '03. Policing', d: 'The contrasting mechanism' },
+              { t: '05. Queuing', d: 'Where shaped packets wait' },
+              { t: '09. Modular QoS CLI', d: 'Parent and child policies' }
+            ],
+            glossary: ['Shaping', 'Policing', 'MQC', 'Queuing']
+          },
+          {
+            id: 't05', num: '05', group: 'queue', title: 'Queuing',
+            blurb: 'FIFO, WFQ, PQ, CBWFQ and LLQ: who leaves the interface first',
+            overview: '**[[Queuing]]** decides the order packets leave an interface when it is congested. The modern answer is **[[CBWFQ]]** for class-based weighted shares, with **[[LLQ]]** adding a strict-priority class for delay-sensitive voice. The exam wants the mapping from each queuing mechanism to the need it serves.',
+            keyIdea: 'CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. PQ can starve, WFQ is per-flow fair, and queuing only matters at egress under congestion.',
+            sections: [
+              { kind: 'table', h: 'Queuing mechanisms', cols: ['Mechanism', 'Behaviour', 'Use'], rows: [
+                ['**FIFO**', 'First in, first out', 'No QoS'],
+                ['**WFQ**', 'Per-flow fair', 'Legacy default'],
+                ['**PQ**', 'Strict priority', 'Critical traffic only'],
+                ['**CBWFQ**', 'Per-class weights', 'Modern default'],
+                ['**LLQ**', 'Priority plus CBWFQ', 'Voice']
+              ]},
+              { kind: 'table', h: 'CBWFQ', cols: ['Concept', 'Detail'], rows: [
+                ['**Class**', 'Matched by class-map'],
+                ['**Bandwidth**', 'kbps share'],
+                ['**Weight**', 'Proportional service'],
+                ['**Drop**', 'Tail drop per queue']
+              ]},
+              { kind: 'table', h: 'LLQ, the strict priority class', cols: ['Item', 'Detail'], rows: [
+                ['**Priority class**', 'Served before bandwidth classes'],
+                ['**Limit**', 'Policed to the priority value'],
+                ['**Risk**', 'Starving others if unlimited'],
+                ['**Use**', 'Voice and EF']
+              ]},
+              { kind: 'code', h: 'Queuing configuration', code:
+`  policy-map QUEUE-EDGE
+   class VOICE
+    priority 128
+   class VIDEO
+    bandwidth 1000
+   class DATA
+    bandwidth 2000
+  !
+  interface GigabitEthernet0/1
+   service-policy output QUEUE-EDGE` },
+              { kind: 'table', h: 'Queuing commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%priority%%**', 'Strict priority LLQ class'],
+                ['**%%bandwidth%%**', 'Guaranteed CBWFQ share'],
+                ['**%%queue-limit%%**', 'Per-class queue depth'],
+                ['**%%fair-queue%%**', 'Per-flow treatment inside a class']
+              ]},
+              { kind: 'table', h: 'PQ versus CBWFQ versus WFQ', cols: ['Mechanism', 'Selection', 'Risk'], rows: [
+                ['**WFQ**', 'Per flow', 'Less control'],
+                ['**PQ**', 'Strict priority', 'Starvation'],
+                ['**CBWFQ**', 'Per class', 'No strict latency bound'],
+                ['**LLQ**', 'Priority plus class', 'Voice-safe when policed']
+              ]}
+            ],
+            commands: [
+              { label: 'Build a voice and data queuing policy', code:
+`policy-map QUEUE-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000` },
+              { label: 'Attach it on egress', code:
+`interface GigabitEthernet0/1\n service-policy output QUEUE-EDGE` },
+              { label: 'Verify queues and scheduling', code:
+`show policy-map interface\nshow queueing interface\nshow interfaces GigabitEthernet0/1` }
+            ],
+            traps: [
+              '**CBWFQ is per-class bandwidth**; **LLQ is a priority class plus CBWFQ**.',
+              'The LLQ priority class must be **policed** to avoid starvation.',
+              '**PQ is strict and can starve**; **WFQ is per-flow fair**.',
+              'Queuing is **egress** and only matters **under congestion**.',
+              'Know **%%priority%%** versus **%%bandwidth%%**.',
+              'FIFO provides no QoS differentiation at all.'
+            ],
+            table: {
+              cols: ['Item', 'Queuing'],
+              rows: [
+                ['FIFO', 'No QoS'],
+                ['WFQ', 'Per flow'],
+                ['PQ', 'Strict'],
+                ['CBWFQ', 'Per class'],
+                ['LLQ', 'Voice priority'],
+                ['Priority', 'Policed'],
+                ['Bandwidth', 'Share'],
+                ['Direction', 'Egress under congestion']
+              ]
+            },
+            related: [
+              { t: '06. Congestion Avoidance', d: 'Queue management inside the classes' },
+              { t: '10. LLQ & CBWFQ', d: 'The production pairing' },
+              { t: '03. Policing', d: 'Input rate control' }
+            ],
+            glossary: ['Queuing', 'CBWFQ', 'LLQ', 'WRED']
+          },
+          {
+            id: 't06', num: '06', group: 'queue', title: 'Congestion Avoidance',
+            blurb: 'WRED drops early and randomly to break TCP synchronisation',
+            overview: 'Congestion avoidance drops packets **before** a queue overflows, preventing tail drop and the **TCP global synchronisation** that follows it. The tool is **[[WRED]]**, which randomly drops lower-priority traffic as the queue fills, protecting high-priority flows and smoothing TCP behaviour.',
+            keyIdea: 'Tail drop causes TCP global sync. WRED drops randomly as the queue grows, using min and max thresholds, and ECN can mark instead of dropping.',
+            sections: [
+              { kind: 'table', h: 'The tail drop problem', cols: ['Issue', 'Effect'], rows: [
+                ['**Tail drop**', 'The last packets are dropped'],
+                ['**Synchronisation**', 'TCP windows collapse together'],
+                ['**Voice**', 'Burst loss'],
+                ['**Retransmission**', 'Efficiency loss']
+              ]},
+              { kind: 'table', h: 'RED and WRED idea', cols: ['Stage', 'Threshold', 'Action'], rows: [
+                ['**Below min**', 'Normal', 'No drop'],
+                ['**Min to max**', 'Growing', 'Random drop rate rises'],
+                ['**Above max**', 'Full', 'Drop all']
+              ]},
+              { kind: 'table', h: 'Weighted means per class', cols: ['Class', 'Drop profile'], rows: [
+                ['**Voice, EF**', 'No drop or highest minimum'],
+                ['**Video, AF**', 'Moderate'],
+                ['**Best effort**', 'Aggressive']
+              ]},
+              { kind: 'code', h: 'WRED configuration', code:
+`  policy-map AVOID
+   class AF31
+    bandwidth 1000
+    random-detect dscp-based
+  !
+  interface GigabitEthernet0/1
+   service-policy output AVOID` },
+              { kind: 'table', h: 'WRED commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%random-detect%%**', 'Enable WRED'],
+                ['**%%random-detect dscp-based%%**', 'Use DSCP drop profiles'],
+                ['**%%random-detect precedence-based%%**', 'Use precedence profiles'],
+                ['**%%min/max threshold%%**', 'Set the drop curve']
+              ]},
+              { kind: 'table', h: 'ECN', cols: ['Item', 'Detail'], rows: [
+                ['**What**', 'Mark instead of drop'],
+                ['**Bits**', 'ECT and CE'],
+                ['**Partner**', 'WRED plus ECN'],
+                ['**Result**', 'TCP backs off without loss']
+              ]},
+              { kind: 'table', h: 'Where to apply', cols: ['Device', 'Reason'], rows: [
+                ['**Egress WAN**', 'Protect voice and video'],
+                ['**Core queues**', 'Avoid synchronisation'],
+                ['**Edge**', 'Set drop profiles']
+              ]}
+            ],
+            commands: [
+              { label: 'Enable DSCP-based WRED in a class', code:
+`policy-map AVOID\n class AF31\n  bandwidth 1000\n  random-detect dscp-based` },
+              { label: 'Attach the policy on egress', code:
+`interface GigabitEthernet0/1\n service-policy output AVOID` },
+              { label: 'Verify WRED and drop counters', code:
+`show policy-map interface\nshow queueing random-detect\nshow interfaces` }
+            ],
+            traps: [
+              '**Tail drop leads to TCP global synchronisation**, and WRED addresses both.',
+              'WRED means **weighted random early detection**, applied per class.',
+              'Thresholds run from **min to max to full drop**.',
+              '**ECN marks instead of dropping**, which keeps TCP friendly.',
+              'Apply WRED at **congested egress**, typically the WAN.',
+              'Lower drop precedence values survive longer than higher ones.'
+            ],
+            table: {
+              cols: ['Item', 'Congestion Avoidance'],
+              rows: [
+                ['Problem', 'Tail drop and sync'],
+                ['Tool', 'WRED'],
+                ['Model', 'RED per class'],
+                ['Threshold', 'Min and max'],
+                ['Weighted', 'Per DSCP'],
+                ['ECN', 'Mark instead of drop'],
+                ['Sync', 'Avoided'],
+                ['Place', 'Egress']
+              ]
+            },
+            related: [
+              { t: '05. Queuing', d: 'The queues WRED manages' },
+              { t: '11. DSCP PHB Deep-Dive', d: 'Drop precedence values' },
+              { t: '03. Policing', d: 'A different drop decision' }
+            ],
+            glossary: ['WRED', 'Queuing', 'DSCP']
+          }
+        ,
+          {
+            id: 't07', num: '07', group: 'arch', title: 'DiffServ',
+            blurb: 'Per-class DSCP and per-hop behaviour, with no signalling at all',
+            overview: '**[[DiffServ]]** is the QoS architecture where each packet carries its own class in the **[[DSCP]]** field and each router applies a per-hop behaviour. There is no signalling and no reservation, which makes it scalable and the de-facto model for enterprise and service-provider QoS.',
+            keyIdea: 'DiffServ is DSCP plus PHB: classify and mark at the edge, trust in the core. EF is voice, AF is assured forwarding with three drop levels, and CS is the class selector.',
+            sections: [
+              { kind: 'table', h: 'DiffServ versus IntServ', cols: ['Aspect', 'DiffServ', 'IntServ'], rows: [
+                ['Model', 'Per class', 'Per flow'],
+                ['Signalling', 'None', 'RSVP'],
+                ['Scale', 'Excellent', 'Poor'],
+                ['Guarantee', 'Statistical', 'Hard']
+              ]},
+              { kind: 'table', h: 'DSCP and PHB', cols: ['Field', 'Bits', 'Purpose'], rows: [
+                ['**DSCP**', '6', 'Packet class'],
+                ['**ECN**', '2', 'Congestion marks'],
+                ['**PHB**', 'Not a field', 'Treatment applied per class']
+              ]},
+              { kind: 'table', h: 'The PHB classes', cols: ['PHB', 'DSCP', 'Use'], rows: [
+                ['**EF**', '46', 'Voice, low latency'],
+                ['**AF4x**', '34, 36, 38', 'Video conference'],
+                ['**AF3x**', '26, 28, 30', 'Video stream'],
+                ['**AF2x**', '18, 20, 22', 'Signalling and OAM'],
+                ['**AF1x**', '10, 12, 14', 'Bulk'],
+                ['**CSx**', '0 to 56', 'Class selector and control'],
+                ['**BE**', '0', 'Default']
+              ]},
+              { kind: 'table', h: 'AF drop precedence', cols: ['Code', 'Drop', 'Example'], rows: [
+                ['**AF21**', 'Low', 'Signalling'],
+                ['**AF22**', 'Medium', 'Data'],
+                ['**AF23**', 'High', 'Bulk']
+              ]},
+              { kind: 'table', h: 'DiffServ in the network', cols: ['Zone', 'Action'], rows: [
+                ['**Edge**', 'Classify and mark'],
+                ['**Core**', 'Trust and apply the PHB'],
+                ['**Provider**', 'Honour DSCP or the contract']
+              ]},
+              { kind: 'code', h: 'Example policy', code:
+`  policy-map DIFFSERV
+   class VOICE
+    priority 128
+   class VIDEO
+    bandwidth 1000
+    random-detect dscp-based
+   class DATA
+    bandwidth 2000` }
+            ],
+            commands: [
+              { label: 'Build the DiffServ policy', code:
+`policy-map DIFFSERV\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n  random-detect dscp-based\n class DATA\n  bandwidth 2000` },
+              { label: 'Verify policy and classes', code:
+`show policy-map\nshow policy-map interface\nshow class-map` },
+              { label: 'Check the running policy', code:
+`show run policy-map\nshow policy-map interface` }
+            ],
+            traps: [
+              'DiffServ is **DSCP plus PHB**, with no signalling.',
+              '**EF (46) is voice**, AF is assured forwarding with three drop levels, and CS is the class selector.',
+              'The core **trusts DSCP**; the edge marks.',
+              'DiffServ is **statistical**; IntServ is per-flow guaranteed.',
+              'Within an AF class, a **lower drop number survives longer**.',
+              'The AF class number selects the queue and the drop number selects the drop probability.'
+            ],
+            table: {
+              cols: ['Item', 'DiffServ'],
+              rows: [
+                ['Model', 'Per class'],
+                ['Mark', 'DSCP'],
+                ['Voice', 'EF'],
+                ['Video', 'AF'],
+                ['Drop', 'AFx3 is highest'],
+                ['Control', 'CS6'],
+                ['Edge', 'Mark'],
+                ['Core', 'Trust and apply PHB']
+              ]
+            },
+            related: [
+              { t: '08. IntServ', d: 'The contrasting reservation model' },
+              { t: '11. DSCP PHB Deep-Dive', d: 'The PHB values' },
+              { t: '12. QoS Marking & Trust Boundaries', d: 'Edge marking' }
+            ],
+            glossary: ['DiffServ', 'DSCP', 'QoS Marking', 'Trust Boundary', 'IntServ', 'QoS', 'Data Plane']
+          },
+          {
+            id: 't08', num: '08', group: 'arch', title: 'IntServ',
+            blurb: 'Per-flow RSVP reservations with hard guarantees but poor scale',
+            overview: '**[[IntServ]]** delivers per-flow, hard QoS guarantees using RSVP to reserve bandwidth end to end **before** traffic flows. Unlike the per-class DiffServ model, every router holds per-flow state, which is why it does not scale to large networks. The exam contrasts IntServ with **[[DiffServ]]** constantly.',
+            keyIdea: 'IntServ is per-flow with RSVP PATH and RESV reservations and hard guarantees. It does not scale, while DiffServ does, and RSVP survives mainly as RSVP-TE for MPLS.',
+            sections: [
+              { kind: 'table', h: 'The IntServ model', cols: ['Item', 'Detail'], rows: [
+                ['**Flow**', 'Per session or application'],
+                ['**Reservation**', 'RSVP PATH and RESV'],
+                ['**State**', 'Per flow on every router'],
+                ['**Guarantee**', 'Hard'],
+                ['**Scale**', 'Poor']
+              ]},
+              { kind: 'table', h: 'RSVP basics', cols: ['Message', 'Direction', 'Job'], rows: [
+                ['**PATH**', 'Sender to receiver', 'Announce requirements'],
+                ['**RESV**', 'Receiver to sender', 'Reserve resources'],
+                ['**Admission**', 'Every hop', 'Accept or reject']
+              ]},
+              { kind: 'table', h: 'Services', cols: ['Service', 'Guarantee'], rows: [
+                ['**Guaranteed**', 'Hard bandwidth and delay'],
+                ['**Controlled load**', 'QoS under load'],
+                ['**Best effort**', 'None']
+              ]},
+              { kind: 'code', h: 'RSVP configuration', code:
+`  interface GigabitEthernet0/1
+   ip rsvp bandwidth 128 64
+   ip rsvp reservation bandwidth per-flow` },
+              { kind: 'table', h: 'RSVP commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%ip rsvp bandwidth%%**', 'Maximum and typical bandwidth'],
+                ['**%%ip rsvp reservation%%**', 'Per-flow caps'],
+                ['**%%ip rsvp neighbor%%**', 'Explicit peers']
+              ]},
+              { kind: 'table', h: 'IntServ versus DiffServ', cols: ['Aspect', 'IntServ', 'DiffServ'], rows: [
+                ['Unit', 'Flow', 'Class'],
+                ['Signal', 'RSVP', 'None'],
+                ['State', 'Per flow', 'Per class'],
+                ['Guarantee', 'Hard', 'Statistical'],
+                ['Scale', 'Low', 'High']
+              ]},
+              { kind: 'table', h: 'Where IntServ lives today', cols: ['Use', 'Note'], rows: [
+                ['**RSVP-TE**', 'MPLS traffic engineering'],
+                ['**Voice gateways**', 'Small segments'],
+                ['**Niche**', 'Hard guarantees']
+              ]}
+            ],
+            commands: [
+              { label: 'Enable RSVP on an interface', code:
+`interface GigabitEthernet0/1\n ip rsvp bandwidth 128 64\n ip rsvp reservation bandwidth per-flow` },
+              { label: 'Verify reservations', code:
+`show ip rsvp interface\nshow ip rsvp reservation\nshow ip rsvp sender` },
+              { label: 'Check installed state and debug', code:
+`show ip rsvp installed\ndebug ip rsvp` }
+            ],
+            traps: [
+              'IntServ is **per flow with RSVP reservations** and hard guarantees.',
+              '**PATH announces and RESV reserves**; each router admits or rejects.',
+              'It **does not scale** because every router keeps per-flow state.',
+              'DiffServ is per class and scales; IntServ is per flow.',
+              'RSVP survives mainly as **RSVP-TE** for MPLS traffic engineering.',
+              'RSVP must be configured on **every hop** along the path.'
+            ],
+            table: {
+              cols: ['Item', 'IntServ'],
+              rows: [
+                ['Unit', 'Flow'],
+                ['Signal', 'RSVP'],
+                ['PATH', 'Announce'],
+                ['RESV', 'Reserve'],
+                ['State', 'Per flow'],
+                ['Guarantee', 'Hard'],
+                ['Scale', 'Low'],
+                ['Survives', 'RSVP-TE']
+              ]
+            },
+            related: [
+              { t: '07. DiffServ', d: 'The scalable contrast' },
+              { t: '05. Queuing', d: 'Per-hop treatment it reserves' }
+            ],
+            glossary: ['IntServ', 'DiffServ', 'LLQ', 'QoS']
+          },
+          {
+            id: 't09', num: '09', group: 'config', title: 'Modular QoS CLI',
+            blurb: 'class-map, policy-map, service-policy: match, treat, attach',
+            overview: '**[[MQC|MQC (Modular QoS CLI)]]** is the standard way to build QoS on Cisco routers. It separates QoS into three blocks: **class-map** to match, **policy-map** to define the action, and **service-policy** to attach. Every modern QoS config, whether marking, policing, shaping or queuing, uses these blocks.',
+            keyIdea: 'MQC equals class-map then policy-map then service-policy: match, treat, attach. Unmatched traffic hits class-default, and a policy attaches in one direction.',
+            sections: [
+              { kind: 'table', h: 'The three MQC blocks', cols: ['Block', 'Role', 'Command'], rows: [
+                ['**class-map**', 'Match traffic', 'class-map match-any or match-all NAME'],
+                ['**policy-map**', 'Define treatment', 'policy-map NAME'],
+                ['**service-policy**', 'Attach to interface', 'service-policy input or output NAME']
+              ]},
+              { kind: 'table', h: 'class-map matching', cols: ['Keyword', 'Logic'], rows: [
+                ['**%%match-all%%**', 'Every criterion must match'],
+                ['**%%match-any%%**', 'Any one criterion matches'],
+                ['**%%match dscp%%**', 'DSCP value or values'],
+                ['**%%match access-group%%**', 'ACL'],
+                ['**%%match protocol%%**', 'NBAR at Layer 7']
+              ]},
+              { kind: 'code', h: 'Class-map examples', code:
+`  class-map match-any VOICE
+   match dscp ef
+  class-map match-all STRICT
+   match dscp af41
+   match access-group name VIDEO-ACL` },
+              { kind: 'table', h: 'policy-map actions', cols: ['Command', 'Action'], rows: [
+                ['**%%set dscp%%** or **%%set cos%%**', 'Mark'],
+                ['**%%police%%**', 'Enforce a rate'],
+                ['**%%shape%%**', 'Smooth a rate'],
+                ['**%%bandwidth%%**', 'CBWFQ share'],
+                ['**%%priority%%**', 'LLQ strict priority'],
+                ['**%%random-detect%%**', 'WRED']
+              ]},
+              { kind: 'table', h: 'Attaching with service-policy', cols: ['Direction', 'Command'], rows: [
+                ['**Ingress**', 'service-policy input NAME'],
+                ['**Egress**', 'service-policy output NAME'],
+                ['**Both**', 'One policy per direction']
+              ]},
+              { kind: 'table', h: 'class-default', cols: ['Item', 'Detail'], rows: [
+                ['**%%class class-default%%**', 'Matches all unmatched traffic'],
+                ['**Existence**', 'Always present as the catch-all'],
+                ['**Actions**', 'Shape, police or queue the default']
+              ]},
+              { kind: 'code', h: 'Hierarchical MQC', code:
+`  policy-map PARENT
+   class class-default
+    shape average 10000000
+    service-policy CHILD` }
+            ],
+            commands: [
+              { label: 'Build classes and attach a policy', code:
+`class-map match-any VOICE\n match dscp ef\npolicy-map EDGE\n class VOICE\n  priority 128\n class class-default\n  fair-queue\ninterface GigabitEthernet0/1\n service-policy output EDGE` },
+              { label: 'Verify the building blocks', code:
+`show class-map\nshow policy-map\nshow policy-map interface` },
+              { label: 'Check the policy direction and hierarchy', code:
+`show run interface GigabitEthernet0/1\nshow run policy-map` }
+            ],
+            traps: [
+              'MQC is **class-map, policy-map, service-policy**: match, treat, attach.',
+              '**match-all** and **match-any** change the matching logic.',
+              'A service-policy attaches in **one direction**, input or output.',
+              'Unmatched traffic falls into **class-default**.',
+              '**Hierarchical MQC** nests a child policy under a parent for shaping plus per-class action.',
+              'The class-map is the what, the policy-map is the how, and the service-policy is the where.'
+            ],
+            table: {
+              cols: ['Block', 'Role'],
+              rows: [
+                ['class-map', 'Match'],
+                ['policy-map', 'Actions'],
+                ['service-policy', 'Attach in or out'],
+                ['match-all', 'All criteria'],
+                ['match-any', 'Any criterion'],
+                ['class-default', 'Catch-all'],
+                ['Actions', 'Mark, police, shape, queue'],
+                ['Hierarchy', 'Parent and child']
+              ]
+            },
+            related: [
+              { t: '01. Classification', d: 'class-map matching' },
+              { t: '03. Policing', d: 'A policy action' },
+              { t: '10. LLQ & CBWFQ', d: 'Queuing actions' }
+            ],
+            glossary: ['MQC', 'QoS Classification', 'Policing', 'Shaping', 'Queuing', 'WRED', 'Control Plane', 'Data Plane']
+          },
+          {
+            id: 't10', num: '10', group: 'config', title: 'LLQ & CBWFQ',
+            blurb: 'Guaranteed class shares plus a policed priority queue for voice',
+            overview: '**[[CBWFQ]]** is the egress scheduling method that gives each traffic class a guaranteed bandwidth share. **[[LLQ]]** adds a strict-priority class, usually voice or EF, served before everything else but rate-limited so it cannot starve the other classes. Together they are the production answer for converged voice, video and data.',
+            keyIdea: 'CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. Use priority for voice and bandwidth for video and data.',
+            sections: [
+              { kind: 'table', h: 'CBWFQ model', cols: ['Concept', 'Detail'], rows: [
+                ['**Class**', 'Matched by class-map'],
+                ['**Share**', 'Bandwidth in kbps per class'],
+                ['**Scheduling**', 'Proportional to weight'],
+                ['**Drop**', 'Tail drop per queue'],
+                ['**Residual**', 'Unused bandwidth is redistributed']
+              ]},
+              { kind: 'table', h: 'LLQ, the strict priority class', cols: ['Item', 'Detail'], rows: [
+                ['**Command**', 'priority kbps'],
+                ['**Behaviour**', 'Served before bandwidth classes'],
+                ['**Rate limit**', 'Policed to the priority value'],
+                ['**Use**', 'Voice and EF'],
+                ['**Risk**', 'Starvation if not limited']
+              ]},
+              { kind: 'table', h: 'priority versus bandwidth', cols: ['Keyword', 'Meaning'], rows: [
+                ['**%%priority%%**', 'Strict-priority LLQ class, policed'],
+                ['**%%bandwidth%%**', 'Guaranteed weighted share, not strict'],
+                ['**Both**', 'LLQ is served first, then CBWFQ classes']
+              ]},
+              { kind: 'code', h: 'Configuration example', code:
+`  policy-map WAN-EDGE
+   class VOICE
+    priority 128
+   class VIDEO
+    bandwidth 1000
+   class DATA
+    bandwidth 2000
+   class class-default
+    fair-queue
+  !
+  interface GigabitEthernet0/1
+   service-policy output WAN-EDGE` },
+              { kind: 'table', h: 'Queuing commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%priority%%**', 'LLQ strict-priority class'],
+                ['**%%bandwidth%%**', 'CBWFQ guaranteed share'],
+                ['**%%fair-queue%%**', 'Per-flow treatment in class-default'],
+                ['**%%queue-limit%%**', 'Per-class queue depth']
+              ]},
+              { kind: 'para', h: 'Why LLQ is policed', p: 'The priority queue is rate-limited to the configured **priority** value. Bursts beyond it are dropped, which guarantees that the bandwidth classes still get served instead of being starved by a busy voice queue.' },
+              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
+                ['**%%show policy-map interface%%**', 'Per-class rates and drops'],
+                ['**%%show queueing interface%%**', 'Queuing state'],
+                ['**%%show class-map%%**', 'Class definitions'],
+                ['**%%show policy-map%%**', 'Policy configuration']
+              ]}
+            ],
+            commands: [
+              { label: 'Build LLQ plus CBWFQ', code:
+`policy-map WAN-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000\n class class-default\n  fair-queue` },
+              { label: 'Attach on the WAN egress', code:
+`interface GigabitEthernet0/1\n service-policy output WAN-EDGE` },
+              { label: 'Verify queues and drops', code:
+`show policy-map interface GigabitEthernet0/1\nshow queueing interface\nshow interfaces GigabitEthernet0/1` }
+            ],
+            traps: [
+              '**CBWFQ is per-class guaranteed bandwidth**; **LLQ is a strict priority class**.',
+              'The LLQ priority class **must be policed** to prevent starvation.',
+              '**%%priority%%** is LLQ and policed; **%%bandwidth%%** is a CBWFQ share.',
+              'Queuing is **egress** and only matters under congestion.',
+              'Voice goes to **LLQ with EF**; video and data use **CBWFQ** shares.',
+              'If voice jitters on a congested link, the missing piece is usually an **LLQ priority class**.'
+            ],
+            table: {
+              cols: ['Item', 'CBWFQ', 'LLQ'],
+              rows: [
+                ['Command', 'bandwidth', 'priority'],
+                ['Served', 'Weighted share', 'Strict first'],
+                ['Policed', 'No', 'Yes'],
+                ['Use', 'Data and video', 'Voice, EF'],
+                ['Risk', 'No strict latency bound', 'Starvation if unlimited'],
+                ['Basis', 'Class weights', 'Priority plus CBWFQ']
+              ]
+            },
+            related: [
+              { t: '05. Queuing', d: 'The mechanism family' },
+              { t: '06. Congestion Avoidance', d: 'Queue management' },
+              { t: '09. Modular QoS CLI', d: 'The policy framework' }
+            ],
+            glossary: ['CBWFQ', 'LLQ', 'Queuing', 'MQC', 'WRED', 'Voice VLAN']
+          },
+          {
+            id: 't11', num: '11', group: 'config', title: 'DSCP PHB Deep-Dive',
+            blurb: 'EF, AF and CS values, including every drop precedence',
+            overview: '**[[DSCP]]** is the 6-bit Layer 3 field that selects a per-hop behaviour on each router. The key PHB families are **EF** for voice, **AF** for assured forwarding with drop precedences, and **CS** for class selector and control traffic. The exam tests the values and which PHB maps to which traffic.',
+            keyIdea: 'EF is exactly 46. AFxy uses class 1 to 4 and drop 1 to 3, where a lower drop number survives longer. CSx equals x times 8, so CS6 is 48.',
+            sections: [
+              { kind: 'table', h: 'DSCP field structure', cols: ['Field', 'Bits', 'Purpose'], rows: [
+                ['**DSCP**', '6', 'PHB selector'],
+                ['**ECN**', '2', 'Congestion notification'],
+                ['**Total ToS**', '8', 'DSCP plus ECN']
+              ]},
+              { kind: 'table', h: 'The three PHB families', cols: ['PHB', 'DSCP values', 'Use'], rows: [
+                ['**EF**', '46, binary 101110', 'Voice, low latency and jitter'],
+                ['**AF**', 'AF1x to AF4x', 'Video and data with drop classes'],
+                ['**CS**', 'CS0 to CS7', 'Legacy precedence and control']
+              ]},
+              { kind: 'table', h: 'EF in detail', cols: ['Item', 'Detail'], rows: [
+                ['**Value**', '46'],
+                ['**Binary**', '101110'],
+                ['**Meaning**', 'One expedited class, no drop precedences'],
+                ['**Typical**', 'Voice RTP'],
+                ['**Queue**', 'LLQ priority']
+              ]},
+              { kind: 'table', h: 'AF classes and drop precedence', cols: ['Class', 'DSCP values x1, x2, x3'], rows: [
+                ['**AF1x**', '10, 12, 14'],
+                ['**AF2x**', '18, 20, 22'],
+                ['**AF3x**', '26, 28, 30'],
+                ['**AF4x**', '34, 36, 38']
+              ]},
+              { kind: 'table', h: 'AF drop meaning', cols: ['Drop precedence', 'Meaning'], rows: [
+                ['**x1, low**', 'Lowest drop probability'],
+                ['**x2, medium**', 'Medium drop probability'],
+                ['**x3, high**', 'Highest drop probability']
+              ]},
+              { kind: 'table', h: 'CS values', cols: ['CS', 'DSCP', 'Legacy precedence'], rows: [
+                ['**CS0**', '0', '0, best effort'],
+                ['**CS1**', '8', '1'],
+                ['**CS2**', '16', '2'],
+                ['**CS3**', '24', '3'],
+                ['**CS4**', '32', '4'],
+                ['**CS5**', '40', '5'],
+                ['**CS6**', '48', '6, routing and control'],
+                ['**CS7**', '56', '7']
+              ]},
+              { kind: 'table', h: 'Common DSCP quick map', cols: ['DSCP', 'Value', 'Use'], rows: [
+                ['**EF**', '46', 'Voice'],
+                ['**AF41**', '34', 'Video conferencing'],
+                ['**AF31**', '26', 'Video streaming'],
+                ['**AF21**', '18', 'Signalling and OAM'],
+                ['**CS6**', '48', 'Routing control'],
+                ['**CS0 or BE**', '0', 'Best effort']
+              ]}
+            ],
+            commands: [
+              { label: 'Match DSCP values into classes', code:
+`class-map match-any VOICE\n match dscp ef\nclass-map match-any VIDEO\n match dscp af41 af31` },
+              { label: 'Apply PHB treatment', code:
+`policy-map DSCP-PHB\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000` },
+              { label: 'Verify classes and policy', code:
+`show class-map\nshow policy-map` }
+            ],
+            traps: [
+              '**EF is exactly 46**, a single value with no precedences.',
+              '**AF is class 1 to 4 plus drop 1 to 3**; AF41 survives longer than AF43.',
+              '**CSx equals x times 8**, so CS6 is 48 and maps to IP precedence 6.',
+              'ECN uses **2 bits**, while DSCP uses 6 of the 8 ToS bits.',
+              'Voice is **EF to LLQ**; video and data are **AF to CBWFQ and WRED**.',
+              'The AF class number selects the queue and the drop number selects the drop probability.'
+            ],
+            table: {
+              cols: ['PHB', 'DSCP', 'Use', 'Queue'],
+              rows: [
+                ['EF', '46', 'Voice', 'LLQ priority'],
+                ['AF4x', '34, 36, 38', 'Video conference', 'CBWFQ plus WRED'],
+                ['AF3x', '26, 28, 30', 'Video stream', 'CBWFQ plus WRED'],
+                ['AF2x', '18, 20, 22', 'Signalling', 'CBWFQ'],
+                ['CS6', '48', 'Control', 'Priority'],
+                ['BE', '0', 'Default', 'Default']
+              ]
+            },
+            related: [
+              { t: '07. DiffServ', d: 'The DSCP marking model' },
+              { t: '02. Marking', d: 'How values are written' },
+              { t: '06. Congestion Avoidance', d: 'Drop precedence in action' }
+            ],
+            glossary: ['DSCP', 'DiffServ', 'QoS Marking', 'WRED', 'QoS']
+          },
+          {
+            id: 't12', num: '12', group: 'config', title: 'QoS Marking & Trust Boundaries',
+            blurb: 'Mark once at the edge, trust in the core, and map CoS to DSCP',
+            overview: '**[[QoS Marking|Marking]]** writes a QoS value such as **[[DSCP]]**, CoS or IP precedence into the packet so downstream devices apply consistent treatment. The **[[Trust Boundary|trust boundary]]** is the point where the network decides to accept or re-mark incoming markings. Mark once at the edge, then trust and honour it in the core.',
+            keyIdea: 'The trust boundary sits at the access edge. Mark once there, trust DSCP in the core, and map CoS to DSCP when traffic crosses from L2 to L3.',
+            sections: [
+              { kind: 'table', h: 'Marking locations', cols: ['Layer', 'Field', 'Bits'], rows: [
+                ['**L2**', '802.1p CoS', '3'],
+                ['**L3**', 'IP precedence', '3'],
+                ['**L3**', 'DSCP', '6'],
+                ['**MPLS**', 'EXP', '3']
+              ]},
+              { kind: 'table', h: 'The trust boundary', cols: ['Zone', 'Action'], rows: [
+                ['**Access edge**', 'Untrusted, so re-mark or classify everything'],
+                ['**Trusted ports**', 'Trust the CoS or DSCP from phones, cameras and APs'],
+                ['**Core**', 'Trust DSCP and apply the PHB without re-marking']
+              ]},
+              { kind: 'table', h: 'Trust versus re-mark', cols: ['Mode', 'Behaviour'], rows: [
+                ['**Trust**', 'Accept the existing CoS or DSCP as-is'],
+                ['**Re-mark**', 'Overwrite with a policy-derived value']
+              ]},
+              { kind: 'code', h: 'Trust and marking configuration', code:
+`  mls qos trust cos
+  !
+  policy-map MARK
+   class VOICE
+    set dscp ef
+   class CAMERA
+    set dscp af41
+  !
+  interface GigabitEthernet0/1
+   service-policy input MARK` },
+              { kind: 'table', h: 'Trust and marking commands', cols: ['Command', 'Effect'], rows: [
+                ['**%%mls qos trust cos%%**', 'Trust incoming CoS'],
+                ['**%%mls qos trust dscp%%**', 'Trust incoming DSCP'],
+                ['**%%set dscp%%**', 'Write DSCP'],
+                ['**%%set cos%%**', 'Write CoS'],
+                ['**%%service-policy input%%**', 'Apply marking on ingress']
+              ]},
+              { kind: 'table', h: 'CoS to DSCP mapping', cols: ['CoS', 'Typical DSCP usage'], rows: [
+                ['**0**', 'BE'],
+                ['**3**', 'Call signalling'],
+                ['**4**', 'Video, AF41'],
+                ['**5**', 'Voice, EF'],
+                ['**6 and 7**', 'Network control']
+              ]},
+              { kind: 'table', h: 'Marking best practice', cols: ['Rule', 'Detail'], rows: [
+                ['**Mark once**', 'At the trust boundary or edge'],
+                ['**Trust in the core**', 'Core reads DSCP and does not re-mark'],
+                ['**Consistent PHB**', 'Queue by DSCP: EF, AF, CS'],
+                ['**Secure**', 'Untrusted ports are re-marked']
+              ]}
+            ],
+            commands: [
+              { label: 'Trust CoS on an access port', code:
+`interface GigabitEthernet0/1\n mls qos trust cos` },
+              { label: 'Mark traffic by class on ingress', code:
+`policy-map MARK\n class VOICE\n  set dscp ef\n class CAMERA\n  set dscp af41\ninterface GigabitEthernet0/1\n service-policy input MARK` },
+              { label: 'Verify trust and mapping', code:
+`show mls qos\nshow mls qos interface GigabitEthernet0/1\nshow mls qos maps cos-dscp` }
+            ],
+            traps: [
+              '**Marking writes**; **classification reads**.',
+              'The **trust boundary** decides who is trusted and who gets re-marked at the edge.',
+              'Mark **once at the edge**, then **trust in the core** without re-marking.',
+              'CoS is **Layer 2 and LAN-only**; DSCP crosses Layer 3, so map between them at the boundary.',
+              '**%%mls qos trust cos%%** trusts CoS; **%%set dscp%%** marks.',
+              'CoS is carried in the **VLAN tag**, so it only exists on trunked or tagged links.'
+            ],
+            table: {
+              cols: ['Item', 'Marking and Trust'],
+              rows: [
+                ['L2', 'CoS, 3 bits'],
+                ['L3', 'DSCP 6 bits or precedence'],
+                ['MPLS', 'EXP'],
+                ['Trust boundary', 'Access edge'],
+                ['Core', 'Trust, no re-mark'],
+                ['Mark command', 'set dscp or set cos'],
+                ['Trust command', 'mls qos trust'],
+                ['Map', 'CoS to DSCP']
+              ]
+            },
+            related: [
+              { t: '02. Marking', d: 'Edge marking detail' },
+              { t: '07. DiffServ', d: 'The DSCP model' },
+              { t: '01. Classification', d: 'Classify before marking' }
+            ],
+            glossary: ['QoS Marking', 'Trust Boundary', 'QoS Classification', 'DSCP', 'DiffServ', 'VLAN']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'traffic', label: 'Traffic Control', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'queue', label: 'Queuing & Congestion', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'arch', label: 'QoS Architectures', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' },
+          { key: 'config', label: 'Configuration & Marking', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'QoS', def: 'Quality of Service. The set of mechanisms that classify, mark, meter, schedule and drop traffic so important flows get better treatment under contention.' },
+          { term: 'QoS Classification', def: 'Identifying traffic by DSCP, CoS, ACL or application signature so a policy can act on it. It reads rather than writes.' },
+          { term: 'QoS Marking', def: 'Writing a QoS value such as DSCP, CoS or IP precedence into the packet so every downstream hop sees the same class.' },
+          { term: 'Policing', def: 'Enforcing a rate by dropping or re-marking excess traffic with a token bucket. It does not buffer and adds no delay.' },
+          { term: 'Shaping', def: 'Smoothing egress traffic to a rate by buffering the excess. It adds delay but avoids drops.' },
+          { term: 'Queuing', def: 'Choosing the order packets leave an interface when congested, using FIFO, WFQ, PQ, CBWFQ or LLQ.' },
+          { term: 'WRED', def: 'Weighted Random Early Detection. It drops packets randomly as a queue grows, before tail drop, with per-class thresholds.' },
+          { term: 'DiffServ', def: 'Differentiated Services. A scalable per-class model where DSCP selects a per-hop behaviour, with no signalling or reservations.' },
+          { term: 'IntServ', def: 'Integrated Services. A per-flow model that reserves resources with RSVP for hard guarantees and does not scale well.' },
+          { term: 'MQC', def: 'Modular QoS CLI. The Cisco framework of class-map, policy-map and service-policy used to match, treat and attach QoS.' },
+          { term: 'CBWFQ', def: 'Class-Based Weighted Fair Queuing. Egress scheduling that gives each class a guaranteed bandwidth share.' },
+          { term: 'LLQ', def: 'Low Latency Queuing. CBWFQ plus a strict-priority class that is policed so it cannot starve the other classes.' },
+          { term: 'DSCP', def: 'Differentiated Services Code Point. The 6-bit Layer 3 field that selects a per-hop behaviour, with values such as EF 46 and AF41 34.' },
+          { term: 'Trust Boundary', def: 'The point where the network decides to trust or re-mark incoming QoS markings, normally the access edge.' },
+          { term: 'ACL', def: 'Access Control List. A match tool for IP addresses and ports, used by class maps and policy routing.' },
+          { term: 'MPLS', def: 'Multiprotocol Label Switching. Its 3-bit EXP field is another place to carry QoS class information.' },
+          { term: 'Voice VLAN', def: 'A dedicated VLAN for IP phones, usually paired with CoS 5 and DSCP EF so voice is easy to classify and trust.' },
+          { term: 'Control Plane', def: 'The routing and signalling side of the device. QoS protects control traffic such as routing updates with CS6.' },
+          { term: 'Data Plane', def: 'The packet-forwarding side, where marking, queuing and dropping actually happen under a QoS policy.' },
+          { term: 'VLAN', def: 'Virtual LAN. CoS is carried in the 802.1Q VLAN tag, so Layer 2 marking depends on tagged links.' }
+        ];
+
+        const quiz = [
+          { q: 'What does QoS classification do?', options: ['Identifies and groups traffic', 'Writes a QoS value into the packet', 'Buffers excess traffic', 'Reserves bandwidth per flow'], answer: 0, why: 'Classification reads fields and groups traffic; marking writes the value.' },
+          { q: 'Which field is the 6-bit Layer 3 QoS marker?', options: ['CoS', 'DSCP', 'EXP', 'IP precedence'], answer: 1, why: 'DSCP is 6 bits; CoS and EXP are 3-bit Layer 2 or MPLS fields.' },
+          { q: 'Which field is the 3-bit Layer 2 marker?', options: ['DSCP', 'IP precedence', '802.1p CoS', 'ECN'], answer: 2, why: 'CoS lives in the 802.1p or 802.1Q header and is 3 bits.' },
+          { q: 'At which layer does NBAR classify?', options: ['Layer 2', 'Layer 3', 'Layer 4', 'Layer 7'], answer: 3, why: 'NBAR recognises applications by their Layer 7 signatures.' },
+          { q: 'What does class-map match-any require?', options: ['Any one criterion to match', 'Every criterion to match', 'No criteria to match', 'Only DSCP to match'], answer: 0, why: 'match-any is an OR; match-all is an AND.' },
+          { q: 'Where is the trust boundary normally placed?', options: ['In the core', 'At the access edge', 'At the ISP', 'On the route reflector'], answer: 1, why: 'Traffic is classified or re-marked as it enters the network.' },
+          { q: 'What does marking do?', options: ['Identifies traffic classes', 'Drops excess traffic', 'Writes a QoS value into the packet', 'Schedules queues'], answer: 2, why: 'Marking writes DSCP, CoS or precedence so later hops can trust it.' },
+          { q: 'How many bits are in DSCP?', options: ['3', '8', '2', '6'], answer: 3, why: 'DSCP is 6 bits, giving 64 values; the other 2 ToS bits are ECN.' },
+          { q: 'How many bits are in 802.1p CoS?', options: ['3', '6', '8', '2'], answer: 0, why: 'CoS is a 3-bit Layer 2 field.' },
+          { q: 'What is the DSCP value for EF?', options: ['34', '46', '26', '48'], answer: 1, why: 'Expedited Forwarding is 46, used for voice.' },
+          { q: 'What is the DSCP value for AF41?', options: ['46', '26', '34', '38'], answer: 2, why: 'AF41 is class 4, drop precedence 1, value 34.' },
+          { q: 'What is the DSCP value for AF31?', options: ['34', '18', '30', '26'], answer: 3, why: 'AF31 is class 3, drop precedence 1, value 26.' },
+          { q: 'What is the DSCP value for CS6?', options: ['48', '46', '56', '24'], answer: 0, why: 'CSx equals x times 8, so CS6 is 48 and is used for control.' },
+          { q: 'What is the DSCP value for CS0?', options: ['8', '0', '46', '48'], answer: 1, why: 'CS0 is 0, which is best effort.' },
+          { q: 'Which command writes a DSCP value?', options: ['match dscp', 'trust dscp', 'set dscp', 'police dscp'], answer: 2, why: 'The set action writes the value; match only classifies.' },
+          { q: 'What happens to excess traffic under policing?', options: ['It is buffered', 'It is always transmitted', 'It is fragmented', 'It is dropped or re-marked'], answer: 3, why: 'Policing enforces the rate without buffering.' },
+          { q: 'Does policing buffer excess traffic?', options: ['No', 'Yes, always', 'Only on egress', 'Only for voice'], answer: 0, why: 'Shaping buffers; policing drops or re-marks.' },
+          { q: 'Where can policing be applied?', options: ['Egress only', 'Ingress or egress', 'Ingress only', 'Only on loopbacks'], answer: 1, why: 'Policers can be input or output; shapers are egress only.' },
+          { q: 'What does CIR represent in a token bucket?', options: ['The committed burst size', 'The excess burst size', 'The committed information rate', 'The queue depth'], answer: 2, why: 'CIR is the rate at which tokens are added.' },
+          { q: 'What is Bc in a token bucket?', options: ['Excess burst', 'Committed rate', 'Congestion bit', 'Committed burst'], answer: 3, why: 'Bc is the committed burst size; Be is the excess burst.' },
+          { q: 'What is Be in a token bucket?', options: ['Excess burst', 'Committed burst', 'Committed rate', 'Explicit marking'], answer: 0, why: 'Be allows a bigger burst above the committed rate.' },
+          { q: 'Which three outcomes does a dual-bucket policer have?', options: ['Match, mark, queue', 'Conform, exceed, violate', 'Drop, shape, queue', 'Trust, mark, police'], answer: 1, why: 'Conform transmits, exceed may re-mark, and violate may drop.' },
+          { q: 'What does shaping do with excess traffic?', options: ['Drops it', 'Re-marks it', 'Buffers it', 'Fragments it'], answer: 2, why: 'Shaping holds excess packets in a queue until the rate allows them out.' },
+          { q: 'Where does shaping operate?', options: ['Ingress only', 'Ingress or egress', 'Only on loopbacks', 'Egress only'], answer: 3, why: 'Shaping is an output function and adds delay.' },
+          { q: 'What does shaping add that policing does not?', options: ['Delay', 'Packet loss', 'Re-marking', 'Classification'], answer: 0, why: 'Buffering excess packets introduces delay.' },
+          { q: 'What is the difference between shape average and shape peak?', options: ['Average can use the excess burst', 'Peak can use the excess burst', 'Peak drops all excess', 'Average is ingress only'], answer: 1, why: 'shape peak allows traffic above the average rate using Be.' },
+          { q: 'What does hierarchical shaping combine?', options: ['Two ingress policers', 'WRED and ECN', 'A parent aggregate and child per-class policies', 'CoS and DSCP mapping'], answer: 2, why: 'The parent shapes the total rate and the child carves per-class shares.' },
+          { q: 'When does queuing matter?', options: ['At ingress with no congestion', 'Only on loopbacks', 'Only for multicast', 'At egress under congestion'], answer: 3, why: 'Queuing decides the order of packets leaving a congested interface.' },
+          { q: 'What does CBWFQ provide?', options: ['A guaranteed bandwidth share per class', 'A strict priority queue', 'Random early drops', 'Layer 2 CoS mapping'], answer: 0, why: 'CBWFQ schedules classes by weight and guarantees each a share.' },
+          { q: 'What does LLQ add to CBWFQ?', options: ['A second ingress policer', 'A strict-priority class', 'ECN marking', 'CoS trust'], answer: 1, why: 'LLQ adds a priority queue for voice and other latency-sensitive traffic.' },
+          { q: 'Why is the LLQ priority class policed?', options: ['To add delay', 'To mark DSCP', 'To prevent starvation of other classes', 'To enable WRED'], answer: 2, why: 'Without a rate limit the priority queue could consume the whole link.' },
+          { q: 'Which command creates an LLQ class?', options: ['bandwidth', 'queue-limit', 'fair-queue', 'priority'], answer: 3, why: 'priority kbps creates the strict-priority class.' },
+          { q: 'What does the bandwidth command create?', options: ['A guaranteed CBWFQ share', 'A strict priority queue', 'A policer', 'A shaper'], answer: 0, why: 'bandwidth gives the class a weighted guaranteed share, not strict priority.' },
+          { q: 'What is the main risk of strict priority queuing without a limit?', options: ['Too much jitter for voice', 'Starvation of lower queues', 'Loss of CoS', 'DSCP re-marking'], answer: 1, why: 'PQ can starve lower-priority queues, which is why LLQ polices the priority class.' },
+          { q: 'How does WFQ schedule traffic?', options: ['Strictly by priority', 'By DSCP only', 'Per flow, fairly', 'First in, first out'], answer: 2, why: 'WFQ gives per-flow fairness rather than strict priority.' },
+          { q: 'What problem does tail drop cause?', options: ['DSCP re-marking', 'CoS loss', 'Route flapping', 'TCP global synchronisation'], answer: 3, why: 'Many TCP flows drop together and then back off together.' },
+          { q: 'What does WRED do?', options: ['Drops randomly as the queue grows', 'Buffers all excess traffic', 'Marks every packet with EF', 'Reserves bandwidth per flow'], answer: 0, why: 'WRED drops early and randomly to avoid tail drop and synchronisation.' },
+          { q: 'What are the WRED thresholds?', options: ['CIR and PIR', 'Minimum and maximum', 'Bc and Be', 'CoS and DSCP'], answer: 1, why: 'Below min there is no drop, between min and max random drops rise, and above max all packets drop.' },
+          { q: 'What does ECN do?', options: ['Drops all packets above max', 'Reserves bandwidth with RSVP', 'Marks packets instead of dropping them', 'Maps CoS to DSCP'], answer: 2, why: 'ECN signals congestion so TCP can back off without packet loss.' },
+          { q: 'What is the DiffServ model?', options: ['Per flow, using RSVP', 'Per VLAN, using STP', 'Per route, using BGP', 'Per class, using DSCP and PHB'], answer: 3, why: 'DiffServ classifies packets and applies per-hop behaviour based on DSCP.' },
+          { q: 'How much signalling does DiffServ use?', options: ['None', 'RSVP PATH and RESV', 'BGP communities', 'DHCP options'], answer: 0, why: 'DiffServ has no reservation signalling; it relies on marking and PHB.' },
+          { q: 'What is the IntServ model?', options: ['Per class, with DSCP', 'Per flow, with reservations', 'Per VLAN, with CoS', 'Per queue, with WRED'], answer: 1, why: 'IntServ keeps per-flow state and reserves resources end to end.' },
+          { q: 'Which protocol does IntServ use for reservations?', options: ['LDP', 'BGP', 'RSVP', 'DHCP'], answer: 2, why: 'RSVP signals the reservation along the path.' },
+          { q: 'Which RSVP message announces requirements?', options: ['RESV', 'ACK', 'HELLO', 'PATH'], answer: 3, why: 'PATH travels from sender to receiver and announces the traffic profile.' },
+          { q: 'Which RSVP message reserves resources?', options: ['RESV', 'PATH', 'QUERY', 'UPDATE'], answer: 0, why: 'RESV travels back from receiver to sender and reserves bandwidth.' },
+          { q: 'How well does IntServ scale?', options: ['Perfectly, because it is per class', 'Poorly, because of per-flow state', 'It scales like DiffServ', 'It has no state at all'], answer: 1, why: 'Every router must keep state for every flow.' },
+          { q: 'What kind of guarantee does IntServ provide?', options: ['Statistical only', 'No guarantee at all', 'Hard guarantees', 'Best effort only'], answer: 2, why: 'Admission control and reservations provide hard bandwidth and delay guarantees.' },
+          { q: 'What are the three MQC building blocks?', options: ['ACL, route-map, prefix-list', 'DSCP, CoS, EXP', 'WRED, ECN, RED', 'class-map, policy-map, service-policy'], answer: 3, why: 'Match with a class-map, treat with a policy-map, attach with a service-policy.' },
+          { q: 'What does class-default match?', options: ['All unmatched traffic', 'Only voice traffic', 'Only DSCP 46', 'Only traffic on trunk ports'], answer: 0, why: 'class-default is the catch-all class in every policy-map.' },
+          { q: 'How many directions can one service-policy attach to?', options: ['Both at once', 'One, input or output', 'Neither', 'Only input'], answer: 1, why: 'A policy attaches in a single direction, and you can use one policy per direction.' },
+          { q: 'What is the marking best practice?', options: ['Re-mark at every hop', 'Trust every access port', 'Mark once at the edge and trust in the core', 'Mark only in the core'], answer: 2, why: 'Edge marking plus core trust keeps policy consistent and scalable.' }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'qos.theme', done: 'qos.done', best: 'qos.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
