@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VPN Technologies — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 18 VPN Technologies: GRE, IPsec, IKEv2, DMVPN, FlexVPN, VTI, GET VPN, site-to-site VPN, SSL VPN and remote access VPN.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">VPN Technologies — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">VPN</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">VPN Technologies</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 18</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 18</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">11 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 18 &mdash; VPN Technologies</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Tunnels and the designs built on them: GRE and IPsec with IKEv2, then DMVPN, FlexVPN, VTI, GET VPN, site-to-site, SSL and remote access VPNs, with a decision table for picking one.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        VPN Technologies &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 18 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `VPNs answer two different needs. **[[GRE]]** builds a tunnel that carries routing protocols and multicast but encrypts nothing, **[[IPsec]]** supplies the encryption, and **[[IKEv2]]** negotiates the keys. On top of those primitives sit the designs: **[[DMVPN]]** for dynamic branches, **[[FlexVPN]]** as the IKEv2 framework, **[[Virtual Tunnel Interface|VTIs]]** for route-based IPsec, **[[GET VPN]]** for tunnel-free any-to-any over **[[MPLS]]**, and **[[SSL VPN]]** or **[[Remote Access VPN]]** for users.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'tunnel', title: 'GRE',
+            blurb: 'Protocol 47 tunnels, overhead, keepalives and MTU tuning',
+            overview: '**[[GRE]]** encapsulates arbitrary Layer 3 payloads inside an IP tunnel between routers. It runs as **IP protocol 47**, adds a **4-byte GRE header plus a 20-byte outer IP header**, and provides **no encryption and no reliability**. That is why GRE is almost always paired with **[[IPsec]]**.',
+            keyIdea: 'Protocol 47, no encryption, any L3 payload including multicast. Pair it with IPsec and tune MTU and MSS.',
+            sections: [
+              { kind: 'table', h: 'The tunnel concept', cols: ['Element', 'Detail'], rows: [
+                ['**Tunnel interface**', 'Virtual Layer 3 interface the router treats as real'],
+                ['**Outer IP**', 'Transport address on the physical underlay'],
+                ['**Inner IP**', 'Original packet being carried'],
+                ['**GRE header**', 'IP protocol 47, 4 bytes']
+              ]},
+              { kind: 'code', h: 'Basic GRE tunnel', code:
+`  interface Tunnel0
+   ip address 10.10.0.1 255.255.255.252
+   tunnel source GigabitEthernet0/0
+   tunnel destination 203.0.113.1
+   ip mtu 1400
+   ip tcp adjust-mss 1360` },
+              { kind: 'table', h: 'GRE versus IPsec', cols: ['Aspect', 'GRE', 'IPsec'], rows: [
+                ['Encryption', '**None**', '**Yes**'],
+                ['Payload', 'Any L3, including multicast', 'Typically unicast'],
+                ['Routing over it', '**Yes**, any IGP or BGP', 'Only via GRE or VTI'],
+                ['Role', 'Transport glue', 'Confidentiality']
+              ]},
+              { kind: 'para', h: 'MTU and fragmentation', p: 'Overhead is **24 bytes or more** before IPsec is added. Reduce the tunnel **%%ip mtu%%** and shrink the TCP maximum segment size with **%%ip tcp adjust-mss%%** so packets fit without fragmentation. PMTUD helps, but adjusting MSS is the reliable fix.' },
+              { kind: 'code', h: 'Keepalives and verification', code:
+`  interface Tunnel0
+   keepalive 10 3
+  !
+  show ip interface brief | include Tunnel
+  show interface Tunnel0
+  show ip route
+  ping 10.10.0.2` }
+            ],
+            commands: [
+              { label: 'Build the tunnel', code:
+`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1` },
+              { label: 'Tune MTU and MSS', code:
+`interface Tunnel0\n ip mtu 1400\n ip tcp adjust-mss 1360` },
+              { label: 'Verify', code:
+`show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow ip route` }
+            ],
+            traps: [
+              'GRE is **IP protocol 47**, not TCP or UDP.',
+              'GRE provides **no encryption** on its own; pair it with IPsec.',
+              'GRE carries **multicast and any L3 payload**, which is what makes DMVPN possible.',
+              'Overhead is **24 bytes or more** once IPsec is added.',
+              'Without **%%ip mtu%%** and **%%ip tcp adjust-mss%%**, large packets silently fail.',
+              '**%%tunnel source%%** and **%%tunnel destination%%** define the underlay endpoints, not the protected subnets.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Protocol', 'IP 47'],
+                ['Encryption', 'None'],
+                ['Payload', 'Any L3 and multicast'],
+                ['Header', '4 B plus 20 B outer IP'],
+                ['Overhead', 'About 24 B'],
+                ['MTU fix', 'ip mtu plus ip tcp adjust-mss'],
+                ['Keepalive', 'tunnel keepalive'],
+                ['Pairing', 'GRE over IPsec'],
+                ['Verify', 'show interface Tunnel0']
+              ]
+            },
+            related: [
+              { t: '02. IPsec', d: 'Encrypts the GRE tunnel' },
+              { t: '03. DMVPN', d: 'Multipoint GRE at scale' }
+            ],
+            glossary: ['GRE', 'IPsec', 'DMVPN', 'MTU', 'Multicast', 'VPN']
+          },
+          {
+            id: 't02', num: '02', group: 'tunnel', title: 'IPsec',
+            blurb: 'AH versus ESP, transport versus tunnel mode, and the IKE phases',
+            overview: '**[[IPsec]]** secures IP traffic at the packet level with **confidentiality, integrity and authentication**. Key management runs through **[[IKEv2]]** on **UDP 500**, with **NAT-T on UDP 4500**; the data plane uses **ESP (protocol 50)** or the legacy **AH (protocol 51)**.',
+            keyIdea: 'ESP 50 encrypts, AH 51 does not. Tunnel mode wraps the whole packet, transport mode protects the payload only.',
+            sections: [
+              { kind: 'table', h: 'AH versus ESP', cols: ['Protocol', 'Job', 'Notes'], rows: [
+                ['**AH** (51)', 'Integrity and authentication', '**No encryption**, no NAT traversal'],
+                ['**ESP** (50)', 'Confidentiality, integrity, authentication', 'The standard choice for real encryption']
+              ]},
+              { kind: 'table', h: 'Transport versus tunnel mode', cols: ['Mode', 'Protects', 'Use'], rows: [
+                ['**Transport**', 'Payload only, original header visible', 'Host to host, or GRE payload'],
+                ['**Tunnel**', 'Entire IP packet with a new outer header', 'Site-to-site VPN']
+              ]},
+              { kind: 'table', h: 'IKE phases and ports', cols: ['Item', 'Purpose'], rows: [
+                ['Phase 1', 'Authenticate peers and build the ISAKMP SA'],
+                ['Phase 2', 'Negotiate data-plane keys and build the IPsec SA'],
+                ['UDP 500', 'ISAKMP and IKE'],
+                ['UDP 4500', 'NAT-T, ESP wrapped inside UDP'],
+                ['Main mode', 'Six messages, secure'],
+                ['Aggressive mode', 'Three messages, faster but weaker']
+              ]},
+              { kind: 'code', h: 'Legacy crypto map configuration', code:
+`  crypto isakmp policy 10
+   encryption aes
+   authentication pre-share
+   group 14
+  !
+  crypto isakmp key Secret123 address 203.0.113.1
+  !
+  crypto ipsec transform-set TS esp-aes esp-sha-hmac
+  !
+  crypto map CM 10 ipsec-isakmp
+   set peer 203.0.113.1
+   set transform-set TS
+   match address VPN-TRAFFIC
+  !
+  interface GigabitEthernet0/0
+   crypto map CM` },
+              { kind: 'para', h: 'Transform sets', p: 'A transform set pairs **encryption** with **integrity**, for example **%%esp-aes%%** plus **%%esp-sha-hmac%%**. Both peers must agree on the algorithms, or phase 2 fails even when the IKE SA is up.' }
+            ],
+            commands: [
+              { label: 'ISAKMP policy and pre-shared key', code:
+`crypto isakmp policy 10\n encryption aes\n authentication pre-share\n group 14\ncrypto isakmp key Secret123 address 203.0.113.1` },
+              { label: 'Transform set and crypto map', code:
+`crypto ipsec transform-set TS esp-aes esp-sha-hmac\ncrypto map CM 10 ipsec-isakmp\n set peer 203.0.113.1\n set transform-set TS\n match address VPN-TRAFFIC` },
+              { label: 'Verify', code:
+`show crypto isakmp sa\nshow crypto ipsec sa\nshow crypto session` }
+            ],
+            traps: [
+              '**ESP (50) encrypts; AH (51) does not.**',
+              'Use **tunnel mode** for site-to-site and **transport mode** for host-to-host.',
+              'IKE uses **UDP 500**; NAT-T uses **UDP 4500**.',
+              'A transform set pairs **encryption and integrity** algorithms.',
+              'Both peers must match proposals, keys and transform sets.',
+              '**[[IKEv2]]** is the modern standard; IKEv1 is legacy.'
+            ],
+            table: {
+              cols: ['Item', 'IPsec'],
+              rows: [
+                ['Encrypts', 'ESP, protocol 50'],
+                ['Auth only', 'AH, protocol 51'],
+                ['Tunnel mode', 'Wraps the whole packet'],
+                ['Transport mode', 'Payload only'],
+                ['IKE', 'UDP 500'],
+                ['NAT-T', 'UDP 4500'],
+                ['Phase 1', 'ISAKMP SA'],
+                ['Phase 2', 'IPsec SA'],
+                ['Transform', 'esp-aes plus esp-sha-hmac']
+              ]
+            },
+            related: [
+              { t: '01. GRE', d: 'Payload IPsec often protects' },
+              { t: '07. IPsec IKEv2', d: 'Modern key exchange' },
+              { t: '06. Site-to-Site VPN', d: 'Typical deployment' }
+            ],
+            glossary: ['IPsec', 'IKEv2', 'GRE', 'Site-to-Site VPN', 'NAT', 'VPN']
+          },
+          {
+            id: 't03', num: '03', group: 'tunnel', title: 'IPsec IKEv2',
+            blurb: 'IKE_SA_INIT and IKE_AUTH, native NAT-T and EAP, and the profile model',
+            overview: '**[[IKEv2]]** is the modern IPsec key-exchange protocol from **RFC 7296**. It folds IKEv1 phase 1 and phase 2 into a single IKE SA built from **IKE_SA_INIT** and **IKE_AUTH**, adds **native NAT-T** and **EAP**, and underpins **[[FlexVPN]]**.',
+            keyIdea: 'IKE_SA_INIT plus IKE_AUTH in four messages, with native NAT-T and EAP. Configured with proposal, policy, keyring and profile.',
+            sections: [
+              { kind: 'table', h: 'IKEv1 versus IKEv2', cols: ['Aspect', 'IKEv1', 'IKEv2'], rows: [
+                ['Exchanges', 'Phase 1 plus phase 2', 'One IKE SA, four messages'],
+                ['Phase 1 modes', 'Main or aggressive', 'None, fixed INIT and AUTH'],
+                ['NAT-T', 'Add-on', '**Built in**'],
+                ['EAP', 'Not native', '**Native**'],
+                ['Rekey', 'Separate IPsec SA phase', 'CREATE_CHILD_SA'],
+                ['Status', 'Legacy', '**Preferred**']
+              ]},
+              { kind: 'code', h: 'The exchange flow', code:
+`  1. IKE_SA_INIT  ->  DH, nonces, algorithms  ->  IKE SA
+  2. IKE_AUTH    ->  authenticate peers      ->  first child SA
+  3. CREATE_CHILD_SA  ->  extra SAs and rekeying
+  4. INFORMATIONAL    ->  delete, error, liveness` },
+              { kind: 'table', h: 'Protocol details', cols: ['Item', 'Detail'], rows: [
+                ['Standard', 'RFC 7296'],
+                ['Ports', 'UDP 500, plus UDP 4500 for NAT-T'],
+                ['IKE SA lifetime', '86400 seconds on Cisco'],
+                ['Child SA lifetime', '3600 seconds on Cisco'],
+                ['Liveness', 'Dead Peer Detection'],
+                ['NAT discovery', 'NAT detection source and destination payloads']
+              ]},
+              { kind: 'table', h: 'IOS XE building blocks', cols: ['Block', 'Role'], rows: [
+                ['**%%crypto ikev2 proposal%%**', 'Encryption, integrity and DH group'],
+                ['**%%crypto ikev2 policy%%**', 'Proposal set and lifetime'],
+                ['**%%crypto ikev2 keyring%%**', 'Pre-shared keys per peer'],
+                ['**%%crypto ikev2 profile%%**', 'Match identity, authentication and keyring'],
+                ['**%%crypto ipsec profile%%**', 'Transform set plus IKEv2 profile']
+              ]},
+              { kind: 'code', h: 'IKEv2 site-to-site configuration', code:
+`  crypto ikev2 proposal PROP
+   encryption aes-gcm-256
+   integrity sha256
+   group 14
+  !
+  crypto ikev2 policy POL
+   proposal PROP
+  !
+  crypto ikev2 keyring KR
+   peer SPOKE
+    address 203.0.113.1
+    pre-shared-key local Secret123
+  !
+  crypto ikev2 profile IKEV2-PROF
+   match identity remote address 203.0.113.1
+   authentication remote pre-share
+   authentication local pre-share
+   keyring local KR` }
+            ],
+            commands: [
+              { label: 'Proposal, policy and keyring', code:
+`crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP\ncrypto ikev2 keyring KR\n peer SPOKE\n  address 203.0.113.1\n  pre-shared-key local Secret123` },
+              { label: 'IKEv2 profile and IPsec profile', code:
+`crypto ikev2 profile IKEV2-PROF\n match identity remote address 203.0.113.1\n authentication remote pre-share\n authentication local pre-share\n keyring local KR\ncrypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF` },
+              { label: 'Verify', code:
+`show crypto ikev2 sa\nshow crypto ikev2 profile\nshow crypto ipsec sa` }
+            ],
+            traps: [
+              'IKEv2 merges the phases into **IKE_SA_INIT plus IKE_AUTH**, not main and aggressive mode.',
+              '**IKEv2 is RFC 7296** and the modern standard; IKEv1 is legacy.',
+              'IKEv2 supports **EAP and NAT-T natively**; IKEv1 needs add-ons.',
+              'Ports remain **UDP 500 and 4500** for both versions.',
+              'On IOS XE, IKEv2 uses **profiles**, not **%%crypto map%%**.',
+              'A mismatched **match identity** fails IKE_AUTH even when the key is correct.'
+            ],
+            table: {
+              cols: ['Item', 'IKEv2'],
+              rows: [
+                ['Standard', 'RFC 7296'],
+                ['Exchange', 'IKE_SA_INIT plus IKE_AUTH'],
+                ['Phases', 'One IKE SA'],
+                ['Main or aggressive', 'Not used'],
+                ['NAT-T', 'Built in'],
+                ['EAP', 'Native'],
+                ['Ports', 'UDP 500 and 4500'],
+                ['IOS XE config', 'Proposal, policy, keyring, profile'],
+                ['Status', 'Preferred']
+              ]
+            },
+            related: [
+              { t: '02. IPsec', d: 'The data plane it protects' },
+              { t: '04. FlexVPN', d: 'Built on IKEv2 profiles' }
+            ],
+            glossary: ['IKEv2', 'IPsec', 'FlexVPN', 'Site-to-Site VPN', 'Remote Access VPN', 'NAT']
+          },
+          {
+            id: 't04', num: '04', group: 'arch', title: 'DMVPN',
+            blurb: 'mGRE plus NHRP plus IPsec, and the spoke-to-spoke shortcut',
+            overview: '**[[DMVPN]]** builds dynamic, full-mesh IPsec tunnels from a hub-and-spoke design using three building blocks: **mGRE** (multipoint GRE), **NHRP** (spoke discovery) and **[[IPsec]]**. Spokes talk directly to each other after NHRP maps them, so data is not hair-pinned through the hub.',
+            keyIdea: 'mGRE plus NHRP plus IPsec. Control stays at the hub, data goes spoke to spoke.',
+            sections: [
+              { kind: 'table', h: 'The three building blocks', cols: ['Protocol', 'Role'], rows: [
+                ['**mGRE**', 'One tunnel interface peering with many destinations'],
+                ['**NHRP**', 'Resolves public addresses of spokes'],
+                ['**IPsec**', 'Encrypts the mGRE tunnel traffic']
+              ]},
+              { kind: 'code', h: 'Spoke-to-spoke shortcut', code:
+`  Spoke A --NHRP register--> Hub (NHS)
+  Spoke B --NHRP register--> Hub (NHS)
+  A wants B: A -> NHRP query -> Hub -> "B is at 198.51.100.2"
+  A --direct IPsec GRE tunnel--> B
+  Control via the hub, data directly between spokes` },
+              { kind: 'table', h: 'Roles and phases', cols: ['Item', 'Description'], rows: [
+                ['**Hub**', 'NHRP next-hop server and permanent mGRE endpoint'],
+                ['**Spoke**', 'Registers with the hub and learns peers'],
+                ['**Phase 1**', 'Hub-and-spoke only, no shortcuts'],
+                ['**Phase 2**', 'Spoke-to-spoke shortcuts, the usual default'],
+                ['**Phase 3**', 'NHRP redirect for best-path routing']
+              ]},
+              { kind: 'code', h: 'Spoke configuration', code:
+`  interface Tunnel0
+   ip address 10.255.0.2 255.255.255.0
+   ip nhrp map 10.255.0.1 203.0.113.1
+   ip nhrp network-id 1
+   ip nhrp nhs 10.255.0.1
+   tunnel source GigabitEthernet0/0
+   tunnel mode gre multipoint
+   tunnel protection ipsec profile DMVPN-PROF` },
+              { kind: 'table', h: 'Why DMVPN scales', cols: ['Benefit', 'Detail'], rows: [
+                ['Scale', 'One hub tunnel interface serves every spoke'],
+                ['Direct path', 'No hub bottleneck for spoke-to-spoke data'],
+                ['Zero touch', 'New spokes register automatically'],
+                ['Resilient', 'Tunnels re-establish dynamically']
+              ]}
+            ],
+            commands: [
+              { label: 'Register the spoke', code:
+`interface Tunnel0\n ip nhrp map 10.255.0.1 203.0.113.1\n ip nhrp network-id 1\n ip nhrp nhs 10.255.0.1` },
+              { label: 'Multipoint GRE with IPsec', code:
+`interface Tunnel0\n tunnel source GigabitEthernet0/0\n tunnel mode gre multipoint\n tunnel protection ipsec profile DMVPN-PROF` },
+              { label: 'Verify', code:
+`show dmvpn\nshow ip nhrp\nshow ip nhrp summary\nshow crypto session` }
+            ],
+            traps: [
+              'DMVPN is **mGRE plus NHRP plus IPsec**, all three.',
+              'NHRP resolves **spoke public addresses** through the hub acting as NHS.',
+              'After the shortcut, **data goes spoke to spoke**; only control uses the hub.',
+              'One mGRE tunnel interface serves **many destinations**.',
+              'Phase 1 has **no spoke-to-spoke shortcuts**; phase 2 does.',
+              '**%%tunnel protection ipsec profile%%** binds IPsec to the tunnel.'
+            ],
+            table: {
+              cols: ['Item', 'DMVPN'],
+              rows: [
+                ['Building blocks', 'mGRE, NHRP, IPsec'],
+                ['Hub role', 'NHRP next-hop server'],
+                ['Spoke discovery', 'NHRP'],
+                ['Data path', 'Direct spoke to spoke'],
+                ['Phase 2', 'Shortcuts enabled'],
+                ['Tunnel mode', 'gre multipoint'],
+                ['Scale', 'One hub tunnel'],
+                ['Verify', 'show dmvpn']
+              ]
+            },
+            related: [
+              { t: '01. GRE', d: 'The multipoint encapsulation' },
+              { t: '02. IPsec', d: 'Encrypts each tunnel' },
+              { t: '11. VPN Technology Comparison', d: 'When to choose DMVPN' }
+            ],
+            glossary: ['DMVPN', 'GRE', 'IPsec', 'VPN', 'Multicast']
+          },
+          {
+            id: 't05', num: '05', group: 'arch', title: 'FlexVPN',
+            blurb: 'One IKEv2 profile framework for every VPN topology',
+            overview: '**[[FlexVPN]]** is Cisco’s **[[IKEv2]]-based** VPN framework: one unified design that does site-to-site, remote access, hub-and-spoke and spoke-to-spoke using the same IKEv2 profile building blocks. It replaces legacy **%%crypto map%%** and ISAKMP configuration with profiles.',
+            keyIdea: 'Proposal, policy, keyring, IKEv2 profile and IPsec profile. One framework for every topology.',
+            sections: [
+              { kind: 'table', h: 'The IKEv2 profile model', cols: ['Block', 'Role'], rows: [
+                ['**%%crypto ikev2 proposal%%**', 'Encryption, integrity and DH group'],
+                ['**%%crypto ikev2 policy%%**', 'Proposal set and lifetime'],
+                ['**%%crypto ikev2 keyring%%**', 'Pre-shared keys per peer'],
+                ['**%%crypto ikev2 profile%%**', 'Match identity, authentication and keyring'],
+                ['**%%crypto ipsec profile%%**', 'Transform set plus IKEv2 profile']
+              ]},
+              { kind: 'table', h: 'FlexVPN modes', cols: ['Mode', 'Use'], rows: [
+                ['**Site-to-site**', 'Static tunnel between two sites'],
+                ['**Remote access**', 'IKEv2 clients to a headend'],
+                ['**Hub-and-spoke**', 'DMVPN-style topology over IKEv2'],
+                ['**Spoke-to-spoke**', 'Dynamic shortcuts between spokes']
+              ]},
+              { kind: 'code', h: 'Site-to-site profile configuration', code:
+`  crypto ikev2 proposal PROP
+   encryption aes-gcm-256
+   integrity sha256
+   group 14
+  !
+  crypto ikev2 policy POL
+   proposal PROP
+  !
+  crypto ikev2 keyring KR
+   peer SPOKE
+    address 203.0.113.10
+    pre-shared-key local Secret123
+  !
+  crypto ikev2 profile IKEV2-PROF
+   match identity remote address 203.0.113.10
+   authentication remote pre-share
+   authentication local pre-share
+   keyring local KR
+  !
+  crypto ipsec profile IPSEC-PROF
+   set transform-set TS
+   set ikev2-profile IKEV2-PROF
+  !
+  interface Tunnel0
+   tunnel protection ipsec profile IPSEC-PROF` },
+              { kind: 'table', h: 'FlexVPN versus DMVPN', cols: ['Aspect', 'DMVPN', 'FlexVPN'], rows: [
+                ['IKE', 'IKEv1 or IKEv2', '**IKEv2 native**'],
+                ['Key technology', 'NHRP plus mGRE', 'IKEv2 profiles'],
+                ['Modes', 'Hub-and-spoke', 'Site-to-site, RA, hub, spoke'],
+                ['Config', 'NHRP plus multipoint tunnel', 'Profile driven']
+              ]},
+              { kind: 'para', h: 'Remote access', p: 'An IKEv2 client such as AnyConnect can terminate on the same IKEv2 profile that serves site-to-site peers. Certificates or pre-shared keys authenticate the client, and dynamic **[[Virtual Tunnel Interface|VTIs]]** scale the number of client tunnels.' }
+            ],
+            commands: [
+              { label: 'Build the profile chain', code:
+`crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP` },
+              { label: 'Attach IPsec to a tunnel', code:
+`crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF` },
+              { label: 'Verify', code:
+`show crypto ikev2 profile\nshow crypto ikev2 sa\nshow crypto ipsec sa\nshow crypto session` }
+            ],
+            traps: [
+              'FlexVPN is **IKEv2 profile based**, not crypto map or ISAKMP based.',
+              'One framework covers **site-to-site, remote access, hub-and-spoke and spoke-to-spoke**.',
+              'AES-GCM with SHA-256 is a common modern proposal.',
+              'IPsec is attached with **%%tunnel protection ipsec profile%%**.',
+              'FlexVPN is profile-first; DMVPN is NHRP and mGRE first.',
+              'FlexVPN can also run hub-and-spoke using NHRP.'
+            ],
+            table: {
+              cols: ['Item', 'FlexVPN'],
+              rows: [
+                ['Base', 'IKEv2'],
+                ['Config', 'Profiles'],
+                ['Modes', 'Site-to-site, RA, hub, spoke'],
+                ['Keyring', 'Pre-shared keys'],
+                ['Transform', 'IPsec profile'],
+                ['Tunnel hook', 'tunnel protection ipsec profile'],
+                ['Authentication', 'Certificates or pre-shared keys'],
+                ['Alternative', 'DMVPN with NHRP']
+              ]
+            },
+            related: [
+              { t: '07. IPsec IKEv2', d: 'The key exchange underneath' },
+              { t: '03. DMVPN', d: 'NHRP-based alternative' },
+              { t: '08. Virtual Tunnel Interface', d: 'Interface that carries the profile' }
+            ],
+            glossary: ['FlexVPN', 'IKEv2', 'DMVPN', 'IPsec', 'Site-to-Site VPN', 'Remote Access VPN', 'Virtual Tunnel Interface']
+          },
+          {
+            id: 't06', num: '06', group: 'arch', title: 'Virtual Tunnel Interface',
+            blurb: 'Route-based IPsec with no crypto map and no interesting-traffic ACL',
+            overview: 'A **[[Virtual Tunnel Interface|Virtual Tunnel Interface (VTI)]]** is a route-based **[[IPsec]]** tunnel interface. There is no interesting-traffic ACL and no crypto map: the tunnel gets an IP address, the routing table decides what enters it, and IPsec is bound with **%%tunnel protection ipsec profile%%**.',
+            keyIdea: 'tunnel mode ipsec ipv4 plus tunnel protection ipsec profile. Routing triggers encryption, not an ACL.',
+            sections: [
+              { kind: 'table', h: 'Policy-based versus route-based', cols: ['Aspect', 'Crypto map', 'VTI'], rows: [
+                ['Encryption trigger', '**Interesting-traffic ACL**', '**Route toward the tunnel**'],
+                ['Interface', 'Crypto map on a physical interface', 'Dedicated virtual tunnel'],
+                ['Routing over it', 'Difficult', '**Natural**, any IGP or BGP'],
+                ['Multicast', 'Not directly', '**Yes**'],
+                ['Complexity', 'Higher', 'Lower']
+              ]},
+              { kind: 'code', h: 'VTI configuration', code:
+`  crypto ipsec profile IPSEC-PROF
+   set transform-set TS
+   set ikev2-profile IKEV2-PROF
+  !
+  interface Tunnel0
+   ip address 10.10.0.1 255.255.255.252
+   tunnel source GigabitEthernet0/0
+   tunnel destination 203.0.113.1
+   tunnel mode ipsec ipv4
+   tunnel protection ipsec profile IPSEC-PROF` },
+              { kind: 'table', h: 'VTI versus GRE over IPsec', cols: ['Aspect', 'GRE over IPsec', 'VTI'], rows: [
+                ['Overhead', 'GRE 4 B plus IPsec', 'IPsec only'],
+                ['Multicast', 'Yes', 'Yes'],
+                ['Routing', 'Over the GRE tunnel', 'Over the VTI directly'],
+                ['Encapsulation', 'IP, GRE, IPsec', 'IP, IPsec'],
+                ['Config', 'Tunnel plus GRE plus profile', 'Tunnel plus profile']
+              ]},
+              { kind: 'para', h: 'Why it is simpler', p: 'The VTI decouples **what to encrypt** from **how to encrypt**. The routing table, including **[[OSPF]]** or **[[BGP]]** routes and **[[Multicast]]** state, selects the traffic, while the IPsec profile defines the algorithms and keys.' }
+            ],
+            commands: [
+              { label: 'Make the tunnel an IPsec VTI', code:
+`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel mode ipsec ipv4` },
+              { label: 'Bind the IPsec profile', code:
+`crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF` },
+              { label: 'Verify', code:
+`show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow crypto ipsec sa\nshow crypto session` }
+            ],
+            traps: [
+              'VTI is **route-based**; a crypto map is **policy-based**.',
+              '**%%tunnel mode ipsec ipv4%%** marks the tunnel as an IPsec VTI.',
+              '**%%tunnel protection ipsec profile%%** binds IPsec, not a crypto map.',
+              'No interesting-traffic ACL is needed; **routing triggers encryption**.',
+              'IPsec VTIs support **multicast and dynamic routing**.',
+              'A VTI drops the GRE layer, so overhead is lower than GRE over IPsec.'
+            ],
+            table: {
+              cols: ['Item', 'VTI'],
+              rows: [
+                ['Type', 'Route-based IPsec'],
+                ['Trigger', 'Routing, not an ACL'],
+                ['Config', 'Tunnel plus IPsec profile'],
+                ['Mode', 'tunnel mode ipsec ipv4'],
+                ['Crypto map', 'Not used'],
+                ['Multicast', 'Yes'],
+                ['Routing', 'OSPF, EIGRP, BGP'],
+                ['Modern', 'Yes']
+              ]
+            },
+            related: [
+              { t: '02. IPsec', d: 'Encryption layer' },
+              { t: '01. GRE', d: 'Alternative tunnel encapsulation' },
+              { t: '06. Site-to-Site VPN', d: 'Deployment context' }
+            ],
+            glossary: ['Virtual Tunnel Interface', 'IPsec', 'GRE', 'Site-to-Site VPN', 'OSPF', 'Multicast']
+          },
+          {
+            id: 't07', num: '07', group: 'arch', title: 'GET VPN',
+            blurb: 'GDOI group keys and any-to-any encryption with no tunnels',
+            overview: '**[[GET VPN]] (Group Encrypted Transport VPN)** provides **any-to-any encryption over an [[MPLS]] or IP backbone without tunnel interfaces**. All routers in a group share one group key, distributed by **GDOI (Group Domain of Interpretation)** on **UDP 848**, so there is no hub bottleneck and no overlay routing.',
+            keyIdea: 'No tunnels. GDOI on UDP 848 distributes a group key, and members encrypt directly to each other.',
+            sections: [
+              { kind: 'table', h: 'The GDOI model', cols: ['Role', 'Description'], rows: [
+                ['**Key Server**', 'Manages and distributes group keys'],
+                ['**Member**', 'Group router that encrypts traffic'],
+                ['**Group**', 'Shared key domain'],
+                ['**GDOI**', 'Group key management on UDP 848'],
+                ['**KEK**', 'Key Encryption Key, protects key distribution'],
+                ['**TEK**', 'Traffic Encryption Key, encrypts data']
+              ]},
+              { kind: 'code', h: 'How registration works', code:
+`  Member --register--> Key Server (GDOI, UDP 848)
+  Key Server sends KEK and TEK
+  Member A --encrypt with TEK--> Member B
+  Direct any-to-any, no tunnel between members` },
+              { kind: 'table', h: 'Ports and transport', cols: ['Item', 'Detail'], rows: [
+                ['GDOI port', '**UDP 848**'],
+                ['Data protection', 'ESP group SA'],
+                ['IPsec mode', 'Usually transport'],
+                ['Rekey', 'Key Server pushes a new TEK'],
+                ['Registration', 'IKE between member and Key Server']
+              ]},
+              { kind: 'table', h: 'GET VPN versus tunnel-based designs', cols: ['Aspect', 'GET VPN', 'DMVPN', 'VTI'], rows: [
+                ['Tunnel interface', '**None**', 'mGRE', 'VTI'],
+                ['Data path', '**Direct any-to-any**', 'Spoke to spoke via NHRP', 'Point to point'],
+                ['Key management', 'GDOI group key', 'Per-tunnel IKE', 'Per-tunnel IKE'],
+                ['Overlay routing', '**None**, native', 'NHRP', 'IGP over tunnel'],
+                ['Best for', '**MPLS backbone**', 'Internet branches', 'Fixed sites']
+              ]},
+              { kind: 'table', h: 'Operational features', cols: ['Feature', 'Detail'], rows: [
+                ['Any-to-any', 'Full mesh with no hub in the data path'],
+                ['Backbone', 'MPLS or any IP network'],
+                ['Multicast', 'Supported'],
+                ['COOP', 'Cooperative Key Servers for redundancy'],
+                ['Anti-replay', 'Sequence numbers, which can drop reordered WAN traffic']
+              ]},
+              { kind: 'code', h: 'Key Server configuration snapshot', code:
+`  crypto gdoi group ENCRYPT
+   identity number 98765
+   server local
+   rekey
+    address ipv4 10.0.0.1
+    authorization address ipv4 10.0.0.0 255.255.255.0
+  !
+  crypto gdoi server local` }
+            ],
+            commands: [
+              { label: 'Define the GDOI group', code:
+`crypto gdoi group ENCRYPT\n identity number 98765\n server local\n rekey\n  address ipv4 10.0.0.1\n  authorization address ipv4 10.0.0.0 255.255.255.0` },
+              { label: 'Verify membership and keys', code:
+`show crypto gdoi group\nshow crypto gdoi ks\nshow crypto gdoi member` },
+              { label: 'Verify data encryption', code:
+`show crypto ipsec sa\nshow crypto session` }
+            ],
+            traps: [
+              'GET VPN has **no tunnel interfaces**; members encrypt directly.',
+              'GDOI runs on **UDP 848**, not 500 or 4500.',
+              '**TEK encrypts data; KEK protects key distribution.**',
+              'GET VPN suits a private **MPLS** backbone with native any-to-any.',
+              '**COOP** provides redundant Key Servers.',
+              'Anti-replay can drop reordered packets on a WAN.'
+            ],
+            table: {
+              cols: ['Item', 'GET VPN'],
+              rows: [
+                ['Basis', 'GDOI group key'],
+                ['Tunnels', 'None'],
+                ['Data path', 'Direct any-to-any'],
+                ['Protocol', 'GDOI, UDP 848'],
+                ['Key Server', 'Distributes keys'],
+                ['Data key', 'TEK'],
+                ['Key encryption key', 'KEK'],
+                ['Best fit', 'MPLS or private backbone']
+              ]
+            },
+            related: [
+              { t: '02. IPsec', d: 'Group encryption mechanics' },
+              { t: '11. VPN Technology Comparison', d: 'When GET VPN wins' }
+            ],
+            glossary: ['GET VPN', 'IPsec', 'MPLS', 'DMVPN', 'VPN']
+          },
+          {
+            id: 't08', num: '08', group: 'access', title: 'Site-to-Site VPN',
+            blurb: 'GRE over IPsec, interesting traffic and routing across the tunnel',
+            overview: 'A **[[Site-to-Site VPN|site-to-site (L2L) VPN]]** secures traffic between two fixed sites over a shared underlay. The classic recipes are **[[GRE]] over [[IPsec]]** for routing flexibility, or pure IPsec tunnel mode with an interesting-traffic ACL. It is the simplest VPN for fixed branch locations.',
+            keyIdea: 'GRE over IPsec for routing and multicast; pure IPsec for simple traffic. Mirror-image ACLs on both ends.',
+            sections: [
+              { kind: 'table', h: 'The recipe choices', cols: ['Design', 'Uses', 'Trade-off'], rows: [
+                ['**Pure IPsec**', 'Interesting-traffic ACL', 'No multicast or routing'],
+                ['**GRE over IPsec**', 'GRE tunnel plus IPsec', 'Routing and multicast plus crypto'],
+                ['**FlexVPN**', 'IKEv2 profiles', 'Modern and simpler']
+              ]},
+              { kind: 'code', h: 'Interesting traffic for pure IPsec', code:
+`  access-list VPN-TRAFFIC permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255
+  !
+  crypto map CM 10 ipsec-isakmp
+   match address VPN-TRAFFIC` },
+              { kind: 'table', h: 'GRE over IPsec recipe', cols: ['Step', 'Detail'], rows: [
+                ['1', 'Build the GRE tunnel interface'],
+                ['2', 'Create the IPsec transform and profile'],
+                ['3', 'Attach with tunnel protection ipsec profile'],
+                ['4', 'Run a routing protocol over the tunnel']
+              ]},
+              { kind: 'code', h: 'Encrypted GRE tunnel', code:
+`  interface Tunnel0
+   ip address 10.10.0.1 255.255.255.252
+   tunnel source GigabitEthernet0/0
+   tunnel destination 203.0.113.1
+   tunnel protection ipsec profile IPSEC-PROF
+  !
+  router ospf 1
+   network 10.10.0.0 0.0.0.3 area 0` },
+              { kind: 'table', h: 'Routing over the VPN', cols: ['Protocol', 'Behavior'], rows: [
+                ['**Static**', 'Simple, no failover'],
+                ['**[[OSPF]] or EIGRP**', 'Converges over the tunnel'],
+                ['**[[BGP]]**', 'Scales to many sites']
+              ]},
+              { kind: 'para', h: 'The failure model', p: 'With pure IPsec, **no interesting traffic means no IPsec SA**, even when the IKE SA is up. With GRE over IPsec the tunnel is a normal interface, so tunnel state and routing give you a clearer signal.' }
+            ],
+            commands: [
+              { label: 'Define interesting traffic', code:
+`ip access-list extended VPN-TRAFFIC\n permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255\ncrypto map CM 10 ipsec-isakmp\n match address VPN-TRAFFIC` },
+              { label: 'Encrypted GRE tunnel', code:
+`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel protection ipsec profile IPSEC-PROF` },
+              { label: 'Verify', code:
+`show crypto ipsec sa\nshow crypto ikev2 sa\nshow crypto session\nshow interface Tunnel0` }
+            ],
+            traps: [
+              'The **interesting-traffic ACL** defines what the tunnel protects.',
+              'GRE over IPsec gives **routing, multicast and encryption**.',
+              '**%%tunnel protection ipsec profile%%** is the modern hook.',
+              'ACLs must be **mirror images** on both ends.',
+              'With pure IPsec, no interesting traffic means **no IPsec SA**.',
+              'A GRE tunnel needs its own IP addressing and a route over it.'
+            ],
+            table: {
+              cols: ['Item', 'Site-to-Site'],
+              rows: [
+                ['Design', 'L2L VPN'],
+                ['Best recipe', 'GRE over IPsec'],
+                ['Interesting ACL', 'Local and remote subnets'],
+                ['Routing', 'OSPF or BGP over the tunnel'],
+                ['IPsec hook', 'Profile via tunnel protection'],
+                ['Classic failure', 'No interesting traffic'],
+                ['Scale', 'BGP for many sites'],
+                ['Verify', 'show crypto session']
+              ]
+            },
+            related: [
+              { t: '01. GRE', d: 'Routing-capable tunnel' },
+              { t: '02. IPsec', d: 'Encryption layer' },
+              { t: '03. DMVPN', d: 'Dynamic alternative' }
+            ],
+            glossary: ['Site-to-Site VPN', 'IPsec', 'GRE', 'OSPF', 'BGP', 'VPN']
+          },
+          {
+            id: 't09', num: '09', group: 'access', title: 'SSL VPN',
+            blurb: 'TLS 443, clientless portals and AnyConnect full tunnels',
+            overview: '**[[SSL VPN]]** gives remote users secure access through a browser or the AnyConnect client using **TLS on TCP 443**. Clientless mode presents a portal to internal applications; AnyConnect builds a full tunnel. No IPsec client is needed, and 443 passes almost every firewall.',
+            keyIdea: 'TLS 443, plus DTLS 443 for latency. Clientless is a portal, AnyConnect is a full tunnel.',
+            sections: [
+              { kind: 'table', h: 'Two access modes', cols: ['Mode', 'Description'], rows: [
+                ['**Clientless**', 'Browser portal to internal applications, zero install'],
+                ['**AnyConnect**', 'Client installs a full network tunnel']
+              ]},
+              { kind: 'table', h: 'Transport', cols: ['Item', 'Detail'], rows: [
+                ['Primary port', '**TCP 443**, TLS'],
+                ['Fast path', '**UDP 443**, DTLS'],
+                ['NAT friendly', 'Yes, 443 passes almost anywhere'],
+                ['Client', 'Browser or AnyConnect'],
+                ['Headend', 'ASA, ASAv, ISR or FTD']
+              ]},
+              { kind: 'table', h: 'SSL VPN versus IPsec remote access', cols: ['Aspect', 'SSL VPN', 'IPsec RA'], rows: [
+                ['Client', 'Browser or AnyConnect', 'IPsec client'],
+                ['Port', '**443**, rarely blocked', '500 and 4500, often blocked'],
+                ['Access', 'Fine grained, portal friendly', 'Full tunnel'],
+                ['Corporate control', 'Moderate', 'Strong'],
+                ['Setup friction', 'Low', 'Higher']
+              ]},
+              { kind: 'table', h: 'Authentication and posture', cols: ['Layer', 'Mechanism'], rows: [
+                ['User authentication', 'LDAP, RADIUS or AAA'],
+                ['MFA', 'Token, certificate or push'],
+                ['Posture', 'AnyConnect endpoint assessment'],
+                ['Group policy', 'Split tunnel or full tunnel, ACLs']
+              ]},
+              { kind: 'code', h: 'Verification on the headend', code:
+`  show vpn-sessiondb anyconnect
+  show vpn-sessiondb svc
+  show webvpn
+  show crypto ikev2 sa` }
+            ],
+            commands: [
+              { label: 'Check active client sessions', code:
+`show vpn-sessiondb anyconnect\nshow vpn-sessiondb svc` },
+              { label: 'Check the web portal state', code:
+`show webvpn` },
+              { label: 'Check the IKEv2 fallback path', code:
+`show crypto ikev2 sa\nshow crypto session` }
+            ],
+            traps: [
+              'SSL VPN uses **TLS on TCP 443** and is firewall friendly.',
+              '**Clientless** is a portal; **AnyConnect** is a full tunnel.',
+              '**DTLS on UDP 443** improves latency for real-time traffic.',
+              'MFA, certificates and posture are the security enhancements.',
+              'SSL VPN wins on **per-user reachability** through NAT and firewalls.',
+              'Clientless access is application level, not full network access.'
+            ],
+            table: {
+              cols: ['Item', 'SSL VPN'],
+              rows: [
+                ['Transport', 'TLS on TCP 443'],
+                ['Modes', 'Clientless and AnyConnect'],
+                ['Full tunnel', 'AnyConnect'],
+                ['Fast path', 'DTLS on UDP 443'],
+                ['Client', 'Browser or client'],
+                ['Authentication', 'AAA, MFA, certificates'],
+                ['NAT friendly', 'Yes'],
+                ['Compared with', 'IPsec remote access']
+              ]
+            },
+            related: [
+              { t: '10. Remote Access VPN', d: 'Client-based counterpart' },
+              { t: '02. IPsec', d: 'The alternative transport' }
+            ],
+            glossary: ['SSL VPN', 'Remote Access VPN', 'VPN', 'IPsec', 'NAT']
+          },
+          {
+            id: 't10', num: '10', group: 'access', title: 'Remote Access VPN',
+            blurb: 'AnyConnect, full versus split tunnel, and the authentication triad',
+            overview: '**[[Remote Access VPN|Remote Access (RA) VPN]]** lets individual users connect into the enterprise from any location. Client-based RA uses software such as Cisco AnyConnect to build an encrypted tunnel and gives full network access, unlike a clientless portal.',
+            keyIdea: 'AnyConnect over IPsec on UDP 500 and 4500, or over SSL on 443. Full tunnel for control, split tunnel for performance.',
+            sections: [
+              { kind: 'table', h: 'Client-based versus clientless', cols: ['Aspect', 'Client-based', 'Clientless'], rows: [
+                ['Client', 'Software, AnyConnect', 'Browser only'],
+                ['Access', '**Full network**', 'Applications in a portal'],
+                ['Control', 'Strong, DNS and ACLs', 'Application level'],
+                ['Install', 'Required', 'None'],
+                ['Transport', 'IPsec or SSL and DTLS', 'HTTPS']
+              ]},
+              { kind: 'table', h: 'Two client-based transports', cols: ['Transport', 'Details'], rows: [
+                ['**IPsec RA**', 'IKEv1 or IKEv2, **UDP 500 and 4500**, strong control'],
+                ['**SSL and AnyConnect**', 'TLS **TCP 443**, DTLS **UDP 443**, firewall friendly']
+              ]},
+              { kind: 'table', h: 'Full tunnel versus split tunnel', cols: ['Mode', 'Behavior', 'Use'], rows: [
+                ['**Full tunnel**', 'All client traffic goes through the headend', 'Security and filtering'],
+                ['**Split tunnel**', 'Only corporate subnets go through the tunnel', 'Performance and local Internet']
+              ]},
+              { kind: 'table', h: 'Authentication and policy', cols: ['Layer', 'Mechanism'], rows: [
+                ['User', 'AAA, RADIUS or LDAP'],
+                ['MFA', 'Token, certificate or push'],
+                ['Posture', 'AnyConnect endpoint assessment'],
+                ['Authorization', 'Attributes from AAA'],
+                ['Group policy', 'Per-user access, split or full tunnel, ACLs']
+              ]},
+              { kind: 'code', h: 'ASA headend configuration', code:
+`  crypto ikev2 enable outside
+  !
+  group-policy RA internal
+  group-policy RA attributes
+   vpn-tunnel-protocol ikev2 ssl-client
+   split-tunnel-policy tunnelspecified
+   split-tunnel-network-list value SPLIT-ACL
+  !
+  tunnel-group RA type remote-access
+  tunnel-group RA general-attributes
+   address-pool POOL
+   default-group-policy RA` }
+            ],
+            commands: [
+              { label: 'Show active RA sessions', code:
+`show vpn-sessiondb anyconnect\nshow vpn-sessiondb ikev2\nshow vpn-sessiondb summary` },
+              { label: 'Inspect tunnel group and authentication', code:
+`show tunnel-group\nshow aaa-server\nshow crypto ikev2 sa` },
+              { label: 'Verify the address pool', code:
+`show ip local pool\nshow vpn-sessiondb detail anyconnect` }
+            ],
+            traps: [
+              'Client-based RA means a **software client and full network access**; clientless means a browser.',
+              '**IPsec RA uses UDP 500 and 4500**; SSL uses **TCP 443** and **UDP 443** for DTLS.',
+              '**DTLS** is the low-latency path for voice and video.',
+              '**Full tunnel** sends all traffic through the headend; split tunnel sends corporate traffic only.',
+              'RA security is **MFA plus certificate plus posture plus group policy**.',
+              'A missing address pool leaves the client authenticated but without an IP address.'
+            ],
+            table: {
+              cols: ['Item', 'RA VPN'],
+              rows: [
+                ['Client', 'AnyConnect'],
+                ['IPsec ports', 'UDP 500 and 4500'],
+                ['SSL port', 'TCP 443'],
+                ['DTLS', 'UDP 443'],
+                ['Full tunnel', 'All traffic via the headend'],
+                ['Split tunnel', 'Corporate traffic only'],
+                ['Authentication', 'AAA, MFA, certificates'],
+                ['Headend', 'ASA, ISR or FTD']
+              ]
+            },
+            related: [
+              { t: '05. SSL VPN', d: 'Portal-based variant' },
+              { t: '06. Site-to-Site VPN', d: 'Fixed-site contrast' },
+              { t: '02. IPsec', d: 'IPsec RA transport' }
+            ],
+            glossary: ['Remote Access VPN', 'SSL VPN', 'IKEv2', 'VPN', 'NAT']
+          },
+          {
+            id: 't11', num: '11', group: 'access', title: 'VPN Technology Comparison',
+            blurb: 'Choosing between GRE, IPsec, DMVPN, FlexVPN, GET VPN and SSL',
+            overview: 'ENCOR expects you to choose the right **[[VPN]]** technology for a topology: **[[GRE]]** for transport and multicast, **[[IPsec]]** for encryption, **[[DMVPN]]** for dynamic spokes, **[[FlexVPN]]** as the unified IKEv2 framework, **[[GET VPN]]** for tunnel-free any-to-any over **[[MPLS]]**, and **[[SSL VPN]]** for remote users.',
+            keyIdea: 'Map the topology to the tool. Fixed sites use IPsec, multicast needs GRE over IPsec, dynamic branches use DMVPN or FlexVPN, MPLS any-to-any uses GET VPN, users use SSL.',
+            sections: [
+              { kind: 'table', h: 'The six technologies at a glance', cols: ['Technology', 'Building blocks', 'Best for', 'Encryption'], rows: [
+                ['**GRE**', 'IP protocol 47 tunnel', 'Transport, multicast, routing', 'None, add IPsec'],
+                ['**IPsec**', 'ESP or AH plus IKE', 'Point-to-point confidentiality', 'Yes'],
+                ['**DMVPN**', 'mGRE plus NHRP plus IPsec', 'Dynamic hub and spoke over Internet', 'Yes'],
+                ['**FlexVPN**', 'IKEv2 profiles', 'Unified site-to-site and RA', 'Yes'],
+                ['**GET VPN**', 'GDOI group key', 'Tunnel-free any-to-any on MPLS', 'Yes'],
+                ['**SSL VPN**', 'TLS and DTLS on 443', 'Remote users and clientless', 'Yes']
+              ]},
+              { kind: 'table', h: 'GRE versus IPsec', cols: ['Aspect', 'GRE', 'IPsec'], rows: [
+                ['Encryption', '**None**', 'Yes'],
+                ['Multicast', 'Yes', 'Not directly'],
+                ['Routing over it', 'Any IGP or BGP', 'Via VTI or GRE'],
+                ['Overhead', '4 B plus 20 B outer IP', 'ESP, varies'],
+                ['Typical combination', 'GRE inside IPsec', 'Site-to-site']
+              ]},
+              { kind: 'table', h: 'DMVPN versus FlexVPN', cols: ['Aspect', 'DMVPN', 'FlexVPN'], rows: [
+                ['IKE', 'IKEv1 or IKEv2', '**IKEv2 only**'],
+                ['Key technology', 'NHRP plus mGRE', 'IKEv2 profiles'],
+                ['Modes', 'Dynamic spoke to spoke', 'Site-to-site, RA, hub, spoke'],
+                ['Config', 'NHRP plus multipoint', 'Profile driven']
+              ]},
+              { kind: 'table', h: 'GET VPN versus DMVPN versus VTI', cols: ['Aspect', 'GET VPN', 'DMVPN', 'Crypto map or VTI'], rows: [
+                ['Tunnel interface', 'None', 'mGRE', 'VTI or GRE'],
+                ['Data path', 'Direct any-to-any', 'Spoke to spoke', 'Point to point'],
+                ['Key management', 'GDOI group key', 'Per-tunnel IKE', 'Per-tunnel IKE'],
+                ['Overlay routing', 'None, native', 'NHRP', 'IGP over tunnel'],
+                ['Best fit', 'MPLS backbone', 'Internet branches', 'Fixed sites']
+              ]},
+              { kind: 'table', h: 'Decision table', cols: ['Requirement', 'Choice'], rows: [
+                ['Encryption between two fixed sites', 'IPsec, or GRE over IPsec'],
+                ['Carry multicast and routing protocols', 'GRE over IPsec'],
+                ['Dynamic branches over the Internet', 'DMVPN'],
+                ['One framework for sites and remote access', 'FlexVPN'],
+                ['Any-to-any over MPLS without tunnels', 'GET VPN'],
+                ['Remote users with minimal client friction', 'SSL VPN']
+              ]},
+              { kind: 'code', h: 'Cross-technology verification', code:
+`  show dmvpn
+  show crypto session
+  show crypto ipsec sa
+  show ip nhrp
+  show vpn-sessiondb
+  show ip mroute | include Tunnel` }
+            ],
+            commands: [
+              { label: 'Check overlay state across technologies', code:
+`show dmvpn\nshow ip nhrp\nshow crypto session\nshow crypto ipsec sa` },
+              { label: 'Check remote access state', code:
+`show vpn-sessiondb summary\nshow vpn-sessiondb anyconnect` },
+              { label: 'Check multicast over a tunnel', code:
+`show ip mroute | include Tunnel\nshow ip pim neighbor` }
+            ],
+            traps: [
+              '**GRE alone does not encrypt**; pair it with IPsec.',
+              '**DMVPN is mGRE plus NHRP plus IPsec**; FlexVPN is IKEv2 profiles.',
+              '**GET VPN has no tunnels**; it uses a GDOI group key on MPLS.',
+              '**SSL VPN on 443** is firewall friendly; IPsec RA uses 500 and 4500.',
+              'Choose by **topology and traffic**: dynamic spokes, users, or MPLS any-to-any.',
+              'A VTI is route-based, a crypto map is policy-based.'
+            ],
+            table: {
+              cols: ['Need', 'Pick'],
+              rows: [
+                ['Encrypt fixed links', 'IPsec'],
+                ['Multicast and routing', 'GRE over IPsec'],
+                ['Dynamic branches', 'DMVPN'],
+                ['Unified framework', 'FlexVPN'],
+                ['Tunnel-free any-to-any', 'GET VPN'],
+                ['Remote users', 'SSL VPN'],
+                ['Route-based IPsec', 'VTI'],
+                ['Overhead and MTU', 'Tune ip mtu and adjust-mss']
+              ]
+            },
+            related: [
+              { t: '02. IPsec', d: 'Core encryption technology' },
+              { t: '03. DMVPN', d: 'Hub-and-spoke comparison' },
+              { t: '07. GET VPN', d: 'Tunnel-free comparison' }
+            ],
+            glossary: ['VPN', 'GRE', 'IPsec', 'DMVPN', 'FlexVPN', 'GET VPN', 'SSL VPN', 'Site-to-Site VPN', 'Remote Access VPN', 'MPLS']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'tunnel', label: 'Tunneling & Encryption', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'arch', label: 'VPN Architectures', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'access', label: 'Access & Design', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'VPN', def: 'Virtual Private Network. A logical, protected network built over a shared underlay.' },
+          { term: 'GRE', def: 'Generic Routing Encapsulation. IP protocol 47 tunnel that carries any L3 payload, including multicast, with no encryption of its own.' },
+          { term: 'IPsec', def: 'IP Security. Packet-level confidentiality, integrity and authentication using ESP or AH, with keys negotiated by IKE.' },
+          { term: 'IKEv2', def: 'Internet Key Exchange version 2, RFC 7296. Modern IPsec key management with IKE_SA_INIT and IKE_AUTH, native NAT-T and EAP.' },
+          { term: 'DMVPN', def: 'Dynamic Multipoint VPN. mGRE plus NHRP plus IPsec, giving a hub-and-spoke design with direct spoke-to-spoke tunnels.' },
+          { term: 'FlexVPN', def: 'Cisco IKEv2-based VPN framework built from proposal, policy, keyring and profile blocks, covering site-to-site and remote access.' },
+          { term: 'Virtual Tunnel Interface', def: 'Route-based IPsec interface configured with tunnel mode ipsec ipv4 and tunnel protection ipsec profile. Routing, not an ACL, triggers encryption.' },
+          { term: 'GET VPN', def: 'Group Encrypted Transport VPN. Tunnel-free any-to-any encryption using a GDOI group key distributed by a Key Server on UDP 848.' },
+          { term: 'Site-to-Site VPN', def: 'A VPN between two fixed sites, typically pure IPsec tunnel mode or GRE over IPsec with routing across the tunnel.' },
+          { term: 'SSL VPN', def: 'Remote access VPN over TLS on TCP 443, offering a clientless portal or an AnyConnect full tunnel, with DTLS on UDP 443.' },
+          { term: 'Remote Access VPN', def: 'Per-user VPN into the enterprise using a client such as AnyConnect over IPsec, SSL or DTLS.' },
+          { term: 'MPLS', def: 'Multiprotocol Label Switching. A label-switched provider backbone commonly used as the underlay for GET VPN.' },
+          { term: 'MTU', def: 'Maximum Transmission Unit. Tunnel overhead forces a smaller ip mtu and a reduced TCP MSS to avoid fragmentation.' },
+          { term: 'NAT', def: 'Network Address Translation. NAT-T on UDP 4500 lets IPsec ESP pass through NAT devices.' },
+          { term: 'Multicast', def: 'One-to-many delivery. GRE and VTIs can carry multicast, which plain crypto-map IPsec cannot.' },
+          { term: 'OSPF', def: 'Open Shortest Path First. A link-state IGP commonly run over GRE tunnels and VTIs.' },
+          { term: 'BGP', def: 'Border Gateway Protocol. The path-vector protocol used to scale routing across many VPN sites.' }
+        ];
+
+        const quiz = [
+          { q: 'What IP protocol number does GRE use?', options: ['47', '50', '51', '49'], answer: 0, why: 'GRE is IP protocol 47; ESP is 50 and AH is 51.' },
+          { q: 'What encryption does GRE provide by itself?', options: ['AES-256', 'None', 'ESP', 'TLS'], answer: 1, why: 'GRE is a transport tunnel; use IPsec for encryption.' },
+          { q: 'Which payload can GRE carry that plain IPsec cannot?', options: ['TCP', 'UDP', 'Multicast', 'ICMP'], answer: 2, why: 'GRE carries multicast and any L3 payload.' },
+          { q: 'What is the GRE overhead before IPsec is added?', options: ['20 bytes only', '8 bytes', 'None', '4 bytes plus a 20-byte outer IP header'], answer: 3, why: 'That gives about 24 bytes of overhead.' },
+          { q: 'Which command reduces TCP segment size on a GRE tunnel?', options: ['ip tcp adjust-mss', 'ip mtu', 'tunnel keepalive', 'ip tcp window-size'], answer: 0, why: 'adjust-mss clamps the MSS so packets fit the tunnel MTU.' },
+          { q: 'Which IPsec protocol provides encryption?', options: ['AH', 'ESP', 'GRE', 'IKE'], answer: 1, why: 'ESP, protocol 50, supplies confidentiality plus integrity.' },
+          { q: 'What does AH provide?', options: ['Encryption only', 'Key exchange', 'Integrity and authentication without encryption', 'NAT traversal'], answer: 2, why: 'AH, protocol 51, authenticates but does not encrypt.' },
+          { q: 'Which IPsec mode wraps the entire original packet?', options: ['Transport mode', 'Main mode', 'Aggressive mode', 'Tunnel mode'], answer: 3, why: 'Tunnel mode adds a new outer IP header around the whole packet.' },
+          { q: 'Which IKE port does IPsec use?', options: ['UDP 500', 'TCP 500', 'UDP 848', 'TCP 443'], answer: 0, why: 'IKE runs on UDP 500, with NAT-T on UDP 4500.' },
+          { q: 'What is NAT-T used for?', options: ['Encrypting the IKE header', 'Carrying ESP through NAT on UDP 4500', 'Compressing ESP', 'Routing between sites'], answer: 1, why: 'NAT-T wraps ESP in UDP 4500 so NAT devices can forward it.' },
+          { q: 'What does a transform set define?', options: ['The peer address', 'The routing protocol', 'Encryption and integrity algorithms', 'The tunnel IP'], answer: 2, why: 'It pairs data-plane algorithms such as esp-aes and esp-sha-hmac.' },
+          { q: 'Which IKE version is defined by RFC 7296?', options: ['IKEv1', 'ISAKMP', 'IKEv3', 'IKEv2'], answer: 3, why: 'IKEv2 is RFC 7296 and is the modern standard.' },
+          { q: 'Which exchange pair builds the IKEv2 IKE SA and first child SA?', options: ['IKE_SA_INIT and IKE_AUTH', 'Main and aggressive', 'Phase 1 and phase 2', 'Quick and main'], answer: 0, why: 'IKE_SA_INIT negotiates parameters and IKE_AUTH authenticates the peers.' },
+          { q: 'How many messages does a basic IKEv2 exchange need?', options: ['Six', 'Four', 'Three', 'Eight'], answer: 1, why: 'Two request and response pairs, four messages in total.' },
+          { q: 'Which feature is native in IKEv2 but not IKEv1?', options: ['ESP', 'Tunnel mode', 'EAP authentication', 'Pre-shared keys'], answer: 2, why: 'IKEv2 supports EAP natively for remote access.' },
+          { q: 'What is the default IKEv2 child SA lifetime on Cisco?', options: ['86400 seconds', '600 seconds', '28800 seconds', '3600 seconds'], answer: 3, why: 'The child SA defaults to one hour while the IKE SA defaults to 24 hours.' },
+          { q: 'Which three protocols make up DMVPN?', options: ['mGRE, NHRP and IPsec', 'GRE, OSPF and BGP', 'IPsec, SSL and TLS', 'GDOI, TEK and KEK'], answer: 0, why: 'Multipoint GRE, NHRP and IPsec together form DMVPN.' },
+          { q: 'What does NHRP resolve in DMVPN?', options: ['MAC addresses', 'Spoke public addresses', 'DNS names', 'QoS classes'], answer: 1, why: 'NHRP maps tunnel addresses to public underlay addresses.' },
+          { q: 'Which DMVPN phase enables spoke-to-spoke shortcuts?', options: ['Phase 1', 'Phase 3 only', 'Phase 2', 'No phase'], answer: 2, why: 'Phase 2 introduced direct spoke-to-spoke tunnels.' },
+          { q: 'Which command sets a tunnel to multipoint GRE?', options: ['tunnel mode ipsec ipv4', 'tunnel protection ipsec profile', 'ip nhrp nhs', 'tunnel mode gre multipoint'], answer: 3, why: 'That command makes one tunnel interface serve many peers.' },
+          { q: 'What is the hub role in NHRP?', options: ['Next-hop server', 'Key server', 'RADIUS client', 'Certificate authority'], answer: 0, why: 'The hub acts as the NHS where spokes register.' },
+          { q: 'Which command verifies DMVPN peer state?', options: ['show crypto map', 'show dmvpn', 'show ip arp', 'show vlan'], answer: 1, why: 'show dmvpn lists tunnel peers, state and uptime.' },
+          { q: 'What is FlexVPN built on?', options: ['Crypto maps', 'NHRP only', 'IKEv2 profiles', 'GDOI'], answer: 2, why: 'FlexVPN uses IKEv2 proposals, policies, keyrings and profiles.' },
+          { q: 'Which block holds pre-shared keys in an IKEv2 configuration?', options: ['crypto ikev2 policy', 'crypto ipsec profile', 'crypto map', 'crypto ikev2 keyring'], answer: 3, why: 'The keyring stores keys per peer.' },
+          { q: 'What attaches an IPsec profile to a tunnel interface?', options: ['tunnel protection ipsec profile', 'crypto map', 'match address', 'set peer'], answer: 0, why: 'That command binds the profile to the tunnel.' },
+          { q: 'Which VPN type is route-based IPsec?', options: ['Crypto map', 'VTI', 'GET VPN', 'SSL VPN'], answer: 1, why: 'A VTI encrypts whatever the routing table sends into it.' },
+          { q: 'Which command marks a tunnel as an IPsec VTI?', options: ['tunnel mode gre multipoint', 'tunnel protection ipsec profile', 'tunnel mode ipsec ipv4', 'ip verify unicast'], answer: 2, why: 'tunnel mode ipsec ipv4 selects IPsec VTI mode.' },
+          { q: 'What triggers encryption on a VTI?', options: ['An interesting-traffic ACL', 'A crypto map', 'A NAT rule', 'A route toward the tunnel'], answer: 3, why: 'Routing selects the traffic, not an ACL.' },
+          { q: 'How does a VTI compare with GRE over IPsec?', options: ['It removes the GRE layer and overhead', 'It adds a GRE header', 'It disables multicast', 'It requires crypto maps'], answer: 0, why: 'A VTI is IP over IPsec with no GRE header.' },
+          { q: 'How does GET VPN distribute group keys?', options: ['IKE on UDP 500', 'GDOI on UDP 848', 'TLS on TCP 443', 'ESP on protocol 50'], answer: 1, why: 'Members register with the Key Server using GDOI on UDP 848.' },
+          { q: 'What does the TEK do in GET VPN?', options: ['Protects key distribution', 'Routes packets', 'Encrypts traffic', 'Authenticates users'], answer: 2, why: 'The Traffic Encryption Key encrypts data; the KEK protects the TEK.' },
+          { q: 'Which design has no tunnel interfaces?', options: ['DMVPN', 'VTI', 'GRE over IPsec', 'GET VPN'], answer: 3, why: 'GET VPN members encrypt directly with a shared group key.' },
+          { q: 'Where is GET VPN the natural fit?', options: ['A private MPLS backbone', 'Two fixed sites over the Internet', 'Remote laptop users', 'A single site'], answer: 0, why: 'It provides native any-to-any encryption across a trusted backbone.' },
+          { q: 'What does COOP provide in GET VPN?', options: ['Group routing', 'Redundant Key Servers', 'NAT traversal', 'Compression'], answer: 1, why: 'Cooperative Key Servers keep key distribution available.' },
+          { q: 'What defines interesting traffic in classic IPsec?', options: ['The routing table', 'The tunnel interface', 'The crypto map ACL', 'NHRP'], answer: 2, why: 'Only traffic matching the ACL is encrypted in policy-based IPsec.' },
+          { q: 'Why is GRE over IPsec preferred for branch routing?', options: ['It encrypts without IPsec', 'It removes all overhead', 'It avoids tunnel interfaces', 'It carries routing protocols and multicast'], answer: 3, why: 'GRE makes the tunnel a normal interface for IGPs and multicast.' },
+          { q: 'What happens if no interesting traffic matches on a crypto-map tunnel?', options: ['No IPsec SA forms', 'The IKE SA fails', 'The tunnel shuts down', 'Routing loops'], answer: 0, why: 'IPsec SAs are built on demand from interesting traffic.' },
+          { q: 'Which routing protocol is used to scale many VPN sites?', options: ['RIP', 'BGP', 'HSRP', 'IGMP'], answer: 1, why: 'BGP scales across many sites and providers.' },
+          { q: 'Which protocol and port does SSL VPN use?', options: ['ESP on protocol 50', 'IKE on UDP 500', 'TLS on TCP 443', 'GDOI on UDP 848'], answer: 2, why: 'SSL VPN rides TLS on 443, with DTLS on UDP 443 for performance.' },
+          { q: 'What is clientless SSL VPN?', options: ['A full network tunnel', 'An IPsec client', 'A site-to-site tunnel', 'A browser portal to applications'], answer: 3, why: 'Clientless mode gives application access through the browser.' },
+          { q: 'Which transport does AnyConnect use for low-latency traffic?', options: ['DTLS on UDP 443', 'TLS on TCP 443', 'ESP on protocol 50', 'GRE on protocol 47'], answer: 0, why: 'DTLS avoids TCP retransmission delays for real-time apps.' },
+          { q: 'What is the difference between full and split tunnel?', options: ['Split sends all traffic via the headend', 'Full sends all traffic via the headend', 'Full sends only corporate traffic', 'Split disables encryption'], answer: 1, why: 'Split tunnel sends only corporate subnets through the VPN.' },
+          { q: 'Which transport pair describes IPsec remote access?', options: ['TCP 443 and UDP 443', 'UDP 848 only', 'UDP 500 and 4500', 'TCP 22 and 23'], answer: 2, why: 'IPsec RA uses IKE on 500 and NAT-T on 4500.' },
+          { q: 'Which technology carries multicast and routing but no encryption?', options: ['IPsec', 'SSL VPN', 'GET VPN', 'GRE'], answer: 3, why: 'GRE is the transport glue; IPsec adds the encryption.' },
+          { q: 'Which technology fits dynamic branches over the Internet?', options: ['DMVPN', 'GET VPN', 'SSL VPN', 'Crypto map'], answer: 0, why: 'DMVPN combines NHRP discovery with per-tunnel IPsec.' }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'vpn.theme', done: 'vpn.done', best: 'vpn.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
