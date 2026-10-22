@@ -1,0 +1,6725 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Labs — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Labs for CCNP Enterprise (ENCOR 350-401): Pick a simulator, build the design labs, drill the routing and VPN protocols, then automate and run end-to-end enterprise scenarios until the whole blueprint clicks.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Labs — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">LAB</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Labs</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 30</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 30</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">16 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 30 &mdash; Labs</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Pick a simulator, build the design labs, drill the routing and VPN protocols, then automate and run end-to-end enterprise scenarios until the whole blueprint clicks.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Labs &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 30 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = "A **[[Network Simulator]]** such as Packet Tracer, CML, GNS3 or EVE-NG gives you the practice fabric, then the design labs build an **[[Enterprise Campus]]**, branch, ISP and data centre. Protocol labs drill **[[OSPF]]**, **[[BGP]]**, **[[MPLS]]**, **[[DMVPN]]** and **[[IPsec]]**, and the **[[SD-WAN]]** and automation labs finish with full enterprise scenarios.";
+
+        const topics = [
+ {
+  "num": "01",
+  "id": "t01",
+  "group": "platform",
+  "title": "Cisco Packet Tracer",
+  "blurb": "Cisco Packet Tracer (PT) is a free, low-fidelity network simulator — great for topology practice and",
+  "overview": "**[[Network Simulator|Cisco Packet Tracer (PT)]]** is a free, low-fidelity network simulator — great for **topology practice and ENCOR basics** (L2/L3, routing, wireless, some automation). It lacks full IOS features (no DMVPN/QoS depth), so treat it as a **learning sandbox, not a CCNP-grade lab**.",
+  "keyIdea": "PT **lacks advanced features** (DMVPN/MPLS/SD-WAN).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What PT is good for",
+    "cols": [
+     "Area",
+     "Fit"
+    ],
+    "rows": [
+     [
+      "Campus L2/L3",
+      "good"
+     ],
+     [
+      "OSPF/EIGRP",
+      "good"
+     ],
+     [
+      "Wireless",
+      "basic"
+     ],
+     [
+      "Basic security",
+      "basic"
+     ],
+     [
+      "Automation",
+      "limited"
+     ],
+     [
+      "Advanced topics",
+      "no"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Use PT for topology + config practice.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Limitations vs CCNP",
+    "cols": [
+     "Feature",
+     "PT",
+     "CCNP needs"
+    ],
+    "rows": [
+     [
+      "DMVPN",
+      "no",
+      "yes"
+     ],
+     [
+      "Advanced QoS",
+      "no",
+      "yes"
+     ],
+     [
+      "IPsec depth",
+      "limited",
+      "yes"
+     ],
+     [
+      "MPLS",
+      "no",
+      "yes"
+     ],
+     [
+      "SD-WAN",
+      "no",
+      "yes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**CML/GNS3/EVE-NG** cover the deep topics."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Typical lab flow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "build topology"
+     ],
+     [
+      "2",
+      "cable links"
+     ],
+     [
+      "3",
+      "IP + VLANs"
+     ],
+     [
+      "4",
+      "routing"
+     ],
+     [
+      "5",
+      "verify"
+     ],
+     [
+      "6",
+      "save .pkt"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Design → cable → configure → verify → save.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification features",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Simulation mode",
+      "packet animation"
+     ],
+     [
+      "CLI",
+      "full config"
+     ],
+     [
+      "PDU",
+      "follow packet"
+     ],
+     [
+      "Ping/tr",
+      "verify"
+     ],
+     [
+      "Multiuser",
+      "connect peers"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Simulation mode** shows packet flow visually."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PT vs other tools",
+    "cols": [
+     "Tool",
+     "PT"
+    ],
+    "rows": [
+     [
+      "Fidelity",
+      "low"
+     ],
+     [
+      "Speed",
+      "high"
+     ],
+     [
+      "Cost",
+      "free"
+     ],
+     [
+      "Real images",
+      "no"
+     ],
+     [
+      "Best for",
+      "beginners/ENCOR"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "PT = **fast + free + easy** but shallow."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Tips",
+    "cols": [
+     "Tip",
+     "Why"
+    ],
+    "rows": [
+     [
+      "Save often",
+      ".pkt"
+     ],
+     [
+      "Use physical",
+      "realism"
+     ],
+     [
+      "Practice CLI",
+      "exam style"
+     ],
+     [
+      "Do labs",
+      "repetition"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Practice the **CLI, not the GUI**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(no special commands — standard IOS CLI)\nping / traceroute\nshow vlan / show ip route\nsimulation mode for packet view"
+   }
+  ],
+  "traps": [
+   "PT **lacks advanced features** (DMVPN/MPLS/SD-WAN).",
+   "Use **CLI**, not GUI, to build exam skills.",
+   "Great for **ENCOR basics** only.",
+   "Save work as **.pkt** files.",
+   "Simulation mode = **visual verification**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "PT"
+   ],
+   "rows": [
+    [
+     "Fidelity",
+     "low"
+    ],
+    [
+     "Cost",
+     "free"
+    ],
+    [
+     "Best",
+     "basics"
+    ],
+    [
+     "Missing",
+     "DMVPN/MPLS"
+    ],
+    [
+     "CLI",
+     "full"
+    ],
+    [
+     "Verify",
+     "sim mode"
+    ],
+    [
+     "Save",
+     ".pkt"
+    ],
+    [
+     "Upgrade",
+     "CML/GNS3"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Cisco Modeling Labs (CML)",
+    "d": "Cisco Modeling Labs (CML, ex-VIRL) runs real Cisco IOS/IOS-XE images on your server via a web UI + A"
+   },
+   {
+    "t": "03. GNS3",
+    "d": "GNS3 is a free GUI that runs real device images (IOS, IOS-XE, and any VM) plus Docker containers."
+   }
+  ],
+  "glossary": [
+   "Network Simulator"
+  ]
+ },
+ {
+  "num": "02",
+  "id": "t02",
+  "group": "platform",
+  "title": "Cisco Modeling Labs (CML)",
+  "blurb": "Cisco Modeling Labs (CML, ex-VIRL) runs real Cisco IOS/IOS-XE images on your server via a web UI + A",
+  "overview": "**[[Network Simulator|Cisco Modeling Labs (CML, ex-VIRL)]]** runs **real Cisco [[Cisco IOS|IOS]]/IOS-XE images** on your server via a web UI + API. It's the **official Cisco lab environment** for CCNP/CCIE practice, supporting automation (NETCONF/REST) and snapshots. The exam-prep gold standard.",
+  "keyIdea": "CML = **real IOS images** (vs PT).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What CML offers",
+    "cols": [
+     "Feature",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Real images",
+      "IOS-XE/NX-OS"
+     ],
+     [
+      "Topologies",
+      "unlimited nodes"
+     ],
+     [
+      "API",
+      "automation"
+     ],
+     [
+      "Snapshots",
+      "save/restore"
+     ],
+     [
+      "Web UI",
+      "browser control"
+     ],
+     [
+      "Nodes",
+      "routers/switches/firewalls"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Real device images** make CML exam-faithful."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Node types",
+    "cols": [
+     "Node",
+     "Use"
+    ],
+    "rows": [
+     [
+      "CSR1000v",
+      "router"
+     ],
+     [
+      "IOSv",
+      "router/switch"
+     ],
+     [
+      "NX-OS",
+      "data center"
+     ],
+     [
+      "ASAv",
+      "firewall"
+     ],
+     [
+      "vIOS-L2",
+      "switching"
+     ],
+     [
+      "External",
+      "connect real net"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Mix **L2 + L3 + firewall** for full labs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Building a lab",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "create nodes"
+     ],
+     [
+      "2",
+      "connect links"
+     ],
+     [
+      "3",
+      "boot"
+     ],
+     [
+      "4",
+      "console/config"
+     ],
+     [
+      "5",
+      "snapshot"
+     ],
+     [
+      "6",
+      "test"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Boot → configure → snapshot** the working state."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Automation",
+    "cols": [
+     "Interface",
+     "Use"
+    ],
+    "rows": [
+     [
+      "REST API",
+      "scripts"
+     ],
+     [
+      "NETCONF",
+      "config"
+     ],
+     [
+      "Python",
+      "pyATS/Ansible"
+     ],
+     [
+      "Import/export",
+      "share labs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "CML's **API + NETCONF** power automation practice."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Snapshots and cloning",
+    "cols": [
+     "Feature",
+     "Benefit"
+    ],
+    "rows": [
+     [
+      "Snapshot",
+      "rollback"
+     ],
+     [
+      "Clone",
+      "duplicate lab"
+     ],
+     [
+      "Export",
+      "backup"
+     ],
+     [
+      "Timing",
+      "save states"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Snapshot = instant rollback** for experiments."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "CML vs alternatives",
+    "cols": [
+     "Tool",
+     "CML"
+    ],
+    "rows": [
+     [
+      "Images",
+      "real Cisco"
+     ],
+     [
+      "Cost",
+      "licensed"
+     ],
+     [
+      "UI",
+      "web"
+     ],
+     [
+      "API",
+      "yes"
+     ],
+     [
+      "Fidelity",
+      "high"
+     ],
+     [
+      "Best for",
+      "serious CCNP prep"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**CML = highest fidelity** among the GUI tools."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(web UI + API; device CLI is standard IOS-XE)\npython3 -c \"import requests; r=requests.get('https://cml/api/...')\"\nsnapshot via UI"
+   }
+  ],
+  "traps": [
+   "CML = **real IOS images** (vs PT).",
+   "**Snapshots** enable safe experiments.",
+   "**API/NETCONF** = automation practice.",
+   "Node resources matter (**CPU/RAM**).",
+   "Best for **CCNP-grade labs**; requires license."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "CML"
+   ],
+   "rows": [
+    [
+     "Images",
+     "real IOS"
+    ],
+    [
+     "UI",
+     "web"
+    ],
+    [
+     "API",
+     "REST/NETCONF"
+    ],
+    [
+     "Snapshots",
+     "rollback"
+    ],
+    [
+     "Nodes",
+     "L2/L3/fw"
+    ],
+    [
+     "Cost",
+     "licensed"
+    ],
+    [
+     "Fidelity",
+     "high"
+    ],
+    [
+     "Best",
+     "CCNP/CCIE"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. Cisco Packet Tracer",
+    "d": "Cisco Packet Tracer (PT) is a free, low-fidelity network simulator — great for topology practice and"
+   },
+   {
+    "t": "03. GNS3",
+    "d": "GNS3 is a free GUI that runs real device images (IOS, IOS-XE, and any VM) plus Docker containers."
+   }
+  ],
+  "glossary": [
+   "Network Simulator",
+   "Cisco IOS"
+  ]
+ },
+ {
+  "num": "03",
+  "id": "t03",
+  "group": "platform",
+  "title": "GNS3",
+  "blurb": "GNS3 is a free GUI that runs real device images (IOS, IOS-XE, and any VM) plus Docker containers.",
+  "overview": "**[[Network Simulator|GNS3]]** is a free GUI that runs **real device images** (IOS, IOS-XE, and any VM) plus **[[Docker]]** containers. It's flexible and automation-friendly, popular for **CCNP lab practice** without Cisco licensing. Runs images via QEMU/dynamips.",
+  "keyIdea": "GNS3 = **real images + VMs + Docker** (free).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What GNS3 runs",
+    "cols": [
+     "Type",
+     "Use"
+    ],
+    "rows": [
+     [
+      "IOS (dynamips)",
+      "routers"
+     ],
+     [
+      "IOS-XE (QEMU)",
+      "modern routers"
+     ],
+     [
+      "Firewalls",
+      "ASAv"
+     ],
+     [
+      "Linux VM",
+      "hosts/services"
+     ],
+     [
+      "Docker",
+      "containers"
+     ],
+     [
+      "VPCS",
+      "simple PCs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Mix real images + VMs + Docker.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Architecture",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "GNS3 server",
+      "compute"
+     ],
+     [
+      "GNS3 GUI",
+      "client"
+     ],
+     [
+      "QEMU",
+      "virtualization"
+     ],
+     [
+      "Dynamips",
+      "IOS emulation"
+     ],
+     [
+      "Docker",
+      "containers"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "GUI → **server → emulators**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Building labs",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "add image"
+     ],
+     [
+      "2",
+      "drop nodes"
+     ],
+     [
+      "3",
+      "connect"
+     ],
+     [
+      "4",
+      "boot/config"
+     ],
+     [
+      "5",
+      "save project"
+     ],
+     [
+      "6",
+      "export/import"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Image first; then topology.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Automation support",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "API",
+      "scripts"
+     ],
+     [
+      "Docker",
+      "code dev"
+     ],
+     [
+      "Cloud integration",
+      "bridge"
+     ],
+     [
+      "Import/export",
+      "share"
+     ],
+     [
+      "Ansible",
+      "config"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "GNS3 pairs with **Docker + Ansible** for automation."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Resources",
+    "cols": [
+     "Item",
+     "Note"
+    ],
+    "rows": [
+     [
+      "CPU",
+      "per node"
+     ],
+     [
+      "RAM",
+      "images heavy"
+     ],
+     [
+      "Disk",
+      "images big"
+     ],
+     [
+      "Server",
+      "local/remote"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Plan **CPU/RAM per image**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "GNS3 vs CML vs EVE-NG",
+    "cols": [
+     "Tool",
+     "GNS3"
+    ],
+    "rows": [
+     [
+      "Cost",
+      "free"
+     ],
+     [
+      "Images",
+      "real + VM"
+     ],
+     [
+      "Docker",
+      "yes"
+     ],
+     [
+      "API",
+      "yes"
+     ],
+     [
+      "Fidelity",
+      "high"
+     ],
+     [
+      "UI",
+      "desktop"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "GNS3 = **free + flexible** middle ground."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(web/desktop UI; device CLI = real IOS)\nGNS3 API: curl http://127.0.0.1:3080/v2/\ndocker images for container nodes"
+   }
+  ],
+  "traps": [
+   "GNS3 = **real images + VMs + Docker** (free).",
+   "Dynamips = **IOS**; QEMU = **IOS-XE**.",
+   "Heavy **CPU/RAM** per image.",
+   "**API** enables automation practice.",
+   "Great for CCNP without **Cisco licensing**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "GNS3"
+   ],
+   "rows": [
+    [
+     "Cost",
+     "free"
+    ],
+    [
+     "Images",
+     "real"
+    ],
+    [
+     "VM",
+     "QEMU"
+    ],
+    [
+     "IOS",
+     "dynamips"
+    ],
+    [
+     "Docker",
+     "yes"
+    ],
+    [
+     "API",
+     "yes"
+    ],
+    [
+     "Fidelity",
+     "high"
+    ],
+    [
+     "Best",
+     "CCNP labs"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Cisco Modeling Labs (CML)",
+    "d": "Cisco Modeling Labs (CML, ex-VIRL) runs real Cisco IOS/IOS-XE images on your server via a web UI + A"
+   },
+   {
+    "t": "04. EVE-NG",
+    "d": "EVE-NG (Emulated Virtual Environment Next Generation) is a web-based lab platform that runs real ima"
+   }
+  ],
+  "glossary": [
+   "Network Simulator",
+   "Docker"
+  ]
+ },
+ {
+  "num": "04",
+  "id": "t04",
+  "group": "platform",
+  "title": "EVE-NG",
+  "blurb": "EVE-NG (Emulated Virtual Environment Next Generation) is a web-based lab platform that runs real ima",
+  "overview": "**[[Network Simulator|EVE-NG]]** (Emulated Virtual Environment Next Generation) is a **web-based lab platform** that runs real images (IOS, NX-OS, ASA, and third-party VMs) — the go-to **pro edition is free**, ideal for big multi-vendor CCNP topologies. Browser console + API.",
+  "keyIdea": "EVE-NG = **web-based, free tier**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What EVE-NG runs",
+    "cols": [
+     "Type",
+     "Use"
+    ],
+    "rows": [
+     [
+      "IOS/IOS-XE",
+      "routers"
+     ],
+     [
+      "NX-OS",
+      "switches"
+     ],
+     [
+      "ASA",
+      "firewalls"
+     ],
+     [
+      "vIOS-L2",
+      "switching"
+     ],
+     [
+      "Linux VMs",
+      "hosts"
+     ],
+     [
+      "Container",
+      "Linux nodes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Real multi-vendor images** on one platform."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Modes",
+    "cols": [
+     "Mode",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Community",
+      "free, basic"
+     ],
+     [
+      "Pro",
+      "free image pool"
+     ],
+     [
+      "Pro+",
+      "licensed"
+     ],
+     [
+      "Import",
+      "Cisco QCOW"
+     ],
+     [
+      "Multi-node",
+      "scale"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Community = **free tier**; Pro unlocks image import."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Web UI workflow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "log in web"
+     ],
+     [
+      "2",
+      "add node"
+     ],
+     [
+      "3",
+      "connect"
+     ],
+     [
+      "4",
+      "boot"
+     ],
+     [
+      "5",
+      "console"
+     ],
+     [
+      "6",
+      "save topology"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "All from the **browser**",
+      "d": "no desktop app."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Scale and features",
+    "cols": [
+     "Feature",
+     "Benefit"
+    ],
+    "rows": [
+     [
+      "Multi-user",
+      "team lab"
+     ],
+     [
+      "API",
+      "automation"
+     ],
+     [
+      "Snapshots",
+      "save states"
+     ],
+     [
+      "Templates",
+      "reuse"
+     ],
+     [
+      "External net",
+      "bridge"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Multi-user + API",
+      "d": "team + automation ready."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Requirements",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Host",
+      "Linux/ESXi"
+     ],
+     [
+      "RAM",
+      "many GB"
+     ],
+     [
+      "Disk",
+      "image storage"
+     ],
+     [
+      "CPU",
+      "per node"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Plan **hardware for node count**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "EVE-NG vs GNS3 vs CML",
+    "cols": [
+     "Tool",
+     "EVE-NG"
+    ],
+    "rows": [
+     [
+      "UI",
+      "web"
+     ],
+     [
+      "Cost",
+      "free tier"
+     ],
+     [
+      "Multi-vendor",
+      "yes"
+     ],
+     [
+      "API",
+      "yes"
+     ],
+     [
+      "Fidelity",
+      "high"
+     ],
+     [
+      "Best",
+      "large labs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "EVE-NG = **web + scale** for big topologies."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(web UI; device CLI = real IOS/NX-OS)\nEVE API: https://<host>/api/...\nsnapshot/export via UI"
+   }
+  ],
+  "traps": [
+   "EVE-NG = **web-based, free tier**.",
+   "Supports **multi-vendor images** (Cisco + others).",
+   "Pro edition = **image import unlocked**.",
+   "Browser console + **API**.",
+   "Great for **large CCNP topologies**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "EVE-NG"
+   ],
+   "rows": [
+    [
+     "UI",
+     "web"
+    ],
+    [
+     "Cost",
+     "free"
+    ],
+    [
+     "Multi-vendor",
+     "yes"
+    ],
+    [
+     "Images",
+     "real"
+    ],
+    [
+     "API",
+     "yes"
+    ],
+    [
+     "Snapshots",
+     "yes"
+    ],
+    [
+     "Scale",
+     "large"
+    ],
+    [
+     "Best",
+     "big labs"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. GNS3",
+    "d": "GNS3 is a free GUI that runs real device images (IOS, IOS-XE, and any VM) plus Docker containers."
+   },
+   {
+    "t": "05. Enterprise Campus",
+    "d": "The Enterprise Campus lab builds a three-tier campus with access/distribution/ core, VLANs, EtherCha"
+   }
+  ],
+  "glossary": [
+   "Network Simulator"
+  ]
+ },
+ {
+  "num": "05",
+  "id": "t05",
+  "group": "design",
+  "title": "Enterprise Campus",
+  "blurb": "The Enterprise Campus lab builds a three-tier campus with access/distribution/ core, VLANs, EtherCha",
+  "overview": "The **[[Enterprise Campus|Enterprise Campus lab]]** builds a **three-tier campus** with access/distribution/ core, VLANs, EtherChannel, STP, and routing. It ties L2 + L3 together — the backbone of ENCOR hands-on. Verify with the L2/L3 command chains.",
+  "keyIdea": "Three-tier: **access/distribution/core**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Design",
+    "cols": [
+     "Tier",
+     "Device",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Access",
+      "switch",
+      "hosts"
+     ],
+     [
+      "Distribution",
+      "switch",
+      "L3 routing"
+     ],
+     [
+      "Core",
+      "routers/switches",
+      "backbone"
+     ],
+     [
+      "Interconnection",
+      "uplinks",
+      "EtherChannel"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Access → Distribution → Core",
+      "d": "classic campus."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Layer 2 setup",
+    "cols": [
+     "Task",
+     "Command"
+    ],
+    "rows": [
+     [
+      "VLANs",
+      "vlan 10"
+     ],
+     [
+      "Trunks",
+      "switchport mode trunk"
+     ],
+     [
+      "EtherChannel",
+      "channel-group"
+     ],
+     [
+      "STP root",
+      "spanning-tree vlan X root primary"
+     ],
+     [
+      "Access",
+      "switchport access vlan"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VLAN + trunk + bundle + STP** first."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Layer 3 setup",
+    "cols": [
+     "Task",
+     "Command"
+    ],
+    "rows": [
+     [
+      "SVI",
+      "interface Vlan10"
+     ],
+     [
+      "Routing",
+      "ospf/eigrp"
+     ],
+     [
+      "Default",
+      "ip route"
+     ],
+     [
+      "FHRP",
+      "standby/HSRP"
+     ],
+     [
+      "Uplink",
+      "routed ports"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**SVI + routing + FHRP** complete the campus."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification chain",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Link",
+      "show interfaces status"
+     ],
+     [
+      "VLAN",
+      "show vlan"
+     ],
+     [
+      "Bundle",
+      "show etherchannel summary"
+     ],
+     [
+      "STP",
+      "show spanning-tree"
+     ],
+     [
+      "Routes",
+      "show ip route"
+     ],
+     [
+      "Redundancy",
+      "show standby brief"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Work **L1 → L2 → L3** methodically."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Redundancy",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "EtherChannel",
+      "uplinks"
+     ],
+     [
+      "HSRP/VRRP",
+      "gateways"
+     ],
+     [
+      "STP root",
+      "designed"
+     ],
+     [
+      "Loop-free",
+      "Root Guard"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Design for redundancy everywhere.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Common lab order",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "VLANs"
+     ],
+     [
+      "2",
+      "trunks"
+     ],
+     [
+      "3",
+      "EtherChannel"
+     ],
+     [
+      "4",
+      "SVIs"
+     ],
+     [
+      "5",
+      "routing"
+     ],
+     [
+      "6",
+      "FHRP"
+     ],
+     [
+      "7",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Build in a **repeatable sequence**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "vlan 10\ninterface Gi0/1\n switchport mode trunk\n switchport trunk allowed vlan 10,20\n channel-group 1 mode active\ninterface Vlan10\n ip address 10.10.10.254 255.255.255.0\n standby 1 ip 10.10.10.1\nrouter ospf 1\n network 10.10.10.0 0.0.0.255 area 0\nshow spanning-tree\nshow etherchannel summary\nshow standby brief"
+   }
+  ],
+  "traps": [
+   "Three-tier: **access/distribution/core**.",
+   "**VLANs → trunks → EtherChannel → SVIs → routing → FHRP**.",
+   "HSRP + EtherChannel = **campus redundancy**.",
+   "Verify **L1 → L2 → L3** order.",
+   "Root priority controlled by **design**."
+  ],
+  "table": {
+   "cols": [
+    "Tier",
+    "Role"
+   ],
+   "rows": [
+    [
+     "Access",
+     "hosts"
+    ],
+    [
+     "Distribution",
+     "L3"
+    ],
+    [
+     "Core",
+     "backbone"
+    ],
+    [
+     "L2",
+     "VLAN/trunk"
+    ],
+    [
+     "L3",
+     "SVI/routing"
+    ],
+    [
+     "Bundle",
+     "EtherChannel"
+    ],
+    [
+     "Gateway",
+     "HSRP"
+    ],
+    [
+     "Verify",
+     "chain"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. EVE-NG",
+    "d": "EVE-NG (Emulated Virtual Environment Next Generation) is a web-based lab platform that runs real ima"
+   },
+   {
+    "t": "06. Branch Office",
+    "d": "The Branch Office lab models a small site connecting to HQ over WAN + VPN (commonly DMVPN or IPsec)."
+   }
+  ],
+  "glossary": [
+   "Enterprise Campus"
+  ]
+ },
+ {
+  "num": "06",
+  "id": "t06",
+  "group": "design",
+  "title": "Branch Office",
+  "blurb": "The Branch Office lab models a small site connecting to HQ over WAN + VPN (commonly DMVPN or IPsec).",
+  "overview": "The **Branch Office lab** models a small site connecting to HQ over **[[WAN]] + [[VPN]]** (commonly **DMVPN or IPsec**). It uses a branch router, a hub router, dual WAN links, and **automatic failover**. Core CCNP topics: tunnel, routing through overlay, NAT, QoS.",
+  "keyIdea": "Branch = **dual WAN + DMVPN/IPsec + failover**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Branch design",
+    "cols": [
+     "Element",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Router",
+      "cEdge branch"
+     ],
+     [
+      "WAN links",
+      "2 ISPs"
+     ],
+     [
+      "Tunnel",
+      "DMVPN/IPsec"
+     ],
+     [
+      "HQ",
+      "hub/datacenter"
+     ],
+     [
+      "LAN",
+      "local users"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Branch = one router, multiple WAN paths, secure tunnel.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Connectivity",
+    "cols": [
+     "Link",
+     "Use"
+    ],
+    "rows": [
+     [
+      "ISP1",
+      "primary"
+     ],
+     [
+      "ISP2",
+      "backup"
+     ],
+     [
+      "Tunnel",
+      "overlay"
+     ],
+     [
+      "Underlay",
+      "Internet"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Load/share + failover** across dual WAN."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Tunnel setup (DMVPN)",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "loopback + tunnel"
+     ],
+     [
+      "2",
+      "NHRP map"
+     ],
+     [
+      "3",
+      "IPsec profile"
+     ],
+     [
+      "4",
+      "routing over tunnel"
+     ],
+     [
+      "5",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "DMVPN = **dynamic full-mesh** from hubs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "IPsec alternative",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "isakmp policy"
+     ],
+     [
+      "2",
+      "transform"
+     ],
+     [
+      "3",
+      "crypto map"
+     ],
+     [
+      "4",
+      "apply interface"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Site-to-site IPsec",
+      "d": "static alternative."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Branch services",
+    "cols": [
+     "Service",
+     "Use"
+    ],
+    "rows": [
+     [
+      "NAT",
+      "Internet"
+     ],
+     [
+      "DHCP",
+      "LAN"
+     ],
+     [
+      "QOS",
+      "voice/video"
+     ],
+     [
+      "Redundancy",
+      "dual WAN"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Branch runs **local services + WAN QoS**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Tunnel",
+      "show ip nhrp"
+     ],
+     [
+      "SA",
+      "show crypto"
+     ],
+     [
+      "Route",
+      "show ip route"
+     ],
+     [
+      "Failover",
+      "show track"
+     ],
+     [
+      "QOS",
+      "show policy-map"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Tunnel + crypto + route",
+      "d": "branch health."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "interface Tunnel0\n ip nhrp network-id 1\n ip nhrp nhs 1.1.1.1\n tunnel source Gi0/1\n tunnel destination 1.1.1.1\n tunnel protection ipsec profile DMVPN\ntrack 1 ip sla 10 reachability\nip route 0.0.0.0 0.0.0.0 2.2.2.1 track 1\nshow ip nhrp brief\nshow crypto session"
+   }
+  ],
+  "traps": [
+   "Branch = **dual WAN + DMVPN/IPsec + failover**.",
+   "**NHRP + IPsec profile** = DMVPN core.",
+   "Dual WAN needed **track + route** for failover.",
+   "Verify **tunnel → crypto → route**.",
+   "NAT/QoS/DHCP are **local branch services**."
+  ],
+  "table": {
+   "cols": [
+    "Element",
+    "Role"
+   ],
+   "rows": [
+    [
+     "WAN",
+     "dual links"
+    ],
+    [
+     "Tunnel",
+     "DMVPN"
+    ],
+    [
+     "Security",
+     "IPsec"
+    ],
+    [
+     "Failover",
+     "track"
+    ],
+    [
+     "LAN",
+     "local"
+    ],
+    [
+     "NAT",
+     "Internet"
+    ],
+    [
+     "QOS",
+     "voice"
+    ],
+    [
+     "Verify",
+     "nhrp/crypto"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Enterprise Campus",
+    "d": "The Enterprise Campus lab builds a three-tier campus with access/distribution/ core, VLANs, EtherCha"
+   },
+   {
+    "t": "07. ISP",
+    "d": "The ISP lab models a service provider core with eBGP between providers and customers, BGP attributes"
+   }
+  ],
+  "glossary": [
+   "WAN",
+   "VPN"
+  ]
+ },
+ {
+  "num": "07",
+  "id": "t07",
+  "group": "design",
+  "title": "ISP",
+  "blurb": "The ISP lab models a service provider core with eBGP between providers and customers, BGP attributes",
+  "overview": "The **ISP lab** models a **service provider core** with **[[eBGP]] between providers and customers**, **BGP attributes**, **MPLS transit**, and **traffic engineering**. It builds the internet-facing skills needed for **SD-WAN underlay + BGP interconnect** on ENCOR.",
+  "keyIdea": "**eBGP = different AS; iBGP = same AS, next-hop-self.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "ISP design",
+    "cols": [
+     "Element",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "IGP",
+      "OSPF in AS"
+     ],
+     [
+      "iBGP",
+      "internal"
+     ],
+     [
+      "eBGP",
+      "to customers/peers"
+     ],
+     [
+      "MPLS",
+      "label transit"
+     ],
+     [
+      "Edge",
+      "PE routers"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**eBGP + MPLS** form the ISP core."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "eBGP setup",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "router bgp"
+     ],
+     [
+      "2",
+      "neighbor remote-as"
+     ],
+     [
+      "3",
+      "next-hop-self iBGP"
+     ],
+     [
+      "4",
+      "advertise"
+     ],
+     [
+      "5",
+      "filter"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**eBGP peers = different AS; iBGP = same AS.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Attributes lab",
+    "cols": [
+     "Attribute",
+     "Action"
+    ],
+    "rows": [
+     [
+      "Weight",
+      "inbound local"
+     ],
+     [
+      "Local-pref",
+      "outbound"
+     ],
+     [
+      "AS-path",
+      "prepend"
+     ],
+     [
+      "MED",
+      "inter-AS"
+     ],
+     [
+      "Community",
+      "tagging"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Attributes shape best-path** toward/away."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "MPLS transit",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "OSPF core"
+     ],
+     [
+      "2",
+      "LDP"
+     ],
+     [
+      "3",
+      "label switching"
+     ],
+     [
+      "4",
+      "MP-BGP"
+     ],
+     [
+      "5",
+      "L3VPN"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**LDP + MP-BGP** deliver VPN transit."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Other ISP features",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Filtering",
+      "prefix-list"
+     ],
+     [
+      "Route reflectors",
+      "scale iBGP"
+     ],
+     [
+      "Confederation",
+      "ASN groups"
+     ],
+     [
+      "QoS",
+      "class transit"
+     ],
+     [
+      "Traffic eng",
+      "tunnels"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**RR + filters** scale the core."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "eBGP",
+      "show ip bgp summary"
+     ],
+     [
+      "MPLS",
+      "show mpls ldp bindings"
+     ],
+     [
+      "VRF",
+      "show ip vrf"
+     ],
+     [
+      "Labels",
+      "show mpls forwarding"
+     ],
+     [
+      "Prefixes",
+      "show ip bgp"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "BGP + LDP",
+      "d": "healthy ISP transit."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "router bgp 65001\n neighbor 10.0.0.2 remote-as 65002\n neighbor 10.0.0.1 remote-as 65000 next-hop-self\nmpls label protocol ldp\nrouter ospf 1\n mpls ldp autoconfig\nshow ip bgp summary\nshow mpls ldp bindings"
+   }
+  ],
+  "traps": [
+   "**eBGP = different AS; iBGP = same AS, next-hop-self.**",
+   "MPLS needs **LDP + MP-BGP** for VPNs.",
+   "**Route reflectors** scale iBGP.",
+   "Attributes direct **best-path**.",
+   "AS-path prepend/MED/community = **traffic control**."
+  ],
+  "table": {
+   "cols": [
+    "Element",
+    "Role"
+   ],
+   "rows": [
+    [
+     "IGP",
+     "OSPF"
+    ],
+    [
+     "iBGP",
+     "internal"
+    ],
+    [
+     "eBGP",
+     "external"
+    ],
+    [
+     "MPLS",
+     "label transit"
+    ],
+    [
+     "RR",
+     "scale"
+    ],
+    [
+     "Attrs",
+     "path"
+    ],
+    [
+     "Filter",
+     "prefix-list"
+    ],
+    [
+     "Verify",
+     "bgp/ldp"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. Branch Office",
+    "d": "The Branch Office lab models a small site connecting to HQ over WAN + VPN (commonly DMVPN or IPsec)."
+   },
+   {
+    "t": "08. Data Center",
+    "d": "The Data Center lab uses NX-OS switches with vPC, VXLAN, OTV, and fabric interconnect to build the s"
+   }
+  ],
+  "glossary": [
+   "eBGP"
+  ]
+ },
+ {
+  "num": "08",
+  "id": "t08",
+  "group": "design",
+  "title": "Data Center",
+  "blurb": "The Data Center lab uses NX-OS switches with vPC, VXLAN, OTV, and fabric interconnect to build the s",
+  "overview": "The **Data Center lab** uses **NX-OS** switches with **vPC, [[VXLAN]], OTV, and fabric interconnect** to build the **[[Spine-Leaf|spine-leaf]]** spine. It extends ENCOR into **overlay networks** and modern DC data plane concepts.",
+  "keyIdea": "**NX-OS %%feature%% commands** must be enabled first.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "DC design",
+    "cols": [
+     "Tier",
+     "Device"
+    ],
+    "rows": [
+     [
+      "Spine",
+      "core NX-OS"
+     ],
+     [
+      "Leaf",
+      "ToR switches"
+     ],
+     [
+      "vPC",
+      "dual-homed access"
+     ],
+     [
+      "Fabric",
+      "VXLAN overlay"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Spine-leaf + vPC",
+      "d": "resilient DC fabric."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "NX-OS basics",
+    "cols": [
+     "Command",
+     "Use"
+    ],
+    "rows": [
+     [
+      "%%feature <name>%%",
+      "enable"
+     ],
+     [
+      "%%vlan%%",
+      "L2"
+     ],
+     [
+      "%%interface port-channel%%",
+      "bundle"
+     ],
+     [
+      "%%run%% vs %%copy run start%%",
+      "save"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NX-OS = feature-driven CLI.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "vPC",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "feature vpc"
+     ],
+     [
+      "2",
+      "vpc domain"
+     ],
+     [
+      "3",
+      "peer link"
+     ],
+     [
+      "4",
+      "vpc member"
+     ],
+     [
+      "5",
+      "keepalive"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**vPC = active-active port channel across two switches.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VXLAN overlay",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "NVE interface"
+     ],
+     [
+      "2",
+      "VNIs"
+     ],
+     [
+      "3",
+      "multicast/EVPN"
+     ],
+     [
+      "4",
+      "VRF"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VXLAN = L2 over L3 fabric.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "OTV / redundancy",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "OTV",
+      "inter-DC overlay"
+     ],
+     [
+      "FHRP",
+      "anycast GW"
+     ],
+     [
+      "HSRP",
+      "legacy"
+     ],
+     [
+      "Fabric ext",
+      "scale"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**OTV** connects remote DCs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "vPC",
+      "show vpc"
+     ],
+     [
+      "NVE",
+      "show nve peers"
+     ],
+     [
+      "Port channel",
+      "show port-channel"
+     ],
+     [
+      "VRF",
+      "show ip vrf"
+     ],
+     [
+      "MAC",
+      "show mac address-table"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "vPC + NVE + VRF",
+      "d": "fabric status."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "feature vpc\nvpc domain 10\n peer-keepalive destination 10.0.0.2\ninterface port-channel 1\n vpc 1\nfeature vn-segment-vlan-based\ninterface nve1\n member vni 10010\n show vpc\n show nve peers"
+   }
+  ],
+  "traps": [
+   "**NX-OS %%feature%% commands** must be enabled first.",
+   "vPC = **active-active bundle** (not standby).",
+   "**VXLAN = L2 over L3** via NVE/VNI.",
+   "OTV connects **remote DCs**.",
+   "Save with **%%copy run start%%** on NX-OS."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "DC"
+   ],
+   "rows": [
+    [
+     "Spine",
+     "core"
+    ],
+    [
+     "Leaf",
+     "ToR"
+    ],
+    [
+     "vPC",
+     "active-active"
+    ],
+    [
+     "VXLAN",
+     "overlay"
+    ],
+    [
+     "NVE",
+     "tunnel"
+    ],
+    [
+     "VNI",
+     "ID"
+    ],
+    [
+     "OTV",
+     "remote"
+    ],
+    [
+     "Save",
+     "copy run start"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. ISP",
+    "d": "The ISP lab models a service provider core with eBGP between providers and customers, BGP attributes"
+   },
+   {
+    "t": "09. Multi-Area OSPF",
+    "d": "The Multi-Area OSPF lab builds area 0 + non-backbone areas, ABRs, LSA types, and summarization."
+   }
+  ],
+  "glossary": [
+   "VXLAN",
+   "Spine-Leaf"
+  ]
+ },
+ {
+  "num": "09",
+  "id": "t09",
+  "group": "protocol",
+  "title": "Multi-Area OSPF",
+  "blurb": "The Multi-Area OSPF lab builds area 0 + non-backbone areas, ABRs, LSA types, and summarization.",
+  "overview": "The **[[OSPF|Multi-Area OSPF]] lab** builds **area 0 + non-backbone areas**, **[[ABR]]s**, **[[LSA]] types**, and **summarization**. It practices the core OSPF concepts in a routed topology. Verify adjacencies, LSDB, and inter-area routes.",
+  "keyIdea": "**All areas attach to area 0** (via ABR).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Topology",
+    "cols": [
+     "Device",
+     "Role",
+     "Area"
+    ],
+    "rows": [
+     [
+      "Core",
+      "backbone",
+      "0"
+     ],
+     [
+      "ABR",
+      "connects",
+      "0 + X"
+     ],
+     [
+      "Internal",
+      "non-backbone",
+      "X"
+     ],
+     [
+      "ASBR",
+      "external",
+      "any"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Area 0 backbone + attached areas.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Configuration",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "router ospf"
+     ],
+     [
+      "2",
+      "network statements"
+     ],
+     [
+      "3",
+      "area assignment"
+     ],
+     [
+      "4",
+      "router-id"
+     ],
+     [
+      "5",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%network <net> <mask> area <id>%% maps **subnets to areas**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "LSA types",
+    "cols": [
+     "Type",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "1",
+      "router"
+     ],
+     [
+      "2",
+      "network"
+     ],
+     [
+      "3",
+      "summary (ABR)"
+     ],
+     [
+      "4",
+      "ASBR summary"
+     ],
+     [
+      "5",
+      "external"
+     ],
+     [
+      "7",
+      "NSSA external"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Type 3 = inter-area summaries**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "ABR roles",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Connects",
+      "area ↔ backbone"
+     ],
+     [
+      "Summarizes",
+      "LSA3"
+     ],
+     [
+      "Filters",
+      "area ranges"
+     ],
+     [
+      "Routes",
+      "to all areas"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "ABR = **area interconnector**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Areas types",
+    "cols": [
+     "Area",
+     "Behavior"
+    ],
+    "rows": [
+     [
+      "Standard",
+      "all LSAs"
+     ],
+     [
+      "Stub",
+      "no type 5"
+     ],
+     [
+      "Totally stub",
+      "no 3/5"
+     ],
+     [
+      "NSSA",
+      "7 for external"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Stub/NSSA limit external flooding.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Neighbors",
+      "show ip ospf neighbor"
+     ],
+     [
+      "LSDB",
+      "show ip ospf database"
+     ],
+     [
+      "Inter-area",
+      "show ip route ospf"
+     ],
+     [
+      "ABR",
+      "show ip ospf"
+     ],
+     [
+      "Summaries",
+      "show ip ospf summary"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Neighbor + database + inter-area routes.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "router ospf 1\n router-id 1.1.1.1\n network 10.0.0.0 0.0.0.255 area 0\n network 10.1.0.0 0.0.0.255 area 1\n area 1 range 10.1.0.0 255.255.0.0\nshow ip ospf neighbor\nshow ip ospf database summary"
+   }
+  ],
+  "traps": [
+   "**All areas attach to area 0** (via ABR).",
+   "**Type 3 = inter-area summary**.",
+   "**Stub = no type 5; NSSA uses type 7**.",
+   "Area range = **summarization**.",
+   "Verify **neighbor → database → route**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "OSPF"
+   ],
+   "rows": [
+    [
+     "Backbone",
+     "area 0"
+    ],
+    [
+     "ABR",
+     "connects"
+    ],
+    [
+     "LSA3",
+     "summary"
+    ],
+    [
+     "Stub",
+     "no type5"
+    ],
+    [
+     "NSSA",
+     "type7"
+    ],
+    [
+     "Range",
+     "summarize"
+    ],
+    [
+     "Verify",
+     "neighbor"
+    ],
+    [
+     "External",
+     "type5"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. Data Center",
+    "d": "The Data Center lab uses NX-OS switches with vPC, VXLAN, OTV, and fabric interconnect to build the s"
+   },
+   {
+    "t": "10. Advanced BGP",
+    "d": "The Advanced BGP lab practices iBGP full mesh vs route reflectors, attribute manipulation, filtering"
+   }
+  ],
+  "glossary": [
+   "OSPF",
+   "ABR",
+   "LSA"
+  ]
+ },
+ {
+  "num": "10",
+  "id": "t10",
+  "group": "protocol",
+  "title": "Advanced BGP",
+  "blurb": "The Advanced BGP lab practices iBGP full mesh vs route reflectors, attribute manipulation, filtering",
+  "overview": "The **[[BGP|Advanced BGP]] lab** practices **[[iBGP]] full mesh vs route reflectors**, **attribute manipulation**, **filtering**, and **advanced features** (communities, confederation). Core to proving BGP hands-on skill. Verify sessions, paths, and best-path outcomes.",
+  "keyIdea": "**RR = client/non-client** rules.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "iBGP scale options",
+    "cols": [
+     "Method",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Full mesh",
+      "small"
+     ],
+     [
+      "Route reflector",
+      "scale"
+     ],
+     [
+      "Confederation",
+      "ASN groups"
+     ],
+     [
+      "Multihop",
+      "non-adjacent"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Route reflectors** break iBGP full-mesh limits."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Route reflector",
+    "cols": [
+     "Role",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "RR",
+      "client reflector"
+     ],
+     [
+      "Client",
+      "peers to RR"
+     ],
+     [
+      "Non-client",
+      "full mesh"
+     ],
+     [
+      "Rules",
+      "standard"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Clients talk to the RR only.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Attributes practice",
+    "cols": [
+     "Attribute",
+     "Action"
+    ],
+    "rows": [
+     [
+      "Weight",
+      "highest local"
+     ],
+     [
+      "Local-pref",
+      "outbound"
+     ],
+     [
+      "AS-path",
+      "length/prepend"
+     ],
+     [
+      "MED",
+      "inter-AS"
+     ],
+     [
+      "Origin",
+      "IGP/EGP/inc"
+     ],
+     [
+      "Community",
+      "tagging"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Change attributes → change best path.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Filtering",
+    "cols": [
+     "Method",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Prefix-list",
+      "distribute-list"
+     ],
+     [
+      "AS-path",
+      "ip as-path access-list"
+     ],
+     [
+      "Community",
+      "route-map"
+     ],
+     [
+      "Filter-list",
+      "neighbor filter"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Control what you accept/advertise.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Advanced features",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Communities",
+      "tagging"
+     ],
+     [
+      "Confederation",
+      "scale"
+     ],
+     [
+      "Peer groups",
+      "config reuse"
+     ],
+     [
+      "Next-hop-self",
+      "iBGP"
+     ],
+     [
+      "Allowas-in",
+      "similar AS"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Peer groups** simplify many-neighbor configs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Sessions",
+      "show ip bgp summary"
+     ],
+     [
+      "Best path",
+      "show ip bgp"
+     ],
+     [
+      "Reflector",
+      "show ip bgp rr"
+     ],
+     [
+      "Routes",
+      "show ip route bgp"
+     ],
+     [
+      "Attr",
+      "show ip bgp <net>"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Summary → path → installed** chain."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "router bgp 65000\n neighbor 10.0.0.1 remote-as 65000\n neighbor 10.0.0.1 route-reflector-client\n neighbor 10.0.0.1 next-hop-self\n neighbor 10.0.0.1 send-community\n neighbor 10.0.0.2 prefix-list FILTER in\n network 10.10.0.0 mask 255.255.255.0\nshow ip bgp summary\nshow ip bgp neighbors 10.0.0.1 received-routes"
+   }
+  ],
+  "traps": [
+   "**RR = client/non-client** rules.",
+   "**next-hop-self** required for iBGP.",
+   "Filters: **prefix-list, as-path, community, route-map**.",
+   "**send-community** must be set.",
+   "Best path: **weight → local-pref → AS path → MED**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "BGP"
+   ],
+   "rows": [
+    [
+     "Scale",
+     "RR"
+    ],
+    [
+     "Full mesh",
+     "iBGP"
+    ],
+    [
+     "Filter",
+     "prefix-list"
+    ],
+    [
+     "Attr",
+     "route-map"
+    ],
+    [
+     "Next-hop",
+     "self"
+    ],
+    [
+     "Community",
+     "tag"
+    ],
+    [
+     "Verify",
+     "summary"
+    ],
+    [
+     "Order",
+     "bestpath"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. Multi-Area OSPF",
+    "d": "The Multi-Area OSPF lab builds area 0 + non-backbone areas, ABRs, LSA types, and summarization."
+   },
+   {
+    "t": "11. MPLS",
+    "d": "The MPLS lab configures LDP on the core, verifies label bindings and FIB entries, and builds an L3VP"
+   }
+  ],
+  "glossary": [
+   "BGP",
+   "iBGP"
+  ]
+ },
+ {
+  "num": "11",
+  "id": "t11",
+  "group": "protocol",
+  "title": "MPLS",
+  "blurb": "The MPLS lab configures LDP on the core, verifies label bindings and FIB entries, and builds an L3VP",
+  "overview": "The **[[MPLS]] lab** configures **LDP** on the core, verifies **label bindings and [[FIB]] entries**, and builds an **L3VPN with MP-BGP**. It ties IGP + LDP + BGP together on the provider edge.",
+  "keyIdea": "**LDP = transport labels; MP-BGP = VPN labels.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Core setup",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "OSPF core"
+     ],
+     [
+      "2",
+      "mpls ip"
+     ],
+     [
+      "3",
+      "ldp"
+     ],
+     [
+      "4",
+      "verify"
+     ],
+     [
+      "5",
+      "VPN"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**IGP + LDP** across the core."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "LDP",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Sessions",
+      "show mpls ldp neighbor"
+     ],
+     [
+      "Bindings",
+      "show mpls ldp bindings"
+     ],
+     [
+      "Labels",
+      "show mpls forwarding"
+     ],
+     [
+      "Interface",
+      "mpls ip"
+     ],
+     [
+      "TTL",
+      "propagate"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Label bindings per FEC.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "L3VPN build",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "vrf definition"
+     ],
+     [
+      "2",
+      "vrf interfaces"
+     ],
+     [
+      "3",
+      "MP-BGP vpnv4"
+     ],
+     [
+      "4",
+      "rd/rt"
+     ],
+     [
+      "5",
+      "routes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VRF + MP-BGP = L3VPN.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "MP-BGP",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%address-family vpnv4%%",
+      "VPN routes"
+     ],
+     [
+      "%%neighbor X activate%%",
+      "family"
+     ],
+     [
+      "%%neighbor send-community%%",
+      "RTs"
+     ],
+     [
+      "%%route-target%%",
+      "inter-VRF"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**MP-BGP carries labels + VPNv4 routes.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Pushing labels",
+    "cols": [
+     "Detail",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "First label",
+      "transport (LDP)"
+     ],
+     [
+      "Second label",
+      "VPN (BGP)"
+     ],
+     [
+      "PHP",
+      "pop"
+     ],
+     [
+      "Implicit null",
+      "pop only"
+     ],
+     [
+      "Explicit null",
+      "keep label"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Two labels** in MPLS VPNs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "LDP",
+      "show mpls ldp neighbor"
+     ],
+     [
+      "FIB",
+      "show mpls forwarding"
+     ],
+     [
+      "VRF",
+      "show ip vrf"
+     ],
+     [
+      "VPNv4",
+      "show bgp vpnv4"
+     ],
+     [
+      "Routes",
+      "show ip vrf detail"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**LDP + FIB + VPNv4** prove the service."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "mpls label protocol ldp\ninterface Gi0/1\n mpls ip\nrouter ospf 1\n mpls ldp autoconfig\nvrf definition CUST\n rd 65000:100\n route-target both 65000:100\nrouter bgp 65000\n address-family vpnv4\n  neighbor 10.0.0.2 activate\n  neighbor 10.0.0.2 send-community both\nshow mpls ldp bindings\nshow mpls forwarding\nshow bgp vpnv4 unicast"
+   }
+  ],
+  "traps": [
+   "**LDP = transport labels; MP-BGP = VPN labels.**",
+   "%%mpls ip%% on **interfaces** enables LDP.",
+   "MP-BGP needs **send-community**.",
+   "**Two labels** in L3VPN.",
+   "Verify **LDP → FIB → VPNv4**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "MPLS"
+   ],
+   "rows": [
+    [
+     "IGP",
+     "OSPF"
+    ],
+    [
+     "LDP",
+     "labels"
+    ],
+    [
+     "VPN",
+     "MP-BGP"
+    ],
+    [
+     "VRF",
+     "per customer"
+    ],
+    [
+     "Label 1",
+     "transport"
+    ],
+    [
+     "Label 2",
+     "VPN"
+    ],
+    [
+     "RT",
+     "import/export"
+    ],
+    [
+     "Verify",
+     "fib/vpnv4"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. Advanced BGP",
+    "d": "The Advanced BGP lab practices iBGP full mesh vs route reflectors, attribute manipulation, filtering"
+   },
+   {
+    "t": "12. DMVPN",
+    "d": "The DMVPN lab builds a hub-and-spoke overlay with NHRP for dynamic spoke discovery, mGRE tunnels, an"
+   }
+  ],
+  "glossary": [
+   "MPLS",
+   "FIB"
+  ]
+ },
+ {
+  "num": "12",
+  "id": "t12",
+  "group": "protocol",
+  "title": "DMVPN",
+  "blurb": "The DMVPN lab builds a hub-and-spoke overlay with NHRP for dynamic spoke discovery, mGRE tunnels, an",
+  "overview": "The **[[DMVPN]] lab** builds a **hub-and-spoke overlay** with **NHRP for dynamic spoke discovery**, **mGRE tunnels**, and **IPsec protection** — enabling **spoke-to-spoke direct tunnels**. Verify with NHRP, tunnel, and crypto states.",
+  "keyIdea": "DMVPN = **mGRE + NHRP + IPsec**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Components",
+    "cols": [
+     "Item",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Hub",
+      "NHRP server"
+     ],
+     [
+      "Spoke",
+      "NHRP client"
+     ],
+     [
+      "mGRE",
+      "dynamic tunnels"
+     ],
+     [
+      "NHRP",
+      "address resolution"
+     ],
+     [
+      "IPsec",
+      "encrypt overlay"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "mGRE + NHRP",
+      "d": "dynamic topology."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "NHRP",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Registration",
+      "show ip nhrp"
+     ],
+     [
+      "Server",
+      "nhs command"
+     ],
+     [
+      "Map",
+      "nhrp map"
+     ],
+     [
+      "Network",
+      "nhrp network-id"
+     ],
+     [
+      "Cache",
+      "entries"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Spokes register to the hub via NHRP.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Spoke-to-spoke",
+    "cols": [
+     "Flow",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "First",
+      "via hub"
+     ],
+     [
+      "Learn",
+      "NHRP resolution"
+     ],
+     [
+      "Tunnel",
+      "direct"
+     ],
+     [
+      "Hold",
+      "resolution timer"
+     ],
+     [
+      "Idle",
+      "drops"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Spokes build direct tunnels after NHRP resolution.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Phase variants",
+    "cols": [
+     "Phase",
+     "Spoke-Spoke"
+    ],
+    "rows": [
+     [
+      "1",
+      "hub-only"
+     ],
+     [
+      "2",
+      "via hub"
+     ],
+     [
+      "3",
+      "direct"
+     ],
+     [
+      "4",
+      "hierarchical"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Phase 3 = direct spoke tunnels.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "IPsec integration",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "isakmp profile"
+     ],
+     [
+      "2",
+      "transform"
+     ],
+     [
+      "3",
+      "ipsec profile"
+     ],
+     [
+      "4",
+      "tunnel protection"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**tunnel protection** wraps the mGRE."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "NHRP",
+      "show ip nhrp"
+     ],
+     [
+      "Tunnel",
+      "show interface tunnel"
+     ],
+     [
+      "Crypto",
+      "show crypto isakmp sa"
+     ],
+     [
+      "Routes",
+      "show ip route"
+     ],
+     [
+      "SA",
+      "show crypto ipsec sa"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NHRP → tunnel → crypto** chain."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "interface Tunnel0\n ip nhrp network-id 1\n ip nhrp nhs 1.1.1.1\n tunnel mode gre multipoint\n tunnel source Gi0/1\n tunnel destination 1.1.1.1\n tunnel protection ipsec profile DMVPN\nshow ip nhrp short\nshow crypto session"
+   }
+  ],
+  "traps": [
+   "DMVPN = **mGRE + NHRP + IPsec**.",
+   "**NHRP** = the resolution+registration engine.",
+   "Phase 3 = **direct spoke-to-spoke**.",
+   "%%tunnel destination%% = **hub only** (mGRE).",
+   "Check **NHRP → tunnel → crypto**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "DMVPN"
+   ],
+   "rows": [
+    [
+     "Tunnel",
+     "mGRE"
+    ],
+    [
+     "Resolve",
+     "NHRP"
+    ],
+    [
+     "Server",
+     "hub/NHS"
+    ],
+    [
+     "Client",
+     "spoke"
+    ],
+    [
+     "Encrypt",
+     "IPsec"
+    ],
+    [
+     "Direct",
+     "phase 3"
+    ],
+    [
+     "Network",
+     "nhrp id"
+    ],
+    [
+     "Verify",
+     "nhrp/crypto"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. MPLS",
+    "d": "The MPLS lab configures LDP on the core, verifies label bindings and FIB entries, and builds an L3VP"
+   },
+   {
+    "t": "13. IPsec",
+    "d": "The IPsec lab configures site-to-site VPN with IKEv1/v2, transform sets, crypto maps, and interestin"
+   }
+  ],
+  "glossary": [
+   "DMVPN"
+  ]
+ },
+ {
+  "num": "13",
+  "id": "t13",
+  "group": "protocol",
+  "title": "IPsec",
+  "blurb": "The IPsec lab configures site-to-site VPN with IKEv1/v2, transform sets, crypto maps, and interestin",
+  "overview": "The **[[IPsec]] lab** configures **[[Site-to-Site VPN|site-to-site VPN]]** with **[[IKEv2|IKEv1/v2]]**, **transform sets**, **crypto maps**, and **interesting traffic**. It's the base VPN skill for DMVPN, FlexVPN, and remote access. Verify the two SAs and protected traffic.",
+  "keyIdea": "**ACL = interesting traffic** (must mirror).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Config sequence",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "isakmp policy"
+     ],
+     [
+      "2",
+      "transform set"
+     ],
+     [
+      "3",
+      "ACL interesting"
+     ],
+     [
+      "4",
+      "crypto map"
+     ],
+     [
+      "5",
+      "apply"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**IKE → transform → ACL → map → interface.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "IKEv1 vs v2",
+    "cols": [
+     "Aspect",
+     "IKEv1",
+     "IKEv2"
+    ],
+    "rows": [
+     [
+      "Phases",
+      "2",
+      "1 exchange"
+     ],
+     [
+      "Aggressive",
+      "optional",
+      "no"
+     ],
+     [
+      "Auth",
+      "PSK/cert",
+      "PSK/cert"
+     ],
+     [
+      "Safer",
+      "v2",
+      "v2"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**IKEv2 = simpler + more secure.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Transform set",
+    "cols": [
+     "Item",
+     "Example"
+    ],
+    "rows": [
+     [
+      "Encryption",
+      "esp-aes"
+     ],
+     [
+      "Integrity",
+      "esp-sha256"
+     ],
+     [
+      "DH group",
+      "14/19"
+     ],
+     [
+      "Mode",
+      "tunnel"
+     ],
+     [
+      "PFS",
+      "optional"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**esp-aes + esp-sha = common pair.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Interesting traffic",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "ACL",
+      "match tunnel"
+     ],
+     [
+      "Traffic",
+      "permitted = protected"
+     ],
+     [
+      "Denied",
+      "clear text"
+     ],
+     [
+      "Mirror",
+      "both sides"
+     ],
+     [
+      "Symmetric",
+      "must match"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**ACL defines what the tunnel carries.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Crypto map",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "crypto map name seq"
+     ],
+     [
+      "2",
+      "match address ACL"
+     ],
+     [
+      "3",
+      "set peer"
+     ],
+     [
+      "4",
+      "set transform"
+     ],
+     [
+      "5",
+      "apply to interface"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**map binds peer + ACL + transform.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Phase1",
+      "show crypto isakmp sa"
+     ],
+     [
+      "Phase2",
+      "show crypto ipsec sa"
+     ],
+     [
+      "Map",
+      "show crypto map"
+     ],
+     [
+      "Traffic",
+      "ipsec sa traffic"
+     ],
+     [
+      "Errors",
+      "show crypto errors"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Both SAs + packet count = working VPN.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "crypto isakmp policy 10\n encr aes\n authentication pre-share\n group 14\ncrypto ipsec transform-set TS esp-aes esp-sha256\naccess-list 100 permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255\ncrypto map CM 1 ipsec-isakmp\n set peer 1.1.1.1\n transform-set TS\n match address 100\ninterface Gi0/1\n crypto map CM\nshow crypto isakmp sa\nshow crypto ipsec sa"
+   }
+  ],
+  "traps": [
+   "**ACL = interesting traffic** (must mirror).",
+   "**IKEv1 = 2 phases; IKEv2 = 1 exchange.**",
+   "**esp-aes + esp-sha** = classic transform.",
+   "Crypto map = **peer + ACL + transform**.",
+   "Verify **both SAs + byte counters**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "IPsec"
+   ],
+   "rows": [
+    [
+     "Phase1",
+     "ISAKMP"
+    ],
+    [
+     "Phase2",
+     "IPSec"
+    ],
+    [
+     "Transform",
+     "esp-aes/sha"
+    ],
+    [
+     "ACL",
+     "interesting"
+    ],
+    [
+     "Map",
+     "bind"
+    ],
+    [
+     "IKEv2",
+     "simpler"
+    ],
+    [
+     "Verify",
+     "isakmp/ipsec"
+    ],
+    [
+     "Counters",
+     "traffic"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "12. DMVPN",
+    "d": "The DMVPN lab builds a hub-and-spoke overlay with NHRP for dynamic spoke discovery, mGRE tunnels, an"
+   },
+   {
+    "t": "14. SD-WAN",
+    "d": "The SD-WAN lab brings up the control plane (vManage/vSmart/vBond), onboards vEdge/cEdge, and verifie"
+   }
+  ],
+  "glossary": [
+   "IPsec",
+   "Site-to-Site VPN",
+   "IKEv2"
+  ]
+ },
+ {
+  "num": "14",
+  "id": "t14",
+  "group": "protocol",
+  "title": "SD-WAN",
+  "blurb": "The SD-WAN lab brings up the control plane (vManage/vSmart/vBond), onboards vEdge/cEdge, and verifie",
+  "overview": "The **[[SD-WAN]] lab** brings up the **control plane** ([[vManage]]/[[vSmart]]/[[vBond]]), **onboards vEdge/cEdge**, and verifies **transport tunnels, BFD, and policy**. It modernizes WAN design with centralized control.",
+  "keyIdea": "**Control plane (vBond/vSmart/vManage) up first.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Components",
+    "cols": [
+     "Node",
+     "Role"
+    ],
+    "rows": [
+     [
+      "vManage",
+      "dashboard"
+     ],
+     [
+      "vSmart",
+      "policy"
+     ],
+     [
+      "vBond",
+      "orchestrator"
+     ],
+     [
+      "vEdge/cEdge",
+      "router"
+     ],
+     [
+      "vAnalytics",
+      "reporting"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Control plane first; data plane follows.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Onboarding flow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "DNA/port"
+     ],
+     [
+      "2",
+      "vBond discovery"
+     ],
+     [
+      "3",
+      "upload to vManage"
+     ],
+     [
+      "4",
+      "vSmart contact"
+     ],
+     [
+      "5",
+      "tunnels form"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "vEdge **finds vBond, then registers** to vManage."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification commands",
+    "cols": [
+     "Check",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Control",
+      "show sdwan control connections"
+     ],
+     [
+      "Local",
+      "show sdwan control local-properties"
+     ],
+     [
+      "Tunnel",
+      "show sdwan tunnel"
+     ],
+     [
+      "Interface",
+      "show sdwan interface"
+     ],
+     [
+      "Policy",
+      "show sdwan policy"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Control + tunnel** tables = core health."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "BFD / SLA",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "BFD",
+      "liveness"
+     ],
+     [
+      "SLA",
+      "class metrics"
+     ],
+     [
+      "Path",
+      "preference"
+     ],
+     [
+      "Fallback",
+      "backup"
+     ],
+     [
+      "vSmart",
+      "apples policy"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**BFD/SLA drive path selection + failover.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Policy",
+    "cols": [
+     "Type",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "Centralized",
+      "vSmart"
+     ],
+     [
+      "Data",
+      "match/action"
+     ],
+     [
+      "Control",
+      "routing"
+     ],
+     [
+      "Localized",
+      "device"
+     ],
+     [
+      "App-aware",
+      "priority"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Policy = **vSmart-applied match/action rules**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Lab flow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "deploy controllers"
+     ],
+     [
+      "2",
+      "onboard edge"
+     ],
+     [
+      "3",
+      "check control"
+     ],
+     [
+      "4",
+      "tunnels"
+     ],
+     [
+      "5",
+      "policy"
+     ],
+     [
+      "6",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Deploy → onboard → control → tunnels → policy.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(edge CLI)\nsystem\n ip address 10.0.0.1\nsystem\n organization-name CORP\nvpn 0\n route 0.0.0.0/0 vpn 0 ipsec\nvpn 512\n ip route 0.0.0.0/0 vpn 0\nvSmart policy / vManage GUI\nshow sdwan control connections\nshow sdwan tunnel"
+   }
+  ],
+  "traps": [
+   "**Control plane (vBond/vSmart/vManage) up first.**",
+   "%%show sdwan control connections%% = **first check**.",
+   "**BFD/SLA** drives failover.",
+   "Policy = **vSmart centralized**.",
+   "DTLS **12346** control plane."
+  ],
+  "table": {
+   "cols": [
+    "Node",
+    "Role"
+   ],
+   "rows": [
+    [
+     "vManage",
+     "UI"
+    ],
+    [
+     "vSmart",
+     "policy"
+    ],
+    [
+     "vBond",
+     "orchestrator"
+    ],
+    [
+     "vEdge",
+     "router"
+    ],
+    [
+     "Tunnels",
+     "data plane"
+    ],
+    [
+     "BFD",
+     "liveness"
+    ],
+    [
+     "SLA",
+     "path"
+    ],
+    [
+     "Check",
+     "control connections"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "13. IPsec",
+    "d": "The IPsec lab configures site-to-site VPN with IKEv1/v2, transform sets, crypto maps, and interestin"
+   },
+   {
+    "t": "15. Automation Labs",
+    "d": "Automation Labs practice Python + Ansible + APIs (NETCONF/RESTCONF) against labs."
+   }
+  ],
+  "glossary": [
+   "SD-WAN",
+   "vManage",
+   "vSmart",
+   "vBond"
+  ]
+ },
+ {
+  "num": "15",
+  "id": "t15",
+  "group": "capstone",
+  "title": "Automation Labs",
+  "blurb": "Automation Labs practice Python + Ansible + APIs (NETCONF/RESTCONF) against labs.",
+  "overview": "**Automation Labs** practice **[[Python]] + [[Ansible]] + APIs ([[NETCONF]]/[[RESTCONF]])** against labs. They build the ENCOR automation objectives: config via API, data models (YANG), and repeatable playbooks. Core skills: interaction, parsing, and idempotent changes.",
+  "keyIdea": "Enable **%%restconf%% + %%netconf-yang%%** first.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Interaction methods",
+    "cols": [
+     "Method",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "RESTCONF",
+      "HTTP + YANG"
+     ],
+     [
+      "NETCONF",
+      "XML RPC"
+     ],
+     [
+      "SSH",
+      "CLI"
+     ],
+     [
+      "gNMI",
+      "streaming"
+     ],
+     [
+      "Python",
+      "libs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**API-first** for modern automation."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Python basics",
+    "cols": [
+     "Use",
+     "Example"
+    ],
+    "rows": [
+     [
+      "Requests",
+      "RESTCONF"
+     ],
+     [
+      "ncclient",
+      "NETCONF"
+     ],
+     [
+      "json",
+      "parse"
+     ],
+     [
+      "os",
+      "env"
+     ],
+     [
+      "argparse",
+      "CLI"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**requests + ncclient** cover most labs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "RESTCONF lab",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "enable RESTCONF"
+     ],
+     [
+      "2",
+      "GET auth"
+     ],
+     [
+      "3",
+      "parse JSON"
+     ],
+     [
+      "4",
+      "PATCH config"
+     ],
+     [
+      "5",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "RESTCONF = **HTTP method per YANG path**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "NETCONF lab",
+    "cols": [
+     "Step",
+     "Command"
+    ],
+    "rows": [
+     [
+      "1",
+      "enable NETCONF"
+     ],
+     [
+      "2",
+      "ncclient connect"
+     ],
+     [
+      "3",
+      "get config"
+     ],
+     [
+      "4",
+      "edit-config"
+     ],
+     [
+      "5",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "NETCONF = **XML RPC** over SSH."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Ansible playbooks",
+    "cols": [
+     "Element",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "ios_command",
+      "CLI"
+     ],
+     [
+      "ios_config",
+      "config"
+     ],
+     [
+      "netconf_config",
+      "NETCONF"
+     ],
+     [
+      "Inventory",
+      "hosts"
+     ],
+     [
+      "Modules",
+      "repeatable"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "ios_config/netconf_config",
+      "d": "idempotent config."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Lab workflow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "enable APIs"
+     ],
+     [
+      "2",
+      "script connect"
+     ],
+     [
+      "3",
+      "change config"
+     ],
+     [
+      "4",
+      "verify"
+     ],
+     [
+      "5",
+      "rollback"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Enable → connect → change → verify → rollback.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(IOs-XE config)\nrestconf\nnetconf-yang\n(Python)\nimport requests\nr = requests.get('/restconf/data/Cisco-IOS-XE-native:native/interface', auth=(u,p), headers={'accept':'application/yang-data+json'})\n(Python ncclient / Ansible playbook)"
+   }
+  ],
+  "traps": [
+   "Enable **%%restconf%% + %%netconf-yang%%** first.",
+   "RESTCONF = **HTTP + JSON**; NETCONF = **XML**.",
+   "Accept header = **%%application/yang-data+json%%**.",
+   "Ansible = **idempotent modules**.",
+   "Verify + **rollback** after every change."
+  ],
+  "table": {
+   "cols": [
+    "Method",
+    "Format"
+   ],
+   "rows": [
+    [
+     "RESTCONF",
+     "JSON"
+    ],
+    [
+     "NETCONF",
+     "XML"
+    ],
+    [
+     "Python",
+     "requests/ncclient"
+    ],
+    [
+     "Ansible",
+     "modules"
+    ],
+    [
+     "YANG",
+     "data model"
+    ],
+    [
+     "Enable",
+     "feature"
+    ],
+    [
+     "Verify",
+     "post-change"
+    ],
+    [
+     "Rollback",
+     "revert"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "14. SD-WAN",
+    "d": "The SD-WAN lab brings up the control plane (vManage/vSmart/vBond), onboards vEdge/cEdge, and verifie"
+   },
+   {
+    "t": "16. End-to-End Enterprise Scenarios",
+    "d": "End-to-End Enterprise Scenarios stitch campus + WAN + data center + security + automation into one i"
+   }
+  ],
+  "glossary": [
+   "Python",
+   "Ansible",
+   "NETCONF",
+   "RESTCONF"
+  ]
+ },
+ {
+  "num": "16",
+  "id": "t16",
+  "group": "capstone",
+  "title": "End-to-End Enterprise Scenarios",
+  "blurb": "End-to-End Enterprise Scenarios stitch campus + WAN + data center + security + automation into one i",
+  "overview": "**End-to-End Enterprise Scenarios** stitch **[[Enterprise Campus|campus]] + [[WAN]] + data center + security + automation** into one integrated lab. They practice full **data-path troubleshooting** and the ENCOR **big-picture** design. Follow a **top-down verify chain**.",
+  "keyIdea": "**Isobar one packet end-to-end** across domains.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Scenario design",
+    "cols": [
+     "Domain",
+     "Element"
+    ],
+    "rows": [
+     [
+      "Campus",
+      "L2/L3 + FHRP"
+     ],
+     [
+      "WAN",
+      "DMVPN/SD-WAN"
+     ],
+     [
+      "DC",
+      "VXLAN/vPC"
+     ],
+     [
+      "Security",
+      "ACL/firewall"
+     ],
+     [
+      "Automation",
+      "APIs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "One topology = **all domains connected**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Data path",
+    "cols": [
+     "Step",
+     "Check"
+    ],
+    "rows": [
+     [
+      "1",
+      "host → access"
+     ],
+     [
+      "2",
+      "access → distribution"
+     ],
+     [
+      "3",
+      "routing to WAN"
+     ],
+     [
+      "4",
+      "tunnel/crypto"
+     ],
+     [
+      "5",
+      "remote site"
+     ],
+     [
+      "6",
+      "server"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Follow **one packet end-to-end**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Configuration order",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "L2 base"
+     ],
+     [
+      "2",
+      "L3 base"
+     ],
+     [
+      "3",
+      "redundancy"
+     ],
+     [
+      "4",
+      "WAN/tunnels"
+     ],
+     [
+      "5",
+      "security"
+     ],
+     [
+      "6",
+      "automation"
+     ],
+     [
+      "7",
+      "verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Build in **layers, then cross-check** domains."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Scenario types",
+    "cols": [
+     "Item",
+     "Feature"
+    ],
+    "rows": [
+     [
+      "Dual-homed",
+      "failover"
+     ],
+     [
+      "App pef",
+      "QoS"
+     ],
+     [
+      "Cloud",
+      "extension"
+     ],
+     [
+      "Security",
+      "segmentation"
+     ],
+     [
+      "Monitoring",
+      "telemetry"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Test **failure + performance + security**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification chain",
+    "cols": [
+     "Tool",
+     "Use"
+    ],
+    "rows": [
+     [
+      "ping/tr",
+      "reachability"
+     ],
+     [
+      "show commands",
+      "state"
+     ],
+     [
+      "IP SLA",
+      "SLA"
+     ],
+     [
+      "NetFlow",
+      "flows"
+     ],
+     [
+      "syslog",
+      "events"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Probe → state → flow → logs** across sites."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Playbook",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "baseline"
+     ],
+     [
+      "2",
+      "failure test"
+     ],
+     [
+      "3",
+      "root cause"
+     ],
+     [
+      "4",
+      "fix"
+     ],
+     [
+      "5",
+      "re-verify"
+     ],
+     [
+      "6",
+      "automate"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Simulate **failures and re-verify after fixes**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(branch + campus + DC combos)\nshow ip route\nshow sdwan control connections\nshow ip nhrp brief\nshow crypto session\nping/traceroute across sites\nshow switching paths"
+   }
+  ],
+  "traps": [
+   "**Isobar one packet end-to-end** across domains.",
+   "Verify **each layer before cross-session**.",
+   "Failure **simulation + rollback** practice.",
+   "QoS/security/automation = **integrated**, not silos.",
+   "Build a **repeatable playbook**."
+  ],
+  "table": {
+   "cols": [
+    "Domain",
+    "Check"
+   ],
+   "rows": [
+    [
+     "Campus",
+     "FHRP/VLAN"
+    ],
+    [
+     "WAN",
+     "tunnel"
+    ],
+    [
+     "DC",
+     "VXLAN"
+    ],
+    [
+     "Security",
+     "ACL"
+    ],
+    [
+     "Monitoring",
+     "telemetry"
+    ],
+    [
+     "Path",
+     "one packet"
+    ],
+    [
+     "Test",
+     "failover"
+    ],
+    [
+     "Goal",
+     "full stack"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "15. Automation Labs",
+    "d": "Automation Labs practice Python + Ansible + APIs (NETCONF/RESTCONF) against labs."
+   },
+   {
+    "t": "01. Cisco Packet Tracer",
+    "d": "Cisco Packet Tracer (PT) is a free, low-fidelity network simulator — great for topology practice and"
+   }
+  ],
+  "glossary": [
+   "Enterprise Campus",
+   "WAN"
+  ]
+ }
+];
+
+        const GROUPS = [{"key": "platform", "label": "Lab Platforms", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "design", "label": "Design-Based Labs", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}, {"key": "protocol", "label": "Protocol Labs", "chip": "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300", "dot": "bg-amber-600", "bullet": "text-amber-600 dark:text-amber-400"}, {"key": "capstone", "label": "Automation & Capstone", "chip": "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300", "dot": "bg-violet-600", "bullet": "text-violet-600 dark:text-violet-400"}];
+
+        const groups = GROUPS;
+
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+ {
+  "term": "Network Simulator",
+  "def": "A network simulator/emulator is software that runs networks on your own hardware for practice. Packet Tracer = free but low fidelity (great for ENCOR basics); CML (ex-VIRL) = official Cisco, runs real Cisco IOS/IOS XE images via web UI + API; GNS3 = free GUI running real images + Docker..."
+ },
+ {
+  "term": "Cisco IOS",
+  "def": "Cisco IOS (Internetwork Operating System) is the classic network OS: a monolithic control-plane image with the CLI as its face. The CLI runs two families — exec (show, ping, config mode entry) and configure (global/interface/line submodes) — plus built-in help, tab completion, and ?. The..."
+ },
+ {
+  "term": "Docker",
+  "def": "Docker is the most common container runtime/platform: you write a Dockerfile (build recipe) → build an image (immutable snapshot) → share it via a registry (Docker Hub) → run containers anywhere Docker exists. It popularized containers with an easy CLI and tooling (Compose for multi-container..."
+ },
+ {
+  "term": "Enterprise Campus",
+  "def": "The enterprise campus is the full in-building / between-buildings network serving users — plus its server, WAN, and security modules. It is not a single topology: it is the complete site architecture assembled from many patterns."
+ },
+ {
+  "term": "WAN",
+  "def": "A Wide Area Network (WAN) connects geographically distant sites — cities, states, countries — usually by leasing capacity from a service provider. WAN links are the expensive, slower, provider-managed edges between a company's LANs."
+ },
+ {
+  "term": "VPN",
+  "def": "A VPN (Virtual Private Network) delivers private networking over a shared/public transport by tunneling + (usually) encrypting traffic — giving remote sites or users \"as if on the private LAN\" connectivity across the Internet. The family: site-to-site (Site-to-Site VPN), remote access (Remote..."
+ },
+ {
+  "term": "eBGP",
+  "def": "eBGP (External BGP) peer sessions run between routers in different autonomous systems. It is how one AS advertises its prefixes to the Internet and how the Internet exchanges routes at large."
+ },
+ {
+  "term": "VXLAN",
+  "def": "VXLAN is an overlay data-plane technology: it wraps L2 frames in a UDP (4789) packet (outer: IP/UDP/VXLAN header) that rides any L3 underlay. Its VNI (VXLAN Network Identifier, 24-bit) replaces the 12-bit VLAN → 16 million segments instead of 4094, and L2 domains stretch across routed cores /..."
+ },
+ {
+  "term": "Spine-Leaf",
+  "def": "Spine-leaf is the modern data-center/enterprise switching architecture: every leaf (top-of-rack) switch connects to every spine switch, and no leaf connects to another leaf. It is a non-blocking, predictable partial mesh — the practical successor to the classical campus three-tier for east–west..."
+ },
+ {
+  "term": "OSPF",
+  "def": "OSPF (Open Shortest Path First) is an open-standard link-state IGP: routers flood information about their directly attached links (via LSAs), build a complete Link State Database, then run the SPF (Dijkstra) algorithm to compute shortest paths to every destination."
+ },
+ {
+  "term": "ABR",
+  "def": "An Area Border Router (ABR) has interfaces in more than one OSPF Area (at least one must be Area 0). It keeps a separate Link State Database/SPF tree per area and advertises inter-area summary (Type-3) LSAs between areas."
+ },
+ {
+  "term": "LSA",
+  "def": "A Link State Advertisement (LSA) is the OSPF unit of topology information — each LSA describes a router, a network segment, a summary route, or an external route and is flooded to build the Link State Database."
+ },
+ {
+  "term": "BGP",
+  "def": "BGP (Border Gateway Protocol) is the path-vector routing protocol of the Internet: it exchanges prefixes with path attributes between autonomous systems (ASes) and lets operators implement rich policy on who advertises what to whom."
+ },
+ {
+  "term": "iBGP",
+  "def": "iBGP (Internal BGP) peer sessions run between routers in the same AS. Its job is to carry the BGP routes from border to border without redistributing them into the IGP."
+ },
+ {
+  "term": "MPLS",
+  "def": "MPLS (Multiprotocol Label Switching) forwards packets based on short fixed labels instead of IP longest-prefix lookups: at ingress, a packet gets a label deciding its path; core routers swap/forward by label (fast, deterministic); at egress the label pops and normal IP resumes. The payoff:..."
+ },
+ {
+  "term": "FIB",
+  "def": "The FIB (Forwarding Information Base) is the data-plane, forwarding-optimized copy of the routing table — built by CEF from the RIB with next hops already resolved into L2 rewrites. Packets are switched against the FIB, not against the RIB: longest-prefix FIB lookup → adjacency rewrite →..."
+ },
+ {
+  "term": "DMVPN",
+  "def": "DMVPN (Dynamic Multipoint VPN) is Cisco's hub-and-spoke site-to-site VPN that scales to hundreds/thousands of branches and builds dynamic spoke-to-spoke tunnels on demand: branches that need to talk directly bypass the hub (no hub bottleneck, no full-mesh config). Built on mGRE + NHRP + IPsec —..."
+ },
+ {
+  "term": "IPsec",
+  "def": "IPsec is the protocol suite that provides confidentiality, integrity, authentication, and anti-replay for IP traffic — the encryption engine behind site-to-site and remote-access VPNs. Two sides: IKE (IKEv1/v2 key management, UDP 500/4500) and ESP (encapsulating security payload, IP protocol 50..."
+ },
+ {
+  "term": "Site-to-Site VPN",
+  "def": "A site-to-site (S2S) VPN connects entire networks through routers/firewalls at each site — LAN-to-LAN over the Internet, invisible to the hosts inside. Implementation is device-to-device: IPsec (with GRE/VTI for routing), DMVPN for hub-and-spoke scale, or FlexVPN for flexible policies."
+ },
+ {
+  "term": "IKEv2",
+  "def": "IKEv2 (Internet Key Exchange version 2) is the modern IPsec key-management protocol — it establishes and maintains the security associations (SAs) and session keys used to encrypt traffic. It replaced IKEv1's two-phase complexity with a leaner exchange, built-in mobility, NAT traversal, and EAP..."
+ },
+ {
+  "term": "SD-WAN",
+  "def": "Cisco SD-WAN (Viptela) is the WAN architecture that abstracts the underlay: it builds a secure overlay (IPsec/DTLS tunnels) across ANY transport (MPLS, broadband, LTE) and steers traffic with business policy instead of provider fate. The fabric splits planes: vManage (management), vSmart..."
+ },
+ {
+  "term": "vManage",
+  "def": "vManage is the management plane of Cisco SD-WAN: the central NMS dashboard + API where you onboard devices, push templates (device/feature/VPN), monitor health, and run analytics across the whole fabric. It talks to every controller and edge, aggregates their state (alerts, tunnels, apps) — and..."
+ },
+ {
+  "term": "vSmart",
+  "def": "vSmart is the control plane of Cisco SD-WAN: it runs OMP (Overlay Management Protocol) with every WAN Edge router, maintains the overlay topology, and distributes centralized policy (routes, TLOCs, SLA classes) across the fabric. Edges exchange routes indirectly through vSmart — the controller..."
+ },
+ {
+  "term": "vBond",
+  "def": "vBond is the orchestration plane of Cisco SD-WAN — the \"front door\" of the fabric: it authenticates and onboards every device (edges, vSmarts, vManages) that joins, hands them certificates, and tells each device which controller to talk to. Once onboarding completes, vBond is not in the..."
+ },
+ {
+  "term": "Python",
+  "def": "Python is the de-facto network automation language: scripts talk to devices via REST APIs / RESTCONF, CLI libraries (Netmiko, NAPALM), or NETCONF, and parse JSON/YAML. The exam wants basic fluency — reading output, parsing data, requests + json — not art."
+ },
+ {
+  "term": "Ansible",
+  "def": "Ansible is a push-based, agentless automation tool: YAML playbooks declare what to do, and modules execute it against inventory hosts over SSH (no agent to install!). For networking: ios_command / ios_config modules, or RESTCONF via uri. A control node runs them; devices just need SSH."
+ },
+ {
+  "term": "NETCONF",
+  "def": "NETCONF (RFC 6241) is the IETF standard for managing network devices over SSH using XML RPCs: <get-config>, <edit-config>, <commit> against YANG-modeled datastores. It supports transactions/rollback (candidate/running datastores), filtering, and event notifications — the \"deep\" programmatic..."
+ },
+ {
+  "term": "RESTCONF",
+  "def": "RESTCONF (RFC 8040) is the IETF standard that exposes YANG models over HTTP(S) using REST verbs — the REST-friendly sibling of NETCONF. It uses GET/POST/PUT/PATCH/DELETE against YANG-defined resources with JSON or XML payloads, on HTTP(S) port 443 (often with basic/token auth). Simpler than..."
+ }
+];
+
+        const quiz = [
+ {
+  "q": "In Cisco Packet Tracer, which value matches \"Fidelity\"?",
+  "options": [
+   "low",
+   "high",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Cisco Packet Tracer quick review pairs \"Fidelity\" with \"low\"."
+ },
+ {
+  "q": "In Cisco Packet Tracer, which value matches \"CLI\"?",
+  "options": [
+   "low",
+   "full",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The Cisco Packet Tracer quick review pairs \"CLI\" with \"full\"."
+ },
+ {
+  "q": "In Cisco Packet Tracer, which value matches \"Upgrade\"?",
+  "options": [
+   "low",
+   "free",
+   "CML/GNS3",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The Cisco Packet Tracer quick review pairs \"Upgrade\" with \"CML/GNS3\"."
+ },
+ {
+  "q": "In Cisco Modeling Labs (CML), which value matches \"Images\"?",
+  "options": [
+   "real",
+   "low",
+   "free",
+   "real IOS"
+  ],
+  "answer": 3,
+  "why": "The Cisco Modeling Labs (CML) quick review pairs \"Images\" with \"real IOS\"."
+ },
+ {
+  "q": "In Cisco Modeling Labs (CML), which value matches \"Nodes\"?",
+  "options": [
+   "L2/L3/fw",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Cisco Modeling Labs (CML) quick review pairs \"Nodes\" with \"L2/L3/fw\"."
+ },
+ {
+  "q": "In Cisco Modeling Labs (CML), which value matches \"Best\"?",
+  "options": [
+   "basics",
+   "CCNP/CCIE",
+   "CCNP labs",
+   "big labs"
+  ],
+  "answer": 1,
+  "why": "The Cisco Modeling Labs (CML) quick review pairs \"Best\" with \"CCNP/CCIE\"."
+ },
+ {
+  "q": "In GNS3, which value matches \"Cost\"?",
+  "options": [
+   "licensed",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The GNS3 quick review pairs \"Cost\" with \"free\"."
+ },
+ {
+  "q": "In GNS3, which value matches \"Docker\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "yes"
+  ],
+  "answer": 3,
+  "why": "The GNS3 quick review pairs \"Docker\" with \"yes\"."
+ },
+ {
+  "q": "In GNS3, which value matches \"Best\"?",
+  "options": [
+   "CCNP labs",
+   "basics",
+   "CCNP/CCIE",
+   "big labs"
+  ],
+  "answer": 0,
+  "why": "The GNS3 quick review pairs \"Best\" with \"CCNP labs\"."
+ },
+ {
+  "q": "In EVE-NG, which value matches \"UI\"?",
+  "options": [
+   "low",
+   "web",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The EVE-NG quick review pairs \"UI\" with \"web\"."
+ },
+ {
+  "q": "In EVE-NG, which value matches \"API\"?",
+  "options": [
+   "REST/NETCONF",
+   "low",
+   "yes",
+   "free"
+  ],
+  "answer": 2,
+  "why": "The EVE-NG quick review pairs \"API\" with \"yes\"."
+ },
+ {
+  "q": "In EVE-NG, which value matches \"Best\"?",
+  "options": [
+   "basics",
+   "CCNP/CCIE",
+   "CCNP labs",
+   "big labs"
+  ],
+  "answer": 3,
+  "why": "The EVE-NG quick review pairs \"Best\" with \"big labs\"."
+ },
+ {
+  "q": "In Enterprise Campus, which value matches \"Access\"?",
+  "options": [
+   "hosts",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Enterprise Campus quick review pairs \"Access\" with \"hosts\"."
+ },
+ {
+  "q": "In Enterprise Campus, which value matches \"L3\"?",
+  "options": [
+   "low",
+   "SVI/routing",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The Enterprise Campus quick review pairs \"L3\" with \"SVI/routing\"."
+ },
+ {
+  "q": "In Enterprise Campus, which value matches \"Verify\"?",
+  "options": [
+   "sim mode",
+   "nhrp/crypto",
+   "chain",
+   "bgp/ldp"
+  ],
+  "answer": 2,
+  "why": "The Enterprise Campus quick review pairs \"Verify\" with \"chain\"."
+ },
+ {
+  "q": "In Branch Office, which value matches \"WAN\"?",
+  "options": [
+   "tunnel",
+   "low",
+   "free",
+   "dual links"
+  ],
+  "answer": 3,
+  "why": "The Branch Office quick review pairs \"WAN\" with \"dual links\"."
+ },
+ {
+  "q": "In Branch Office, which value matches \"LAN\"?",
+  "options": [
+   "local",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Branch Office quick review pairs \"LAN\" with \"local\"."
+ },
+ {
+  "q": "In Branch Office, which value matches \"Verify\"?",
+  "options": [
+   "sim mode",
+   "nhrp/crypto",
+   "chain",
+   "bgp/ldp"
+  ],
+  "answer": 1,
+  "why": "The Branch Office quick review pairs \"Verify\" with \"nhrp/crypto\"."
+ },
+ {
+  "q": "In ISP, which value matches \"IGP\"?",
+  "options": [
+   "low",
+   "free",
+   "OSPF",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The ISP quick review pairs \"IGP\" with \"OSPF\"."
+ },
+ {
+  "q": "In ISP, which value matches \"RR\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "scale"
+  ],
+  "answer": 3,
+  "why": "The ISP quick review pairs \"RR\" with \"scale\"."
+ },
+ {
+  "q": "In ISP, which value matches \"Verify\"?",
+  "options": [
+   "bgp/ldp",
+   "sim mode",
+   "chain",
+   "nhrp/crypto"
+  ],
+  "answer": 0,
+  "why": "The ISP quick review pairs \"Verify\" with \"bgp/ldp\"."
+ },
+ {
+  "q": "In Data Center, which value matches \"Spine\"?",
+  "options": [
+   "low",
+   "core",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The Data Center quick review pairs \"Spine\" with \"core\"."
+ },
+ {
+  "q": "In Data Center, which value matches \"NVE\"?",
+  "options": [
+   "low",
+   "free",
+   "tunnel",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The Data Center quick review pairs \"NVE\" with \"tunnel\"."
+ },
+ {
+  "q": "In Data Center, which value matches \"Save\"?",
+  "options": [
+   ".pkt",
+   "low",
+   "free",
+   "copy run start"
+  ],
+  "answer": 3,
+  "why": "The Data Center quick review pairs \"Save\" with \"copy run start\"."
+ },
+ {
+  "q": "In Multi-Area OSPF, which value matches \"Backbone\"?",
+  "options": [
+   "area 0",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Multi-Area OSPF quick review pairs \"Backbone\" with \"area 0\"."
+ },
+ {
+  "q": "In Multi-Area OSPF, which value matches \"NSSA\"?",
+  "options": [
+   "low",
+   "type7",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The Multi-Area OSPF quick review pairs \"NSSA\" with \"type7\"."
+ },
+ {
+  "q": "In Multi-Area OSPF, which value matches \"External\"?",
+  "options": [
+   "low",
+   "free",
+   "type5",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The Multi-Area OSPF quick review pairs \"External\" with \"type5\"."
+ },
+ {
+  "q": "In Advanced BGP, which value matches \"Scale\"?",
+  "options": [
+   "large",
+   "low",
+   "free",
+   "RR"
+  ],
+  "answer": 3,
+  "why": "The Advanced BGP quick review pairs \"Scale\" with \"RR\"."
+ },
+ {
+  "q": "In Advanced BGP, which value matches \"Next-hop\"?",
+  "options": [
+   "self",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Advanced BGP quick review pairs \"Next-hop\" with \"self\"."
+ },
+ {
+  "q": "In Advanced BGP, which value matches \"Order\"?",
+  "options": [
+   "low",
+   "bestpath",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The Advanced BGP quick review pairs \"Order\" with \"bestpath\"."
+ },
+ {
+  "q": "In MPLS, which value matches \"IGP\"?",
+  "options": [
+   "low",
+   "free",
+   "OSPF",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The MPLS quick review pairs \"IGP\" with \"OSPF\"."
+ },
+ {
+  "q": "In MPLS, which value matches \"Label 1\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "transport"
+  ],
+  "answer": 3,
+  "why": "The MPLS quick review pairs \"Label 1\" with \"transport\"."
+ },
+ {
+  "q": "In MPLS, which value matches \"Verify\"?",
+  "options": [
+   "fib/vpnv4",
+   "sim mode",
+   "chain",
+   "nhrp/crypto"
+  ],
+  "answer": 0,
+  "why": "The MPLS quick review pairs \"Verify\" with \"fib/vpnv4\"."
+ },
+ {
+  "q": "In DMVPN, which value matches \"Tunnel\"?",
+  "options": [
+   "DMVPN",
+   "mGRE",
+   "low",
+   "free"
+  ],
+  "answer": 1,
+  "why": "The DMVPN quick review pairs \"Tunnel\" with \"mGRE\"."
+ },
+ {
+  "q": "In DMVPN, which value matches \"Encrypt\"?",
+  "options": [
+   "low",
+   "free",
+   "IPsec",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The DMVPN quick review pairs \"Encrypt\" with \"IPsec\"."
+ },
+ {
+  "q": "In DMVPN, which value matches \"Verify\"?",
+  "options": [
+   "sim mode",
+   "chain",
+   "bgp/ldp",
+   "nhrp/crypto"
+  ],
+  "answer": 3,
+  "why": "The DMVPN quick review pairs \"Verify\" with \"nhrp/crypto\"."
+ },
+ {
+  "q": "In IPsec, which value matches \"Phase1\"?",
+  "options": [
+   "ISAKMP",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The IPsec quick review pairs \"Phase1\" with \"ISAKMP\"."
+ },
+ {
+  "q": "In IPsec, which value matches \"Map\"?",
+  "options": [
+   "low",
+   "bind",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The IPsec quick review pairs \"Map\" with \"bind\"."
+ },
+ {
+  "q": "In IPsec, which value matches \"Counters\"?",
+  "options": [
+   "low",
+   "free",
+   "traffic",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The IPsec quick review pairs \"Counters\" with \"traffic\"."
+ },
+ {
+  "q": "In SD-WAN, which value matches \"vManage\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "UI"
+  ],
+  "answer": 3,
+  "why": "The SD-WAN quick review pairs \"vManage\" with \"UI\"."
+ },
+ {
+  "q": "In SD-WAN, which value matches \"Tunnels\"?",
+  "options": [
+   "data plane",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The SD-WAN quick review pairs \"Tunnels\" with \"data plane\"."
+ },
+ {
+  "q": "In SD-WAN, which value matches \"Check\"?",
+  "options": [
+   "low",
+   "control connections",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The SD-WAN quick review pairs \"Check\" with \"control connections\"."
+ },
+ {
+  "q": "In Automation Labs, which value matches \"RESTCONF\"?",
+  "options": [
+   "low",
+   "free",
+   "JSON",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The Automation Labs quick review pairs \"RESTCONF\" with \"JSON\"."
+ },
+ {
+  "q": "In Automation Labs, which value matches \"YANG\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "data model"
+  ],
+  "answer": 3,
+  "why": "The Automation Labs quick review pairs \"YANG\" with \"data model\"."
+ },
+ {
+  "q": "In Automation Labs, which value matches \"Rollback\"?",
+  "options": [
+   "revert",
+   "low",
+   "free",
+   "basics"
+  ],
+  "answer": 0,
+  "why": "The Automation Labs quick review pairs \"Rollback\" with \"revert\"."
+ },
+ {
+  "q": "In End-to-End Enterprise Scenarios, which value matches \"Campus\"?",
+  "options": [
+   "low",
+   "FHRP/VLAN",
+   "free",
+   "basics"
+  ],
+  "answer": 1,
+  "why": "The End-to-End Enterprise Scenarios quick review pairs \"Campus\" with \"FHRP/VLAN\"."
+ },
+ {
+  "q": "In End-to-End Enterprise Scenarios, which value matches \"Monitoring\"?",
+  "options": [
+   "low",
+   "free",
+   "telemetry",
+   "basics"
+  ],
+  "answer": 2,
+  "why": "The End-to-End Enterprise Scenarios quick review pairs \"Monitoring\" with \"telemetry\"."
+ },
+ {
+  "q": "In End-to-End Enterprise Scenarios, which value matches \"Goal\"?",
+  "options": [
+   "low",
+   "free",
+   "basics",
+   "full stack"
+  ],
+  "answer": 3,
+  "why": "The End-to-End Enterprise Scenarios quick review pairs \"Goal\" with \"full stack\"."
+ }
+];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'lab.theme', done: 'lab.done', best: 'lab.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
