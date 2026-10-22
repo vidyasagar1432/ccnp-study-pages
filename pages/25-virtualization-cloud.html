@@ -1,0 +1,5236 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtualization & Cloud — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Virtualization & Cloud for CCNP Enterprise (ENCOR 350-401): Server virtualization with VMs, hypervisors and containers, network virtualization with VRF, then the three cloud deployment models and the SaaS, PaaS and IaaS service models.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Virtualization & Cloud — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">CLD</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Virtualization & Cloud</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 25</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 25</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">13 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 25 &mdash; Virtualization & Cloud</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Server virtualization with VMs, hypervisors and containers, network virtualization with VRF, then the three cloud deployment models and the SaaS, PaaS and IaaS service models.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Virtualization & Cloud &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 25 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = "**[[Virtual Machine|Virtual machines]]** run a full guest OS on a **[[Hypervisor]]**, while **[[Container|containers]]** share the kernel and are orchestrated by **[[Docker]]** and **[[Kubernetes]]**. **[[VRF]]** brings that isolation to routing, and **[[Public Cloud]]**, **[[Private Cloud]]** and **[[Hybrid Cloud]]** are consumed as **[[SaaS]]**, **[[PaaS]]** or **[[IaaS]]**.";
+
+        const topics = [
+ {
+  "num": "01",
+  "id": "t01",
+  "group": "server",
+  "title": "Virtual Machines",
+  "blurb": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v",
+  "overview": "A **[[Virtual Machine|VM]]** is a software-emulated computer: a full guest OS running on **virtualized hardware** (vCPU, vRAM, vNIC, vDisk) atop a **[[Hypervisor|hypervisor]]**. VMs give **isolation** and **workload mobility** at the cost of resource overhead. For network engineers, VMs are the unit of **virtual appliances** (routers, WLCs, firewalls) and the cloud.",
+  "keyIdea": "VM = **full guest OS on virtual hardware**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What makes a VM",
+    "cols": [
+     "Component",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "vCPU",
+      "virtual cores"
+     ],
+     [
+      "vRAM",
+      "allocated memory"
+     ],
+     [
+      "vNIC",
+      "virtual NIC"
+     ],
+     [
+      "vDisk",
+      "virtual disk"
+     ],
+     [
+      "Guest OS",
+      "full OS"
+     ],
+     [
+      "Hypervisor",
+      "host layer"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "A VM = **guest OS + virtualized hardware**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Full isolation",
+    "cols": [
+     "Aspect",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Kernel",
+      "separate per VM"
+     ],
+     [
+      "Apps",
+      "isolated"
+     ],
+     [
+      "Crash",
+      "contained"
+     ],
+     [
+      "Security",
+      "strong boundary"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VMs are **hard-isolated**",
+      "d": "a crash stays in the VM."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VM vs container",
+    "cols": [
+     "Aspect",
+     "VM",
+     "Container"
+    ],
+    "rows": [
+     [
+      "Kernel",
+      "own",
+      "shared"
+     ],
+     [
+      "Overhead",
+      "high",
+      "low"
+     ],
+     [
+      "Isolation",
+      "strong",
+      "lighter"
+     ],
+     [
+      "Boot",
+      "minutes",
+      "seconds"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VM = full kernel; container = shared kernel** (note 03)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Virtual appliances",
+    "cols": [
+     "Appliance",
+     "Role"
+    ],
+    "rows": [
+     [
+      "CSR1000v",
+      "router"
+     ],
+     [
+      "vWLC",
+      "wireless controller"
+     ],
+     [
+      "ASAv",
+      "firewall"
+     ],
+     [
+      "vManage/vSmart",
+      "SD-WAN"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Network functions ship as **VMs**",
+      "d": "same config as hardware."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Migration",
+    "cols": [
+     "Feature",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Snapshot",
+      "save state"
+     ],
+     [
+      "Clone",
+      "copy"
+     ],
+     [
+      "Migrate",
+      "move live"
+     ],
+     [
+      "Export",
+      "OVF/OVA"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Snapshots + migration",
+      "d": "agility and DR."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Trade-offs",
+    "cols": [
+     "Cost",
+     "Reason"
+    ],
+    "rows": [
+     [
+      "Resource",
+      "kernel duplication"
+     ],
+     [
+      "Boot",
+      "slower"
+     ],
+     [
+      "Density",
+      "lower"
+     ],
+     [
+      "Isolation",
+      "bonus"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "VMs trade **density for isolation** vs containers."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show vm-host ...\nshow platform software ...\n(no direct CLI — managed via hypervisor/cloud)"
+   }
+  ],
+  "traps": [
+   "VM = **full guest OS on virtual hardware**.",
+   "**VM = own kernel; container = shared**.",
+   "Virtual appliances = **CSR1000v, vWLC, ASAv**.",
+   "Strong isolation, higher overhead.",
+   "Snapshots/migration give agility."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "VM"
+   ],
+   "rows": [
+    [
+     "Guest",
+     "full OS"
+    ],
+    [
+     "Kernel",
+     "own"
+    ],
+    [
+     "Isolation",
+     "strong"
+    ],
+    [
+     "Overhead",
+     "high"
+    ],
+    [
+     "vNIC",
+     "virtual"
+    ],
+    [
+     "Appliance",
+     "CSR1000v"
+    ],
+    [
+     "Snapshot",
+     "state"
+    ],
+    [
+     "vs container",
+     "kernel"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Hypervisors",
+    "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
+   },
+   {
+    "t": "03. Containers",
+    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+   }
+  ],
+  "glossary": [
+   "Virtual Machine",
+   "Hypervisor"
+  ]
+ },
+ {
+  "num": "02",
+  "id": "t02",
+  "group": "server",
+  "title": "Hypervisors",
+  "blurb": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware.",
+  "overview": "A **[[Hypervisor|hypervisor]]** (VMM) is the software layer that creates and runs [[Virtual Machine|VMs]] by abstracting hardware. **Type 1 (bare-metal)** runs directly on hardware — the datacenter standard (ESXi, Hyper-V, KVM). **Type 2 (hosted)** runs on an OS (VirtualBox, Workstation). The exam contrasts the types and their roles.",
+  "keyIdea": "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Hypervisor types",
+    "cols": [
+     "Type",
+     "Runs on",
+     "Examples"
+    ],
+    "rows": [
+     [
+      "Type 1",
+      "bare metal",
+      "ESXi, Hyper-V, KVM"
+     ],
+     [
+      "Type 2",
+      "host OS",
+      "VirtualBox, Workstation"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Type 1 = no host OS; Type 2 = on top of an OS.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Type 1 (bare-metal)",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Performance",
+      "near-native"
+     ],
+     [
+      "Overhead",
+      "minimal"
+     ],
+     [
+      "Use",
+      "datacenter/cloud"
+     ],
+     [
+      "Security",
+      "smaller surface"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "ESXi/KVM power the clouds",
+      "d": "direct hardware access."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Type 2 (hosted)",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Performance",
+      "lower"
+     ],
+     [
+      "Use",
+      "desktop/lab"
+     ],
+     [
+      "Install",
+      "simple"
+     ],
+     [
+      "Dependence",
+      "host OS"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Type 2 is fine for **testing and labs**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "What the hypervisor does",
+    "cols": [
+     "Task",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "CPU",
+      "schedule vCPUs"
+     ],
+     [
+      "Memory",
+      "allocate"
+     ],
+     [
+      "I/O",
+      "emulate/passthrough"
+     ],
+     [
+      "Isolation",
+      "between VMs"
+     ],
+     [
+      "Management",
+      "lifecycle"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The hypervisor **schedules and isolates** workloads."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Virtualization models",
+    "cols": [
+     "Model",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Full",
+      "emulate hardware"
+     ],
+     [
+      "Paravirtual",
+      "guest-aware"
+     ],
+     [
+      "Hardware-assisted",
+      "CPU VT-x"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Modern hypervisors use **hardware-assisted** virtualization."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Management",
+    "cols": [
+     "Tool",
+     "Role"
+    ],
+    "rows": [
+     [
+      "vCenter",
+      "ESXi cluster mgmt"
+     ],
+     [
+      "Libvirt",
+      "KVM"
+     ],
+     [
+      "SCVMM",
+      "Hyper-V"
+     ],
+     [
+      "Cloud",
+      "orchestrated"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Hypervisors are managed by **central tools/cloud APIs**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "esxcli vm process list\nesxcli network vswitch standard list\nshow vm-host ...\n(platform-specific CLIs)"
+   }
+  ],
+  "traps": [
+   "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
+   "Type 1 = **datacenter/cloud** standard.",
+   "Hypervisor = CPU/memory/I/O **scheduling + isolation**.",
+   "Hardware-assisted virtualization is the norm.",
+   "Virtual switches connect **vNICs**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Hypervisor"
+   ],
+   "rows": [
+    [
+     "Type 1",
+     "bare-metal"
+    ],
+    [
+     "Type 2",
+     "hosted"
+    ],
+    [
+     "ESXi",
+     "Type 1"
+    ],
+    [
+     "VirtualBox",
+     "Type 2"
+    ],
+    [
+     "Job",
+     "schedule+isolate"
+    ],
+    [
+     "Model",
+     "HW-assisted"
+    ],
+    [
+     "Mgmt",
+     "vCenter"
+    ],
+    [
+     "Use",
+     "cloud/DC"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. Virtual Machines",
+    "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
+   },
+   {
+    "t": "03. Containers",
+    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+   }
+  ],
+  "glossary": [
+   "Hypervisor",
+   "Virtual Machine"
+  ]
+ },
+ {
+  "num": "03",
+  "id": "t03",
+  "group": "server",
+  "title": "Containers",
+  "blurb": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest",
+  "overview": "**[[Container|Containers]]** package an app + its dependencies to run **isolated but kernel-shared** workloads — no guest OS, no hypervisor overhead. They boot in **seconds** and scale easily. For network, containers run **containerized NFs** (e.g., IOS-XE on Catalyst 8000v in models), and the exam stresses VM vs container differences.",
+  "keyIdea": "Container = **shared kernel + namespaces/cgroups**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "How containers work",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Kernel",
+      "shared host"
+     ],
+     [
+      "Namespaces",
+      "isolation"
+     ],
+     [
+      "cgroups",
+      "resources"
+     ],
+     [
+      "Image",
+      "app + deps"
+     ],
+     [
+      "Runtime",
+      "Docker/containerd"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Namespaces isolate; cgroups limit",
+      "d": "no separate kernel."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Container vs VM",
+    "cols": [
+     "Aspect",
+     "Container",
+     "VM"
+    ],
+    "rows": [
+     [
+      "Kernel",
+      "shared",
+      "own"
+     ],
+     [
+      "Boot",
+      "seconds",
+      "minutes"
+     ],
+     [
+      "Overhead",
+      "low",
+      "high"
+     ],
+     [
+      "Isolation",
+      "lighter",
+      "strong"
+     ],
+     [
+      "Density",
+      "high",
+      "low"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Containers trade isolation for density and speed.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Components",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Image",
+      "read-only template"
+     ],
+     [
+      "Container",
+      "running image"
+     ],
+     [
+      "Registry",
+      "image store"
+     ],
+     [
+      "Orchestrator",
+      "K8s (note 05)"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Image → container; registry shares images."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Portable",
+      "same everywhere"
+     ],
+     [
+      "Light",
+      "fast startup"
+     ],
+     [
+      "Scale",
+      "replicate easily"
+     ],
+     [
+      "CI/CD",
+      "natural fit"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Containers = **portable, repeatable packaging**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking model",
+    "cols": [
+     "Model",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Bridge",
+      "NAT default"
+     ],
+     [
+      "Host",
+      "share host net"
+     ],
+     [
+      "Overlay",
+      "multi-node mesh"
+     ],
+     [
+      "CNI",
+      "plugin standard"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**CNI** (container network interface) connects containers to networks."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Container NFs",
+    "cols": [
+     "NF",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "IOS-XE",
+      "containerized router"
+     ],
+     [
+      "Cloud services",
+      "microservices"
+     ],
+     [
+      "vAppliance",
+      "many vendors"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Network functions increasingly ship as **containers**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "docker ps\ndocker pull image\ndocker run -d image\nkubectl get pods (note 05)"
+   }
+  ],
+  "traps": [
+   "Container = **shared kernel + namespaces/cgroups**.",
+   "**vs VM: light/fast/low-isolation vs heavy/slow/strong**.",
+   "Image + runtime + registry model.",
+   "**CNI** = container networking standard.",
+   "Containerized **network functions** are modern ION."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Container"
+   ],
+   "rows": [
+    [
+     "Kernel",
+     "shared"
+    ],
+    [
+     "Isolation",
+     "namespaces"
+    ],
+    [
+     "Limits",
+     "cgroups"
+    ],
+    [
+     "Boot",
+     "seconds"
+    ],
+    [
+     "Overhead",
+     "low"
+    ],
+    [
+     "Image",
+     "app+deps"
+    ],
+    [
+     "Network",
+     "CNI"
+    ],
+    [
+     "vs VM",
+     "lighter"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Hypervisors",
+    "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
+   },
+   {
+    "t": "04. Docker",
+    "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
+   }
+  ],
+  "glossary": [
+   "Container"
+  ]
+ },
+ {
+  "num": "04",
+  "id": "t04",
+  "group": "server",
+  "title": "Docker",
+  "blurb": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in",
+  "overview": "**[[Docker]]** is the most common **container runtime/platform**: build images from a **Dockerfile**, share them in a **registry**, and run them anywhere. Core concepts — **image, container, volume, network, compose** — underpin cloud-native networking (CNF, CI/CD). The exam tests the object model and key commands.",
+  "keyIdea": "Docker objects: **image, container, volume, network**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Object model",
+    "cols": [
+     "Object",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Image",
+      "read-only template"
+     ],
+     [
+      "Container",
+      "running image"
+     ],
+     [
+      "Volume",
+      "persistent data"
+     ],
+     [
+      "Network",
+      "connectivity"
+     ],
+     [
+      "Compose",
+      "multi-container"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Image → container**; volumes persist; compose orchestrates locally."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Dockerfile",
+    "code": "FROM ubuntu\nRUN apt-get update\nCOPY app.py /app.py\nEXPOSE 80\nCMD [\"python3\", \"/app.py\"]"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Instruction",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "FROM",
+      "base image"
+     ],
+     [
+      "RUN",
+      "build step"
+     ],
+     [
+      "COPY",
+      "add file"
+     ],
+     [
+      "EXPOSE",
+      "port"
+     ],
+     [
+      "CMD",
+      "runtime command"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "A Dockerfile **builds images declaratively**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%docker build%%",
+      "create image"
+     ],
+     [
+      "%%docker pull/push%%",
+      "registry"
+     ],
+     [
+      "%%docker run%%",
+      "start container"
+     ],
+     [
+      "%%docker ps%%",
+      "list running"
+     ],
+     [
+      "%%docker exec%%",
+      "run inside"
+     ],
+     [
+      "%%docker stop/rm%%",
+      "manage"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "pull → run → exec → stop",
+      "d": "the lifecycle."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking",
+    "cols": [
+     "Mode",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "bridge",
+      "default NAT"
+     ],
+     [
+      "host",
+      "shared net"
+     ],
+     [
+      "none",
+      "isolated"
+     ],
+     [
+      "custom",
+      "user networks"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Containers default to a **bridge/NAT** network."
+     },
+     {
+      "t": "Key point",
+      "d": "%%-p%% publishes host→container ports."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Docker vs VM mindset",
+    "cols": [
+     "Aspect",
+     "Docker"
+    ],
+    "rows": [
+     [
+      "Kernel",
+      "shared"
+     ],
+     [
+      "Process",
+      "per container"
+     ],
+     [
+      "Startup",
+      "milliseconds"
+     ],
+     [
+      "Isolation",
+      "namespaces"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Docker = **process-level virtualization**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Docker in networking",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "CNF",
+      "containerized NFs"
+     ],
+     [
+      "Lab",
+      "test topologies"
+     ],
+     [
+      "CI/CD",
+      "automated"
+     ],
+     [
+      "Orchestration",
+      "K8s (note 05)"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Docker runs **network functions/testbeds**; K8s scales them."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "docker build -t myapp .\ndocker run -d -p 8080:80 myapp\ndocker ps\ndocker logs <id>\ndocker exec -it <id> /bin/bash"
+   }
+  ],
+  "traps": [
+   "Docker objects: **image, container, volume, network**.",
+   "Dockerfile: **FROM/RUN/COPY/EXPOSE/CMD**.",
+   "Default network = **bridge/NAT**.",
+   "%%docker ps/run/exec/build%% — know the verbs.",
+   "Docker = process isolation; **K8s = orchestration**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Docker"
+   ],
+   "rows": [
+    [
+     "Image",
+     "template"
+    ],
+    [
+     "Container",
+     "running"
+    ],
+    [
+     "Volume",
+     "persist"
+    ],
+    [
+     "Network",
+     "bridge"
+    ],
+    [
+     "Build",
+     "docker build"
+    ],
+    [
+     "Run",
+     "docker run"
+    ],
+    [
+     "Exec",
+     "docker exec"
+    ],
+    [
+     "Scale",
+     "K8s"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. Containers",
+    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+   },
+   {
+    "t": "05. Kubernetes Basics",
+    "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
+   }
+  ],
+  "glossary": [
+   "Docker"
+  ]
+ },
+ {
+  "num": "05",
+  "id": "t05",
+  "group": "server",
+  "title": "Kubernetes Basics",
+  "blurb": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads",
+  "overview": "**[[Kubernetes|Kubernetes (K8s)]]** is the **container orchestrator** — it schedules, scales, and heals container workloads across a **cluster**. Core objects: **nodes, pods, deployments, services, namespaces**. For networking, K8s services and **CNI/Ingress** are the key concepts to remember.",
+  "keyIdea": "K8s = **orchestration; Docker = runtime**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Cluster structure",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Control plane",
+      "brain (API server)"
+     ],
+     [
+      "Worker nodes",
+      "run pods"
+     ],
+     [
+      "kubelet",
+      "node agent"
+     ],
+     [
+      "etcd",
+      "state store"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Control plane decides; workers run** the workload."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Core objects",
+    "cols": [
+     "Object",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Node",
+      "a worker machine"
+     ],
+     [
+      "Pod",
+      "smallest unit (1+ containers)"
+     ],
+     [
+      "Deployment",
+      "desired replicas"
+     ],
+     [
+      "Service",
+      "stable network endpoint"
+     ],
+     [
+      "Namespace",
+      "logical partition"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Pods run apps; services expose them; deployments maintain count.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Pod vs Service",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Pod",
+      "ephemeral, own IP"
+     ],
+     [
+      "Service",
+      "stable VIP/clusterIP"
+     ],
+     [
+      "Selector",
+      "labels to match pods"
+     ],
+     [
+      "Result",
+      "apps don't chase IPs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Services decouple clients from pod churn.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking model",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Pod network",
+      "full mesh, CNI"
+     ],
+     [
+      "Service",
+      "clusterIP"
+     ],
+     [
+      "Ingress",
+      "external L7"
+     ],
+     [
+      "NodePort/LB",
+      "external access"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**CNI** provides pod networking; **Ingress** exposes services."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Scaling & self-healing",
+    "cols": [
+     "Behavior",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Desired state",
+      "declarative"
+     ],
+     [
+      "Replicas",
+      "auto scale"
+     ],
+     [
+      "Health",
+      "liveness probes"
+     ],
+     [
+      "Restart",
+      "crashed pods re-created"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "K8s **reconciles** current → desired state continuously."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Key commands",
+    "code": "kubectl get nodes\nkubectl get pods -A\nkubectl get services\nkubectl apply -f deployment.yaml\nkubectl scale deploy app --replicas=5"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "get",
+      "list resources"
+     ],
+     [
+      "apply",
+      "declarative apply"
+     ],
+     [
+      "scale",
+      "change replicas"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "kubectl get nodes/pods/services/namespaces\nkubectl apply -f manifest.yaml\nkubectl describe pod <name>\nkubectl logs <pod>\nkubectl scale deployment --replicas=N"
+   }
+  ],
+  "traps": [
+   "K8s = **orchestration; Docker = runtime**.",
+   "**Pod = unit; Service = stable endpoint; Deployment = replicas**.",
+   "Control plane vs worker nodes.",
+   "Networking: **CNI (pods), Service (clusterIP), Ingress (L7)**.",
+   "Declarative desired state + **self-healing**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Kubernetes"
+   ],
+   "rows": [
+    [
+     "Orchestrate",
+     "containers"
+    ],
+    [
+     "Node",
+     "worker"
+    ],
+    [
+     "Pod",
+     "unit"
+    ],
+    [
+     "Service",
+     "endpoint"
+    ],
+    [
+     "Deployment",
+     "replicas"
+    ],
+    [
+     "Namespace",
+     "partition"
+    ],
+    [
+     "Network",
+     "CNI"
+    ],
+    [
+     "Run",
+     "kubectl"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. Docker",
+    "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
+   },
+   {
+    "t": "06. VRF (Virtual Routing and Forwarding)",
+    "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
+   }
+  ],
+  "glossary": [
+   "Kubernetes"
+  ]
+ },
+ {
+  "num": "06",
+  "id": "t06",
+  "group": "network",
+  "title": "VRF (Virtual Routing and Forwarding)",
+  "blurb": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces",
+  "overview": "**[[VRF]]** creates **multiple isolated routing tables on one router** — each with its own RIB, CEF, interfaces, and routing protocol. It's the core of **L3VPN segmentation** (Level 20 note 07) and of **VRF-lite** for simple, MPLS-free isolation. In the cloud context, VRFs mirror **virtual networks** per tenant.",
+  "keyIdea": "VRF = **separate RIB/FIB/interfaces**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What a VRF isolates",
+    "cols": [
+     "Table",
+     "Per-VRF"
+    ],
+    "rows": [
+     [
+      "RIB",
+      "routes"
+     ],
+     [
+      "CEF/FIB",
+      "forwarding"
+     ],
+     [
+      "Interfaces",
+      "membership"
+     ],
+     [
+      "Protocol",
+      "per-VRF process"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**RIB + FIB + interfaces** are fully isolated."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Use cases",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "L3VPN",
+      "MPLS + MP-BGP"
+     ],
+     [
+      "VRF-lite",
+      "no MPLS needed"
+     ],
+     [
+      "Multi-tenant",
+      "per customer"
+     ],
+     [
+      "Management",
+      "OOB VRF"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "VRF powers **VPNs** (Level 20) and **VRF-lite** (note 07)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "RD and RT",
+    "cols": [
+     "Item",
+     "Function"
+    ],
+    "rows": [
+     [
+      "RD",
+      "uniqueness (MP-BGP)"
+     ],
+     [
+      "RT",
+      "membership/policy"
+     ],
+     [
+      "Lite",
+      "RTs optional"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "RD = identity; RT = who shares",
+      "d": "needed for MPLS VPNs."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Config",
+    "code": "ip vrf CUST1\n rd 65000:100\n!\ninterface Gi0/1\n ip vrf forwarding CUST1\n ip address 10.0.0.1 255.255.255.0\n!\nrouter bgp 65000\n address-family ipv4 vrf CUST1"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%ip vrf%%",
+      "create"
+     ],
+     [
+      "%%rd%%",
+      "distinguisher"
+     ],
+     [
+      "%%ip vrf forwarding%%",
+      "bind interface"
+     ],
+     [
+      "%%address-family ipv4 vrf%%",
+      "per-VRF BGP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "%%ip vrf forwarding%% clears the IP address",
+      "d": "reapply it."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VRF in the cloud",
+    "cols": [
+     "Concept",
+     "Cloud equivalent"
+    ],
+    "rows": [
+     [
+      "VRF",
+      "VPC/tenant network"
+     ],
+     [
+      "Isolation",
+      "per-tenant tables"
+     ],
+     [
+      "Routing",
+      "per-network"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Clouds use **similar isolation**",
+      "d": "VPCs are the \"VRF\" of the cloud."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show ip vrf\nshow ip route vrf CUST1\nshow ip cef vrf CUST1\nping vrf CUST1 10.0.0.2"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show ip vrf\nshow ip vrf detail\nshow ip route vrf CUST1\nshow ip cef vrf CUST1\nshow bgp vpnv4 vrf CUST1\nping vrf CUST1 ..."
+   }
+  ],
+  "traps": [
+   "VRF = **separate RIB/FIB/interfaces**.",
+   "**RD = identity; RT = membership** (for MPLS).",
+   "%%ip vrf forwarding%% removes the IP.",
+   "VRF-lite = **isolation without MPLS** (note 07).",
+   "Cloud VPC ≈ the VRF concept."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "VRF"
+   ],
+   "rows": [
+    [
+     "Isolates",
+     "RIB/FIB"
+    ],
+    [
+     "Use",
+     "VPN/lite"
+    ],
+    [
+     "RD",
+     "uniqueness"
+    ],
+    [
+     "RT",
+     "membership"
+    ],
+    [
+     "Bind",
+     "ip vrf forwarding"
+    ],
+    [
+     "Cloud",
+     "VPC"
+    ],
+    [
+     "Lite",
+     "no MPLS"
+    ],
+    [
+     "Ping",
+     "ping vrf"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. Kubernetes Basics",
+    "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
+   },
+   {
+    "t": "07. VRF Lite",
+    "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
+   }
+  ],
+  "glossary": [
+   "VRF"
+  ]
+ },
+ {
+  "num": "07",
+  "id": "t07",
+  "group": "network",
+  "title": "VRF Lite",
+  "blurb": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati",
+  "overview": "**[[VRF|VRF-lite]]** uses **VRFs without MPLS/MP-BGP**: separate routing tables and interfaces provide L3 segmentation on a single router — **cheap and simple**, ideal for small multi-tenant or service-separation designs. The trade-off: **no VPN label/MP-BGP scalability** — each hop must carry the same VRFs.",
+  "keyIdea": "VRF-lite = **VRFs without MPLS/MP-BGP**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "VRF-lite vs L3VPN",
+    "cols": [
+     "Aspect",
+     "VRF-lite",
+     "MPLS L3VPN"
+    ],
+    "rows": [
+     [
+      "MPLS",
+      "no",
+      "yes"
+     ],
+     [
+      "MP-BGP",
+      "no",
+      "yes"
+     ],
+     [
+      "Labels",
+      "none",
+      "two-label"
+     ],
+     [
+      "Scale",
+      "small",
+      "large"
+     ],
+     [
+      "Scope",
+      "single site",
+      "WAN-wide"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VRF-lite = isolation without MPLS",
+      "d": "point-to-point of VRFs between routers."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "How it works",
+    "cols": [
+     "Element",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VRF per tenant",
+      "on each router"
+     ],
+     [
+      "Interfaces",
+      "bound per VRF"
+     ],
+     [
+      "Routing",
+      "per-VRF IGP/static"
+     ],
+     [
+      "Links",
+      "same VRF both ends"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Every router on the path needs the **same VRF mapped to the same links**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Use cases",
+    "cols": [
+     "Use",
+     "Reason"
+    ],
+    "rows": [
+     [
+      "Small sites",
+      "cheap isolation"
+     ],
+     [
+      "Guest/mgmt",
+      "separate tables"
+     ],
+     [
+      "Lab",
+      "quick segmentation"
+     ],
+     [
+      "Enterprise core",
+      "simplified"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "VRF-lite suits **single-site segmentation** without an SP."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Config",
+    "code": "ip vrf GUEST\n rd 65000:10\n!\ninterface Gi0/0\n ip vrf forwarding GUEST\n ip address 10.0.0.1 255.255.255.0\n!\nrouter bgp 65000\n address-family ipv4 vrf GUEST"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%ip vrf%%",
+      "create"
+     ],
+     [
+      "%%ip vrf forwarding%%",
+      "bind"
+     ],
+     [
+      "%%address-family ipv4 vrf%%",
+      "per-VRF BGP"
+     ],
+     [
+      "%%rd%%",
+      "optional locally"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Limitations",
+    "cols": [
+     "Limit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Scale",
+      "manual per hop"
+     ],
+     [
+      "Overlap",
+      "RD/RT not global"
+     ],
+     [
+      "WAN",
+      "no MPLS transit"
+     ],
+     [
+      "Complexity",
+      "per-device"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Beyond a few devices, **MPLS VPNs scale better**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show ip vrf\nshow ip route vrf GUEST\nshow ip cef vrf GUEST\nping vrf GUEST ..."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show ip vrf\nshow ip vrf detail\nshow ip route vrf GUEST\nshow ip cef vrf GUEST\nping vrf GUEST ..."
+   }
+  ],
+  "traps": [
+   "VRF-lite = **VRFs without MPLS/MP-BGP**.",
+   "Every hop must **map the same VRFs** to links.",
+   "Great for **single-site isolation**; not for large WAN.",
+   "No label stack — **scale limit**.",
+   "L3VPN = the scalable upgrade path."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "VRF Lite"
+   ],
+   "rows": [
+    [
+     "MPLS",
+     "none"
+    ],
+    [
+     "MP-BGP",
+     "none"
+    ],
+    [
+     "Isolation",
+     "per-router"
+    ],
+    [
+     "Scope",
+     "single site"
+    ],
+    [
+     "Scale",
+     "small"
+    ],
+    [
+     "RD/RT",
+     "local"
+    ],
+    [
+     "WAN",
+     "no"
+    ],
+    [
+     "Upgrade",
+     "L3VPN"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. VRF (Virtual Routing and Forwarding)",
+    "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
+   },
+   {
+    "t": "08. Public Cloud",
+    "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
+   }
+  ],
+  "glossary": [
+   "VRF"
+  ]
+ },
+ {
+  "num": "08",
+  "id": "t08",
+  "group": "cloud",
+  "title": "Public Cloud",
+  "blurb": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered",
+  "overview": "A **[[Public Cloud|public cloud]]** is shared, on-demand infrastructure run by a provider (**AWS, Azure, GCP**) and delivered as **IaaS/PaaS/SaaS**. You rent capacity, get **elasticity** and **capex-to-opex** conversion. Networking: **VPC/VNet** isolation, virtual networks, NAT/load balancers, and **connectivity back to the campus via VPN/Direct Connect**.",
+  "keyIdea": "Public cloud = **shared, elastic, pay-as-you-go**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Definition",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Owner",
+      "provider"
+     ],
+     [
+      "Access",
+      "internet/shared"
+     ],
+     [
+      "Model",
+      "pay-as-you-go"
+     ],
+     [
+      "Tenancy",
+      "multi-tenant"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Public cloud = **shared, metered, elastic** compute."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Cloud services (notes 11–13)",
+    "cols": [
+     "Service",
+     "Example"
+    ],
+    "rows": [
+     [
+      "IaaS",
+      "EC2/VMs"
+     ],
+     [
+      "PaaS",
+      "managed DB"
+     ],
+     [
+      "SaaS",
+      "Office 365"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Public clouds offer **all three service models**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking model",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VPC/VNet",
+      "isolated space"
+     ],
+     [
+      "Subnets",
+      "segmentation"
+     ],
+     [
+      "Security groups",
+      "L3/L4 rules"
+     ],
+     [
+      "LB",
+      "load balancing"
+     ],
+     [
+      "NAT GW",
+      "outbound"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VPC = the cloud's \"VRF\"",
+      "d": "isolated per tenant."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Connectivity options",
+    "cols": [
+     "Method",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Internet VPN",
+      "IPsec"
+     ],
+     [
+      "Direct Connect",
+      "private link"
+     ],
+     [
+      "Cloud VPN",
+      "managed"
+     ],
+     [
+      "SD-WAN",
+      "overlay"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Hybrid/backup connectivity uses **VPN or direct links**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Public vs private",
+    "cols": [
+     "Aspect",
+     "Public",
+     "Private"
+    ],
+    "rows": [
+     [
+      "Tenancy",
+      "shared",
+      "dedicated"
+     ],
+     [
+      "Control",
+      "provider",
+      "you"
+     ],
+     [
+      "Location",
+      "provider DC",
+      "on-prem"
+     ],
+     [
+      "Cost",
+      "opex",
+      "capex"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Public = shared+provider-managed; private = dedicated+on-prem** (note 09)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits/trade-offs",
+    "cols": [
+     "Pro",
+     "Con"
+    ],
+    "rows": [
+     [
+      "Elastic",
+      "shared"
+     ],
+     [
+      "Global",
+      "cost mgmt"
+     ],
+     [
+      "Fast",
+      "compliance"
+     ],
+     [
+      "Managed",
+      "lock-in"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Public cloud wins on **agility and scale**; watch data/compliance."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show cloud ... (SDN controllers)\n(primarily managed via cloud consoles/APIs)"
+   }
+  ],
+  "traps": [
+   "Public cloud = **shared, elastic, pay-as-you-go**.",
+   "**VPC/VNet = isolation**; security groups = filters.",
+   "Connectivity: **VPN/Direct Connect** back to campus.",
+   "IaaS/PaaS/SaaS are the service models.",
+   "vs private: **shared + provider-owned**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Public Cloud"
+   ],
+   "rows": [
+    [
+     "Owner",
+     "provider"
+    ],
+    [
+     "Tenancy",
+     "shared"
+    ],
+    [
+     "IaaS",
+     "VMs"
+    ],
+    [
+     "PaaS",
+     "managed"
+    ],
+    [
+     "SaaS",
+     "apps"
+    ],
+    [
+     "VPC",
+     "isolation"
+    ],
+    [
+     "Connect",
+     "VPN/Direct"
+    ],
+    [
+     "Cost",
+     "opex"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. VRF Lite",
+    "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
+   },
+   {
+    "t": "09. Private Cloud",
+    "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
+   }
+  ],
+  "glossary": [
+   "Public Cloud"
+  ]
+ },
+ {
+  "num": "09",
+  "id": "t09",
+  "group": "cloud",
+  "title": "Private Cloud",
+  "blurb": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated",
+  "overview": "A **[[Private Cloud|private cloud]]** is cloud-like infrastructure (self-service, elastic, metered) that runs on **dedicated, on-premises** resources — e.g., **VMware/OpenStack** under your control. It keeps data and compliance in-house but adds **capex and operational cost**. The exam contrasts private vs public and when to pick each.",
+  "keyIdea": "Private cloud = **dedicated + on-prem + full control**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Definition",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Owner",
+      "your org"
+     ],
+     [
+      "Location",
+      "on-prem / dedicated"
+     ],
+     [
+      "Tenancy",
+      "dedicated"
+     ],
+     [
+      "Control",
+      "full"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Private cloud = **cloud model on your own hardware**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Cloud features locally",
+    "cols": [
+     "Feature",
+     "Local equivalent"
+    ],
+    "rows": [
+     [
+      "Self-service",
+      "portal"
+     ],
+     [
+      "Elasticity",
+      "hypervisor pools"
+     ],
+     [
+      "Metering",
+      "usage"
+     ],
+     [
+      "Orchestration",
+      "vRealize/OpenStack"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "It's about **cloud-style operations**, not location alone."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Platforms",
+    "cols": [
+     "Platform",
+     "Type"
+    ],
+    "rows": [
+     [
+      "VMware vSphere",
+      "most common"
+     ],
+     [
+      "OpenStack",
+      "open-source"
+     ],
+     [
+      "Nutanix",
+      "hyperconverged"
+     ],
+     [
+      "Azure Stack",
+      "hybrid"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VMware + OpenStack** are the classic private-cloud stacks."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Private vs public",
+    "cols": [
+     "Aspect",
+     "Private",
+     "Public"
+    ],
+    "rows": [
+     [
+      "Cost",
+      "capex",
+      "opex"
+     ],
+     [
+      "Control",
+      "full",
+      "limited"
+     ],
+     [
+      "Compliance",
+      "easier",
+      "shared"
+     ],
+     [
+      "Scale",
+      "limited",
+      "elastic"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Private = control/compliance; public = scale/cost.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "When private wins",
+    "cols": [
+     "Use",
+     "Reason"
+    ],
+    "rows": [
+     [
+      "Regulated data",
+      "compliance"
+     ],
+     [
+      "Latency",
+      "local"
+     ],
+     [
+      "Legacy",
+      "integration"
+     ],
+     [
+      "Cost control",
+      "steady load"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Sensitive/steady workloads stay **on-prem**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking in private cloud",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Virtual switches",
+      "vSwitch"
+     ],
+     [
+      "VLANs",
+      "segmentation"
+     ],
+     [
+      "NSX",
+      "SDN overlay"
+     ],
+     [
+      "East-west",
+      "internal"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Private cloud networks use **vSwitch + VLAN or NSX overlays**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "esxcli network vswitch standard list\nesxcli network ip interface list\n(platform-specific consoles/APIs)"
+   }
+  ],
+  "traps": [
+   "Private cloud = **dedicated + on-prem + full control**.",
+   "Platforms: **VMware, OpenStack, Azure Stack**.",
+   "Cost = **capex**; public = opex.",
+   "Wins on **compliance/latency**; public wins on scale.",
+   "Networking via **vSwitch/VLAN or NSX**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Private Cloud"
+   ],
+   "rows": [
+    [
+     "Owner",
+     "you"
+    ],
+    [
+     "Tenancy",
+     "dedicated"
+    ],
+    [
+     "Cost",
+     "capex"
+    ],
+    [
+     "Control",
+     "full"
+    ],
+    [
+     "Platform",
+     "VMware/OpenStack"
+    ],
+    [
+     "Compliance",
+     "easier"
+    ],
+    [
+     "Scale",
+     "limited"
+    ],
+    [
+     "Network",
+     "vSwitch/NSX"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. Public Cloud",
+    "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
+   },
+   {
+    "t": "10. Hybrid Cloud",
+    "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
+   }
+  ],
+  "glossary": [
+   "Private Cloud"
+  ]
+ },
+ {
+  "num": "10",
+  "id": "t10",
+  "group": "cloud",
+  "title": "Hybrid Cloud",
+  "blurb": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha",
+  "overview": "A **[[Hybrid Cloud|hybrid cloud]]** combines **on-premises (private)** and **public cloud** into one operational model — with **shared networking, security, and management** between them. Movement of workloads/data plus **connectivity (VPN/Direct Connect/ExpressRoute/SD-WAN)** are the core concepts. The exam wants the split of where what runs.",
+  "keyIdea": "Hybrid = **private + public in one model**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Definition",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Private",
+      "on-prem workloads"
+     ],
+     [
+      "Public",
+      "elastic/overflow"
+     ],
+     [
+      "Shared",
+      "mgmt/networking"
+     ],
+     [
+      "Goal",
+      "best of both"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Hybrid = **one platform spanning both worlds**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why hybrid",
+    "cols": [
+     "Reason",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Burst",
+      "use public for spikes"
+     ],
+     [
+      "Compliance",
+      "sensitive stays local"
+     ],
+     [
+      "Migration",
+      "glide path to cloud"
+     ],
+     [
+      "DR",
+      "cloud backup"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Keep sensitive on-prem; burst/DR to public.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Connectivity",
+    "cols": [
+     "Method",
+     "Use"
+    ],
+    "rows": [
+     [
+      "VPN/IPsec",
+      "internet tunnel"
+     ],
+     [
+      "Direct Connect",
+      "private link"
+     ],
+     [
+      "ExpressRoute",
+      "Azure"
+     ],
+     [
+      "SD-WAN",
+      "intelligent overlay"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "A **secured, low-latency path** is the foundation of hybrid."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking consistency",
+    "cols": [
+     "Layer",
+     "Hybrid"
+    ],
+    "rows": [
+     [
+      "Identity",
+      "same IdP/SSO"
+     ],
+     [
+      "Routing",
+      "extended subnets"
+     ],
+     [
+      "Firewall",
+      "consistent policies"
+     ],
+     [
+      "Mgmt",
+      "single control"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Keep **policies and addressing** coherent across both."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Challenges",
+    "cols": [
+     "Challenge",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Latency",
+      "distance"
+     ],
+     [
+      "Data gravity",
+      "transfer cost"
+     ],
+     [
+      "Security",
+      "consistent"
+     ],
+     [
+      "Complexity",
+      "two platforms"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Data migration cost + latency** are the top concerns."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show ip route (extended)\nping / traceroute to cloud\nshow crypto ipsec sa (VPN)\nmonitor via cloud console"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show crypto ipsec sa\nshow crypto session\nping 10.0.x.x (cloud subnet)\ntraceroute 10.0.x.x"
+   }
+  ],
+  "traps": [
+   "Hybrid = **private + public in one model**.",
+   "Connectivity: **IPsec VPN, Direct Connect/ExpressRoute, SD-WAN**.",
+   "Sensitive data stays **on-prem**; bursts go public.",
+   "Consistent **identity/security/routing** across both.",
+   "Migration: **glide path**; DR: cloud."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Hybrid"
+   ],
+   "rows": [
+    [
+     "Private",
+     "on-prem"
+    ],
+    [
+     "Public",
+     "elastic"
+    ],
+    [
+     "Connect",
+     "VPN/Direct"
+    ],
+    [
+     "Burst",
+     "cloud"
+    ],
+    [
+     "Compliance",
+     "local"
+    ],
+    [
+     "Identity",
+     "shared"
+    ],
+    [
+     "Security",
+     "consistent"
+    ],
+    [
+     "Goal",
+     "best of both"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. Private Cloud",
+    "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
+   },
+   {
+    "t": "11. SaaS",
+    "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
+   }
+  ],
+  "glossary": [
+   "Hybrid Cloud"
+  ]
+ },
+ {
+  "num": "11",
+  "id": "t11",
+  "group": "service",
+  "title": "SaaS",
+  "blurb": "SaaS delivers complete applications over the internet — no install, no server management; the provid",
+  "overview": "**[[SaaS]]** delivers **complete applications over the internet** — no install, no server management; the provider runs everything (e.g., **Office 365, Salesforce, Webex**). The customer manages only **users and data**. The exam contrasts the three service models (IaaS/PaaS/SaaS) and their **division of responsibility**.",
+  "keyIdea": "SaaS = **full application, provider-managed**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What SaaS is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Deliverable",
+      "full app"
+     ],
+     [
+      "Access",
+      "browser/client"
+     ],
+     [
+      "Provider runs",
+      "infra + app"
+     ],
+     [
+      "Customer",
+      "users + data"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SaaS = **rent the application**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Examples",
+    "cols": [
+     "Service",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Office 365",
+      "email/office"
+     ],
+     [
+      "Salesforce",
+      "CRM"
+     ],
+     [
+      "Webex",
+      "collaboration"
+     ],
+     [
+      "ServiceNow",
+      "IT service mgmt"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Enterprise SaaS = **hosted business apps**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Responsibility split",
+    "cols": [
+     "Layer",
+     "Provider",
+     "Customer"
+    ],
+    "rows": [
+     [
+      "App",
+      "yes",
+      "no"
+     ],
+     [
+      "Middleware",
+      "yes",
+      "no"
+     ],
+     [
+      "OS/host",
+      "yes",
+      "no"
+     ],
+     [
+      "Data/access",
+      "no",
+      "yes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Customer manages **users and data**, little else."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SaaS vs PaaS vs IaaS",
+    "cols": [
+     "Model",
+     "You manage"
+    ],
+    "rows": [
+     [
+      "IaaS",
+      "OS + app + data"
+     ],
+     [
+      "PaaS",
+      "app + data"
+     ],
+     [
+      "SaaS",
+      "data + users only"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Least control = SaaS; most = IaaS** (notes 12/13)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking angle",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Access",
+      "internet/TLS"
+     ],
+     [
+      "Bandwidth",
+      "matters"
+     ],
+     [
+      "QoS",
+      "priority for apps"
+     ],
+     [
+      "Security",
+      "identity + DLP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Network teams **protect + prioritize** SaaS traffic."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Pros/cons",
+    "cols": [
+     "Pro",
+     "Con"
+    ],
+    "rows": [
+     [
+      "Zero maintenance",
+      "less control"
+     ],
+     [
+      "Fast rollout",
+      "lock-in"
+     ],
+     [
+      "Predictable",
+      "compliance"
+     ],
+     [
+      "Mobile ready",
+      "internet-dependent"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SaaS trades **control for convenience**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show nbar protocol-id ... (identify SaaS)\n(managed via provider console + IdP)"
+   }
+  ],
+  "traps": [
+   "SaaS = **full application, provider-managed**.",
+   "Customer manages **data + users only**.",
+   "**Least control of the three models**.",
+   "Examples: Office 365, Salesforce, Webex.",
+   "Network role: **prioritize + secure** traffic."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SaaS"
+   ],
+   "rows": [
+    [
+     "Deliverable",
+     "app"
+    ],
+    [
+     "Managed by",
+     "provider"
+    ],
+    [
+     "Customer",
+     "data/users"
+    ],
+    [
+     "Examples",
+     "Office 365, CRM"
+    ],
+    [
+     "Control",
+     "least"
+    ],
+    [
+     "Access",
+     "internet"
+    ],
+    [
+     "QoS",
+     "priority"
+    ],
+    [
+     "vs IaaS",
+     "more managed"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. Hybrid Cloud",
+    "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
+   },
+   {
+    "t": "12. PaaS",
+    "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
+   }
+  ],
+  "glossary": [
+   "SaaS"
+  ]
+ },
+ {
+  "num": "12",
+  "id": "t12",
+  "group": "service",
+  "title": "PaaS",
+  "blurb": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma",
+  "overview": "**[[PaaS]]** provides a **managed platform** — runtime, DB, middleware — where developers deploy code without managing servers/OS. The provider handles **infra + platform**; you manage **app + data**. Examples: **Azure App Service, AWS Elastic Beanstalk, container services**. It sits **between IaaS and SaaS** in control.",
+  "keyIdea": "PaaS = **managed platform; you manage app + data**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What PaaS is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Deliverable",
+      "platform/runtime"
+     ],
+     [
+      "Provider",
+      "infra + OS + runtime"
+     ],
+     [
+      "Customer",
+      "app + data"
+     ],
+     [
+      "Access",
+      "deploy your code"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "PaaS = **rent the platform, bring the app**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Examples",
+    "cols": [
+     "Service",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Azure App Service",
+      "web apps"
+     ],
+     [
+      "AWS Beanstalk",
+      "deploy"
+     ],
+     [
+      "Google App Engine",
+      "scale"
+     ],
+     [
+      "Managed DB",
+      "PaaS data"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Managed DBs and app runtimes** are classic PaaS."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Responsibility split",
+    "cols": [
+     "Layer",
+     "Provider",
+     "Customer"
+    ],
+    "rows": [
+     [
+      "Infra",
+      "yes",
+      "no"
+     ],
+     [
+      "OS",
+      "yes",
+      "no"
+     ],
+     [
+      "Runtime/middleware",
+      "yes",
+      "no"
+     ],
+     [
+      "App + data",
+      "no",
+      "yes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Provider owns the **platform**; you own the **app**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "PaaS vs IaaS vs SaaS",
+    "cols": [
+     "Model",
+     "You manage"
+    ],
+    "rows": [
+     [
+      "IaaS",
+      "OS + app + data"
+     ],
+     [
+      "PaaS",
+      "app + data"
+     ],
+     [
+      "SaaS",
+      "data + users"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "PaaS is mid-control",
+      "d": "less than IaaS, more than SaaS."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking angle",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Public endpoint",
+      "provider LB"
+     ],
+     [
+      "VNet/VPC",
+      "still isolated"
+     ],
+     [
+      "APIs",
+      "app integration"
+     ],
+     [
+      "Security",
+      "app-level"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "App **APIs + cloud network** still matter to network teams."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Pros/cons",
+    "cols": [
+     "Pro",
+     "Con"
+    ],
+    "rows": [
+     [
+      "No infra mgmt",
+      "platform limits"
+     ],
+     [
+      "Fast dev",
+      "lock-in"
+     ],
+     [
+      "Auto scale",
+      "cost control"
+     ],
+     [
+      "Managed DB",
+      "data residency"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "PaaS = **developer velocity** at some flexibility cost."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(managed via cloud console/CLI)\naz appservice / aws elasticbeanstalk ..."
+   }
+  ],
+  "traps": [
+   "PaaS = **managed platform; you manage app + data**.",
+   "Examples: App Service, Beanstalk, managed DB.",
+   "Control: **between IaaS and SaaS**.",
+   "Provider: infra + OS + runtime.",
+   "Auto-scaling is a PaaS feature."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "PaaS"
+   ],
+   "rows": [
+    [
+     "Deliverable",
+     "platform"
+    ],
+    [
+     "Provider",
+     "infra+OS"
+    ],
+    [
+     "Customer",
+     "app+data"
+    ],
+    [
+     "Examples",
+     "App Service"
+    ],
+    [
+     "Control",
+     "middle"
+    ],
+    [
+     "Auto scale",
+     "yes"
+    ],
+    [
+     "Managed DB",
+     "yes"
+    ],
+    [
+     "vs IaaS",
+     "less OS mgmt"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. SaaS",
+    "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
+   },
+   {
+    "t": "13. IaaS",
+    "d": "IaaS delivers raw compute, storage, and networking as a service — you rent VMs and virtual networks"
+   }
+  ],
+  "glossary": [
+   "PaaS"
+  ]
+ },
+ {
+  "num": "13",
+  "id": "t13",
+  "group": "service",
+  "title": "IaaS",
+  "blurb": "IaaS delivers raw compute, storage, and networking as a service — you rent VMs and virtual networks",
+  "overview": "**[[IaaS]]** delivers **raw compute, storage, and networking** as a service — you rent **[[Virtual Machine|VMs]] and virtual networks** and manage the **OS, apps, and data** yourself (AWS EC2, Azure VMs, GCP Compute). It's the **most control** of the three service models and closest to classic infrastructure. The exam stresses the responsibility split.",
+  "keyIdea": "IaaS = **raw infra; you manage OS + app + data**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What IaaS is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Deliverable",
+      "compute/storage/net"
+     ],
+     [
+      "Provider",
+      "hosts + hypervisor"
+     ],
+     [
+      "Customer",
+      "OS + app + data"
+     ],
+     [
+      "Access",
+      "VMs/networks"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IaaS = **rent raw infrastructure**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Examples",
+    "cols": [
+     "Service",
+     "Use"
+    ],
+    "rows": [
+     [
+      "EC2",
+      "VMs"
+     ],
+     [
+      "Azure VM",
+      "compute"
+     ],
+     [
+      "VPC/VNet",
+      "networks"
+     ],
+     [
+      "S3/Blob",
+      "storage"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VMs + virtual networks + storage",
+      "d": "IaaS."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Responsibility split",
+    "cols": [
+     "Layer",
+     "Provider",
+     "Customer"
+    ],
+    "rows": [
+     [
+      "Hardware",
+      "yes",
+      "no"
+     ],
+     [
+      "Hypervisor",
+      "yes",
+      "no"
+     ],
+     [
+      "OS",
+      "no",
+      "yes"
+     ],
+     [
+      "App + data",
+      "no",
+      "yes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "You manage **OS, apps, data, and networking** above the hypervisor."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "IaaS vs PaaS vs SaaS",
+    "cols": [
+     "Model",
+     "You manage"
+    ],
+    "rows": [
+     [
+      "IaaS",
+      "OS + app + data"
+     ],
+     [
+      "PaaS",
+      "app + data"
+     ],
+     [
+      "SaaS",
+      "data + users"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Most control = IaaS; least = SaaS.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Networking in IaaS",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VPC/VNet",
+      "isolation"
+     ],
+     [
+      "Subnets",
+      "segmentation"
+     ],
+     [
+      "Security groups",
+      "filters"
+     ],
+     [
+      "LB/NAT",
+      "services"
+     ],
+     [
+      "VPN/Direct",
+      "connect"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Network engineers see IaaS as **virtual networking to design**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Pros/cons",
+    "cols": [
+     "Pro",
+     "Con"
+    ],
+    "rows": [
+     [
+      "Full control",
+      "you manage OS"
+     ],
+     [
+      "Familiar",
+      "patching burden"
+     ],
+     [
+      "Elastic",
+      "cost discipline"
+     ],
+     [
+      "Migration",
+      "lift-and-shift"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IaaS = **lift-and-shift** friendly, but **more to operate**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(cloud consoles/CLI)\naz vm list / aws ec2 describe-instances\nvpc / subnet / security group management"
+   }
+  ],
+  "traps": [
+   "IaaS = **raw infra; you manage OS + app + data**.",
+   "Examples: EC2, Azure VMs, VPC, S3.",
+   "**Most control of the three models**.",
+   "Virtual networking = **VPC/subnet/security groups**.",
+   "Lift-and-shift targets IaaS."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "IaaS"
+   ],
+   "rows": [
+    [
+     "Deliverable",
+     "infra"
+    ],
+    [
+     "Provider",
+     "hosts"
+    ],
+    [
+     "Customer",
+     "OS+app"
+    ],
+    [
+     "Examples",
+     "EC2"
+    ],
+    [
+     "Control",
+     "most"
+    ],
+    [
+     "Network",
+     "VPC"
+    ],
+    [
+     "Storage",
+     "S3"
+    ],
+    [
+     "vs SaaS",
+     "most mgmt"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "12. PaaS",
+    "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
+   },
+   {
+    "t": "01. Virtual Machines",
+    "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
+   }
+  ],
+  "glossary": [
+   "IaaS",
+   "Virtual Machine"
+  ]
+ }
+];
+
+        const GROUPS = [{"key": "server", "label": "Server Virtualization", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "network", "label": "Network Virtualization", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}, {"key": "cloud", "label": "Cloud Models", "chip": "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300", "dot": "bg-amber-600", "bullet": "text-amber-600 dark:text-amber-400"}, {"key": "service", "label": "Cloud Services", "chip": "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300", "dot": "bg-violet-600", "bullet": "text-violet-600 dark:text-violet-400"}];
+
+        const groups = GROUPS;
+
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+ {
+  "term": "Virtual Machine",
+  "def": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, vNIC, vDisk) provided by a hypervisor. VMs deliver strong isolation and hardware flexibility at the cost of overhead (a whole OS per workload). In networking: VMs are what cloud IaaS rents you..."
+ },
+ {
+  "term": "Hypervisor",
+  "def": "A hypervisor (VMM) is the software that creates and runs VMs by abstracting hardware and multiplexing it between guests. Type 1 (bare-metal) runs directly on hardware — the datacenter standard (ESXi, KVM, Hyper-V, Xen). Type 2 (hosted) runs as an app on an OS (VirtualBox, VMware Workstation) —..."
+ },
+ {
+  "term": "Container",
+  "def": "Containers package an app + its dependencies to run as isolated but kernel-shared workloads: no guest OS, no hypervisor layer — the host kernel is shared and namespaces/cgroups provide isolation and resource limits. They boot in seconds, are portable, and scale horizontally. The trade: weaker..."
+ },
+ {
+  "term": "Docker",
+  "def": "Docker is the most common container runtime/platform: you write a Dockerfile (build recipe) → build an image (immutable snapshot) → share it via a registry (Docker Hub) → run containers anywhere Docker exists. It popularized containers with an easy CLI and tooling (Compose for multi-container..."
+ },
+ {
+  "term": "Kubernetes",
+  "def": "Kubernetes (K8s) is the container orchestrator: it schedules, scales, heals, and networks container workloads across a cluster of nodes. Core objects: pods (smallest unit — one+ containers sharing an IP), deployments (desired state), services (stable network entry), namespaces. For network..."
+ },
+ {
+  "term": "VRF",
+  "def": "A VRF (Virtual Routing and Forwarding) is a separate routing table + forwarding table on a router: each VRF = its own RIB, its own interfaces, its own services — overlapping prefixes live side by side without conflict. The engine of L3VPNs (one physical PE, many virtual routing domains). Two..."
+ },
+ {
+  "term": "Public Cloud",
+  "def": "A public cloud is shared, on-demand infrastructure operated by a provider (AWS, Azure, GCP) and consumed as IaaS/PaaS/SaaS. You rent capacity with elasticity, global scale, and pay-per-use — no capex, no facility. The trade: shared responsibility (provider secures the cloud; you secure what you..."
+ },
+ {
+  "term": "Private Cloud",
+  "def": "A private cloud delivers cloud-like capabilities — self-service, elasticity, metering — on dedicated, on-premises infrastructure (typically VMware, OpenStack, or Nutanix). You keep full control and isolation, but you also own the capex and operational burden. It's the \"cloud without the..."
+ },
+ {
+  "term": "Hybrid Cloud",
+  "def": "A hybrid cloud combines on-premises and public cloud into one operating model: shared networking, security, and management between both, so workloads can burst (overflow to public), backup, or replicate across the boundary. The network is the glue: VPN/IPsec, Direct Connect/ExpressRoute, SD-WAN..."
+ },
+ {
+  "term": "SaaS",
+  "def": "SaaS (Software as a Service) delivers complete applications over the internet — no install, no server management: the provider runs everything (apps, OS, infra, updates). Examples: Office 365, Salesforce, Webex, Google Workspace. The customer is just a user; the shared-responsibility line sits..."
+ },
+ {
+  "term": "PaaS",
+  "def": "PaaS (Platform as a Service) provides a managed platform — runtime, databases, middleware — so developers deploy code without managing servers/OS/infra (e.g. AWS Elastic Beanstalk, Azure App Service, Heroku; serverless/FaaS like Lambda is the extreme). The provider handles infra + platform; you..."
+ },
+ {
+  "term": "IaaS",
+  "def": "IaaS (Infrastructure as a Service) delivers raw compute, storage, and networking on demand: you rent VMs (vCPU/vRAM), disks, and virtual networks (VPC) and manage everything above — OS, apps, data (AWS EC2, Azure VM, GCP Compute). The provider handles the physical/hypervisor layer. More control..."
+ }
+];
+
+        const quiz = [
+ {
+  "q": "In Virtual Machines, which value matches \"Guest\"?",
+  "options": [
+   "full OS",
+   "own",
+   "strong",
+   "high"
+  ],
+  "answer": 0,
+  "why": "The Virtual Machines quick review pairs \"Guest\" with \"full OS\"."
+ },
+ {
+  "q": "In Virtual Machines, which value matches \"vNIC\"?",
+  "options": [
+   "full OS",
+   "virtual",
+   "own",
+   "strong"
+  ],
+  "answer": 1,
+  "why": "The Virtual Machines quick review pairs \"vNIC\" with \"virtual\"."
+ },
+ {
+  "q": "In Virtual Machines, which value matches \"vs container\"?",
+  "options": [
+   "full OS",
+   "own",
+   "kernel",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The Virtual Machines quick review pairs \"vs container\" with \"kernel\"."
+ },
+ {
+  "q": "In Hypervisors, which value matches \"Type 1\"?",
+  "options": [
+   "full OS",
+   "own",
+   "strong",
+   "bare-metal"
+  ],
+  "answer": 3,
+  "why": "The Hypervisors quick review pairs \"Type 1\" with \"bare-metal\"."
+ },
+ {
+  "q": "In Hypervisors, which value matches \"Job\"?",
+  "options": [
+   "schedule+isolate",
+   "full OS",
+   "own",
+   "strong"
+  ],
+  "answer": 0,
+  "why": "The Hypervisors quick review pairs \"Job\" with \"schedule+isolate\"."
+ },
+ {
+  "q": "In Hypervisors, which value matches \"Use\"?",
+  "options": [
+   "VPN/lite",
+   "cloud/DC",
+   "full OS",
+   "own"
+  ],
+  "answer": 1,
+  "why": "The Hypervisors quick review pairs \"Use\" with \"cloud/DC\"."
+ },
+ {
+  "q": "In Containers, which value matches \"Kernel\"?",
+  "options": [
+   "own",
+   "full OS",
+   "shared",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The Containers quick review pairs \"Kernel\" with \"shared\"."
+ },
+ {
+  "q": "In Containers, which value matches \"Overhead\"?",
+  "options": [
+   "high",
+   "full OS",
+   "own",
+   "low"
+  ],
+  "answer": 3,
+  "why": "The Containers quick review pairs \"Overhead\" with \"low\"."
+ },
+ {
+  "q": "In Containers, which value matches \"vs VM\"?",
+  "options": [
+   "lighter",
+   "full OS",
+   "own",
+   "strong"
+  ],
+  "answer": 0,
+  "why": "The Containers quick review pairs \"vs VM\" with \"lighter\"."
+ },
+ {
+  "q": "In Docker, which value matches \"Image\"?",
+  "options": [
+   "app+deps",
+   "template",
+   "full OS",
+   "own"
+  ],
+  "answer": 1,
+  "why": "The Docker quick review pairs \"Image\" with \"template\"."
+ },
+ {
+  "q": "In Docker, which value matches \"Build\"?",
+  "options": [
+   "full OS",
+   "own",
+   "docker build",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The Docker quick review pairs \"Build\" with \"docker build\"."
+ },
+ {
+  "q": "In Docker, which value matches \"Scale\"?",
+  "options": [
+   "small",
+   "limited",
+   "full OS",
+   "K8s"
+  ],
+  "answer": 3,
+  "why": "The Docker quick review pairs \"Scale\" with \"K8s\"."
+ },
+ {
+  "q": "In Kubernetes Basics, which value matches \"Orchestrate\"?",
+  "options": [
+   "containers",
+   "full OS",
+   "own",
+   "strong"
+  ],
+  "answer": 0,
+  "why": "The Kubernetes Basics quick review pairs \"Orchestrate\" with \"containers\"."
+ },
+ {
+  "q": "In Kubernetes Basics, which value matches \"Deployment\"?",
+  "options": [
+   "full OS",
+   "replicas",
+   "own",
+   "strong"
+  ],
+  "answer": 1,
+  "why": "The Kubernetes Basics quick review pairs \"Deployment\" with \"replicas\"."
+ },
+ {
+  "q": "In Kubernetes Basics, which value matches \"Run\"?",
+  "options": [
+   "docker run",
+   "full OS",
+   "kubectl",
+   "own"
+  ],
+  "answer": 2,
+  "why": "The Kubernetes Basics quick review pairs \"Run\" with \"kubectl\"."
+ },
+ {
+  "q": "In VRF (Virtual Routing and Forwarding), which value matches \"Isolates\"?",
+  "options": [
+   "full OS",
+   "own",
+   "strong",
+   "RIB/FIB"
+  ],
+  "answer": 3,
+  "why": "The VRF (Virtual Routing and Forwarding) quick review pairs \"Isolates\" with \"RIB/FIB\"."
+ },
+ {
+  "q": "In VRF (Virtual Routing and Forwarding), which value matches \"Bind\"?",
+  "options": [
+   "ip vrf forwarding",
+   "full OS",
+   "own",
+   "strong"
+  ],
+  "answer": 0,
+  "why": "The VRF (Virtual Routing and Forwarding) quick review pairs \"Bind\" with \"ip vrf forwarding\"."
+ },
+ {
+  "q": "In VRF (Virtual Routing and Forwarding), which value matches \"Ping\"?",
+  "options": [
+   "full OS",
+   "ping vrf",
+   "own",
+   "strong"
+  ],
+  "answer": 1,
+  "why": "The VRF (Virtual Routing and Forwarding) quick review pairs \"Ping\" with \"ping vrf\"."
+ },
+ {
+  "q": "In VRF Lite, which value matches \"MPLS\"?",
+  "options": [
+   "full OS",
+   "own",
+   "none",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The VRF Lite quick review pairs \"MPLS\" with \"none\"."
+ },
+ {
+  "q": "In VRF Lite, which value matches \"Scale\"?",
+  "options": [
+   "K8s",
+   "limited",
+   "full OS",
+   "small"
+  ],
+  "answer": 3,
+  "why": "The VRF Lite quick review pairs \"Scale\" with \"small\"."
+ },
+ {
+  "q": "In VRF Lite, which value matches \"Upgrade\"?",
+  "options": [
+   "L3VPN",
+   "full OS",
+   "own",
+   "strong"
+  ],
+  "answer": 0,
+  "why": "The VRF Lite quick review pairs \"Upgrade\" with \"L3VPN\"."
+ },
+ {
+  "q": "In Public Cloud, which value matches \"Owner\"?",
+  "options": [
+   "you",
+   "provider",
+   "full OS",
+   "own"
+  ],
+  "answer": 1,
+  "why": "The Public Cloud quick review pairs \"Owner\" with \"provider\"."
+ },
+ {
+  "q": "In Public Cloud, which value matches \"SaaS\"?",
+  "options": [
+   "full OS",
+   "own",
+   "apps",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The Public Cloud quick review pairs \"SaaS\" with \"apps\"."
+ },
+ {
+  "q": "In Public Cloud, which value matches \"Cost\"?",
+  "options": [
+   "capex",
+   "full OS",
+   "own",
+   "opex"
+  ],
+  "answer": 3,
+  "why": "The Public Cloud quick review pairs \"Cost\" with \"opex\"."
+ },
+ {
+  "q": "In Private Cloud, which value matches \"Owner\"?",
+  "options": [
+   "you",
+   "provider",
+   "full OS",
+   "own"
+  ],
+  "answer": 0,
+  "why": "The Private Cloud quick review pairs \"Owner\" with \"you\"."
+ },
+ {
+  "q": "In Private Cloud, which value matches \"Platform\"?",
+  "options": [
+   "full OS",
+   "VMware/OpenStack",
+   "own",
+   "strong"
+  ],
+  "answer": 1,
+  "why": "The Private Cloud quick review pairs \"Platform\" with \"VMware/OpenStack\"."
+ },
+ {
+  "q": "In Private Cloud, which value matches \"Network\"?",
+  "options": [
+   "CNI",
+   "bridge",
+   "vSwitch/NSX",
+   "VPC"
+  ],
+  "answer": 2,
+  "why": "The Private Cloud quick review pairs \"Network\" with \"vSwitch/NSX\"."
+ },
+ {
+  "q": "In Hybrid Cloud, which value matches \"Private\"?",
+  "options": [
+   "full OS",
+   "own",
+   "strong",
+   "on-prem"
+  ],
+  "answer": 3,
+  "why": "The Hybrid Cloud quick review pairs \"Private\" with \"on-prem\"."
+ },
+ {
+  "q": "In Hybrid Cloud, which value matches \"Compliance\"?",
+  "options": [
+   "local",
+   "easier",
+   "full OS",
+   "own"
+  ],
+  "answer": 0,
+  "why": "The Hybrid Cloud quick review pairs \"Compliance\" with \"local\"."
+ },
+ {
+  "q": "In Hybrid Cloud, which value matches \"Goal\"?",
+  "options": [
+   "full OS",
+   "best of both",
+   "own",
+   "strong"
+  ],
+  "answer": 1,
+  "why": "The Hybrid Cloud quick review pairs \"Goal\" with \"best of both\"."
+ },
+ {
+  "q": "In SaaS, which value matches \"Deliverable\"?",
+  "options": [
+   "platform",
+   "infra",
+   "app",
+   "full OS"
+  ],
+  "answer": 2,
+  "why": "The SaaS quick review pairs \"Deliverable\" with \"app\"."
+ },
+ {
+  "q": "In SaaS, which value matches \"Control\"?",
+  "options": [
+   "full",
+   "middle",
+   "most",
+   "least"
+  ],
+  "answer": 3,
+  "why": "The SaaS quick review pairs \"Control\" with \"least\"."
+ },
+ {
+  "q": "In SaaS, which value matches \"vs IaaS\"?",
+  "options": [
+   "more managed",
+   "less OS mgmt",
+   "full OS",
+   "own"
+  ],
+  "answer": 0,
+  "why": "The SaaS quick review pairs \"vs IaaS\" with \"more managed\"."
+ },
+ {
+  "q": "In PaaS, which value matches \"Deliverable\"?",
+  "options": [
+   "app",
+   "platform",
+   "infra",
+   "full OS"
+  ],
+  "answer": 1,
+  "why": "The PaaS quick review pairs \"Deliverable\" with \"platform\"."
+ },
+ {
+  "q": "In PaaS, which value matches \"Control\"?",
+  "options": [
+   "full",
+   "least",
+   "middle",
+   "most"
+  ],
+  "answer": 2,
+  "why": "The PaaS quick review pairs \"Control\" with \"middle\"."
+ },
+ {
+  "q": "In PaaS, which value matches \"vs IaaS\"?",
+  "options": [
+   "more managed",
+   "full OS",
+   "own",
+   "less OS mgmt"
+  ],
+  "answer": 3,
+  "why": "The PaaS quick review pairs \"vs IaaS\" with \"less OS mgmt\"."
+ },
+ {
+  "q": "In IaaS, which value matches \"Deliverable\"?",
+  "options": [
+   "infra",
+   "app",
+   "platform",
+   "full OS"
+  ],
+  "answer": 0,
+  "why": "The IaaS quick review pairs \"Deliverable\" with \"infra\"."
+ },
+ {
+  "q": "In IaaS, which value matches \"Control\"?",
+  "options": [
+   "full",
+   "most",
+   "least",
+   "middle"
+  ],
+  "answer": 1,
+  "why": "The IaaS quick review pairs \"Control\" with \"most\"."
+ },
+ {
+  "q": "In IaaS, which value matches \"vs SaaS\"?",
+  "options": [
+   "full OS",
+   "own",
+   "most mgmt",
+   "strong"
+  ],
+  "answer": 2,
+  "why": "The IaaS quick review pairs \"vs SaaS\" with \"most mgmt\"."
+ }
+];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'cld.theme', done: 'cld.done', best: 'cld.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>

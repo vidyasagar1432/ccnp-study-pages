@@ -31,6 +31,7 @@ pages/21-qos.html
 pages/22-wireless.html
 pages/23-enterprise-wan.html
 pages/24-sdn-automation.html
+pages/25-virtualization-cloud.html
 vendor/vue.global.prod.js     Vue 3.5.42 — offline fallback copy
 vendor/tailwindcss.js         Tailwind Play CDN 3.4.17 — offline fallback copy
 tools/                        validation scripts + per-page config
@@ -76,7 +77,8 @@ Everything is client-side, so `file://` works. It also works over HTTP
 | 23 | [Enterprise WAN](pages/23-enterprise-wan.html) | 11 | 55 questions |
 | 24 | [SDN & Automation](pages/24-sdn-automation.html) | 16 | 48 questions |
 
-The remaining levels (25–30) are listed on the hub as *planned*. Each one is ported
+| 25 | [Virtualization & Cloud](pages/25-virtualization-cloud.html) | 13 | 39 questions |
+The remaining levels (26–30) are listed on the hub as *planned*. Each one is ported
 from the matching note set in the CCNP Obsidian vault, keeping the note structure:
 
 > Overview → Core Concepts → Commands → Exam Traps → Quick Review Table → Related Notes → Glossary
@@ -101,7 +103,7 @@ from the matching note set in the CCNP Obsidian vault, keeping the note structur
 
 Progress, theme, and best score are stored in `localStorage` under a per-page prefix
 (`nb.*` for Level 00, `pl.*` for Level 01, `nt.*` for Level 02, `osi.*` for Level 03,
-`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06, `vl.*` for Level 07, `stp.*` for Level 08, `rf.*` for Level 09, `os.*` for Level 10, `ei.*` for Level 11, `bg.*` for Level 12, `rd.*` for Level 13, `fhrp.*` for Level 14, `nat.*` for Level 15, `ns.*` for Level 16, `sec.*` for Level 17, `vpn.*` for Level 18, `mc.*` for Level 19, `mpls.*` for Level 20, `qos.*` for Level 21, `wifi.*` for Level 22, `wan.*` for Level 23, `sdn.*` for Level 24) so
+`sw.*` for Level 04, `ip4.*` for Level 05, `v6.*` for Level 06, `vl.*` for Level 07, `stp.*` for Level 08, `rf.*` for Level 09, `os.*` for Level 10, `ei.*` for Level 11, `bg.*` for Level 12, `rd.*` for Level 13, `fhrp.*` for Level 14, `nat.*` for Level 15, `ns.*` for Level 16, `sec.*` for Level 17, `vpn.*` for Level 18, `mc.*` for Level 19, `mpls.*` for Level 20, `qos.*` for Level 21, `wifi.*` for Level 22, `wan.*` for Level 23, `sdn.*` for Level 24, `cld.*` for Level 25) so
 levels never overwrite each other.
 
 ## Loading Vue and Tailwind
