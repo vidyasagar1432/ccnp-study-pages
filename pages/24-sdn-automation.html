@@ -1,0 +1,6065 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDN & Automation — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="SDN & Automation for CCNP Enterprise (ENCOR 350-401): The SDN model and campus fabric, the programmability protocols and data formats, then the Python, Ansible, Terraform and Git workflow that turns the network into code.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">SDN & Automation — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">SDN</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">SDN & Automation</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 24</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 24</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">16 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 24 &mdash; SDN & Automation</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The SDN model and campus fabric, the programmability protocols and data formats, then the Python, Ansible, Terraform and Git workflow that turns the network into code.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        SDN & Automation &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 24 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = "**[[SDN]]** separates control from data, then **[[DNA Center]]**, **[[SD-Access]]**, **[[VXLAN]]** and **[[LISP]]** build the campus fabric. **[[REST API]]**, **[[RESTCONF]]**, **[[NETCONF]]** and **[[YANG]]** expose it programmatically, with **[[JSON]]**, **[[XML]]**, **[[YAML]]**, **[[Python]]**, **[[Ansible]]**, **[[Terraform]]** and **[[Git]]** as the toolchain.";
+
+        const topics = [
+ {
+  "num": "01",
+  "id": "t01",
+  "group": "sdn",
+  "title": "SDN",
+  "blurb": "SDN separates the control plane from the data plane, centralizing the brain in a controller.",
+  "overview": "**[[SDN]]** separates the **control plane** from the **data plane**, centralizing the brain in a controller. Northbound **APIs** talk to apps; southbound protocols (NETCONF, RESTCONF, OpenFlow) program devices. The result: network services become **programmable and centrally managed** — the foundation of DNA Center, SD-Access, and VXLAN/LISP.",
+  "keyIdea": "SDN = **separated control + data plane**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Control vs data plane",
+    "cols": [
+     "Plane",
+     "SDN location"
+    ],
+    "rows": [
+     [
+      "Control",
+      "controller (central)"
+     ],
+     [
+      "Data",
+      "switches/routers"
+     ],
+     [
+      "Management",
+      "orchestration"
+     ],
+     [
+      "Service",
+      "apps/APIs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Centralized control",
+      "d": "one brain for the whole network."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SDN architecture",
+    "cols": [
+     "Layer",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Application",
+      "business apps"
+     ],
+     [
+      "Northbound API",
+      "app ↔ controller"
+     ],
+     [
+      "Controller",
+      "control logic"
+     ],
+     [
+      "Southbound API",
+      "controller ↔ device"
+     ],
+     [
+      "Infrastructure",
+      "hardware"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Northbound",
+      "d": "up to apps; **southbound** = down to devices."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Southbound protocols",
+    "cols": [
+     "Protocol",
+     "Style"
+    ],
+    "rows": [
+     [
+      "NETCONF",
+      "YANG + XML"
+     ],
+     [
+      "RESTCONF",
+      "YANG + REST"
+     ],
+     [
+      "OpenFlow",
+      "flow table"
+     ],
+     [
+      "CLI/SNMP",
+      "legacy"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Modern SDN favors **NETCONF/RESTCONF over YANG** (notes 07/08)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Model vs controller-based",
+    "cols": [
+     "Approach",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Controller-based",
+      "centralized logic"
+     ],
+     [
+      "Model-based",
+      "YANG data models"
+     ],
+     [
+      "Overlay",
+      "VXLAN/LISP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Cisco's enterprise SDN = **DNA Center + SD-Access** (notes 02/03)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Agility",
+      "rapid change"
+     ],
+     [
+      "Automation",
+      "template-based"
+     ],
+     [
+      "Consistency",
+      "single source"
+     ],
+     [
+      "Visibility",
+      "analytics"
+     ],
+     [
+      "Security",
+      "policy-driven"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SDN turns the network into **an API-managed service**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Trade-offs",
+    "cols": [
+     "Concern",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Controller",
+      "SPOF if not HA"
+     ],
+     [
+      "Protocol",
+      "must support"
+     ],
+     [
+      "Skill",
+      "new skills"
+     ],
+     [
+      "Migration",
+      "hybrid path"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Controllers need **HA**; legacy devices need gateways."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show platform software yang\nshow netconf-yang sessions\nshow running-config\nnetconf-yang\nrestconf"
+   }
+  ],
+  "traps": [
+   "SDN = **separated control + data plane**.",
+   "**Northbound = apps; southbound = devices**.",
+   "NETCONF/RESTCONF + **YANG** = modern southbound.",
+   "Controller must be **HA** (avoid SPOF).",
+   "Cisco SDN = **DNA Center + SD-Access** (overlay + VXLAN/LISP)."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SDN"
+   ],
+   "rows": [
+    [
+     "Control",
+     "centralized"
+    ],
+    [
+     "Data",
+     "devices"
+    ],
+    [
+     "Northbound",
+     "apps"
+    ],
+    [
+     "Southbound",
+     "NETCONF/REST"
+    ],
+    [
+     "Model",
+     "YANG"
+    ],
+    [
+     "OpenFlow",
+     "flow"
+    ],
+    [
+     "Cisco",
+     "DNA Center"
+    ],
+    [
+     "Benefit",
+     "programmability"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Cisco DNA Center",
+    "d": "DNA Center is Cisco's SDN controller + management platform for campus networks."
+   },
+   {
+    "t": "03. SD-Access",
+    "d": "SD-Access is Cisco's intent-based campus fabric."
+   }
+  ],
+  "glossary": [
+   "SDN"
+  ]
+ },
+ {
+  "num": "02",
+  "id": "t02",
+  "group": "sdn",
+  "title": "Cisco DNA Center",
+  "blurb": "DNA Center is Cisco's SDN controller + management platform for campus networks.",
+  "overview": "**[[DNA Center]]** is Cisco's **[[SDN|SDN controller]] + management platform** for campus networks. It provides **intent-based networking**, automation (design, provisioning, assurance), and the **control logic** for **SD-Access** (note 03). It exposes a **REST API** and uses **netconf/CLI** southbound to program Catalyst switches.",
+  "keyIdea": "DNA Center = **intent-based + assurance + automation**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What DNA Center does",
+    "cols": [
+     "Function",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Design",
+      "sites, templates"
+     ],
+     [
+      "Provision",
+      "device config"
+     ],
+     [
+      "Assurance",
+      "telemetry/health"
+     ],
+     [
+      "Automation",
+      "intent-based"
+     ],
+     [
+      "SD-Access",
+      "fabric control"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "DNA Center = **the brain + dashboard of the campus**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Intent-based networking",
+    "cols": [
+     "Step",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Intent",
+      "what you want"
+     ],
+     [
+      "Translation",
+      "policies → config"
+     ],
+     [
+      "Activation",
+      "push to devices"
+     ],
+     [
+      "Assurance",
+      "verify intent"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Intent = desired state**; DNA Center makes it real and verifies it."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Planes/functions",
+    "cols": [
+     "Plane",
+     "DNA Center role"
+    ],
+    "rows": [
+     [
+      "Management",
+      "UI/API"
+     ],
+     [
+      "Automation",
+      "provisioning"
+     ],
+     [
+      "Assurance",
+      "analytics"
+     ],
+     [
+      "Control",
+      "SD-Access fabric"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Assurance gives **telemetry-driven** troubleshooting."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "APIs",
+    "cols": [
+     "API",
+     "Use"
+    ],
+    "rows": [
+     [
+      "REST API",
+      "third-party apps"
+     ],
+     [
+      "Intent API",
+      "high-level"
+     ],
+     [
+      "Integration",
+      "Ansible/scripts"
+     ],
+     [
+      "Token",
+      "auth"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "DNA Center's **REST API** enables automation (note 06)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SD-Access tie-in",
+    "cols": [
+     "Component",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Fabric controller",
+      "DNA Center"
+     ],
+     [
+      "Control plane",
+      "LISP"
+     ],
+     [
+      "Data plane",
+      "VXLAN"
+     ],
+     [
+      "Policy",
+      "ISE"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "DNA Center drives **SD-Access (LISP + VXLAN + ISE)**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "High availability",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Cluster",
+      "multiple nodes"
+     ],
+     [
+      "Roles",
+      "primary/secondary"
+     ],
+     [
+      "Data",
+      "DB replication"
+     ],
+     [
+      "Failover",
+      "automatic"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Run DNA Center as a **cluster** for HA."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show platform software ...\nshow running-config\ndna center UI / API\nshow telemetry ..."
+   }
+  ],
+  "traps": [
+   "DNA Center = **intent-based + assurance + automation**.",
+   "**SD-Access** control = LISP + VXLAN + ISE (note 03).",
+   "REST API = automation entry point.",
+   "Intent → **translate → activate → assure**.",
+   "Run as a **cluster** for HA."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "DNA Center"
+   ],
+   "rows": [
+    [
+     "Role",
+     "controller/mgmt"
+    ],
+    [
+     "Intent",
+     "desired state"
+    ],
+    [
+     "Assurance",
+     "telemetry"
+    ],
+    [
+     "Automation",
+     "templates"
+    ],
+    [
+     "SD-Access",
+     "fabric"
+    ],
+    [
+     "LISP",
+     "control"
+    ],
+    [
+     "VXLAN",
+     "data"
+    ],
+    [
+     "API",
+     "REST"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. SDN",
+    "d": "SDN separates the control plane from the data plane, centralizing the brain in a controller."
+   },
+   {
+    "t": "03. SD-Access",
+    "d": "SD-Access is Cisco's intent-based campus fabric."
+   }
+  ],
+  "glossary": [
+   "DNA Center",
+   "SDN"
+  ]
+ },
+ {
+  "num": "03",
+  "id": "t03",
+  "group": "sdn",
+  "title": "SD-Access",
+  "blurb": "SD-Access is Cisco's intent-based campus fabric.",
+  "overview": "**[[SD-Access]]** is Cisco's **intent-based campus fabric**. It builds a **[[VXLAN]] overlay** (data plane) with a **[[LISP]] control plane** and **ISE policy**, orchestrated by **DNA Center**. It delivers **macro/micro segmentation**, host mobility, and **policy-driven access** across the wired+wireless campus.",
+  "keyIdea": "SD-Access = **LISP (control) + VXLAN (data) + ISE (policy) + DNA Center**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The three planes",
+    "cols": [
+     "Plane",
+     "Technology"
+    ],
+    "rows": [
+     [
+      "Control",
+      "LISP"
+     ],
+     [
+      "Data",
+      "VXLAN"
+     ],
+     [
+      "Policy",
+      "ISE + SGT"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**LISP routes; VXLAN tunnels; ISE decides access.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Fabric roles",
+    "cols": [
+     "Role",
+     "Device"
+    ],
+    "rows": [
+     [
+      "Fabric edge",
+      "access switch"
+     ],
+     [
+      "Border",
+      "to outside/legacy"
+     ],
+     [
+      "Control plane",
+      "LISP map server"
+     ],
+     [
+      "Fabric WLC",
+      "wireless"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Edge = entry; border = exit; control = mapping.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Macro vs micro segmentation",
+    "cols": [
+     "Type",
+     "What",
+     "Tool"
+    ],
+    "rows": [
+     [
+      "Macro",
+      "VN (VRF)",
+      "VXLAN"
+     ],
+     [
+      "Micro",
+      "SG (trust)",
+      "ISE/SGT"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Macro = separate networks; micro = security groups inside them.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why it helps",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Policy",
+      "group-based"
+     ],
+     [
+      "Mobility",
+      "anywhere"
+     ],
+     [
+      "Segmentation",
+      "simplified"
+     ],
+     [
+      "Automation",
+      "intent-based"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Hosts keep IPs while roaming**; policy follows the group, not the VLAN."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key components",
+    "cols": [
+     "Component",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VXLAN",
+      "data plane tunnels"
+     ],
+     [
+      "LISP",
+      "EID ↔ RLOC mapping"
+     ],
+     [
+      "ISE",
+      "AAA + SGT"
+     ],
+     [
+      "DNA Center",
+      "orchestration"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VXLAN (04) + LISP (05) + ISE + DNA Center",
+      "d": "the SD-Access stack."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show lisp session\nshow vxlan vni\nshow ip device tracking\nshow authentication sessions\nshow vlan vn-segment"
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show lisp session\nshow lisp map-cache\nshow vxlan vni\nshow vlan vn-segment\nshow authentication sessions\nshow ip device tracking"
+   }
+  ],
+  "traps": [
+   "SD-Access = **LISP (control) + VXLAN (data) + ISE (policy) + DNA Center**.",
+   "**Macro = VN/VRF; micro = SGT**.",
+   "Fabric roles: **edge, border, control plane**.",
+   "Host **keeps IP** while roaming.",
+   "Policy is **group-based**, not VLAN-based."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SD-Access"
+   ],
+   "rows": [
+    [
+     "Control",
+     "LISP"
+    ],
+    [
+     "Data",
+     "VXLAN"
+    ],
+    [
+     "Policy",
+     "ISE/SGT"
+    ],
+    [
+     "Edge",
+     "access"
+    ],
+    [
+     "Border",
+     "exit"
+    ],
+    [
+     "Macro",
+     "VN"
+    ],
+    [
+     "Micro",
+     "SG"
+    ],
+    [
+     "Orchestrate",
+     "DNA Center"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Cisco DNA Center",
+    "d": "DNA Center is Cisco's SDN controller + management platform for campus networks."
+   },
+   {
+    "t": "04. VXLAN",
+    "d": "VXLAN is an overlay data-plane technology: it encapsulates L2 frames in UDP (4789) over the underlay"
+   }
+  ],
+  "glossary": [
+   "SD-Access",
+   "VXLAN",
+   "LISP"
+  ]
+ },
+ {
+  "num": "04",
+  "id": "t04",
+  "group": "sdn",
+  "title": "VXLAN",
+  "blurb": "VXLAN is an overlay data-plane technology: it encapsulates L2 frames in UDP (4789) over the underlay",
+  "overview": "**[[VXLAN]]** is an **overlay data-plane** technology: it encapsulates L2 frames in **UDP (4789)** over the underlay, scaling VLANs to **16 million VNIs** and letting L2 domains stretch across L3. It is the **data plane of SD-Access** and the modern DC fabric. The exam tests the header and VNI concept.",
+  "keyIdea": "VXLAN = **MAC-in-UDP, port 4789**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Why VXLAN",
+    "cols": [
+     "Problem",
+     "VXLAN answer"
+    ],
+    "rows": [
+     [
+      "4094 VLANs",
+      "16M VNIs"
+     ],
+     [
+      "L2 stretch",
+      "overlay"
+     ],
+     [
+      "Multi-tenant",
+      "VNI = tenant"
+     ],
+     [
+      "L3 underlay",
+      "IP transport"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "VXLAN **escapes the 12-bit VLAN limit** with a 24-bit VNI."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Encapsulation",
+    "cols": [
+     "Header",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Outer",
+      "IP/UDP (4789)"
+     ],
+     [
+      "VXLAN",
+      "VNI (24-bit)"
+     ],
+     [
+      "Inner",
+      "original L2 frame"
+     ],
+     [
+      "Result",
+      "MAC-in-UDP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**MAC-in-UDP** over the IP underlay."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VNI",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VNI",
+      "24-bit ID"
+     ],
+     [
+      "Scope",
+      "16,777,216"
+     ],
+     [
+      "Maps to",
+      "VLAN/segment"
+     ],
+     [
+      "Tenant",
+      "isolation"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "VNI = the overlay VLAN",
+      "d": "separates tenants/segments."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VTEP (tunnel endpoints)",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "VTEP",
+      "VXLAN endpoint"
+     ],
+     [
+      "Encapsulate",
+      "at ingress"
+     ],
+     [
+      "Decapsulate",
+      "at egress"
+     ],
+     [
+      "Underlay",
+      "IP address"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**VTEPs** do the encap/decap at the edges."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "BUM handling",
+    "cols": [
+     "Mode",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Multicast",
+      "underlay mcast"
+     ],
+     [
+      "Head-end replication",
+      "unicast copies"
+     ],
+     [
+      "EVPN",
+      "BGP-based"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "BUM traffic uses **multicast, HER, or EVPN** to reach VNIs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "VXLAN vs VLAN",
+    "cols": [
+     "Aspect",
+     "VLAN",
+     "VXLAN"
+    ],
+    "rows": [
+     [
+      "ID",
+      "12-bit",
+      "24-bit"
+     ],
+     [
+      "Count",
+      "4094",
+      "16M"
+     ],
+     [
+      "Domain",
+      "L2",
+      "overlay L3"
+     ],
+     [
+      "Transport",
+      "switch",
+      "UDP/IP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "VXLAN **decouples L2 from the physical topology**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show vxlan vni\nshow nve peers\nshow interface nve1\nshow l2vpn evpn\nshow vlan vn-segment"
+   }
+  ],
+  "traps": [
+   "VXLAN = **MAC-in-UDP, port 4789**.",
+   "**VNI = 24-bit (16M)**.",
+   "VTEPs **encap/decap** at the edges.",
+   "BUM via **multicast / HER / EVPN**.",
+   "It's the **data plane of SD-Access**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "VXLAN"
+   ],
+   "rows": [
+    [
+     "UDP",
+     "4789"
+    ],
+    [
+     "VNI bits",
+     "24"
+    ],
+    [
+     "Count",
+     "16M"
+    ],
+    [
+     "Encap",
+     "MAC-in-UDP"
+    ],
+    [
+     "Endpoint",
+     "VTEP"
+    ],
+    [
+     "BUM",
+     "mcast/HER/EVPN"
+    ],
+    [
+     "Use",
+     "SD-Access"
+    ],
+    [
+     "vs VLAN",
+     "24-bit"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. SD-Access",
+    "d": "SD-Access is Cisco's intent-based campus fabric."
+   },
+   {
+    "t": "05. LISP",
+    "d": "LISP separates identity (EID) from location (RLOC): hosts keep stable IDs while mapping to current n"
+   }
+  ],
+  "glossary": [
+   "VXLAN"
+  ]
+ },
+ {
+  "num": "05",
+  "id": "t05",
+  "group": "sdn",
+  "title": "LISP",
+  "blurb": "LISP separates identity (EID) from location (RLOC): hosts keep stable IDs while mapping to current n",
+  "overview": "**[[LISP]]** separates **identity (EID)** from **location (RLOC)**: hosts keep stable IDs while mapping to current network locations via a **map server/control plane**. It is the **control plane of SD-Access** — enabling host mobility and policy without changing IPs. The exam tests the EID/RLOC split and the mapping flow.",
+  "keyIdea": "LISP = **EID (identity) vs RLOC (location)**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "EID vs RLOC",
+    "cols": [
+     "Term",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "EID",
+      "endpoint identity (host IP)"
+     ],
+     [
+      "RLOC",
+      "routing locator (site IP)"
+     ],
+     [
+      "Map",
+      "EID → RLOC"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**EIDs travel; RLOCs are the current location.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "LISP roles",
+    "cols": [
+     "Role",
+     "Device"
+    ],
+    "rows": [
+     [
+      "ITR",
+      "ingress tunnel router"
+     ],
+     [
+      "ETR",
+      "egress tunnel router"
+     ],
+     [
+      "MR/MS",
+      "map resolver/server"
+     ],
+     [
+      "PxTR",
+      "proxy to non-LISP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**ITR/ETR = edges; MS/MR = control plane; PxTR = legacy interop.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Mapping flow",
+    "cols": [
+     "Step",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "1",
+      "ITR needs a destination"
+     ],
+     [
+      "2",
+      "map-request to MR/MS"
+     ],
+     [
+      "3",
+      "MS returns EID → RLOC"
+     ],
+     [
+      "4",
+      "ITR encapsulates to ETR"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Control plane = map lookup; data plane = encapsulation.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "LISP in SD-Access",
+    "cols": [
+     "Plane",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Control",
+      "LISP"
+     ],
+     [
+      "Data",
+      "VXLAN"
+     ],
+     [
+      "Mobility",
+      "EID persists"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "LISP maps EIDs so hosts roam with the same IP",
+      "d": "the SD-Access control plane."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Benefits",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Mobility",
+      "same IP"
+     ],
+     [
+      "Scaling",
+      "routing table split"
+     ],
+     [
+      "Policy",
+      "mapping control"
+     ],
+     [
+      "Interop",
+      "PxTR"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "LISP **decouples routing scale** from endpoint movement."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show lisp session\nshow lisp map-cache\nshow lisp eid-table\nshow lisp ipv4 database\nshow ip lisp ..."
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show lisp session\nshow lisp map-cache\nshow lisp eid-table\nshow lisp ipv4 database\nshow lisp ipv4 map-cache\ndebug lisp ..."
+   }
+  ],
+  "traps": [
+   "LISP = **EID (identity) vs RLOC (location)**.",
+   "Roles: **ITR/ETR (edges), MR/MS (control), PxTR (interop)**.",
+   "Map lookup = **control plane**; encap = data plane.",
+   "It's the **SD-Access control plane** (host mobility).",
+   "Host keeps IP while roaming."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "LISP"
+   ],
+   "rows": [
+    [
+     "EID",
+     "identity"
+    ],
+    [
+     "RLOC",
+     "location"
+    ],
+    [
+     "ITR",
+     "ingress"
+    ],
+    [
+     "ETR",
+     "egress"
+    ],
+    [
+     "MS",
+     "map server"
+    ],
+    [
+     "PxTR",
+     "legacy"
+    ],
+    [
+     "SD-Access",
+     "control"
+    ],
+    [
+     "Mobility",
+     "same IP"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. VXLAN",
+    "d": "VXLAN is an overlay data-plane technology: it encapsulates L2 frames in UDP (4789) over the underlay"
+   },
+   {
+    "t": "06. REST API",
+    "d": "REST is an HTTP-based API style where resources have URLs and actions are HTTP verbs (GET/POST/PUT/P"
+   }
+  ],
+  "glossary": [
+   "LISP"
+  ]
+ },
+ {
+  "num": "06",
+  "id": "t06",
+  "group": "api",
+  "title": "REST API",
+  "blurb": "REST is an HTTP-based API style where resources have URLs and actions are HTTP verbs (GET/POST/PUT/P",
+  "overview": "**[[REST API|REST]]** is an **HTTP-based** API style where resources have URLs and actions are HTTP verbs (**GET/POST/PUT/PATCH/DELETE**). Data rides as **[[JSON]]** (or XML). Network controllers (DNA Center, SD-WAN vManage, routers via RESTCONF) expose REST APIs — making the network **scriptable**. The exam tests the verbs and status codes.",
+  "keyIdea": "REST = **HTTP verbs + URLs + JSON**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "REST principles",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Resource",
+      "URL-addressable"
+     ],
+     [
+      "Verbs",
+      "HTTP methods"
+     ],
+     [
+      "State",
+      "stateless"
+     ],
+     [
+      "Data",
+      "JSON/XML"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Stateless",
+      "d": "each request is independent."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "HTTP verbs",
+    "cols": [
+     "Verb",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "GET",
+      "read"
+     ],
+     [
+      "POST",
+      "create"
+     ],
+     [
+      "PUT",
+      "replace"
+     ],
+     [
+      "PATCH",
+      "modify"
+     ],
+     [
+      "DELETE",
+      "remove"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**GET=read, POST=create, PUT/PATCH=update, DELETE=remove.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Status codes",
+    "cols": [
+     "Code",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "200",
+      "OK"
+     ],
+     [
+      "201",
+      "created"
+     ],
+     [
+      "401",
+      "unauthorized"
+     ],
+     [
+      "404",
+      "not found"
+     ],
+     [
+      "500",
+      "server error"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "2xx = success; **4xx = client; 5xx = server**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "API structure",
+    "cols": [
+     "Part",
+     "Example"
+    ],
+    "rows": [
+     [
+      "Base URL",
+      "https://controller"
+     ],
+     [
+      "Path",
+      "/dna/intent/api/..."
+     ],
+     [
+      "Auth",
+      "token/headers"
+     ],
+     [
+      "Payload",
+      "JSON body"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Token-based auth (e.g., OAuth/bearer) is standard."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example (cURL)",
+    "code": "curl -X GET \"https://10.0.0.5/dna/intent/api/v1/network-device\" \\\n  -H \"X-Auth-Token: $TOKEN\" -k"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Method",
+     "Effect"
+    ],
+    "rows": [
+     [
+      "-X",
+      "HTTP verb"
+     ],
+     [
+      "-H",
+      "headers"
+     ],
+     [
+      "-d",
+      "JSON body"
+     ],
+     [
+      "-k",
+      "skip TLS verify"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why it matters",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Automation",
+      "scripts"
+     ],
+     [
+      "Consistency",
+      "same API"
+     ],
+     [
+      "Integration",
+      "Ansible/Python"
+     ],
+     [
+      "Read/write",
+      "full lifecycle"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "REST is the **automation gateway** for SDN/controllers."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "curl -X GET -H \"Authorization: Bearer $TOKEN\" https://host/api\ncurl -X POST -d '{\"key\":\"value\"}' -H \"Content-Type: application/json\" ..."
+   }
+  ],
+  "traps": [
+   "REST = **HTTP verbs + URLs + JSON**.",
+   "**GET/POST/PUT/PATCH/DELETE** mapping.",
+   "Status: 200/201 OK, 401 auth, **4xx client, 5xx server**.",
+   "**Stateless** requests.",
+   "Token/bearer auth is standard."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "REST"
+   ],
+   "rows": [
+    [
+     "Style",
+     "HTTP"
+    ],
+    [
+     "GET",
+     "read"
+    ],
+    [
+     "POST",
+     "create"
+    ],
+    [
+     "PUT",
+     "replace"
+    ],
+    [
+     "DELETE",
+     "remove"
+    ],
+    [
+     "Data",
+     "JSON"
+    ],
+    [
+     "Auth",
+     "token"
+    ],
+    [
+     "State",
+     "stateless"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. LISP",
+    "d": "LISP separates identity (EID) from location (RLOC): hosts keep stable IDs while mapping to current n"
+   },
+   {
+    "t": "07. RESTCONF",
+    "d": "RESTCONF is an IETF standard that exposes YANG models over HTTP(S) using REST verbs — a REST-style i"
+   }
+  ],
+  "glossary": [
+   "REST API",
+   "JSON"
+  ]
+ },
+ {
+  "num": "07",
+  "id": "t07",
+  "group": "api",
+  "title": "RESTCONF",
+  "blurb": "RESTCONF is an IETF standard that exposes YANG models over HTTP(S) using REST verbs — a REST-style i",
+  "overview": "**[[RESTCONF]]** is an **IETF standard** that exposes **[[YANG]] models over HTTP(S) using REST** verbs — a **REST-style interface to network config**. It's simpler than [[NETCONF]] (stateless, JSON/XML payloads) and is the modern way to configure Cisco IOS-XE devices via API. The exam contrasts RESTCONF vs NETCONF.",
+  "keyIdea": "RESTCONF = **HTTP(S) + YANG + JSON/XML** (RFC 8040).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What RESTCONF is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Standard",
+      "RFC 8040"
+     ],
+     [
+      "Data model",
+      "YANG"
+     ],
+     [
+      "Transport",
+      "HTTP/HTTPS"
+     ],
+     [
+      "Payload",
+      "JSON/XML"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**YANG models + REST verbs over HTTP.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verbs",
+    "cols": [
+     "Verb",
+     "Use"
+    ],
+    "rows": [
+     [
+      "GET",
+      "read config/state"
+     ],
+     [
+      "POST",
+      "create data"
+     ],
+     [
+      "PUT",
+      "replace data"
+     ],
+     [
+      "PATCH",
+      "partial update"
+     ],
+     [
+      "DELETE",
+      "remove data"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Same verb semantics as REST (note 06)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "RESTCONF vs NETCONF",
+    "cols": [
+     "Aspect",
+     "RESTCONF",
+     "NETCONF"
+    ],
+    "rows": [
+     [
+      "Transport",
+      "HTTP(S)",
+      "SSH"
+     ],
+     [
+      "Encoding",
+      "JSON/XML",
+      "XML"
+     ],
+     [
+      "State",
+      "stateless",
+      "RPC/stateful"
+     ],
+     [
+      "Operations",
+      "HTTP verbs",
+      "RPC %%<get>/<edit-config>%%"
+     ],
+     [
+      "Simplicity",
+      "simpler",
+      "richer"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**RESTCONF = HTTP + JSON; NETCONF = SSH + XML/RPC** (note 08)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Data locations",
+    "cols": [
+     "Location",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "/data",
+      "config + state"
+     ],
+     [
+      "/operations",
+      "RPCs"
+     ],
+     [
+      "/yang-version",
+      "models"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Data is addressed by **path** into the YANG tree."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Config example (IOS-XE)",
+    "code": "curl -k -u admin:pass -X PATCH \\\n  https://192.0.2.1/restconf/data/Cisco-IOS-XE-native:native/interface/GigabitEthernet=1 \\\n  -d '{\"Cisco-IOS-XE-interface:description\":\"uplink\"}' \\\n  -H \"Content-Type: application/yang-data+json\""
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Enable with **%%restconf%%** in global config."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "When to use it",
+    "cols": [
+     "Use",
+     "Reason"
+    ],
+    "rows": [
+     [
+      "RESTCONF",
+      "simple REST automation"
+     ],
+     [
+      "NETCONF",
+      "rich ops/transactions"
+     ],
+     [
+      "Both",
+      "over YANG models"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Pick **RESTCONF for simplicity; NETCONF for power**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "conf t\n restconf\n!\nshow netconf-yang ...\nshow running-config\ncurl -k -u user:pass https://host/restconf/data/..."
+   }
+  ],
+  "traps": [
+   "RESTCONF = **HTTP(S) + YANG + JSON/XML** (RFC 8040).",
+   "Verbs: GET/POST/PUT/PATCH/DELETE.",
+   "**vs NETCONF: HTTP+JSON vs SSH+XML/RPC**.",
+   "Enable %%restconf%% globally.",
+   "Address config via the **YANG data path**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "RESTCONF"
+   ],
+   "rows": [
+    [
+     "Standard",
+     "RFC 8040"
+    ],
+    [
+     "Transport",
+     "HTTP(S)"
+    ],
+    [
+     "Encoding",
+     "JSON/XML"
+    ],
+    [
+     "Model",
+     "YANG"
+    ],
+    [
+     "State",
+     "stateless"
+    ],
+    [
+     "Verbs",
+     "REST"
+    ],
+    [
+     "vs NETCONF",
+     "HTTP"
+    ],
+    [
+     "Enable",
+     "restconf"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. REST API",
+    "d": "REST is an HTTP-based API style where resources have URLs and actions are HTTP verbs (GET/POST/PUT/P"
+   },
+   {
+    "t": "08. NETCONF",
+    "d": "NETCONF is the IETF standard (RFC 6241) for managing network devices over an SSH session using XML R"
+   }
+  ],
+  "glossary": [
+   "RESTCONF",
+   "YANG",
+   "NETCONF"
+  ]
+ },
+ {
+  "num": "08",
+  "id": "t08",
+  "group": "api",
+  "title": "NETCONF",
+  "blurb": "NETCONF is the IETF standard (RFC 6241) for managing network devices over an SSH session using XML R",
+  "overview": "**[[NETCONF]]** is the **IETF standard** (RFC 6241) for managing network devices over an **SSH session using XML RPCs**. It works on **[[YANG]] models**, supports **transactions and candidate config**, and separates **operational vs running** datastores. It is the richer alternative to RESTCONF (note 07).",
+  "keyIdea": "NETCONF = **SSH + XML RPC + YANG** (RFC 6241).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "NETCONF layers",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Content",
+      "YANG data"
+     ],
+     [
+      "Operations",
+      "RPCs"
+     ],
+     [
+      "Messages",
+      "XML"
+     ],
+     [
+      "Transport",
+      "SSH"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**XML RPCs over SSH** on a YANG data model."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key operations (RPCs)",
+    "cols": [
+     "RPC",
+     "Use"
+    ],
+    "rows": [
+     [
+      "%%<get>%%",
+      "read state"
+     ],
+     [
+      "%%<get-config>%%",
+      "read running"
+     ],
+     [
+      "%%<edit-config>%%",
+      "change config"
+     ],
+     [
+      "%%<copy-config>%%",
+      "replace"
+     ],
+     [
+      "%%<commit>%%",
+      "apply candidate"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%<edit-config>%% is the change; %%<commit>%% applies the candidate.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Datastores",
+    "cols": [
+     "Store",
+     "Content"
+    ],
+    "rows": [
+     [
+      "running",
+      "current config"
+     ],
+     [
+      "candidate",
+      "staged changes"
+     ],
+     [
+      "startup",
+      "on boot"
+     ],
+     [
+      "operational",
+      "state data"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "candidate lets you stage without applying",
+      "d": "transactional."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Config on IOS-XE",
+    "code": "netconf-yang\nnetconf ssh\n!\nshow netconf-yang sessions\nshow netconf-yang datastore"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%netconf-yang%%",
+      "enable"
+     ],
+     [
+      "%%netconf ssh%%",
+      "transport"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "NETCONF vs RESTCONF",
+    "cols": [
+     "Aspect",
+     "NETCONF",
+     "RESTCONF"
+    ],
+    "rows": [
+     [
+      "Transport",
+      "SSH",
+      "HTTP(S)"
+     ],
+     [
+      "Encoding",
+      "XML",
+      "JSON/XML"
+     ],
+     [
+      "Model",
+      "RPC",
+      "verbs"
+     ],
+     [
+      "Candidate",
+      "yes",
+      "limited"
+     ],
+     [
+      "Transactions",
+      "yes",
+      "less"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NETCONF = RPC/XML/SSH; RESTCONF = verbs/JSON/HTTP.**"
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example flow",
+    "code": "<rpc><edit-config>\n <target><running/></target>\n <config>...</config>\n</edit-config></rpc>"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Encapsulate changes in **RPC envelopes**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "netconf-yang\nnetconf ssh\n!\nshow netconf-yang sessions\nshow netconf-yang datastore\nshow netconf-yang schemas\ndebug netconf-yang"
+   }
+  ],
+  "traps": [
+   "NETCONF = **SSH + XML RPC + YANG** (RFC 6241).",
+   "Ops: **get / edit-config / commit / copy-config**.",
+   "**candidate = stage then commit**.",
+   "running vs candidate vs operational datastores.",
+   "Richer but heavier than RESTCONF."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "NETCONF"
+   ],
+   "rows": [
+    [
+     "Standard",
+     "RFC 6241"
+    ],
+    [
+     "Transport",
+     "SSH"
+    ],
+    [
+     "Encoding",
+     "XML"
+    ],
+    [
+     "Model",
+     "YANG"
+    ],
+    [
+     "Ops",
+     "RPC"
+    ],
+    [
+     "Edit",
+     "edit-config"
+    ],
+    [
+     "Commit",
+     "candidate"
+    ],
+    [
+     "vs RESTCONF",
+     "RPC/SSH"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. RESTCONF",
+    "d": "RESTCONF is an IETF standard that exposes YANG models over HTTP(S) using REST verbs — a REST-style i"
+   },
+   {
+    "t": "09. YANG",
+    "d": "YANG (RFC 6020/7950) is a data modeling language that describes network configuration and state as a"
+   }
+  ],
+  "glossary": [
+   "NETCONF",
+   "YANG"
+  ]
+ },
+ {
+  "num": "09",
+  "id": "t09",
+  "group": "api",
+  "title": "YANG",
+  "blurb": "YANG (RFC 6020/7950) is a data modeling language that describes network configuration and state as a",
+  "overview": "**[[YANG]]** (RFC 6020/7950) is a **data modeling language** that describes network configuration and state as a **tree of containers, lists, and leafs**. Both **[[NETCONF]]** and **RESTCONF** operate on YANG models — it's the shared \"schema\" of modern network automation. The exam tests the model structure and standard models.",
+  "keyIdea": "YANG = **data model (tree of containers/lists/leafs)**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What YANG does",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Model",
+      "config + state"
+     ],
+     [
+      "Tree",
+      "containers/lists"
+     ],
+     [
+      "Reuse",
+      "modules"
+     ],
+     [
+      "Access",
+      "NETCONF/RESTCONF"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "YANG gives devices a **structured, machine-readable interface**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key statements",
+    "cols": [
+     "Statement",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "module",
+      "model namespace"
+     ],
+     [
+      "container",
+      "group of nodes"
+     ],
+     [
+      "list",
+      "repeated entries"
+     ],
+     [
+      "leaf",
+      "single value"
+     ],
+     [
+      "leaf-list",
+      "array of values"
+     ],
+     [
+      "type",
+      "data type"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "A YANG module is the **schema** for a device's config."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Data types",
+    "cols": [
+     "Type",
+     "Example"
+    ],
+    "rows": [
+     [
+      "string",
+      "\"uplink\""
+     ],
+     [
+      "int/uint",
+      "100"
+     ],
+     [
+      "boolean",
+      "true/false"
+     ],
+     [
+      "enumeration",
+      "up/down"
+     ],
+     [
+      "ip-address",
+      "10.0.0.1"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Typed leaves make validation **automatic**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Standard models",
+    "cols": [
+     "Model",
+     "For"
+    ],
+    "rows": [
+     [
+      "ietf-interfaces",
+      "interfaces"
+     ],
+     [
+      "ietf-ip",
+      "IP addressing"
+     ],
+     [
+      "Cisco-IOS-XE-native",
+      "IOS-XE native"
+     ],
+     [
+      "ietf-yang-types",
+      "common types"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Cisco ships **Cisco-IOS-XE-*** models for its devices."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example",
+    "code": "interface:\n  - name: GigabitEthernet1\n    type: ethernetCsmacd\n    enabled: true"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "This JSON/YAML maps directly to the **ietf-interfaces** YANG tree."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why it matters",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Standard",
+      "vendor-neutral"
+     ],
+     [
+      "Validation",
+      "typed"
+     ],
+     [
+      "Automation",
+      "programmatic"
+     ],
+     [
+      "Introspection",
+      "self-describing"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "YANG = **the common language** for NETCONF/RESTCONF."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show netconf-yang schemas\nshow yang ...\nshow netconf-yang datastore\nshow running-config"
+   }
+  ],
+  "traps": [
+   "YANG = **data model (tree of containers/lists/leafs)**.",
+   "Both NETCONF and RESTCONF use it.",
+   "**module / container / list / leaf** are the building blocks.",
+   "Standard models: **ietf-interfaces**, **ietf-ip**, Cisco native.",
+   "Typed leaves = automatic validation."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "YANG"
+   ],
+   "rows": [
+    [
+     "Type",
+     "data model"
+    ],
+    [
+     "Tree",
+     "containers/lists"
+    ],
+    [
+     "Leaf",
+     "value"
+    ],
+    [
+     "Module",
+     "namespace"
+    ],
+    [
+     "Used by",
+     "NETCONF/RESTCONF"
+    ],
+    [
+     "Standard",
+     "ietf-"
+    ],
+    [
+     "Cisco",
+     "IOS-XE-native"
+    ],
+    [
+     "Benefit",
+     "validation"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. NETCONF",
+    "d": "NETCONF is the IETF standard (RFC 6241) for managing network devices over an SSH session using XML R"
+   },
+   {
+    "t": "10. JSON",
+    "d": "JSON (JavaScript Object Notation) is the lightweight data format used by REST APIs, RESTCONF, and mo"
+   }
+  ],
+  "glossary": [
+   "YANG",
+   "NETCONF"
+  ]
+ },
+ {
+  "num": "10",
+  "id": "t10",
+  "group": "data",
+  "title": "JSON",
+  "blurb": "JSON (JavaScript Object Notation) is the lightweight data format used by REST APIs, RESTCONF, and mo",
+  "overview": "**[[JSON]]** (JavaScript Object Notation) is the **lightweight data format** used by REST APIs, RESTCONF, and most automation tools. It's built on **key-value pairs, arrays, and nesting** — human-readable and machine-parseable. The exam expects you to read and reason about JSON for API payloads.",
+  "keyIdea": "JSON = **key-value, arrays, nesting**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "JSON structure",
+    "cols": [
+     "Element",
+     "Syntax"
+    ],
+    "rows": [
+     [
+      "Object",
+      "%%{ }%%"
+     ],
+     [
+      "Array",
+      "%%[ ]%%"
+     ],
+     [
+      "Key-value",
+      "%%\"key\": value%%"
+     ],
+     [
+      "String",
+      "%%\"text\"%%"
+     ],
+     [
+      "Number",
+      "%%42%%"
+     ],
+     [
+      "Boolean",
+      "%%true/false%%"
+     ],
+     [
+      "Null",
+      "%%null%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Everything is **key-value pairs, nested objects, or arrays**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example",
+    "code": "{\n  \"device\": \"R1\",\n  \"interfaces\": [\n    {\"name\": \"Gi1\", \"enabled\": true},\n    {\"name\": \"Gi2\", \"enabled\": false}\n  ],\n  \"asn\": 65000\n}"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "%%interfaces%% is an **array of objects**",
+      "d": "common for lists of devices/config."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Rules",
+    "cols": [
+     "Rule",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Quotes",
+      "keys double-quoted"
+     ],
+     [
+      "Trailing",
+      "no trailing commas"
+     ],
+     [
+      "Nested",
+      "objects/arrays"
+     ],
+     [
+      "Valid",
+      "must parse"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Malformed JSON (trailing comma, unquoted key) **fails to parse**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "JSON in APIs",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Request",
+      "POST/PUT body"
+     ],
+     [
+      "Response",
+      "API data"
+     ],
+     [
+      "Config",
+      "RESTCONF YANG+JSON"
+     ],
+     [
+      "State",
+      "device telemetry"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "JSON is the **default payload** of REST/RESTCONF."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "JSON vs XML",
+    "cols": [
+     "Aspect",
+     "JSON",
+     "XML"
+    ],
+    "rows": [
+     [
+      "Style",
+      "compact",
+      "verbose"
+     ],
+     [
+      "Types",
+      "native",
+      "text"
+     ],
+     [
+      "Popular",
+      "modern",
+      "legacy"
+     ],
+     [
+      "Comments",
+      "no",
+      "yes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**JSON = lighter, modern; XML = heavier, older** (note 11)."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Parsing (Python)",
+    "code": "import json\ndata = json.loads(payload)   # str -> dict\nprint(data[\"device\"])"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%json.loads%%/%%json.dumps%% convert between text and objects."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "import json\ndata = json.loads(response)\njson.dumps(data, indent=2)"
+   }
+  ],
+  "traps": [
+   "JSON = **key-value, arrays, nesting**.",
+   "Keys **double-quoted**; no trailing commas.",
+   "Array %%[ ]%% vs object %%{ }%%.",
+   "Default payload of **REST/RESTCONF**.",
+   "%%json.loads%% parses text to Python objects."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "JSON"
+   ],
+   "rows": [
+    [
+     "Object",
+     "{ }"
+    ],
+    [
+     "Array",
+     "[ ]"
+    ],
+    [
+     "Key",
+     "\"key\""
+    ],
+    [
+     "Value",
+     "string/number/bool"
+    ],
+    [
+     "Parse",
+     "json.loads"
+    ],
+    [
+     "Dump",
+     "json.dumps"
+    ],
+    [
+     "vs XML",
+     "lighter"
+    ],
+    [
+     "Use",
+     "APIs"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. YANG",
+    "d": "YANG (RFC 6020/7950) is a data modeling language that describes network configuration and state as a"
+   },
+   {
+    "t": "11. XML",
+    "d": "XML (eXtensible Markup Language) is the tag-based data format used by NETCONF and legacy APIs."
+   }
+  ],
+  "glossary": [
+   "JSON"
+  ]
+ },
+ {
+  "num": "11",
+  "id": "t11",
+  "group": "data",
+  "title": "XML",
+  "blurb": "XML (eXtensible Markup Language) is the tag-based data format used by NETCONF and legacy APIs.",
+  "overview": "**[[XML]]** (eXtensible Markup Language) is the **tag-based** data format used by **[[NETCONF]]** and legacy APIs. Every value is wrapped in **opening/closing tags**; attributes add metadata. It's verbose but strict — and it's what NETCONF RPCs are written in. The exam contrasts XML with JSON.",
+  "keyIdea": "XML = **tag-based, well-formed, one root**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "XML structure",
+    "cols": [
+     "Element",
+     "Syntax"
+    ],
+    "rows": [
+     [
+      "Element",
+      "%%<tag>value</tag>%%"
+     ],
+     [
+      "Attribute",
+      "%%<tag attr=\"v\">%%"
+     ],
+     [
+      "Root",
+      "single document root"
+     ],
+     [
+      "Nested",
+      "child elements"
+     ],
+     [
+      "Namespace",
+      "%%xmlns%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Everything is **nested elements with tags**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example",
+    "code": "<device name=\"R1\">\n  <interfaces>\n    <interface>\n      <name>Gi1</name>\n      <enabled>true</enabled>\n    </interface>\n  </interfaces>\n</device>"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%device%% is the root; %%interfaces%% contains repeated children."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Rules",
+    "cols": [
+     "Rule",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Well-formed",
+      "matching tags"
+     ],
+     [
+      "One root",
+      "single document"
+     ],
+     [
+      "Case",
+      "tags case-sensitive"
+     ],
+     [
+      "Escape",
+      "&amp; &lt; &gt;"
+     ],
+     [
+      "Attribute",
+      "quoted values"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "A missing closing tag breaks **well-formedness**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "XML in networking",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "NETCONF",
+      "RPCs in XML"
+     ],
+     [
+      "YANG",
+      "XML encoding"
+     ],
+     [
+      "Legacy",
+      "SOAP/SNMP-ish"
+     ],
+     [
+      "Config",
+      "device data"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NETCONF carries everything as XML RPCs** (note 08)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "XML vs JSON",
+    "cols": [
+     "Aspect",
+     "XML",
+     "JSON"
+    ],
+    "rows": [
+     [
+      "Tags",
+      "verbose",
+      "compact"
+     ],
+     [
+      "Types",
+      "text",
+      "native"
+     ],
+     [
+      "Attributes",
+      "yes",
+      "no"
+     ],
+     [
+      "Comments",
+      "yes",
+      "no"
+     ],
+     [
+      "Popularity",
+      "legacy",
+      "modern"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**XML = strict/verbose; JSON = light/modern.**"
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Parsing (Python)",
+    "code": "import xml.etree.ElementTree as ET\nroot = ET.fromstring(payload)\nprint(root.find(\"name\").text)"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "ElementTree navigates the tag tree."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "import xml.etree.ElementTree as ET\nroot = ET.fromstring(xml_text)\nfor child in root.iter(\"interface\"):\n    print(child.find(\"name\").text)"
+   }
+  ],
+  "traps": [
+   "XML = **tag-based, well-formed, one root**.",
+   "Used by **NETCONF** (XML RPCs).",
+   "**vs JSON: verbose/strict vs compact/light**.",
+   "Attributes vs child elements.",
+   "ElementTree for parsing."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "XML"
+   ],
+   "rows": [
+    [
+     "Element",
+     "<tag>"
+    ],
+    [
+     "Attribute",
+     "attr=\"v\""
+    ],
+    [
+     "Root",
+     "one"
+    ],
+    [
+     "Rule",
+     "well-formed"
+    ],
+    [
+     "Use",
+     "NETCONF"
+    ],
+    [
+     "vs JSON",
+     "verbose"
+    ],
+    [
+     "Namespace",
+     "xmlns"
+    ],
+    [
+     "Parse",
+     "ElementTree"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. JSON",
+    "d": "JSON (JavaScript Object Notation) is the lightweight data format used by REST APIs, RESTCONF, and mo"
+   },
+   {
+    "t": "12. YAML",
+    "d": "YAML (\"YAML Ain't Markup Language\") is a human-friendly data format based on indentation — used heav"
+   }
+  ],
+  "glossary": [
+   "XML",
+   "NETCONF"
+  ]
+ },
+ {
+  "num": "12",
+  "id": "t12",
+  "group": "data",
+  "title": "YAML",
+  "blurb": "YAML (\"YAML Ain't Markup Language\") is a human-friendly data format based on indentation — used heav",
+  "overview": "**[[YAML]]** (\"YAML Ain't Markup Language\") is a **human-friendly data format** based on **indentation** — used heavily by **[[Ansible]]** (playbooks/inventory) and config files. It maps cleanly to JSON/Python structures. The exam expects you to read YAML and spot indentation/quoting mistakes.",
+  "keyIdea": "YAML = **indentation-based**; no braces; spaces not tabs.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "YAML basics",
+    "cols": [
+     "Element",
+     "Syntax"
+    ],
+    "rows": [
+     [
+      "Mapping",
+      "%%key: value%%"
+     ],
+     [
+      "List",
+      "%%- item%%"
+     ],
+     [
+      "Nesting",
+      "indentation"
+     ],
+     [
+      "Comments",
+      "%%#%%"
+     ],
+     [
+      "Strings",
+      "quotes optional"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Indentation defines structure",
+      "d": "spaces, not tabs."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example",
+    "code": "device: R1\ninterfaces:\n  - name: Gi1\n    enabled: true\n  - name: Gi2\n    enabled: false\nasn: 65000"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "%%interfaces%% is a **list of mappings**",
+      "d": "the classic Ansible/device structure."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Rules to remember",
+    "cols": [
+     "Rule",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Spaces",
+      "not tabs"
+     ],
+     [
+      "Consistency",
+      "same indent level"
+     ],
+     [
+      "Quote",
+      "special chars (%%:%%, %%#%%)"
+     ],
+     [
+      "Booleans",
+      "true/false"
+     ],
+     [
+      "Null",
+      "null/~"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Tabs and mixed indent = parse errors.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "YAML in networking",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Ansible",
+      "playbooks + inventory"
+     ],
+     [
+      "Terraform",
+      "HCL is similar"
+     ],
+     [
+      "Config",
+      "files/values"
+     ],
+     [
+      "SDN",
+      "DNA Center exports"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "YAML is the **config/playbook language** of automation."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "YAML vs JSON",
+    "cols": [
+     "Aspect",
+     "YAML",
+     "JSON"
+    ],
+    "rows": [
+     [
+      "Readability",
+      "human",
+      "moderate"
+     ],
+     [
+      "Braces",
+      "none",
+      "yes"
+     ],
+     [
+      "Indent",
+      "key",
+      "braces"
+     ],
+     [
+      "Comments",
+      "yes",
+      "no"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "YAML = readable; JSON = compact/standard",
+      "d": "YAML converts to JSON."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Python handling",
+    "code": "import yaml\ndata = yaml.safe_load(text)   # YAML -> dict/list\nyaml.safe_dump(data)"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%yaml.safe_load%% converts YAML to Python objects."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "import yaml\ndata = yaml.safe_load(open(\"vars.yaml\"))\nprint(data[\"device\"])"
+   }
+  ],
+  "traps": [
+   "YAML = **indentation-based**; no braces; spaces not tabs.",
+   "**Ansible playbooks/inventory** are YAML.",
+   "Lists %%- item%%, mappings %%key: value%%.",
+   "Quote special characters.",
+   "%%yaml.safe_load%% parses to Python."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "YAML"
+   ],
+   "rows": [
+    [
+     "Structure",
+     "indent"
+    ],
+    [
+     "Mapping",
+     "key: value"
+    ],
+    [
+     "List",
+     "- item"
+    ],
+    [
+     "Comments",
+     "#"
+    ],
+    [
+     "Tabs",
+     "forbidden"
+    ],
+    [
+     "Use",
+     "Ansible"
+    ],
+    [
+     "vs JSON",
+     "readable"
+    ],
+    [
+     "Parse",
+     "safe_load"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "11. XML",
+    "d": "XML (eXtensible Markup Language) is the tag-based data format used by NETCONF and legacy APIs."
+   },
+   {
+    "t": "13. Python",
+    "d": "Python is the de-facto language for network automation: scripts talk to devices via REST/Netmiko/NAP"
+   }
+  ],
+  "glossary": [
+   "YAML",
+   "Ansible"
+  ]
+ },
+ {
+  "num": "13",
+  "id": "t13",
+  "group": "tools",
+  "title": "Python",
+  "blurb": "Python is the de-facto language for network automation: scripts talk to devices via REST/Netmiko/NAP",
+  "overview": "**[[Python]]** is the de-facto language for network automation: scripts talk to devices via **REST/Netmiko/NAPALM**, parse **[[JSON]]/YAML**, and drive controllers. The exam expects basic Python literacy — variables, data types, conditionals, loops, functions, and the %%requests%%/%%json%% modules for APIs.",
+  "keyIdea": "Python = **data types + requests + json**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Core syntax",
+    "cols": [
+     "Concept",
+     "Example"
+    ],
+    "rows": [
+     [
+      "Variable",
+      "%%host = \"192.0.2.1\"%%"
+     ],
+     [
+      "List",
+      "%%devices = [\"R1\",\"R2\"]%%"
+     ],
+     [
+      "Dict",
+      "%%{\"name\": \"R1\"}%%"
+     ],
+     [
+      "Condition",
+      "%%if x > 5:%%"
+     ],
+     [
+      "Loop",
+      "%%for d in devices:%%"
+     ],
+     [
+      "Function",
+      "%%def get(ip):%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "**Dicts and lists** mirror JSON",
+      "d": "the bridge to APIs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Libraries for network automation",
+    "cols": [
+     "Library",
+     "Use"
+    ],
+    "rows": [
+     [
+      "requests",
+      "HTTP/REST"
+     ],
+     [
+      "json",
+      "parse/serialize"
+     ],
+     [
+      "netmiko",
+      "SSH CLI"
+     ],
+     [
+      "napalm",
+      "multi-vendor API"
+     ],
+     [
+      "ncclient",
+      "NETCONF"
+     ],
+     [
+      "yaml",
+      "YAML config"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**requests + netmiko + ncclient** cover most automation needs."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "REST call example",
+    "code": "import requests, json\nr = requests.get(\"https://host/api\", headers={\"X-Auth-Token\": token}, verify=False)\ndata = r.json()\nprint(data[\"response\"])"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Method",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "requests.get/post/put/delete",
+      "verbs"
+     ],
+     [
+      ".json()",
+      "parse response"
+     ],
+     [
+      "verify=False",
+      "skip TLS"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Common patterns",
+    "cols": [
+     "Pattern",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Read config",
+      "GET"
+     ],
+     [
+      "Change config",
+      "POST/PATCH"
+     ],
+     [
+      "SSH",
+      "netmiko"
+     ],
+     [
+      "Loop devices",
+      "for + list"
+     ],
+     [
+      "Handle errors",
+      "try/except"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Try/except** keeps scripts from dying on one bad device."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example device loop",
+    "code": "for host in devices:\n    r = requests.get(f\"https://{host}/api\", ...)\n    print(host, r.status_code)"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "F-strings and loops make **multi-device** work easy."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why Python in exams",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Readable",
+      "easy to learn"
+     ],
+     [
+      "Ecosystem",
+      "requests/netmiko"
+     ],
+     [
+      "Data",
+      "JSON/YAML native"
+     ],
+     [
+      "Controllers",
+      "DNA Center/SD-WAN APIs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Python = the **glue** for SDN automation."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "python3 -c \"import requests, json; print('ok')\"\npython3 script.py\npip install requests netmiko napalm"
+   }
+  ],
+  "traps": [
+   "Python = **data types + requests + json**.",
+   "Libraries: **requests (REST), netmiko (SSH), ncclient (NETCONF)**.",
+   "%%r.json()%% parses API responses.",
+   "F-strings + loops = multi-device automation.",
+   "%%try/except%% for error handling."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Python"
+   ],
+   "rows": [
+    [
+     "REST",
+     "requests"
+    ],
+    [
+     "Parse",
+     "json"
+    ],
+    [
+     "SSH",
+     "netmiko"
+    ],
+    [
+     "NETCONF",
+     "ncclient"
+    ],
+    [
+     "Loop",
+     "for"
+    ],
+    [
+     "Error",
+     "try/except"
+    ],
+    [
+     "Dict",
+     "key: value"
+    ],
+    [
+     "Multi",
+     "devices list"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "12. YAML",
+    "d": "YAML (\"YAML Ain't Markup Language\") is a human-friendly data format based on indentation — used heav"
+   },
+   {
+    "t": "14. Ansible",
+    "d": "Ansible is a push-based, agentless automation tool."
+   }
+  ],
+  "glossary": [
+   "Python",
+   "JSON"
+  ]
+ },
+ {
+  "num": "14",
+  "id": "t14",
+  "group": "tools",
+  "title": "Ansible",
+  "blurb": "Ansible is a push-based, agentless automation tool.",
+  "overview": "**[[Ansible]]** is a **push-based, agentless** automation tool. Playbooks (**[[YAML]]**) run **modules** against inventory hosts over **SSH**. For networking, modules like %%ios_command%%, %%ios_config%%, and %%restconf/ncclient%% configure devices. The exam tests the playbook structure and core concepts.",
+  "keyIdea": "Ansible = **agentless, push, SSH**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Agentless push model",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Agent",
+      "none on device"
+     ],
+     [
+      "Transport",
+      "SSH (networking)"
+     ],
+     [
+      "Control",
+      "Ansible controller"
+     ],
+     [
+      "Inventory",
+      "list of hosts"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Ansible **pushes** from the controller",
+      "d": "nothing installs on the device."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key components",
+    "cols": [
+     "Component",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Playbook",
+      "YAML tasks"
+     ],
+     [
+      "Inventory",
+      "hosts/groups"
+     ],
+     [
+      "Module",
+      "unit of work"
+     ],
+     [
+      "Task",
+      "one module run"
+     ],
+     [
+      "Play",
+      "tasks on hosts"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Playbook = the automation recipe.**"
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Playbook example",
+    "code": "- hosts: routers\n  connection: network_cli\n  tasks:\n    - name: Set banner\n      ios_config:\n        lines:\n          - banner motd ^Welcome^"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Keyword",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "hosts",
+      "target group"
+     ],
+     [
+      "connection",
+      "network_cli/ssh"
+     ],
+     [
+      "tasks",
+      "list of modules"
+     ],
+     [
+      "ios_config",
+      "Cisco module"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Network modules",
+    "cols": [
+     "Module",
+     "Use"
+    ],
+    "rows": [
+     [
+      "ios_command",
+      "run show"
+     ],
+     [
+      "ios_config",
+      "push config"
+     ],
+     [
+      "ios_facts",
+      "gather state"
+     ],
+     [
+      "ios_l3_interface",
+      "structured"
+     ],
+     [
+      "restconf/ncclient",
+      "YANG"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**ios_facts** + structured modules enable **idempotent** config."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Idempotency",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "What",
+      "same result each run"
+     ],
+     [
+      "Benefit",
+      "safe to re-run"
+     ],
+     [
+      "How",
+      "check desired state"
+     ],
+     [
+      "Role",
+      "config as code"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Idempotent** playbooks don't duplicate config."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "ansible-playbook playbook.yaml\nansible-inventory --list\nansible routers -m ping"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%ansible-playbook%% runs; %%-m ping%% tests reachability."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "ansible-playbook -i inventory site.yaml\nansible-inventory --list\nansible routers -m ios_command -a \"commands='show version'\""
+   }
+  ],
+  "traps": [
+   "Ansible = **agentless, push, SSH**.",
+   "**Playbook = YAML; modules = ios_config/ios_command**.",
+   "Inventory lists hosts; %%network_cli%% for devices.",
+   "**Idempotent** = safe to re-run.",
+   "%%ios_facts%% gathers state for structured config."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Ansible"
+   ],
+   "rows": [
+    [
+     "Model",
+     "push"
+    ],
+    [
+     "Agent",
+     "none"
+    ],
+    [
+     "Playbook",
+     "YAML"
+    ],
+    [
+     "Module",
+     "ios_config"
+    ],
+    [
+     "Inventory",
+     "hosts"
+    ],
+    [
+     "Connection",
+     "network_cli"
+    ],
+    [
+     "Idempotent",
+     "yes"
+    ],
+    [
+     "Run",
+     "ansible-playbook"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "13. Python",
+    "d": "Python is the de-facto language for network automation: scripts talk to devices via REST/Netmiko/NAP"
+   },
+   {
+    "t": "15. Terraform",
+    "d": "Terraform is Infrastructure as Code (IaC): you declare the desired state in HCL and Terraform plans"
+   }
+  ],
+  "glossary": [
+   "Ansible",
+   "YAML"
+  ]
+ },
+ {
+  "num": "15",
+  "id": "t15",
+  "group": "tools",
+  "title": "Terraform",
+  "blurb": "Terraform is Infrastructure as Code (IaC): you declare the desired state in HCL and Terraform plans",
+  "overview": "**[[Terraform]]** is **Infrastructure as Code (IaC)**: you declare the **desired state** in **HCL** and Terraform **plans and applies** the changes against providers (cloud, and via **Cisco providers**: DNA Center, IOS-XE, Meraki, SD-WAN). Its key difference from Ansible: **state-based, declarative** with a **plan/apply** workflow.",
+  "keyIdea": "Terraform = **declarative IaC + state**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Declarative model",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Declare",
+      "desired state (HCL)"
+     ],
+     [
+      "Plan",
+      "compute diff"
+     ],
+     [
+      "Apply",
+      "make it so"
+     ],
+     [
+      "State",
+      "track what exists"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Terraform **reconciles current → desired state**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Core workflow",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%terraform init%%",
+      "install providers"
+     ],
+     [
+      "%%terraform plan%%",
+      "preview changes"
+     ],
+     [
+      "%%terraform apply%%",
+      "execute plan"
+     ],
+     [
+      "%%terraform destroy%%",
+      "remove resources"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Plan → apply",
+      "d": "the safe workflow."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "HCL example",
+    "code": "provider \"iosxe\" {\n  host = \"192.0.2.1\"\n  username = \"admin\"\n}\n\nresource \"iosxe_interface\" \"uplink\" {\n  name = \"GigabitEthernet1\"\n  description = \"to core\"\n  shutdown = false\n}"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Keyword",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "provider",
+      "platform"
+     ],
+     [
+      "resource",
+      "object"
+     ],
+     [
+      "name",
+      "key"
+     ],
+     [
+      "attribute",
+      "value"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Terraform vs Ansible",
+    "cols": [
+     "Aspect",
+     "Terraform",
+     "Ansible"
+    ],
+    "rows": [
+     [
+      "Model",
+      "declarative",
+      "imperative"
+     ],
+     [
+      "State",
+      "yes",
+      "no"
+     ],
+     [
+      "Workflow",
+      "plan/apply",
+      "run playbook"
+     ],
+     [
+      "Use",
+      "provision infra",
+      "config/manage"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Terraform = state+plan; Ansible = push/imperative.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Providers",
+    "cols": [
+     "Provider",
+     "What"
+    ],
+    "rows": [
+     [
+      "iosxe",
+      "IOS-XE config"
+     ],
+     [
+      "dnacentersdk",
+      "DNA Center"
+     ],
+     [
+      "meraki",
+      "cloud"
+     ],
+     [
+      "sdwan",
+      "SD-WAN"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Cisco providers** let Terraform drive network gear."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why it matters",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Codify",
+      "infra as code"
+     ],
+     [
+      "Repeatable",
+      "state-based"
+     ],
+     [
+      "Safe",
+      "plan previews"
+     ],
+     [
+      "Multicloud",
+      "same tool"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IaC + plan = **auditable, repeatable** infrastructure."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "terraform init\nterraform plan\nterraform apply -auto-approve\nterraform destroy\nterraform state list"
+   }
+  ],
+  "traps": [
+   "Terraform = **declarative IaC + state**.",
+   "Workflow: **init → plan → apply → destroy**.",
+   "HCL = %%provider%% + %%resource%%.",
+   "**vs Ansible: declarative/state vs imperative/push**.",
+   "Cisco providers: **iosxe, dnacentersdk, meraki, sdwan**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Terraform"
+   ],
+   "rows": [
+    [
+     "Model",
+     "declarative"
+    ],
+    [
+     "State",
+     "yes"
+    ],
+    [
+     "Plan",
+     "preview"
+    ],
+    [
+     "Apply",
+     "execute"
+    ],
+    [
+     "HCL",
+     "resources"
+    ],
+    [
+     "Provider",
+     "iosxe"
+    ],
+    [
+     "vs Ansible",
+     "state-based"
+    ],
+    [
+     "Use",
+     "IaC"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "14. Ansible",
+    "d": "Ansible is a push-based, agentless automation tool."
+   },
+   {
+    "t": "16. Git",
+    "d": "Git is a distributed version control system — it tracks config/scripts/playbooks, enables branches"
+   }
+  ],
+  "glossary": [
+   "Terraform"
+  ]
+ },
+ {
+  "num": "16",
+  "id": "t16",
+  "group": "tools",
+  "title": "Git",
+  "blurb": "Git is a distributed version control system — it tracks config/scripts/playbooks, enables branches",
+  "overview": "**[[Git]]** is a **distributed version control system** — it tracks config/scripts/playbooks, enables **branches, commits, and rollback**. For network engineers it's the backbone of **Infrastructure as Code** and **config-as-code** workflows. The exam tests the core commands and concepts.",
+  "keyIdea": "Git states: **working → staged → committed**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Why Git",
+    "cols": [
+     "Benefit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Versioning",
+      "track changes"
+     ],
+     [
+      "Rollback",
+      "revert errors"
+     ],
+     [
+      "Branching",
+      "parallel work"
+     ],
+     [
+      "Collaboration",
+      "team/PR"
+     ],
+     [
+      "Audit",
+      "history"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Git = **the safety net for config as code**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The three states",
+    "cols": [
+     "State",
+     "Where"
+    ],
+    "rows": [
+     [
+      "working",
+      "your files"
+     ],
+     [
+      "staged",
+      "index"
+     ],
+     [
+      "committed",
+      "repository"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Files flow: **modified → staged → committed**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Core commands",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%git init%%",
+      "start repo"
+     ],
+     [
+      "%%git add%%",
+      "stage"
+     ],
+     [
+      "%%git commit%%",
+      "save snapshot"
+     ],
+     [
+      "%%git status%%",
+      "show state"
+     ],
+     [
+      "%%git log%%",
+      "history"
+     ],
+     [
+      "%%git checkout%%",
+      "switch/restore"
+     ],
+     [
+      "%%git push/pull%%",
+      "remote sync"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**add → commit** records a change; **push/pull** syncs."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Example flow",
+    "code": "git init\ngit add configs/\ngit commit -m \"add router configs\"\ngit log\ngit diff"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Result"
+    ],
+    "rows": [
+     [
+      "git add",
+      "stage"
+     ],
+     [
+      "git commit",
+      "snapshot"
+     ],
+     [
+      "git diff",
+      "see changes"
+     ],
+     [
+      "git log",
+      "history"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Git for networking",
+    "cols": [
+     "Use",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Config files",
+      "versioned"
+     ],
+     [
+      "Playbooks",
+      "Ansible/Terraform"
+     ],
+     [
+      "IaC",
+      "audit + rollback"
+     ],
+     [
+      "Collaboration",
+      "PR review"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Store **configs/playbooks** in Git for reproducibility."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Remote workflows",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Remote",
+      "GitHub/GitLab"
+     ],
+     [
+      "Clone",
+      "copy repo"
+     ],
+     [
+      "Branch",
+      "feature work"
+     ],
+     [
+      "Merge/PR",
+      "integrate"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Branch + PR** keeps changes reviewable."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "git clone <url>\ngit branch feature\ngit checkout feature\ngit add -A\ngit commit -m \"msg\"\ngit push origin main"
+   }
+  ],
+  "traps": [
+   "Git states: **working → staged → committed**.",
+   "%%add%% stages; %%commit%% saves; %%push%% syncs.",
+   "**Branch + PR** = collaboration.",
+   "Git underpins **IaC / config-as-code**.",
+   "%%git log%%/%%git diff%% = history + review."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Git"
+   ],
+   "rows": [
+    [
+     "System",
+     "VCS"
+    ],
+    [
+     "Init",
+     "git init"
+    ],
+    [
+     "Stage",
+     "git add"
+    ],
+    [
+     "Commit",
+     "git commit"
+    ],
+    [
+     "History",
+     "git log"
+    ],
+    [
+     "Branch",
+     "git branch"
+    ],
+    [
+     "Remote",
+     "push/pull"
+    ],
+    [
+     "Use",
+     "IaC"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "15. Terraform",
+    "d": "Terraform is Infrastructure as Code (IaC): you declare the desired state in HCL and Terraform plans"
+   },
+   {
+    "t": "01. SDN",
+    "d": "SDN separates the control plane from the data plane, centralizing the brain in a controller."
+   }
+  ],
+  "glossary": [
+   "Git"
+  ]
+ }
+];
+
+        const GROUPS = [{"key": "sdn", "label": "SDN Concepts", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "api", "label": "Programmability & APIs", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}, {"key": "data", "label": "Data Formats", "chip": "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300", "dot": "bg-amber-600", "bullet": "text-amber-600 dark:text-amber-400"}, {"key": "tools", "label": "Automation Tools", "chip": "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300", "dot": "bg-violet-600", "bullet": "text-violet-600 dark:text-violet-400"}];
+
+        const groups = GROUPS;
+
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+ {
+  "term": "SDN",
+  "def": "SDN (Software-Defined Networking) separates the control plane from the data plane: the brain moves to a central controller (e.g. DNA Center), while switches/routers keep only the forwarding plane. The controller talks to apps via northbound APIs (REST) and to devices via southbound protocols —..."
+ },
+ {
+  "term": "DNA Center",
+  "def": "Cisco DNA Center is the SDN controller + management platform for the campus: the heart of intent-based networking (IBN). It automates design, provisioning, assurance (telemetry/AI), and policy across switches/APs, and orchestrates SD-Access fabrics (VXLAN/LISP/ISE). It is the campus analog of..."
+ },
+ {
+  "term": "SD-Access",
+  "def": "SD-Access is Cisco's intent-based campus fabric: a VXLAN overlay carries data (16M VNIs — the VLAN problem solved), LISP is the control plane (EID→RLOC mapping), ISE provides policy/segmentation, and DNA Center orchestrates it all. Devices connect anywhere and get their identity/policy from the..."
+ },
+ {
+  "term": "VXLAN",
+  "def": "VXLAN is an overlay data-plane technology: it wraps L2 frames in a UDP (4789) packet (outer: IP/UDP/VXLAN header) that rides any L3 underlay. Its VNI (VXLAN Network Identifier, 24-bit) replaces the 12-bit VLAN → 16 million segments instead of 4094, and L2 domains stretch across routed cores /..."
+ },
+ {
+  "term": "LISP",
+  "def": "LISP (Locator/ID Separation Protocol) splits a host's identity (EID) from its location (RLOC): endpoints keep stable IDs while the network tracks where they live, via a map server/map resolver control plane. Mobility becomes a mapping update — the control plane of SD-Access (alongside VXLAN data..."
+ },
+ {
+  "term": "REST API",
+  "def": "REST (Representational State Transfer) is the HTTP-based API style: everything is a resource with a URL, and actions are HTTP verbs — GET (read), POST (create), PUT/PATCH (update), DELETE (remove). Data rides as JSON/XML; status comes back as HTTP codes (200 OK, 404, 500). Network..."
+ },
+ {
+  "term": "JSON",
+  "def": "JSON (JavaScript Object Notation) is the lightweight data format of REST APIs, RESTCONF, and most automation tools — built on key-value objects {}, arrays [], and strings/numbers/booleans (always double-quoted). It's compact, readable, language-agnostic — and it parsed, launched, and answered a..."
+ },
+ {
+  "term": "RESTCONF",
+  "def": "RESTCONF (RFC 8040) is the IETF standard that exposes YANG models over HTTP(S) using REST verbs — the REST-friendly sibling of NETCONF. It uses GET/POST/PUT/PATCH/DELETE against YANG-defined resources with JSON or XML payloads, on HTTP(S) port 443 (often with basic/token auth). Simpler than..."
+ },
+ {
+  "term": "YANG",
+  "def": "YANG (RFC 6020/7950) is the data modeling language that describes a device's configuration and state as a tree of containers, lists, and leafs. It is the vocabulary both NETCONF and RESTCONF operate on: \"model the interface\" → YANG defines it → protocols read/write it. One model, two protocols,..."
+ },
+ {
+  "term": "NETCONF",
+  "def": "NETCONF (RFC 6241) is the IETF standard for managing network devices over SSH using XML RPCs: <get-config>, <edit-config>, <commit> against YANG-modeled datastores. It supports transactions/rollback (candidate/running datastores), filtering, and event notifications — the \"deep\" programmatic..."
+ },
+ {
+  "term": "XML",
+  "def": "XML (eXtensible Markup Language) is the tag-based data format: every value sits between an opening and closing tag (<name>SW1</name>), with attributes adding metadata. It's the natural format for NETCONF (XML RPCs) and legacy SOAP APIs; verbose but self-describing and schema-able (XSD)."
+ },
+ {
+  "term": "YAML",
+  "def": "YAML (\"YAML Ain't Markup Language\") is the human-friendly data format built on indentation — no brackets or tags, just spaces that define structure. It's the backbone of Ansible (playbooks, inventory) and countless config files. Common gotcha: tabs are illegal — indentation must be spaces; ---..."
+ },
+ {
+  "term": "Ansible",
+  "def": "Ansible is a push-based, agentless automation tool: YAML playbooks declare what to do, and modules execute it against inventory hosts over SSH (no agent to install!). For networking: ios_command / ios_config modules, or RESTCONF via uri. A control node runs them; devices just need SSH."
+ },
+ {
+  "term": "Python",
+  "def": "Python is the de-facto network automation language: scripts talk to devices via REST APIs / RESTCONF, CLI libraries (Netmiko, NAPALM), or NETCONF, and parse JSON/YAML. The exam wants basic fluency — reading output, parsing data, requests + json — not art."
+ },
+ {
+  "term": "Terraform",
+  "def": "Terraform is Infrastructure as Code (IaC): you declare desired state in HCL (HashiCorp Configuration Language) files and Terraform plans then applies the diff against providers (cloud — AWS/Azure — and increasingly network devices/controllers). Unlike Ansible's imperative steps, Terraform is..."
+ },
+ {
+  "term": "Git",
+  "def": "Git is a distributed version control system (Linus Torvalds, 2005): it tracks changes to files — configs, scripts, playbooks — with commits, branches, and rollback. For network engineers: the backbone of \"config as code\", enabling review, history, and instant revert of device configurations and..."
+ }
+];
+
+        const quiz = [
+ {
+  "q": "In SDN, which value matches \"Control\"?",
+  "options": [
+   "centralized",
+   "LISP",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The SDN quick review pairs \"Control\" with \"centralized\"."
+ },
+ {
+  "q": "In SDN, which value matches \"Model\"?",
+  "options": [
+   "push",
+   "YANG",
+   "declarative",
+   "centralized"
+  ],
+  "answer": 1,
+  "why": "The SDN quick review pairs \"Model\" with \"YANG\"."
+ },
+ {
+  "q": "In SDN, which value matches \"Benefit\"?",
+  "options": [
+   "validation",
+   "centralized",
+   "programmability",
+   "devices"
+  ],
+  "answer": 2,
+  "why": "The SDN quick review pairs \"Benefit\" with \"programmability\"."
+ },
+ {
+  "q": "In Cisco DNA Center, which value matches \"Role\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "controller/mgmt"
+  ],
+  "answer": 3,
+  "why": "The Cisco DNA Center quick review pairs \"Role\" with \"controller/mgmt\"."
+ },
+ {
+  "q": "In Cisco DNA Center, which value matches \"SD-Access\"?",
+  "options": [
+   "fabric",
+   "control",
+   "centralized",
+   "devices"
+  ],
+  "answer": 0,
+  "why": "The Cisco DNA Center quick review pairs \"SD-Access\" with \"fabric\"."
+ },
+ {
+  "q": "In Cisco DNA Center, which value matches \"API\"?",
+  "options": [
+   "centralized",
+   "REST",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The Cisco DNA Center quick review pairs \"API\" with \"REST\"."
+ },
+ {
+  "q": "In SD-Access, which value matches \"Control\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "LISP",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The SD-Access quick review pairs \"Control\" with \"LISP\"."
+ },
+ {
+  "q": "In SD-Access, which value matches \"Border\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "exit"
+  ],
+  "answer": 3,
+  "why": "The SD-Access quick review pairs \"Border\" with \"exit\"."
+ },
+ {
+  "q": "In SD-Access, which value matches \"Orchestrate\"?",
+  "options": [
+   "DNA Center",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The SD-Access quick review pairs \"Orchestrate\" with \"DNA Center\"."
+ },
+ {
+  "q": "In VXLAN, which value matches \"UDP\"?",
+  "options": [
+   "centralized",
+   "4789",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The VXLAN quick review pairs \"UDP\" with \"4789\"."
+ },
+ {
+  "q": "In VXLAN, which value matches \"Endpoint\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "VTEP",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The VXLAN quick review pairs \"Endpoint\" with \"VTEP\"."
+ },
+ {
+  "q": "In VXLAN, which value matches \"vs VLAN\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "24-bit"
+  ],
+  "answer": 3,
+  "why": "The VXLAN quick review pairs \"vs VLAN\" with \"24-bit\"."
+ },
+ {
+  "q": "In LISP, which value matches \"EID\"?",
+  "options": [
+   "identity",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The LISP quick review pairs \"EID\" with \"identity\"."
+ },
+ {
+  "q": "In LISP, which value matches \"MS\"?",
+  "options": [
+   "centralized",
+   "map server",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The LISP quick review pairs \"MS\" with \"map server\"."
+ },
+ {
+  "q": "In LISP, which value matches \"Mobility\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "same IP",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The LISP quick review pairs \"Mobility\" with \"same IP\"."
+ },
+ {
+  "q": "In REST API, which value matches \"Style\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "HTTP"
+  ],
+  "answer": 3,
+  "why": "The REST API quick review pairs \"Style\" with \"HTTP\"."
+ },
+ {
+  "q": "In REST API, which value matches \"DELETE\"?",
+  "options": [
+   "remove",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The REST API quick review pairs \"DELETE\" with \"remove\"."
+ },
+ {
+  "q": "In REST API, which value matches \"State\"?",
+  "options": [
+   "yes",
+   "stateless",
+   "centralized",
+   "devices"
+  ],
+  "answer": 1,
+  "why": "The REST API quick review pairs \"State\" with \"stateless\"."
+ },
+ {
+  "q": "In RESTCONF, which value matches \"Standard\"?",
+  "options": [
+   "RFC 6241",
+   "ietf-",
+   "RFC 8040",
+   "centralized"
+  ],
+  "answer": 2,
+  "why": "The RESTCONF quick review pairs \"Standard\" with \"RFC 8040\"."
+ },
+ {
+  "q": "In RESTCONF, which value matches \"State\"?",
+  "options": [
+   "yes",
+   "centralized",
+   "devices",
+   "stateless"
+  ],
+  "answer": 3,
+  "why": "The RESTCONF quick review pairs \"State\" with \"stateless\"."
+ },
+ {
+  "q": "In RESTCONF, which value matches \"Enable\"?",
+  "options": [
+   "restconf",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The RESTCONF quick review pairs \"Enable\" with \"restconf\"."
+ },
+ {
+  "q": "In NETCONF, which value matches \"Standard\"?",
+  "options": [
+   "RFC 8040",
+   "RFC 6241",
+   "ietf-",
+   "centralized"
+  ],
+  "answer": 1,
+  "why": "The NETCONF quick review pairs \"Standard\" with \"RFC 6241\"."
+ },
+ {
+  "q": "In NETCONF, which value matches \"Ops\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "RPC",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The NETCONF quick review pairs \"Ops\" with \"RPC\"."
+ },
+ {
+  "q": "In NETCONF, which value matches \"vs RESTCONF\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "RPC/SSH"
+  ],
+  "answer": 3,
+  "why": "The NETCONF quick review pairs \"vs RESTCONF\" with \"RPC/SSH\"."
+ },
+ {
+  "q": "In YANG, which value matches \"Type\"?",
+  "options": [
+   "data model",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The YANG quick review pairs \"Type\" with \"data model\"."
+ },
+ {
+  "q": "In YANG, which value matches \"Used by\"?",
+  "options": [
+   "centralized",
+   "NETCONF/RESTCONF",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The YANG quick review pairs \"Used by\" with \"NETCONF/RESTCONF\"."
+ },
+ {
+  "q": "In YANG, which value matches \"Benefit\"?",
+  "options": [
+   "programmability",
+   "centralized",
+   "validation",
+   "devices"
+  ],
+  "answer": 2,
+  "why": "The YANG quick review pairs \"Benefit\" with \"validation\"."
+ },
+ {
+  "q": "In JSON, which value matches \"Object\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "{ }"
+  ],
+  "answer": 3,
+  "why": "The JSON quick review pairs \"Object\" with \"{ }\"."
+ },
+ {
+  "q": "In JSON, which value matches \"Parse\"?",
+  "options": [
+   "json.loads",
+   "ElementTree",
+   "safe_load",
+   "json"
+  ],
+  "answer": 0,
+  "why": "The JSON quick review pairs \"Parse\" with \"json.loads\"."
+ },
+ {
+  "q": "In JSON, which value matches \"Use\"?",
+  "options": [
+   "SD-Access",
+   "APIs",
+   "NETCONF",
+   "Ansible"
+  ],
+  "answer": 1,
+  "why": "The JSON quick review pairs \"Use\" with \"APIs\"."
+ },
+ {
+  "q": "In XML, which value matches \"Element\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "<tag>",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The XML quick review pairs \"Element\" with \"<tag>\"."
+ },
+ {
+  "q": "In XML, which value matches \"Use\"?",
+  "options": [
+   "SD-Access",
+   "APIs",
+   "Ansible",
+   "NETCONF"
+  ],
+  "answer": 3,
+  "why": "The XML quick review pairs \"Use\" with \"NETCONF\"."
+ },
+ {
+  "q": "In XML, which value matches \"Parse\"?",
+  "options": [
+   "ElementTree",
+   "json.loads",
+   "safe_load",
+   "json"
+  ],
+  "answer": 0,
+  "why": "The XML quick review pairs \"Parse\" with \"ElementTree\"."
+ },
+ {
+  "q": "In YAML, which value matches \"Structure\"?",
+  "options": [
+   "centralized",
+   "indent",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The YAML quick review pairs \"Structure\" with \"indent\"."
+ },
+ {
+  "q": "In YAML, which value matches \"Tabs\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "forbidden",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The YAML quick review pairs \"Tabs\" with \"forbidden\"."
+ },
+ {
+  "q": "In YAML, which value matches \"Parse\"?",
+  "options": [
+   "json.loads",
+   "ElementTree",
+   "json",
+   "safe_load"
+  ],
+  "answer": 3,
+  "why": "The YAML quick review pairs \"Parse\" with \"safe_load\"."
+ },
+ {
+  "q": "In Python, which value matches \"REST\"?",
+  "options": [
+   "requests",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The Python quick review pairs \"REST\" with \"requests\"."
+ },
+ {
+  "q": "In Python, which value matches \"Loop\"?",
+  "options": [
+   "centralized",
+   "for",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The Python quick review pairs \"Loop\" with \"for\"."
+ },
+ {
+  "q": "In Python, which value matches \"Multi\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "devices list",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The Python quick review pairs \"Multi\" with \"devices list\"."
+ },
+ {
+  "q": "In Ansible, which value matches \"Model\"?",
+  "options": [
+   "YANG",
+   "declarative",
+   "centralized",
+   "push"
+  ],
+  "answer": 3,
+  "why": "The Ansible quick review pairs \"Model\" with \"push\"."
+ },
+ {
+  "q": "In Ansible, which value matches \"Inventory\"?",
+  "options": [
+   "hosts",
+   "centralized",
+   "devices",
+   "apps"
+  ],
+  "answer": 0,
+  "why": "The Ansible quick review pairs \"Inventory\" with \"hosts\"."
+ },
+ {
+  "q": "In Ansible, which value matches \"Run\"?",
+  "options": [
+   "centralized",
+   "ansible-playbook",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The Ansible quick review pairs \"Run\" with \"ansible-playbook\"."
+ },
+ {
+  "q": "In Terraform, which value matches \"Model\"?",
+  "options": [
+   "YANG",
+   "push",
+   "declarative",
+   "centralized"
+  ],
+  "answer": 2,
+  "why": "The Terraform quick review pairs \"Model\" with \"declarative\"."
+ },
+ {
+  "q": "In Terraform, which value matches \"HCL\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "apps",
+   "resources"
+  ],
+  "answer": 3,
+  "why": "The Terraform quick review pairs \"HCL\" with \"resources\"."
+ },
+ {
+  "q": "In Terraform, which value matches \"Use\"?",
+  "options": [
+   "IaC",
+   "SD-Access",
+   "APIs",
+   "NETCONF"
+  ],
+  "answer": 0,
+  "why": "The Terraform quick review pairs \"Use\" with \"IaC\"."
+ },
+ {
+  "q": "In Git, which value matches \"System\"?",
+  "options": [
+   "centralized",
+   "VCS",
+   "devices",
+   "apps"
+  ],
+  "answer": 1,
+  "why": "The Git quick review pairs \"System\" with \"VCS\"."
+ },
+ {
+  "q": "In Git, which value matches \"History\"?",
+  "options": [
+   "centralized",
+   "devices",
+   "git log",
+   "apps"
+  ],
+  "answer": 2,
+  "why": "The Git quick review pairs \"History\" with \"git log\"."
+ },
+ {
+  "q": "In Git, which value matches \"Use\"?",
+  "options": [
+   "SD-Access",
+   "APIs",
+   "NETCONF",
+   "IaC"
+  ],
+  "answer": 3,
+  "why": "The Git quick review pairs \"Use\" with \"IaC\"."
+ }
+];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'sdn.theme', done: 'sdn.done', best: 'sdn.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
