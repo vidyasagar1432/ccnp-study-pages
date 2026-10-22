@@ -1,0 +1,4091 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monitoring & Telemetry — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Monitoring & Telemetry for CCNP Enterprise (ENCOR 350-401): Device polling and logs, flow accounting, traffic mirroring, synthetic probes and streaming telemetry, then packet capture when you need to see the actual frames.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Monitoring & Telemetry — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">MON</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Monitoring & Telemetry</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 26</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 26</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">9 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 26 &mdash; Monitoring & Telemetry</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Device polling and logs, flow accounting, traffic mirroring, synthetic probes and streaming telemetry, then packet capture when you need to see the actual frames.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Monitoring & Telemetry &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 26 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = "**[[SNMP]]** polls devices and receives traps, while **[[NetFlow]]** and **[[Flexible NetFlow]]** account for traffic. **[[SPAN]]** and **[[ERSPAN]]** mirror packets, **[[IP SLA]]** sends synthetic probes, and **[[Syslog]]** centralises events. Modern **[[Telemetry]]** streams state continuously, and **[[Wireshark]]** is still the packet-level truth.";
+
+        const topics = [
+ {
+  "num": "01",
+  "id": "t01",
+  "group": "device",
+  "title": "SNMP",
+  "blurb": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps).",
+  "overview": "**[[SNMP]]** monitors and configures network devices over **UDP 161 (poll) / 162 (traps)**. Data lives in the **MIB** and is addressed by **OIDs**; **v2c (community)** and **v3 (security)** are the versions that matter. The exam tests versions, the SNMP model, and configuration.",
+  "keyIdea": "SNMP = **UDP 161 poll / 162 traps**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "SNMP model",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "Manager (NMS)",
+      "polls/collects"
+     ],
+     [
+      "Agent",
+      "runs on device"
+     ],
+     [
+      "MIB",
+      "data tree"
+     ],
+     [
+      "OID",
+      "address of data"
+     ],
+     [
+      "Community/security",
+      "access"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Manager polls the agent's MIB** via OIDs."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Operations",
+    "cols": [
+     "Operation",
+     "Direction",
+     "Use"
+    ],
+    "rows": [
+     [
+      "GET",
+      "M→A",
+      "read one OID"
+     ],
+     [
+      "GETNEXT",
+      "M→A",
+      "walk MIB"
+     ],
+     [
+      "SET",
+      "M→A",
+      "change value"
+     ],
+     [
+      "TRAP",
+      "A→M",
+      "alert"
+     ],
+     [
+      "INFORM",
+      "A→M",
+      "acknowledged alert"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**GET reads; SET writes; TRAP/INFORM push alerts.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Versions",
+    "cols": [
+     "Version",
+     "Security"
+    ],
+    "rows": [
+     [
+      "v1",
+      "community, clear"
+     ],
+     [
+      "v2c",
+      "community, clear"
+     ],
+     [
+      "v3",
+      "auth + encryption"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**v2c = community string (weak); v3 = secure (auth/priv).**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "MIB/OID",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "MIB",
+      "device database"
+     ],
+     [
+      "OID",
+      "dotted address"
+     ],
+     [
+      "Example",
+      "1.3.6.1.2.1.1.1 (sysDescr)"
+     ],
+     [
+      "Walk",
+      "GETNEXT through tree"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The **OID** names a value in the MIB."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Configuration",
+    "code": "snmp-server community public RO\nsnmp-server community secret RW\nsnmp-server host 192.0.2.10 version 3 authpriv NMS\nsnmp-server group GRP v3 priv\nsnmp-server user admin GRP v3 auth sha Pass1 priv aes 128 Pass2"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%community%%",
+      "v1/v2c access"
+     ],
+     [
+      "%%host%%",
+      "trap destination"
+     ],
+     [
+      "%%group/user%%",
+      "v3 security"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**v3** needs user/group with auth+privacy."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "v2c vs v3",
+    "cols": [
+     "Aspect",
+     "v2c",
+     "v3"
+    ],
+    "rows": [
+     [
+      "Community",
+      "yes",
+      "no"
+     ],
+     [
+      "Auth",
+      "none",
+      "SHA/MD5"
+     ],
+     [
+      "Encryption",
+      "none",
+      "AES/DES"
+     ],
+     [
+      "Use",
+      "legacy/lab",
+      "production"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**v3 for security; v2c is legacy.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show snmp\nshow snmp mib\nshow snmp sessions\nsnmpget -v2c -c public host 1.3.6.1.2.1.1.1.0\nsnmpwalk -v2c -c public host .1"
+   }
+  ],
+  "traps": [
+   "SNMP = **UDP 161 poll / 162 traps**.",
+   "**v2c = community (weak); v3 = auth+encryption**.",
+   "GET/SET/TRAP/INFORM — know the verbs.",
+   "Data via **MIB + OID**.",
+   "%%snmp-server community%% and %%host%% are the config core."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SNMP"
+   ],
+   "rows": [
+    [
+     "Poll",
+     "UDP 161"
+    ],
+    [
+     "Traps",
+     "UDP 162"
+    ],
+    [
+     "v2c",
+     "community"
+    ],
+    [
+     "v3",
+     "auth+priv"
+    ],
+    [
+     "Data",
+     "MIB/OID"
+    ],
+    [
+     "GET",
+     "read"
+    ],
+    [
+     "SET",
+     "write"
+    ],
+    [
+     "TRAP",
+     "alert"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. NetFlow",
+    "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
+   },
+   {
+    "t": "03. Flexible NetFlow",
+    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+   }
+  ],
+  "glossary": [
+   "SNMP"
+  ]
+ },
+ {
+  "num": "02",
+  "id": "t02",
+  "group": "traffic",
+  "title": "NetFlow",
+  "blurb": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector.",
+  "overview": "**[[NetFlow]]** exports **flow records** (per-conversation metadata — not packets) to a collector. Flows are **bidirectional** (forward + reverse direction) and identified by the **7-tuple**. Versions matter: **v5 (fixed records)** and **v9 (templates)**. The exam tests flow fields, versions, and basic config.",
+  "keyIdea": "Flows are **bidirectional**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What NetFlow exports",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Flow",
+      "conversation"
+     ],
+     [
+      "Direction",
+      "forward + reverse"
+     ],
+     [
+      "Fields",
+      "tuple + bytes"
+     ],
+     [
+      "Collector",
+      "receiver"
+     ],
+     [
+      "Export",
+      "UDP port"
+     ],
+     [
+      "Sampling",
+      "optional"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "NetFlow = **metadata, not full packets**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The 7-tuple",
+    "cols": [
+     "Field",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Src IP",
+      "source"
+     ],
+     [
+      "Dst IP",
+      "destination"
+     ],
+     [
+      "Src port",
+      "layer 4"
+     ],
+     [
+      "Dst port",
+      "layer 4"
+     ],
+     [
+      "Protocol",
+      "IP proto"
+     ],
+     [
+      "TOS",
+      "class"
+     ],
+     [
+      "Interface",
+      "in/out"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "These identify and **tag a flow**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Versions",
+    "cols": [
+     "Version",
+     "Format"
+    ],
+    "rows": [
+     [
+      "v1",
+      "fixed fields"
+     ],
+     [
+      "v5",
+      "fixed, most famous"
+     ],
+     [
+      "v9",
+      "template-based (flexible)"
+     ],
+     [
+      "IPFIX",
+      "template-based (standard)"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**v5 fixed; v9/IPFIX template-based.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Flow direction",
+    "cols": [
+     "Direction",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Forward",
+      "initiator → responder"
+     ],
+     [
+      "Reverse",
+      "responder → initiator"
+     ],
+     [
+      "Biflow",
+      "both in one record"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The router **caches both directions**."
+     },
+     {
+      "t": "Key point",
+      "d": "Good agility: **v9 sends rich, extensible records**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Export",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Port",
+      "UDP 2055 common"
+     ],
+     [
+      "Collectors",
+      "NMS"
+     ],
+     [
+      "Aggregation",
+      "on collector"
+     ],
+     [
+      "Cache",
+      "on device"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The device caches flows and **exports to a collector**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The exam focus",
+    "cols": [
+     "Topic",
+     "Know"
+    ],
+    "rows": [
+     [
+      "Fields",
+      "7-tuple"
+     ],
+     [
+      "Versions",
+      "v5/v9/IPFIX"
+     ],
+     [
+      "Direction",
+      "biflow"
+     ],
+     [
+      "Export",
+      "collector"
+     ],
+     [
+      "Use",
+      "analysis"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**v5 vs v9 = fixed vs templates** is the classic trap."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "flow record FR1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n match ip protocol\n collect counter bytes\n collect counter packets\nflow exporter EXP1\n destination 192.0.2.10\n transport udp 2055\nflow monitor FM1\n record FR1\n exporter EXP1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor FM1 input"
+   }
+  ],
+  "traps": [
+   "Flows are **bidirectional**.",
+   "**7-tuple** defines a flow.",
+   "**v5 = fixed; v9/IPFIX = templates**.",
+   "Export usually **UDP 2055**.",
+   "NetFlow = **metadata, not packets**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "NetFlow"
+   ],
+   "rows": [
+    [
+     "Records",
+     "metadata"
+    ],
+    [
+     "7-tuple",
+     "conversation"
+    ],
+    [
+     "v5",
+     "fixed"
+    ],
+    [
+     "v9",
+     "templates"
+    ],
+    [
+     "Export",
+     "UDP 2055"
+    ],
+    [
+     "Direction",
+     "biflow"
+    ],
+    [
+     "Cache",
+     "on device"
+    ],
+    [
+     "Use",
+     "analysis"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. SNMP",
+    "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
+   },
+   {
+    "t": "03. Flexible NetFlow",
+    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+   }
+  ],
+  "glossary": [
+   "NetFlow"
+  ]
+ },
+ {
+  "num": "03",
+  "id": "t03",
+  "group": "traffic",
+  "title": "Flexible NetFlow",
+  "blurb": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %",
+  "overview": "**[[Flexible NetFlow|Flexible NetFlow (FNF)]]** is the modern [[NetFlow|NetFlow]] engine: you **define your own records** (%%match%% = key, %%collect%% = non-key fields) via **record → exporter → monitor**. It uses **NetFlow v9/IPFIX** export and improves on fixed-format v5. The exam tests the record constructs and the configuration flow.",
+  "keyIdea": "FNF = **custom records** (match/collect).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Flow record anatomy",
+    "cols": [
+     "Part",
+     "Meaning",
+     "Keyword"
+    ],
+    "rows": [
+     [
+      "match",
+      "key fields",
+      "%%match%%"
+     ],
+     [
+      "collect",
+      "extra fields",
+      "%%collect%%"
+     ],
+     [
+      "exporter",
+      "collector",
+      "%%flow exporter%%"
+     ],
+     [
+      "monitor",
+      "bind",
+      "%%flow monitor%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Keys define the flow identity; collect adds **info about it**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Record examples",
+    "cols": [
+     "Purpose",
+     "Keys",
+     "Collects"
+    ],
+    "rows": [
+     [
+      "traffic analysis",
+      "IPs/ports",
+      "bytes/start"
+     ],
+     [
+      "top talkers",
+      "src/vlan",
+      "bytes/flows"
+     ],
+     [
+      "interface stats",
+      "ifindex",
+      "bytes"
+     ],
+     [
+      "custom",
+      "anything",
+      "anything"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "FNF lets you **tailor fields** to the use case."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Exporter details",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Destination",
+      "collector IP"
+     ],
+     [
+      "Transport",
+      "UDP (2055)"
+     ],
+     [
+      "Version",
+      "v9/IPFIX"
+     ],
+     [
+      "Options",
+      "templates"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Export templates **describe the record** to the collector."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Monitor + cache",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Monitor",
+      "record + exporter"
+     ],
+     [
+      "Cache",
+      "resident flows"
+     ],
+     [
+      "Services",
+      "independent"
+     ],
+     [
+      "Interface",
+      "enable input/output"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Monitor binds everything; the **cache stores flow state**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Why FNF over v5",
+    "cols": [
+     "Aspect",
+     "v5",
+     "FNF"
+    ],
+    "rows": [
+     [
+      "Fields",
+      "fixed",
+      "custom"
+     ],
+     [
+      "Templates",
+      "none",
+      "yes"
+     ],
+     [
+      "Applications",
+      "limited",
+      "rich"
+     ],
+     [
+      "Scale",
+      "capped",
+      "flexible"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**FNF wins on flexibility and scale.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Integration",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "NBAR",
+      "app classification"
+     ],
+     [
+      "sampling",
+      "high rate"
+     ],
+     [
+      "multicast",
+      "flows"
+     ],
+     [
+      "aggregation",
+      "top-N"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "FNF combines with **NBAR and sampling**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "flow record R1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n collect counter bytes\n collect counter packets\nflow exporter E1\n destination 192.0.2.10\n transport udp 2055\nflow monitor M1\n record R1\n exporter E1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor M1 input"
+   }
+  ],
+  "traps": [
+   "FNF = **custom records** (match/collect).",
+   "Structure: **record → exporter → monitor**.",
+   "Export uses **v9/IPFIX templates**.",
+   "%%collect%% = non-key; %%match%% = key.",
+   "Interfaces: %%ip flow monitor ... input%%."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "FNF"
+   ],
+   "rows": [
+    [
+     "Records",
+     "custom"
+    ],
+    [
+     "match",
+     "keys"
+    ],
+    [
+     "collect",
+     "fields"
+    ],
+    [
+     "Export",
+     "v9/IPFIX"
+    ],
+    [
+     "Monitor",
+     "bind"
+    ],
+    [
+     "Cache",
+     "resident"
+    ],
+    [
+     "Use",
+     "flexible"
+    ],
+    [
+     "vs v5",
+     "templates"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. NetFlow",
+    "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
+   },
+   {
+    "t": "04. SPAN",
+    "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
+   }
+  ],
+  "glossary": [
+   "Flexible NetFlow",
+   "NetFlow"
+  ]
+ },
+ {
+  "num": "04",
+  "id": "t04",
+  "group": "traffic",
+  "title": "SPAN",
+  "blurb": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po",
+  "overview": "**[[SPAN|SPAN (Switched Port Analyzer)]]** mirrors **traffic** from one or more source interfaces to a destination port for analysis. It's local (same switch) and is **one-way**; vlan-level mirroring is also possible. The exam tests the config and the **limits on destinations**.",
+  "keyIdea": "SPAN = **local port mirroring**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "SPAN basics",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Source",
+      "interface/vlan"
+     ],
+     [
+      "Destination",
+      "analyzer port"
+     ],
+     [
+      "Direction",
+      "rx/tx/both"
+     ],
+     [
+      "Scope",
+      "local switch"
+     ],
+     [
+      "Use",
+      "capture/analyze"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SPAN = **port mirroring on a single switch**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Source directions",
+    "cols": [
+     "Direction",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "rx",
+      "received traffic"
+     ],
+     [
+      "tx",
+      "transmitted traffic"
+     ],
+     [
+      "both",
+      "both directions"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%monitor session 1 source ... rx/tx/both%%."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Destination",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Port",
+      "analyzer/IDS"
+     ],
+     [
+      "RSPAN",
+      "remote vlan"
+     ],
+     [
+      "ERSPAN",
+      "routed/IP"
+     ],
+     [
+      "Limits",
+      "one-ish per session"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Destination is the **analyzer/IDS connection**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Configuration",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%monitor session N source Gi x/y rx%%",
+      "source"
+     ],
+     [
+      "%%monitor session N destination Gi a/b%%",
+      "analyzer"
+     ],
+     [
+      "%%monitor session N vlan X%%",
+      "vlan source"
+     ],
+     [
+      "%%no monitor session N%%",
+      "remove"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Build session = **source + destination**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Limitations",
+    "cols": [
+     "Limit",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Local only",
+      "no routing"
+     ],
+     [
+      "Resources",
+      "TCAM/session"
+     ],
+     [
+      "Loops",
+      "danger on vlan"
+     ],
+     [
+      "Overload",
+      "mirror all = loss"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SPAN **does not route**; keep sources sane."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "SPAN vs RSPAN vs ERSPAN",
+    "cols": [
+     "Type",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "SPAN",
+      "local same switch"
+     ],
+     [
+      "RSPAN",
+      "remote via vlan"
+     ],
+     [
+      "ERSPAN",
+      "remote via IP/GRE"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**SPAN local; RSPAN/ERSPAN remote** (note 05)."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination interface GigabitEthernet0/2\nshow monitor session 1\nshow monitor"
+   }
+  ],
+  "traps": [
+   "SPAN = **local port mirroring**.",
+   "Sessions: **source + destination**.",
+   "Directive keywords: **rx / tx / both**.",
+   "**SPAN ≠ RSPAN/ERSPAN** (remote needs separation).",
+   "Destinations are **not routable** like a port."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "SPAN"
+   ],
+   "rows": [
+    [
+     "Scope",
+     "local"
+    ],
+    [
+     "Source",
+     "port/vlan"
+    ],
+    [
+     "Dest",
+     "analyzer"
+    ],
+    [
+     "Direction",
+     "rx/tx/both"
+    ],
+    [
+     "Session",
+     "monitor"
+    ],
+    [
+     "Remote",
+     "RSPAN/ERSPAN"
+    ],
+    [
+     "Routing",
+     "none"
+    ],
+    [
+     "Use",
+     "capture"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. Flexible NetFlow",
+    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+   },
+   {
+    "t": "05. ERSPAN",
+    "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
+   }
+  ],
+  "glossary": [
+   "SPAN"
+  ]
+ },
+ {
+  "num": "05",
+  "id": "t05",
+  "group": "traffic",
+  "title": "ERSPAN",
+  "blurb": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror",
+  "overview": "**[[ERSPAN]]** (Encapsulated Remote [[SPAN|SPAN]]) mirrors traffic across a **routed/IP network** by **encapsulating mirrored packets in IP/GRE** toward a destination on any reachable subnet. It extends SPAN beyond a single switch. The exam stresses **GRE encapsulation** and remote destinations.",
+  "keyIdea": "ERSPAN = **mirror over IP/GRE (routed)**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "ERSPAN basics",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Source",
+      "local port/vlan"
+     ],
+     [
+      "Destination",
+      "remote IP/GRE"
+     ],
+     [
+      "Transport",
+      "IP + GRE"
+     ],
+     [
+      "Scope",
+      "routed network"
+     ],
+     [
+      "Use",
+      "remote analyzer"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "ERSPAN = **SPAN over IP/GRE**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Encapsulation",
+    "cols": [
+     "Field",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Outer IP",
+      "router-to-router"
+     ],
+     [
+      "GRE",
+      "tunnels to dest"
+     ],
+     [
+      "Original",
+      "mirrored frame"
+     ],
+     [
+      "Type",
+      "routable"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The mirror is **tunneled to the analyzer**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "ERSPAN vs SPAN vs RSPAN",
+    "cols": [
+     "Type",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "SPAN",
+      "local"
+     ],
+     [
+      "RSPAN",
+      "remote via vlan"
+     ],
+     [
+      "ERSPAN",
+      "remote via IP/GRE"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**ERSPAN = routed remote mirroring.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Configuration",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%monitor session N type erspan-source%%",
+      "source side"
+     ],
+     [
+      "%%... source interface Gi x/y%%",
+      "what to mirror"
+     ],
+     [
+      "%%... destination%%",
+      "remote config"
+     ],
+     [
+      "%%erspan id 100%%",
+      "session key"
+     ],
+     [
+      "%%erspan ip-address ...%%",
+      "destination IP"
+     ],
+     [
+      "%%erspan origin-ip ...%%",
+      "sender IP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "ERSPAN session = **source + GRE destination + id**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Requirements",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "IP route",
+      "both ends"
+     ],
+     [
+      "GRE support",
+      "platforms"
+     ],
+     [
+      "ACL",
+      "permit GRE"
+     ],
+     [
+      "Overhead",
+      "+50 bytes"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Both routers need **routes + GRE** and MTU headroom."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Caveats",
+    "cols": [
+     "Caveat",
+     "Note"
+    ],
+    "rows": [
+     [
+      "MTU",
+      "raise or fragment"
+     ],
+     [
+      "CPU",
+      "extra processing"
+     ],
+     [
+      "Overload",
+      "plan rate"
+     ],
+     [
+      "Only IP",
+      "no raw L2"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Design with **size and load** in mind."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "monitor session 1 type erspan-source\n monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination\n erspan id 100\n erspan ip-address 192.0.2.10\n erspan origin-ip 198.51.100.1\nshow monitor session 1"
+   }
+  ],
+  "traps": [
+   "ERSPAN = **mirror over IP/GRE (routed)**.",
+   "Uses %%type erspan-source/destination%%.",
+   "Needs **%%erspan id%% + %%erspan ip-address%%**.",
+   "RSPAN = **L2 vlan remote**, ERSPAN = **L3 routed remote**.",
+   "MTU+GRE overhead matters."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "ERSPAN"
+   ],
+   "rows": [
+    [
+     "Scope",
+     "routed"
+    ],
+    [
+     "Transport",
+     "IP/GRE"
+    ],
+    [
+     "Session type",
+     "erspan-source"
+    ],
+    [
+     "Fields",
+     "id/ip/address"
+    ],
+    [
+     "vs SPAN",
+     "remote"
+    ],
+    [
+     "vs RSPAN",
+     "L3 vs L2"
+    ],
+    [
+     "Overhead",
+     "+50 bytes"
+    ],
+    [
+     "Use",
+     "remote mirror"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. SPAN",
+    "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
+   },
+   {
+    "t": "06. IP SLA",
+    "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
+   }
+  ],
+  "glossary": [
+   "ERSPAN",
+   "SPAN"
+  ]
+ },
+ {
+  "num": "06",
+  "id": "t06",
+  "group": "device",
+  "title": "IP SLA",
+  "blurb": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability",
+  "overview": "**[[IP SLA]]** generates **synthetic probes** between routers to measure **latency, jitter, loss, and availability** along a path. Results can **react** (track) for routing or config decisions, and are reported via **SNMP/syslog**. It's the classic **SLA testing** tool on Cisco devices.",
+  "keyIdea": "IP SLA = **synthetic probes** (not passive).",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What IP SLA measures",
+    "cols": [
+     "Metric",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Latency",
+      "RTT time"
+     ],
+     [
+      "Jitter",
+      "delay variation"
+     ],
+     [
+      "Loss",
+      "packet loss %"
+     ],
+     [
+      "Availability",
+      "reachability"
+     ],
+     [
+      "MOS",
+      "voice quality"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Probes generate **real, measurable traffic**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Operation types",
+    "cols": [
+     "Type",
+     "Use"
+    ],
+    "rows": [
+     [
+      "ICMP echo",
+      "reachability"
+     ],
+     [
+      "UDP jitter",
+      "voice quality"
+     ],
+     [
+      "TCP connect",
+      "app checks"
+     ],
+     [
+      "HTTP",
+      "web availability"
+     ],
+     [
+      "UDP echo",
+      "protocol"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Pick the **probe type** that matches what you monitor."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Schedule + tracking",
+    "cols": [
+     "Part",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Create",
+      "probe config"
+     ],
+     [
+      "Schedule",
+      "frequency/start"
+     ],
+     [
+      "Track",
+      "reacts to state"
+     ],
+     [
+      "Reaction",
+      "thresholds/events"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Schedule runs it; **track** ties it to routing/reactions."
+     },
+     {
+      "t": "Key point",
+      "d": "The router sends probes at **set intervals**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Configuration",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%ip sla 10%%",
+      "create operation"
+     ],
+     [
+      "%%icmp-echo 192.0.2.5%%",
+      "type/target"
+     ],
+     [
+      "%%frequency 60%%",
+      "every 60 s"
+     ],
+     [
+      "%%timeout 1000%%",
+      "wait"
+     ],
+     [
+      "%%ip sla schedule 10 life forever start-time now%%",
+      "run"
+     ],
+     [
+      "%%track 1 ip sla 10 reachability%%",
+      "track"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Build = create → define → schedule → track."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Integration",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "Route tracking",
+      "adjust routing"
+     ],
+     [
+      "EEM",
+      "events"
+     ],
+     [
+      "SNMP",
+      "report"
+     ],
+     [
+      "Syslog",
+      "logs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IP SLA feeds **tracking and monitoring systems**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "ICP vs ICMP",
+    "cols": [
+     "Aspect",
+     "IP SLA",
+     "plain ping"
+    ],
+    "rows": [
+     [
+      "Metrics",
+      "jitter/loss/MOS",
+      "reachability"
+     ],
+     [
+      "Schedule",
+      "repeat",
+      "manual"
+     ],
+     [
+      "Integration",
+      "track/SNMP",
+      "none"
+     ],
+     [
+      "Use",
+      "SLA stats",
+      "quick check"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**IP SLA beats ping** for real SLA numbers."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "ip sla 10\n icmp-echo 192.0.2.5\n frequency 60\n timeout 1000\nip sla schedule 10 life forever start-time now\ntrack 1 ip sla 10 reachability\nshow ip sla statistics\nshow ip sla config\nshow track 1"
+   }
+  ],
+  "traps": [
+   "IP SLA = **synthetic probes** (not passive).",
+   "Common metric focus: **latency, jitter, loss**.",
+   "%%ip sla%% + %%frequency%% + %%schedule%% is the config pattern.",
+   "**Track** links results to routing reactions.",
+   "UDP jitter = **voice quality (MOS)**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "IP SLA"
+   ],
+   "rows": [
+    [
+     "Probes",
+     "synthetic"
+    ],
+    [
+     "Metrics",
+     "latency/jitter"
+    ],
+    [
+     "Types",
+     "ICMP/UDP/TCP"
+    ],
+    [
+     "Schedule",
+     "frequency"
+    ],
+    [
+     "Track",
+     "reactions"
+    ],
+    [
+     "Report",
+     "SNMP"
+    ],
+    [
+     "Voice",
+     "MOS"
+    ],
+    [
+     "vs ping",
+     "richer"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. ERSPAN",
+    "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
+   },
+   {
+    "t": "07. Syslog",
+    "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
+   }
+  ],
+  "glossary": [
+   "IP SLA"
+  ]
+ },
+ {
+  "num": "07",
+  "id": "t07",
+  "group": "device",
+  "title": "Syslog",
+  "blurb": "Syslog sends device log messages to a central syslog server (UDP 514).",
+  "overview": "**[[Syslog]]** sends device log messages to a central **syslog server (UDP 514)**. Entries carry **facility + severity** (0–7) and timestamps. Only **one severity is stored on device** (%%logging buffered%%); consoles can differ. The exam tests facilities, severities, and the config commands.",
+  "keyIdea": "Severity numeric: **0 = most severe**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Syslog model",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Message",
+      "event/text"
+     ],
+     [
+      "Facility",
+      "source of event"
+     ],
+     [
+      "Severity",
+      "importance"
+     ],
+     [
+      "Timestamp",
+      "time of event"
+     ],
+     [
+      "Destinations",
+      "console/buffer/server"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Message = **facility + severity + text**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Severity levels",
+    "cols": [
+     "Level",
+     "Keyword",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "0",
+      "emergencies",
+      "system down"
+     ],
+     [
+      "1",
+      "alerts",
+      "immediate action"
+     ],
+     [
+      "2",
+      "critical",
+      "critical cond"
+     ],
+     [
+      "3",
+      "errors",
+      "error events"
+     ],
+     [
+      "4",
+      "warnings",
+      "warning"
+     ],
+     [
+      "5",
+      "notification",
+      "normal but notable"
+     ],
+     [
+      "6",
+      "informational",
+      "normal info"
+     ],
+     [
+      "7",
+      "debugging",
+      "debug output"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Lower number = more severe.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Destinations",
+    "cols": [
+     "Destination",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Console",
+      "%%logging console%%"
+     ],
+     [
+      "Buffer",
+      "%%logging buffered%%"
+     ],
+     [
+      "Server",
+      "%%logging host%%"
+     ],
+     [
+      "Trap/SNMP",
+      "via NMS"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Configure **console, buffer, and server separately**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Config examples",
+    "code": "logging host 192.0.2.10\nlogging trap informational\nlogging console errors\nlogging buffered 8192\nlogging source-interface Loopback0\nlogging timestamp datetime"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%logging host%%",
+      "UDP server"
+     ],
+     [
+      "%%logging trap%%",
+      "server level"
+     ],
+     [
+      "%%logging buffered%%",
+      "on-box ring"
+     ],
+     [
+      "%%logging source-interface%%",
+      "sender IP"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%logging trap%% controls what goes to the server.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Syslog vs SNMP traps",
+    "cols": [
+     "Aspect",
+     "Syslog",
+     "SNMP trap"
+    ],
+    "rows": [
+     [
+      "Format",
+      "text",
+      "structured"
+     ],
+     [
+      "Port",
+      "514",
+      "162"
+     ],
+     [
+      "Severity",
+      "numeric",
+      "OID"
+     ],
+     [
+      "Use",
+      "logs",
+      "alerts"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Syslog = **text logs**; SNMP = **structured alerts**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "logging host 192.0.2.10\nlogging trap informational\nshow logging\nshow logging | include 192\nterminal monitor"
+   }
+  ],
+  "traps": [
+   "Severity numeric: **0 = most severe**.",
+   "%%logging trap%% = **server level** (differs from console).",
+   "Syslog default **UDP 514** (reliable option TCP 6514).",
+   "**Buffered is on-box**, separate from server.",
+   "Facility + severity identify the message."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Syslog"
+   ],
+   "rows": [
+    [
+     "Port",
+     "UDP 514"
+    ],
+    [
+     "Severity",
+     "0–7"
+    ],
+    [
+     "Lowest #",
+     "most severe"
+    ],
+    [
+     "Buffer",
+     "on-box"
+    ],
+    [
+     "Server",
+     "logging host"
+    ],
+    [
+     "Console",
+     "logging console"
+    ],
+    [
+     "Format",
+     "text"
+    ],
+    [
+     "Trap",
+     "SNMP 162"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. IP SLA",
+    "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
+   },
+   {
+    "t": "08. Telemetry",
+    "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
+   }
+  ],
+  "glossary": [
+   "Syslog"
+  ]
+ },
+ {
+  "num": "08",
+  "id": "t08",
+  "group": "device",
+  "title": "Telemetry",
+  "blurb": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN",
+  "overview": "**[[Telemetry|Streaming telemetry]]** pushes **subscriptions of device data** continuously to collectors using **push** (vs [[SNMP]]'s pull), encoded as **protobuf/JSON** and transported over **gRPC/gNMI/NETCONF**. It's the modern, scalable replacement for polling. The exam focuses on **push vs pull** and the protocols.",
+  "keyIdea": "Telemetry = **push**; SNMP = poll.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Push vs pull",
+    "cols": [
+     "Model",
+     "Direction",
+     "Style"
+    ],
+    "rows": [
+     [
+      "SNMP/poll",
+      "collector asks",
+      "pull"
+     ],
+     [
+      "Streaming",
+      "device sends",
+      "push"
+     ],
+     [
+      "NetFlow",
+      "device exports",
+      "push"
+     ],
+     [
+      "Speed",
+      "on change/interval",
+      "sustained"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Device pushes on change or interval",
+      "d": "no polling overhead."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Telemetry protocol stack",
+    "cols": [
+     "Layer",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Encoding",
+      "protobuf/JSON"
+     ],
+     [
+      "Transport",
+      "gRPC (best)"
+     ],
+     [
+      "Model",
+      "gNMI/NETCONF"
+     ],
+     [
+      "YANG",
+      "data models"
+     ],
+     [
+      "Subscription",
+      "path/interval"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Stack: **YANG model + gRPC/gNMI transport**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Models of interest",
+    "cols": [
+     "Model",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "gNMI",
+      "standard network mgmt/telemetry"
+     ],
+     [
+      "gRPC",
+      "high-perf transport"
+     ],
+     [
+      "NETCONF",
+      "config+telemetry"
+     ],
+     [
+      "Cisco",
+      "model-driven on IOS-XE/XR"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**gNMI over gRPC** is the modern pairing."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Model-driven telemetry (MDT)",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Subscription",
+      "on-change / interval"
+     ],
+     [
+      "Path",
+      "YANG data path"
+     ],
+     [
+      "Collector",
+      "streaming receiver"
+     ],
+     [
+      "Darwin",
+      "cadence"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Cisco MDT: subscribe to a **YANG path** and stream."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "vs SNMP/NetFlow",
+    "cols": [
+     "Aspect",
+     "SNMP",
+     "NetFlow",
+     "Telemetry"
+    ],
+    "rows": [
+     [
+      "Mode",
+      "pull",
+      "push",
+      "push"
+     ],
+     [
+      "Richness",
+      "limited",
+      "flows",
+      "full model"
+     ],
+     [
+      "Latency",
+      "poll cycle",
+      "per flow",
+      "on change"
+     ],
+     [
+      "Scale",
+      "poor",
+      "good",
+      "best"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Telemetry = **richer + lower latency + scalable**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Considerations",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "CPU",
+      "push overhead"
+     ],
+     [
+      "Bandwidth",
+      "continuous"
+     ],
+     [
+      "Security",
+      "TLS"
+     ],
+     [
+      "Collector",
+      "must scale"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Design for **sustained stream load**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "telemetry ietf subscription 10\n encoding encode-kvgpb\n filter xpath /interfaces/interface/statistics\n stream yang-push\n update-policy periodic 30000\n receiver ip address 192.0.2.11 port 57500 protocol grpc-tcp"
+   }
+  ],
+  "traps": [
+   "Telemetry = **push**; SNMP = poll.",
+   "**gNMI/gRPC** is the modern transport.",
+   "Data defined by **YANG models/paths**.",
+   "On-change vs **periodic** subscriptions.",
+   "**Model-driven telemetry** is the Cisco term."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Telemetry"
+   ],
+   "rows": [
+    [
+     "Mode",
+     "push"
+    ],
+    [
+     "Transport",
+     "gRPC/gNMI"
+    ],
+    [
+     "Data",
+     "YANG"
+    ],
+    [
+     "Subscription",
+     "on-change/periodic"
+    ],
+    [
+     "Encoding",
+     "protobuf/JSON"
+    ],
+    [
+     "vs SNMP",
+     "no polling"
+    ],
+    [
+     "Scale",
+     "best"
+    ],
+    [
+     "Use",
+     "modern"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. Syslog",
+    "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
+   },
+   {
+    "t": "09. Wireshark",
+    "d": "Wireshark is the industry-standard packet analyzer: capture, decode, and filter traffic for troubles"
+   }
+  ],
+  "glossary": [
+   "Telemetry",
+   "SNMP"
+  ]
+ },
+ {
+  "num": "09",
+  "id": "t09",
+  "group": "traffic",
+  "title": "Wireshark",
+  "blurb": "Wireshark is the industry-standard packet analyzer: capture, decode, and filter traffic for troubles",
+  "overview": "**[[Wireshark]]** is the industry-standard **packet analyzer**: capture, decode, and filter traffic for troubleshooting. It reads **pcap/pcapng**, uses **BPF filters**, and visualizes **conversations, flows, and handshakes**. The exam tests capture filters, decoding, and how to analyze common problems.",
+  "keyIdea": "**BPF = capture filter** (syntax); display filters differ.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What Wireshark does",
+    "cols": [
+     "Feature",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Capture",
+      "live interface"
+     ],
+     [
+      "Decode",
+      "protocol tree"
+     ],
+     [
+      "Filter",
+      "BPF + display"
+     ],
+     [
+      "Follow",
+      "TCP stream"
+     ],
+     [
+      "Export",
+      "pcap/pcapng"
+     ],
+     [
+      "Analysis",
+      "experts/statistics"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Wireshark = **capture, decode, filter, and analyze**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Capture vs display filters",
+    "cols": [
+     "Filter",
+     "Format",
+     "Example"
+    ],
+    "rows": [
+     [
+      "Capture (BPF)",
+      "before capture",
+      "%%tcp port 443%%"
+     ],
+     [
+      "Display",
+      "after capture",
+      "%%tcp.stream eq 0%%"
+     ],
+     [
+      "Capture",
+      "pcap syntax",
+      "%%host 1.2.3.4%%"
+     ],
+     [
+      "Display",
+      "rich fields",
+      "%%http.request%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**BPF limits what's stored; display filters refine the view.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Common display filters",
+    "cols": [
+     "Filter",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%ip.addr == X%%",
+      "host traffic"
+     ],
+     [
+      "%%tcp.port == 443%%",
+      "specific port"
+     ],
+     [
+      "%%http.request%%",
+      "requests"
+     ],
+     [
+      "%%tcp.stream eq 0%%",
+      "one TCP session"
+     ],
+     [
+      "%%icmp%%",
+      "ping traffic"
+     ],
+     [
+      "%%dns.qry.name%%",
+      "DNS queries"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Display filters inspect **decoded fields**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Protocol decode",
+    "cols": [
+     "Layer",
+     "Useful ops"
+    ],
+    "rows": [
+     [
+      "L2",
+      "ARP, MAC"
+     ],
+     [
+      "L3",
+      "ICMP, fragmentation"
+     ],
+     [
+      "L4",
+      "TCP handshake/retrans"
+     ],
+     [
+      "L7",
+      "HTTP, TLS, DNS"
+     ],
+     [
+      "Expert",
+      "malformed/fail"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Decode tree shows **each header + flags**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Analysis workflows",
+    "cols": [
+     "Problem",
+     "Look for"
+    ],
+    "rows": [
+     [
+      "Slow",
+      "retransmissions"
+     ],
+     [
+      "Unreachable",
+      "ICMP errors"
+     ],
+     [
+      "Auth fail",
+      "401/403"
+     ],
+     [
+      "DNS issue",
+      "NXDOMAIN"
+     ],
+     [
+      "Latency",
+      "RTT graph"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Follow Stream + statistics** accelerate diagnosis."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Capture points",
+    "cols": [
+     "Point",
+     "Why"
+    ],
+    "rows": [
+     [
+      "Source host",
+      "egress view"
+     ],
+     [
+      "Server",
+      "ingress view"
+     ],
+     [
+      "SPAN/ERSPAN",
+      "mixed view"
+     ],
+     [
+      "Tap",
+      "full view"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Choose the **vantage point** to match the question."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "(ioanalyze/capture on IOS-XE)\nmonitor capture CAP interface Gi0/1 both\nmonitor capture CAP limit ...\nmonitor capture CAP buffer size 10240\nmonitor capture CAP start\nshow monitor capture CAP\nWireshark: tshark -i eth0 -f \"tcp port 443\""
+   }
+  ],
+  "traps": [
+   "**BPF = capture filter** (syntax); display filters differ.",
+   "Follow TCP stream for **conversation** analysis.",
+   "Use **statistics** for conversations/protocol hierarchy.",
+   "On-box: %%monitor capture%% on IOS-XE.",
+   "pcap/pcapng portability matters."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Wireshark"
+   ],
+   "rows": [
+    [
+     "Role",
+     "packet analyzer"
+    ],
+    [
+     "Format",
+     "pcap/pcapng"
+    ],
+    [
+     "Capture filter",
+     "BPF"
+    ],
+    [
+     "Display filter",
+     "fields"
+    ],
+    [
+     "Follow",
+     "TCP stream"
+    ],
+    [
+     "On-box",
+     "monitor capture"
+    ],
+    [
+     "Export",
+     "pcap"
+    ],
+    [
+     "Use",
+     "troubleshooting"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. Telemetry",
+    "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
+   },
+   {
+    "t": "01. SNMP",
+    "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
+   }
+  ],
+  "glossary": [
+   "Wireshark"
+  ]
+ }
+];
+
+        const GROUPS = [{"key": "device", "label": "Device & Performance", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "traffic", "label": "Traffic Monitoring", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}];
+
+        const groups = GROUPS;
+
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+ {
+  "term": "SNMP",
+  "def": "SNMP (Simple Network Management Protocol) is the monitoring/management protocol: a manager (NMS) polls agents (routers/switches) for values from the MIB (a tree of object IDs = OIDs) and receives traps/informs on events. UDP 161 (polling), UDP 162 (traps). Versions: v1/v2c (community strings,..."
+ },
+ {
+  "term": "NetFlow",
+  "def": "NetFlow exports flow records — metadata about conversations, not packets — to a collector (the \"who talked to whom, how much\" view). A flow = unidirectional sequence with the classic 7-tuple key (src/dst IP, src/dst port, protocol, ToS, input iface). NetFlow powers traffic analysis, capacity..."
+ },
+ {
+  "term": "Flexible NetFlow",
+  "def": "Flexible NetFlow (FNF) is the configurable NetFlow engine: you define the records — match = the flow key fields, collect = the extra fields to gather (which switches/extended features first made this usable). Built from three pieces: record → exporter → monitor (bound to an interface). It's also..."
+ },
+ {
+  "term": "SPAN",
+  "def": "SPAN (Switched Port Analyzer) — port mirroring — copies traffic from source interfaces/VLANs to a destination port (where a sniffer/analyzer listens). It's local (same switch), typically one-way, can mirror RX/TX/both, and the destination port goes out of normal forwarding. Limits: destination..."
+ },
+ {
+  "term": "ERSPAN",
+  "def": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network: mirrored packets are encapsulated in IP + GRE and sent to a destination on any reachable router/switch — analyzer can be anywhere, unlike local SPAN (same box). The GRE-encapsulated copies ride normal routing; the..."
+ },
+ {
+  "term": "IP SLA",
+  "def": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability along a real path — without waiting for real traffic to complain. Even better: results can trigger actions via a track object → routing changes (floating static, HSRP priority shift) or SNMP/..."
+ },
+ {
+  "term": "Syslog",
+  "def": "Syslog is the standard event-logging service: devices send timestamped, severity-tagged messages to local buffers and/or a syslog server (UDP 514). Levels 0–7 (emergency→debug); facility tags identify origin. It's the forensic foundation of every \"what happened at 02:00?\" investigation."
+ },
+ {
+  "term": "Telemetry",
+  "def": "Streaming telemetry pushes subscriptions of device data to collectors continuously — the modern answer to SNMP's pull/poll model. Devices encode data as protobuf/JSON (over gRPC/gNMI, or TCP/UDP) and stream on a schedule or on change; collectors (InfluxDB/Prometheus) get high-frequency,..."
+ },
+ {
+  "term": "Wireshark",
+  "def": "Wireshark is the industry-standard packet analyzer: it captures, decodes, and filters traffic for troubleshooting (alongside the CLI tcpdump). It reads pcap/pcapng captures (from itself, a SPAN port, or a remote box via SSH), decodes hundreds of protocols, and answers \"what exactly did the..."
+ }
+];
+
+        const quiz = [
+ {
+  "q": "In SNMP, which value matches \"Poll\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "community",
+   "auth+priv"
+  ],
+  "answer": 0,
+  "why": "The SNMP quick review pairs \"Poll\" with \"UDP 161\"."
+ },
+ {
+  "q": "In SNMP, which value matches \"Data\"?",
+  "options": [
+   "YANG",
+   "MIB/OID",
+   "UDP 161",
+   "UDP 162"
+  ],
+  "answer": 1,
+  "why": "The SNMP quick review pairs \"Data\" with \"MIB/OID\"."
+ },
+ {
+  "q": "In SNMP, which value matches \"TRAP\"?",
+  "options": [
+   "SNMP 162",
+   "UDP 161",
+   "alert",
+   "UDP 162"
+  ],
+  "answer": 2,
+  "why": "The SNMP quick review pairs \"TRAP\" with \"alert\"."
+ },
+ {
+  "q": "In NetFlow, which value matches \"Records\"?",
+  "options": [
+   "custom",
+   "UDP 161",
+   "UDP 162",
+   "metadata"
+  ],
+  "answer": 3,
+  "why": "The NetFlow quick review pairs \"Records\" with \"metadata\"."
+ },
+ {
+  "q": "In NetFlow, which value matches \"Export\"?",
+  "options": [
+   "UDP 2055",
+   "v9/IPFIX",
+   "pcap",
+   "UDP 161"
+  ],
+  "answer": 0,
+  "why": "The NetFlow quick review pairs \"Export\" with \"UDP 2055\"."
+ },
+ {
+  "q": "In NetFlow, which value matches \"Use\"?",
+  "options": [
+   "flexible",
+   "analysis",
+   "capture",
+   "remote mirror"
+  ],
+  "answer": 1,
+  "why": "The NetFlow quick review pairs \"Use\" with \"analysis\"."
+ },
+ {
+  "q": "In Flexible NetFlow, which value matches \"Records\"?",
+  "options": [
+   "metadata",
+   "UDP 161",
+   "custom",
+   "UDP 162"
+  ],
+  "answer": 2,
+  "why": "The Flexible NetFlow quick review pairs \"Records\" with \"custom\"."
+ },
+ {
+  "q": "In Flexible NetFlow, which value matches \"Monitor\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "community",
+   "bind"
+  ],
+  "answer": 3,
+  "why": "The Flexible NetFlow quick review pairs \"Monitor\" with \"bind\"."
+ },
+ {
+  "q": "In Flexible NetFlow, which value matches \"vs v5\"?",
+  "options": [
+   "templates",
+   "UDP 161",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 0,
+  "why": "The Flexible NetFlow quick review pairs \"vs v5\" with \"templates\"."
+ },
+ {
+  "q": "In SPAN, which value matches \"Scope\"?",
+  "options": [
+   "routed",
+   "local",
+   "UDP 161",
+   "UDP 162"
+  ],
+  "answer": 1,
+  "why": "The SPAN quick review pairs \"Scope\" with \"local\"."
+ },
+ {
+  "q": "In SPAN, which value matches \"Session\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "monitor",
+   "community"
+  ],
+  "answer": 2,
+  "why": "The SPAN quick review pairs \"Session\" with \"monitor\"."
+ },
+ {
+  "q": "In SPAN, which value matches \"Use\"?",
+  "options": [
+   "analysis",
+   "flexible",
+   "remote mirror",
+   "capture"
+  ],
+  "answer": 3,
+  "why": "The SPAN quick review pairs \"Use\" with \"capture\"."
+ },
+ {
+  "q": "In ERSPAN, which value matches \"Scope\"?",
+  "options": [
+   "routed",
+   "local",
+   "UDP 161",
+   "UDP 162"
+  ],
+  "answer": 0,
+  "why": "The ERSPAN quick review pairs \"Scope\" with \"routed\"."
+ },
+ {
+  "q": "In ERSPAN, which value matches \"vs SPAN\"?",
+  "options": [
+   "UDP 161",
+   "remote",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 1,
+  "why": "The ERSPAN quick review pairs \"vs SPAN\" with \"remote\"."
+ },
+ {
+  "q": "In ERSPAN, which value matches \"Use\"?",
+  "options": [
+   "analysis",
+   "flexible",
+   "remote mirror",
+   "capture"
+  ],
+  "answer": 2,
+  "why": "The ERSPAN quick review pairs \"Use\" with \"remote mirror\"."
+ },
+ {
+  "q": "In IP SLA, which value matches \"Probes\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "community",
+   "synthetic"
+  ],
+  "answer": 3,
+  "why": "The IP SLA quick review pairs \"Probes\" with \"synthetic\"."
+ },
+ {
+  "q": "In IP SLA, which value matches \"Track\"?",
+  "options": [
+   "reactions",
+   "UDP 161",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 0,
+  "why": "The IP SLA quick review pairs \"Track\" with \"reactions\"."
+ },
+ {
+  "q": "In IP SLA, which value matches \"vs ping\"?",
+  "options": [
+   "UDP 161",
+   "richer",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 1,
+  "why": "The IP SLA quick review pairs \"vs ping\" with \"richer\"."
+ },
+ {
+  "q": "In Syslog, which value matches \"Port\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "UDP 514",
+   "community"
+  ],
+  "answer": 2,
+  "why": "The Syslog quick review pairs \"Port\" with \"UDP 514\"."
+ },
+ {
+  "q": "In Syslog, which value matches \"Server\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "community",
+   "logging host"
+  ],
+  "answer": 3,
+  "why": "The Syslog quick review pairs \"Server\" with \"logging host\"."
+ },
+ {
+  "q": "In Syslog, which value matches \"Trap\"?",
+  "options": [
+   "SNMP 162",
+   "alert",
+   "UDP 161",
+   "UDP 162"
+  ],
+  "answer": 0,
+  "why": "The Syslog quick review pairs \"Trap\" with \"SNMP 162\"."
+ },
+ {
+  "q": "In Telemetry, which value matches \"Mode\"?",
+  "options": [
+   "UDP 161",
+   "push",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 1,
+  "why": "The Telemetry quick review pairs \"Mode\" with \"push\"."
+ },
+ {
+  "q": "In Telemetry, which value matches \"Encoding\"?",
+  "options": [
+   "UDP 161",
+   "UDP 162",
+   "protobuf/JSON",
+   "community"
+  ],
+  "answer": 2,
+  "why": "The Telemetry quick review pairs \"Encoding\" with \"protobuf/JSON\"."
+ },
+ {
+  "q": "In Telemetry, which value matches \"Use\"?",
+  "options": [
+   "analysis",
+   "flexible",
+   "capture",
+   "modern"
+  ],
+  "answer": 3,
+  "why": "The Telemetry quick review pairs \"Use\" with \"modern\"."
+ },
+ {
+  "q": "In Wireshark, which value matches \"Role\"?",
+  "options": [
+   "packet analyzer",
+   "UDP 161",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 0,
+  "why": "The Wireshark quick review pairs \"Role\" with \"packet analyzer\"."
+ },
+ {
+  "q": "In Wireshark, which value matches \"Follow\"?",
+  "options": [
+   "UDP 161",
+   "TCP stream",
+   "UDP 162",
+   "community"
+  ],
+  "answer": 1,
+  "why": "The Wireshark quick review pairs \"Follow\" with \"TCP stream\"."
+ },
+ {
+  "q": "In Wireshark, which value matches \"Use\"?",
+  "options": [
+   "analysis",
+   "flexible",
+   "troubleshooting",
+   "capture"
+  ],
+  "answer": 2,
+  "why": "The Wireshark quick review pairs \"Use\" with \"troubleshooting\"."
+ }
+];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'mon.theme', done: 'mon.done', best: 'mon.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
