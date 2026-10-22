@@ -1,0 +1,2037 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireless — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 22 Wireless: WLAN and 802.11 fundamentals, SSID and BSSID, channels and RF, WLC and CAPWAP, mobility and roaming, plus WPA2 and WPA3 security.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Wireless — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">WRL</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Wireless</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 22</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 22</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">12 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 22 &mdash; Wireless</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">WLAN and 802.11 fundamentals, SSID and BSSID identity, channels and RF planning, then WLC and CAPWAP control with mobility and roaming. WPA2 and WPA3 secure the air.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Wireless &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 22 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[WLAN]]** is a wireless network built on **[[802.11]]**, where clients associate to an AP that advertises an **[[SSID]]** and a **[[BSSID]]**. Frames travel over **[[RF]]** in the 2.4, 5 and 6 GHz bands, using **[[Channels]]** that must be planned to avoid overlap. Enterprise networks centralize control on a **[[WLC]]** with **[[CAPWAP]]**, share client state through **[[Mobility]]** so **[[Roaming]]** stays seamless, and protect the air with **[[WPA2]]** or **[[WPA3]]**.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'fund', title: 'WLAN',
+            blurb: 'Wireless LAN basics: shared RF, APs, controllers and service sets',
+            overview: 'A **[[WLAN]]** is a wireless network built on **[[802.11]]**. Clients associate to an access point that broadcasts a **[[BSSID|BSSID]]** and **[[SSID]]**, and frames travel over **[[RF]]** in the 2.4, 5 or 6 GHz bands. Enterprise WLANs centralize control on a **[[WLC]]** using **[[CAPWAP]]**, and split the work into control, data and management planes.',
+            keyIdea: 'A WLAN is 802.11 plus the AP and WLC architecture. RF is a shared, error-prone medium, which is why wireless design is about coverage, capacity and interference rather than cables.',
+            sections: [
+              { kind: 'table', h: 'WLAN versus wired LAN', cols: ['Aspect', 'Wired LAN', 'WLAN'], rows: [
+                ['**Medium**', 'Cable', 'Shared RF'],
+                ['**Access**', 'Plug in', 'Associate'],
+                ['**Errors**', 'Low', 'Interference and retries'],
+                ['**Movement**', 'Static', 'Roaming']
+              ]},
+              { kind: 'table', h: 'Components', cols: ['Component', 'Role'], rows: [
+                ['**Client**', 'Station, or STA'],
+                ['**AP**', 'Access point radio'],
+                ['**WLC**', 'Wireless controller'],
+                ['**Backend**', 'Wired network and services']
+              ]},
+              { kind: 'table', h: 'Bands and data rates', cols: ['Band', 'Notes'], rows: [
+                ['**2.4 GHz**', 'Long range, crowded'],
+                ['**5 GHz**', 'More channels, faster'],
+                ['**6 GHz**', 'Wi-Fi 6E and newer']
+              ]},
+              { kind: 'table', h: 'Service sets', cols: ['Term', 'Meaning'], rows: [
+                ['**BSS**', 'One AP radio plus its clients'],
+                ['**ESS**', 'Many BSSes under one SSID'],
+                ['**SSID**', 'Network name'],
+                ['**BSSID**', 'AP radio MAC address']
+              ]},
+              { kind: 'table', h: 'Control and data planes', cols: ['Plane', 'Where'], rows: [
+                ['**Control**', 'WLC'],
+                ['**Management**', 'WLC'],
+                ['**Data**', 'AP to WLC, or local at the AP']
+              ]},
+              { kind: 'table', h: 'Deployment models', cols: ['Model', 'Where'], rows: [
+                ['**Autonomous**', 'Standalone AP'],
+                ['**Centralized**', 'WLC plus CAPWAP'],
+                ['**Cloud**', 'Cloud-managed'],
+                ['**Mesh**', 'Wireless backhaul']
+              ]}
+            ],
+            commands: [
+              { label: 'Check WLAN and AP status', code:
+`show wlan summary
+show ap summary
+show ap config general` },
+              { label: 'Check policy and AP joins', code:
+`show wireless profile policy
+show ap join stats summary` },
+              { label: 'Check radios and clients', code:
+`show ap radio summary
+show wireless client summary` }
+            ],
+            traps: [
+              'A WLAN is **802.11 plus AP and WLC architecture**, not just an SSID.',
+              'RF is a **shared and error-prone** medium; wired assumptions do not carry over.',
+              'The enterprise model is **WLC plus CAPWAP**, not autonomous APs.',
+              '**BSS is one AP**, while **ESS is many BSSes under one SSID**.',
+              'The **data plane** may pass through the WLC or stay local at the AP.',
+              '5 and 6 GHz offer **more spectrum**, which is why they perform better under load.'
+            ],
+            table: {
+              cols: ['Item', 'WLAN'],
+              rows: [
+                ['Standard', '802.11'],
+                ['Bands', '2.4, 5 and 6 GHz'],
+                ['AP', 'Access point'],
+                ['WLC', 'Controller'],
+                ['SSID', 'Name'],
+                ['BSSID', 'Radio MAC'],
+                ['BSS', 'One AP'],
+                ['ESS', 'Many APs']
+              ]
+            },
+            related: [
+              { t: '02. 802.11', d: 'The IEEE standard family' },
+              { t: '07. WLC', d: 'Centralized control' },
+              { t: '08. CAPWAP', d: 'The AP to WLC protocol' }
+            ],
+            glossary: ['WLAN', '802.11', 'SSID', 'BSSID', 'WLC', 'CAPWAP', 'RF']
+          },
+          {
+            id: 't02', num: '02', group: 'fund', title: '802.11',
+            blurb: 'Frames, CSMA/CA and the amendment generations from b to ax',
+            overview: '**[[802.11]]** is the IEEE standard family for WLANs. It defines the MAC and PHY layers, the management frames that run association, and the amendment generations that add speed and bands. The exam tests frame types, the CSMA/CA access mechanism, and which amendment maps to which speed and band.',
+            keyIdea: 'Wireless uses CSMA/CA with ACKs because collisions cannot be detected. Management frames run discovery and association, while n is MIMO, ac is 5 GHz and ax is OFDMA with 6 GHz.',
+            sections: [
+              { kind: 'table', h: 'Frame types', cols: ['Type', 'Purpose'], rows: [
+                ['**Management**', 'Beacon, probe, authentication, association'],
+                ['**Control**', 'RTS, CTS and ACK'],
+                ['**Data**', 'Client payload']
+              ]},
+              { kind: 'table', h: 'CSMA/CA', cols: ['Step', 'Detail'], rows: [
+                ['**Listen**', 'Sense the channel'],
+                ['**Wait**', 'Random backoff after DIFS or AIFS'],
+                ['**Send**', 'Only when the medium is clear'],
+                ['**ACK**', 'Receiver confirms each frame']
+              ]},
+              { kind: 'table', h: 'Management frame flow', cols: ['Frame', 'Direction', 'Step'], rows: [
+                ['**Beacon**', 'AP to client', 'Discover'],
+                ['**Probe request and response**', 'Both', 'Search'],
+                ['**Authentication**', 'Both', 'Identity'],
+                ['**Association**', 'Both', 'Join the BSS']
+              ]},
+              { kind: 'table', h: 'Amendments', cols: ['Standard', 'Band', 'Max rate', 'Note'], rows: [
+                ['**802.11b**', '2.4 GHz', '11 Mbps', 'Legacy'],
+                ['**802.11a**', '5 GHz', '54 Mbps', 'Legacy'],
+                ['**802.11g**', '2.4 GHz', '54 Mbps', 'Legacy'],
+                ['**802.11n, Wi-Fi 4**', '2.4 and 5 GHz', '600 Mbps', 'MIMO'],
+                ['**802.11ac, Wi-Fi 5**', '5 GHz', 'About 1.7 Gbps', 'Wide channels'],
+                ['**802.11ax, Wi-Fi 6**', '2.4, 5 and 6 GHz', 'About 9.6 Gbps', 'OFDMA']
+              ]},
+              { kind: 'table', h: 'RTS and CTS', cols: ['Control frame', 'Use'], rows: [
+                ['**RTS**', 'Reserve the medium'],
+                ['**CTS**', 'Grant the reservation'],
+                ['**NAV**', 'Tell others how long to wait']
+              ]},
+              { kind: 'table', h: 'PHY versus MAC', cols: ['Layer', '802.11 part'], rows: [
+                ['**PHY**', 'OFDM, OFDMA and modulation'],
+                ['**MAC**', 'CSMA/CA and frames'],
+                ['**Security**', 'WPA2 and WPA3 above the MAC']
+              ]},
+              { kind: 'para', h: 'Why the ACK matters', p: 'A wireless station cannot hear a collision while it is transmitting, so **CSMA/CA** avoids collisions instead of detecting them. Every unicast data frame is **acknowledged**, and a missing ACK triggers a retransmission.' }
+            ],
+            commands: [
+              { label: 'Check radios and amendment state', code:
+`show ap radio summary
+show ap dot11 5ghz summary
+show ap config general` },
+              { label: 'Check clients and channel utilisation', code:
+`show wireless client summary
+show ap monitor` },
+              { label: 'Check rates and radio detail', code:
+`show ap dot11 24ghz summary
+show ap dot11 5ghz summary` }
+            ],
+            traps: [
+              'Wireless uses **CSMA/CA with ACKs** because collisions cannot be detected.',
+              '**Management frames** are beacon, probe, authentication and association.',
+              '**n is MIMO, ac is 5 GHz, and ax is OFDMA with 6 GHz**.',
+              '**RTS/CTS** mitigates the hidden node problem.',
+              'Beacons advertise the network roughly every **100 ms**.',
+              '**Control frames** such as ACK and CTS are not data frames.'
+            ],
+            table: {
+              cols: ['Item', '802.11'],
+              rows: [
+                ['Access', 'CSMA/CA'],
+                ['ACK', 'Receiver confirms'],
+                ['Frames', 'Management, control, data'],
+                ['n', 'MIMO'],
+                ['ac', '5 GHz'],
+                ['ax', 'OFDMA and 6 GHz'],
+                ['RTS/CTS', 'Hidden node'],
+                ['Beacon', 'About 100 ms']
+              ]
+            },
+            related: [
+              { t: '01. WLAN', d: 'The network it builds' },
+              { t: '05. Channels', d: 'Spectrum planning' },
+              { t: '06. RF', d: 'Radio fundamentals' }
+            ],
+            glossary: ['802.11', 'WLAN', 'Channels', 'RF', 'SSID']
+          },
+          {
+            id: 't03', num: '03', group: 'fund', title: 'SSID',
+            blurb: 'The network name and how it maps to a WLAN profile and VLAN',
+            overview: 'The **[[SSID]]** is the human-readable name of a wireless network, broadcast in beacons so clients can find and join it. One WLC can run many SSIDs mapped to different WLAN profiles, each with its own security, **[[VLAN]]** and QoS policy. The exam tests how the SSID connects to the WLAN profile and its policies.',
+            keyIdea: 'SSID is a name of up to 32 characters; BSSID is the AP radio MAC. Each SSID maps to its own WLAN profile, VLAN and security policy, and hiding it is not a security control.',
+            sections: [
+              { kind: 'table', h: 'What the SSID is', cols: ['Item', 'Detail'], rows: [
+                ['**Type**', 'ASCII name'],
+                ['**Length**', 'Up to 32 characters'],
+                ['**Broadcast**', 'Inside beacons'],
+                ['**Case**', 'Sensitive']
+              ]},
+              { kind: 'table', h: 'SSID versus BSSID', cols: ['Term', 'Type', 'Meaning'], rows: [
+                ['**SSID**', 'Name', 'Network identity'],
+                ['**BSSID**', 'MAC', 'Specific AP radio']
+              ]},
+              { kind: 'table', h: 'SSID to WLAN profile', cols: ['Layer', 'Definition'], rows: [
+                ['**SSID**', 'The name clients see'],
+                ['**WLAN profile**', 'Security and policy'],
+                ['**VLAN**', 'Where client traffic lands'],
+                ['**QoS and ACL**', 'Per-WLAN rules']
+              ]},
+              { kind: 'table', h: 'Multiple SSIDs', cols: ['SSID', 'Use'], rows: [
+                ['**Corp-Guest**', 'Guest isolation'],
+                ['**Corp-Corp**', '802.1X for employees'],
+                ['**Corp-IoT**', 'PSK plus a dedicated VLAN']
+              ]},
+              { kind: 'table', h: 'Broadcast versus hidden', cols: ['Mode', 'Behaviour'], rows: [
+                ['**Broadcast**', 'Beacon carries the SSID'],
+                ['**Hidden**', 'SSID withheld, but clients still probe']
+              ]},
+              { kind: 'code', h: 'WLC SSID example', code:
+`  wlan Corp-Guest 2 Guest-Data
+   security wpa psk ascii GuestPass1
+   no security wpa akm dot1x
+   vlan Guest
+   no shutdown` },
+              { kind: 'table', h: 'WLAN commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%wlan NAME id%%**', 'Create the WLAN'],
+                ['**%%security wpa psk%%**', 'Pre-shared key'],
+                ['**%%security dot1x%%**', 'Enterprise authentication'],
+                ['**%%vlan%%**', 'Map the VLAN'],
+                ['**%%no shutdown%%**', 'Enable the WLAN']
+              ]}
+            ],
+            commands: [
+              { label: 'Create and inspect a WLAN', code:
+`wlan Corp-Guest 2 Guest-Data
+ security wpa psk ascii GuestPass1
+ vlan Guest
+ no shutdown
+show wlan summary
+show wlan id 2` },
+              { label: 'Check where the SSID is served', code:
+`show ap wlan summary
+show wireless profile policy` },
+              { label: 'Check client and AP detail', code:
+`show ap config general
+show wireless client summary` }
+            ],
+            traps: [
+              'The SSID is a **name of up to 32 characters**; the BSSID is a MAC address.',
+              'Each SSID maps to a **separate WLAN profile, VLAN and policy**.',
+              'A hidden SSID is **not a security measure**, because clients still probe for it.',
+              'SSIDs are advertised in **beacons**.',
+              'The WLC maps an SSID to **VLAN, security and QoS**.',
+              'On a WLC, the SSID is the **wireless side** of the WLAN profile.'
+            ],
+            table: {
+              cols: ['Item', 'SSID'],
+              rows: [
+                ['Type', 'Name'],
+                ['Length', '32 characters'],
+                ['Broadcast', 'Beacons'],
+                ['Compared with BSSID', 'MAC'],
+                ['Profile', 'WLAN'],
+                ['VLAN', 'Mapped'],
+                ['Hidden', 'Not secure'],
+                ['Multiple', 'One policy each']
+              ]
+            },
+            related: [
+              { t: '04. BSSID', d: 'The identity behind the name' },
+              { t: '07. WLC', d: 'Where profiles live' },
+              { t: '11. WPA2', d: 'Security on the WLAN' }
+            ],
+            glossary: ['SSID', 'BSSID', 'WLAN', 'VLAN', 'WLC']
+          },
+          {
+            id: 't04', num: '04', group: 'fund', title: 'BSSID',
+            blurb: 'The AP radio MAC, the basic service set and the extended service set',
+            overview: 'The **[[BSSID]]** is the MAC address of an AP radio, the unique identity behind every **[[SSID]]**. A BSS is one AP radio plus its associated clients, and a group of BSSes under the same SSID forms an ESS. The exam wants the split between SSID and BSSID, and between BSS and ESS.',
+            keyIdea: 'BSSID is a 48-bit AP radio MAC. BSS is one cell, ESS is many cells under one SSID, and clients send frames to the BSSID of their current AP.',
+            sections: [
+              { kind: 'table', h: 'BSSID basics', cols: ['Item', 'Detail'], rows: [
+                ['**Type**', '48-bit MAC'],
+                ['**Source**', 'AP radio'],
+                ['**Unique**', 'Per radio and band'],
+                ['**Frames**', 'Source of beacons']
+              ]},
+              { kind: 'table', h: 'BSS, the basic service set', cols: ['Element', 'Meaning'], rows: [
+                ['**BSS**', 'One AP radio plus clients'],
+                ['**BSSID**', 'The identity of that BSS'],
+                ['**Cell**', 'Coverage of one radio'],
+                ['**Isolation**', 'Each BSS is separate']
+              ]},
+              { kind: 'table', h: 'ESS, the extended service set', cols: ['Element', 'Meaning'], rows: [
+                ['**ESS**', 'Many BSSes under one SSID'],
+                ['**Roaming**', 'Movement between BSSes'],
+                ['**Seamless**', 'Same SSID and security'],
+                ['**Distribution**', 'Wired backbone']
+              ]},
+              { kind: 'table', h: 'The identity split', cols: ['Term', 'What', 'Example'], rows: [
+                ['**SSID**', 'Name clients see', 'CorpNet'],
+                ['**BSSID**', 'AP radio MAC', '00:1a:2b:3c:4d:5e'],
+                ['**BSS**', 'One cell', 'AP1'],
+                ['**ESS**', 'All cells', 'CorpNet everywhere']
+              ]},
+              { kind: 'table', h: 'Frames and the BSSID', cols: ['Frame', 'Uses BSSID'], rows: [
+                ['**Beacon**', 'Yes, as the source'],
+                ['**Probe response**', 'Yes'],
+                ['**Data to the AP**', 'Yes, as the destination'],
+                ['**Client frames**', 'Address the BSSID']
+              ]}
+            ],
+            commands: [
+              { label: 'Check BSSIDs and radios', code:
+`show ap radio summary
+show ap bssid
+show ap config general` },
+              { label: 'Check bands and clients', code:
+`show ap dot11 5ghz summary
+show wireless client summary` },
+              { label: 'Check AP detail for roaming', code:
+`show ap summary
+show wireless client summary` }
+            ],
+            traps: [
+              'The BSSID is the **AP radio MAC**; the SSID is the name.',
+              '**BSS** is one AP plus clients; **ESS** is many BSSes under one SSID.',
+              'The same SSID appears on **many BSSIDs** to support roaming.',
+              'Clients address frames **to the BSSID** of their AP.',
+              'Beacons are sent **from the BSSID**.',
+              'Each band on one AP has its **own BSSID**.'
+            ],
+            table: {
+              cols: ['Item', 'BSSID'],
+              rows: [
+                ['Type', 'MAC'],
+                ['Source', 'AP radio'],
+                ['BSS', 'One cell'],
+                ['ESS', 'Many BSSes'],
+                ['SSID', 'Name'],
+                ['Beacons', 'From the BSSID'],
+                ['Frames', 'To the BSSID'],
+                ['Roam', 'Between BSSes']
+              ]
+            },
+            related: [
+              { t: '03. SSID', d: 'The name clients see' },
+              { t: '10. Roaming', d: 'Movement between BSSes' },
+              { t: '09. Mobility', d: 'State across controllers' }
+            ],
+            glossary: ['BSSID', 'SSID', 'WLAN', 'Roaming']
+          },
+          {
+            id: 't05', num: '05', group: 'rf', title: 'Channels',
+            blurb: 'Non-overlapping channels, DFS, channel width and RRM',
+            overview: '**[[Channels]]** are the RF sub-bands that APs transmit on. Non-overlapping channels let nearby APs share spectrum without interfering, DFS adds radar-aware channels in 5 GHz, and channel width trades throughput for spectrum. The WLC uses RRM to tune channels and power automatically.',
+            keyIdea: 'In 2.4 GHz the non-overlapping set is 1, 6 and 11. In 5 GHz there is far more spectrum plus DFS channels, and wider channels are faster but consume more of it. RRM and TPC automate channel and power selection.',
+            sections: [
+              { kind: 'table', h: '2.4 GHz channels', cols: ['Band', 'Channels', 'Non-overlapping'], rows: [
+                ['**2.4 GHz**', '1 to 13, US 1 to 11', '1, 6 and 11'],
+                ['**Width**', '20 MHz', 'Spacing is 5 MHz']
+              ]},
+              { kind: 'table', h: '5 GHz channels', cols: ['Group', 'Notes'], rows: [
+                ['**5 GHz**', 'Many channels and wider options'],
+                ['**UNII**', '36 to 165'],
+                ['**DFS**', '52 to 144, radar aware'],
+                ['**Non-DFS**', '36, 40, 44, 48, 149 and up']
+              ]},
+              { kind: 'table', h: 'Channel widths', cols: ['Width', '2.4 GHz', '5 GHz'], rows: [
+                ['**20 MHz**', 'Standard', 'Standard'],
+                ['**40 MHz**', 'Bonded', 'Bonded'],
+                ['**80 and 160 MHz**', 'Not used', 'High speed']
+              ]},
+              { kind: 'table', h: 'DFS, dynamic frequency selection', cols: ['Item', 'Detail'], rows: [
+                ['**Purpose**', 'Avoid radar'],
+                ['**Check**', 'Listen before use'],
+                ['**Action**', 'Change channel on radar'],
+                ['**Impact**', 'Brief downtime during a move']
+              ]},
+              { kind: 'table', h: 'RRM, radio resource management', cols: ['Task', 'RRM action'], rows: [
+                ['**Channel**', 'Assign non-overlapping channels'],
+                ['**Power**', 'Adjust with TPC'],
+                ['**Coverage**', 'Detect coverage holes'],
+                ['**Interference**', 'Detect and avoid']
+              ]},
+              { kind: 'code', h: 'Channel and power configuration', code:
+`  ap dot11 5ghz rrm channel global
+  ap dot11 24ghz rrm channel global
+  ap dot11 5ghz rrm tx-power global` },
+              { kind: 'table', h: 'Channel commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%rrm channel global%%**', 'Let RRM pick channels'],
+                ['**%%rrm tx-power global%%**', 'Automatic transmit power'],
+                ['**%%ch-width%%**', 'Set channel width']
+              ]}
+            ],
+            commands: [
+              { label: 'Inspect channel plans', code:
+`show ap radio summary
+show ap dot11 5ghz summary
+show ap dot11 24ghz summary` },
+              { label: 'Check RRM and channel detail', code:
+`show ap config general
+show ap monitor channel` },
+              { label: 'Check DFS and interference', code:
+`show ap dot11 5ghz summary
+show ap monitor channel` }
+            ],
+            traps: [
+              'In 2.4 GHz, the non-overlapping channels are **1, 6 and 11**.',
+              '5 GHz offers **many channels plus DFS**, especially 52 to 144.',
+              'A wider channel is faster but leaves **fewer channels for neighbours**.',
+              '**RRM** automates channel selection, and **TPC** automates transmit power.',
+              'DFS channels **listen for radar** before and during use.',
+              'Overlapping channels cause **co-channel interference**, not more capacity.'
+            ],
+            table: {
+              cols: ['Item', 'Channels'],
+              rows: [
+                ['2.4 GHz', '1, 6 and 11'],
+                ['5 GHz', 'Many channels'],
+                ['DFS', 'Radar check'],
+                ['Widths', '20, 40, 80 and 160 MHz'],
+                ['RRM', 'Auto channel'],
+                ['TPC', 'Auto power'],
+                ['Overlap', 'Avoid'],
+                ['Validate', 'Monitor']
+              ]
+            },
+            related: [
+              { t: '06. RF', d: 'The physics behind the plan' },
+              { t: '02. 802.11', d: 'Channelisation' },
+              { t: '07. WLC', d: 'Where RRM runs' }
+            ],
+            glossary: ['Channels', '802.11', 'RF', 'WLAN']
+          },
+          {
+            id: 't06', num: '06', group: 'rf', title: 'RF',
+            blurb: 'RSSI, SNR, EIRP, cell size and site surveys',
+            overview: '**[[RF]]** physics decide whether Wi-Fi works: signal strength, signal-to-noise ratio, attenuation, interference and antenna behaviour. Design means understanding dBm, path loss, cell size and the capacity trade-offs, then validating the result with a site survey.',
+            keyIdea: 'RSSI is strength in dBm and SNR is cleanliness in dB. EIRP is transmit power plus antenna gain minus cable loss, and smaller cells trade coverage for capacity.',
+            sections: [
+              { kind: 'table', h: 'Key metrics', cols: ['Metric', 'Meaning'], rows: [
+                ['**RSSI**', 'Received signal strength in dBm'],
+                ['**SNR**', 'Signal-to-noise ratio in dB'],
+                ['**dBm**', 'Absolute power level'],
+                ['**EIRP**', 'Effective radiated power']
+              ]},
+              { kind: 'table', h: 'Signal behaviour', cols: ['Effect', 'Detail'], rows: [
+                ['**Attenuation**', 'Loss over distance'],
+                ['**Absorption**', 'Walls and people'],
+                ['**Reflection**', 'Multipath'],
+                ['**Interference**', 'Other radios and noise']
+              ]},
+              { kind: 'table', h: 'Cell size trade-offs', cols: ['Factor', 'Small cell', 'Large cell'], rows: [
+                ['**Capacity**', 'High, more APs', 'Low'],
+                ['**Interference**', 'Lower', 'Higher'],
+                ['**Coverage**', 'Less per AP', 'More per AP'],
+                ['**Cost**', 'Higher', 'Lower']
+              ]},
+              { kind: 'table', h: 'Power and EIRP', cols: ['Item', 'Formula or example'], rows: [
+                ['**dBm**', '10 times log10 of milliwatts'],
+                ['**EIRP**', 'Tx power plus antenna gain minus cable loss'],
+                ['**Example**', '20 dBm plus 3 dBi gives 23 dBm EIRP'],
+                ['**3 dB rule**', 'Doubles the power']
+              ]},
+              { kind: 'table', h: 'Site surveys', cols: ['Type', 'Purpose'], rows: [
+                ['**Passive**', 'Measure existing RF'],
+                ['**Active**', 'Test throughput and association'],
+                ['**Predictive**', 'Software model before install']
+              ]},
+              { kind: 'para', h: 'RRM feedback loop', p: 'RRM uses the RF data from the APs to tune **channels** and **power** (note 05). Weak SNR, high retries or coverage holes feed back into automated changes, but a site survey is still the way to validate the design.' }
+            ],
+            commands: [
+              { label: 'Check radio health and clients', code:
+`show ap radio summary
+show ap dot11 5ghz monitor
+show wireless client summary` },
+              { label: 'Check cabling and AP detail', code:
+`show ap monitor cable
+show ap config general` },
+              { label: 'Check noise and channel utilisation', code:
+`show ap dot11 5ghz summary
+show ap monitor channel` }
+            ],
+            traps: [
+              '**RSSI is strength in dBm; SNR is cleanliness in dB**.',
+              '**EIRP is transmit power plus antenna gain minus cable loss**.',
+              '**Smaller cells provide more capacity per area**.',
+              'Multipath and absorption reduce performance even when RSSI looks good.',
+              'A good SNR target is around **25 dB or better**.',
+              'A site survey validates coverage, interference and capacity.'
+            ],
+            table: {
+              cols: ['Item', 'RF'],
+              rows: [
+                ['Strength', 'RSSI'],
+                ['Cleanliness', 'SNR'],
+                ['Power', 'dBm'],
+                ['Radiated', 'EIRP'],
+                ['Loss', 'Distance and walls'],
+                ['Noise', 'Interference'],
+                ['Cells', 'Small means capacity'],
+                ['Validate', 'Site survey']
+              ]
+            },
+            related: [
+              { t: '05. Channels', d: 'Spectrum and interference' },
+              { t: '02. 802.11', d: 'Radio standard' },
+              { t: '07. WLC', d: 'RRM automation' }
+            ],
+            glossary: ['RF', 'Channels', '802.11', 'WLAN']
+          }
+        ,
+          {
+            id: 't07', num: '07', group: 'arch', title: 'WLC',
+            blurb: 'The controller brain: AP config, RRM, auth, roaming and modes',
+            overview: 'The **[[WLC]]** is the brain of a centralized WLAN. It configures APs, runs RRM, handles client authentication and roaming, and anchors the control plane through **[[CAPWAP]]**. APs are lightweight: the controller pushes their configuration, and in Local mode client data also passes through it.',
+            keyIdea: 'The WLC handles control and management; data may pass through it in Local mode or stay at the AP in FlexConnect. APs join by CAPWAP discovery, DTLS and a config push.',
+            sections: [
+              { kind: 'table', h: 'What the WLC does', cols: ['Function', 'Detail'], rows: [
+                ['**AP configuration**', 'Push profiles and software'],
+                ['**RRM**', 'Channels and power'],
+                ['**Authentication**', 'RADIUS and 802.1X'],
+                ['**Roaming**', 'Client handoff and state'],
+                ['**Management**', 'Monitoring and dashboards']
+              ]},
+              { kind: 'table', h: 'Architecture split', cols: ['Plane', 'Where'], rows: [
+                ['**Control**', 'WLC, over CAPWAP control'],
+                ['**Management**', 'WLC'],
+                ['**Data**', 'AP to WLC, or local at the AP']
+              ]},
+              { kind: 'table', h: 'AP modes', cols: ['Mode', 'Data path'], rows: [
+                ['**Local**', 'Client data goes to the WLC'],
+                ['**FlexConnect**', 'Data stays local at the AP'],
+                ['**Monitor**', 'Sensing only'],
+                ['**Sniffer**', 'Packet capture']
+              ]},
+              { kind: 'table', h: 'AP join process', cols: ['Step', 'Detail'], rows: [
+                ['**1 Discover**', 'DNS, broadcast or configured WLC address'],
+                ['**2 CAPWAP discovery**', 'Request and response'],
+                ['**3 DTLS**', 'Secure the control channel'],
+                ['**4 Config push**', 'AP receives settings and software']
+              ]},
+              { kind: 'table', h: 'WLC interfaces', cols: ['Interface', 'Use'], rows: [
+                ['**Management**', 'Administration and dashboard'],
+                ['**AP manager**', 'AP traffic'],
+                ['**Service**', 'Guest or shared services'],
+                ['**Dynamic**', 'Client VLANs']
+              ]},
+              { kind: 'table', h: 'WLC platforms', cols: ['Type', 'Example'], rows: [
+                ['**Appliance**', 'Catalyst 9800 series'],
+                ['**Embedded**', 'Catalyst switch controller'],
+                ['**Virtual**', 'vWLC'],
+                ['**Cloud**', 'Catalyst Center managed']
+              ]}
+            ],
+            commands: [
+              { label: 'Check AP joins and WLAN state', code:
+`show ap summary
+show ap join stats summary
+show wlan summary` },
+              { label: 'Check controller and client health', code:
+`show wireless stats
+show ap config general
+show wireless client summary` },
+              { label: 'Check AP mode and radios', code:
+`show ap config general
+show ap radio summary` }
+            ],
+            traps: [
+              'The WLC owns **control and management**; data can stay local in **FlexConnect**.',
+              'APs join via **CAPWAP discovery, DTLS and a config push**.',
+              '**RRM runs on the WLC**, not independently on each AP.',
+              '**Local mode** sends client data to the WLC; **FlexConnect** keeps it at the AP.',
+              'The Catalyst **9800 is the modern IOS-XE** controller.',
+              'APs are lightweight, so they depend on the controller for configuration.'
+            ],
+            table: {
+              cols: ['Item', 'WLC'],
+              rows: [
+                ['Role', 'Central control'],
+                ['Protocol', 'CAPWAP'],
+                ['Control plane', 'WLC'],
+                ['Data plane', 'WLC or FlexConnect'],
+                ['RRM', 'WLC'],
+                ['Authentication', 'RADIUS'],
+                ['Modes', 'Local and FlexConnect'],
+                ['Platform', '9800']
+              ]
+            },
+            related: [
+              { t: '08. CAPWAP', d: 'The AP to WLC tunnel' },
+              { t: '09. Mobility', d: 'Roaming across controllers' },
+              { t: '05. Channels', d: 'RRM tuning' }
+            ],
+            glossary: ['WLC', 'CAPWAP', 'WLAN', 'SSID', 'Mobility', 'Roaming']
+          },
+          {
+            id: 't08', num: '08', group: 'arch', title: 'CAPWAP',
+            blurb: 'Two tunnels, UDP 5246 and 5247, DTLS and the AP join sequence',
+            overview: '**[[CAPWAP]]** is the standard tunnel between an AP and a **[[WLC]]**. It carries control traffic such as configuration and statistics on UDP 5246, and in Local mode it also carries client data on UDP 5247. Control is protected by DTLS, and the ports are a frequent exam question.',
+            keyIdea: 'CAPWAP control is UDP 5246 and data is UDP 5247, with DTLS on control. Local mode tunnels data to the WLC; FlexConnect does not.',
+            sections: [
+              { kind: 'table', h: 'The two tunnels', cols: ['Tunnel', 'Port', 'Content'], rows: [
+                ['**Control**', 'UDP 5246', 'Configuration and monitoring'],
+                ['**Data**', 'UDP 5247', 'Client traffic in Local mode']
+              ]},
+              { kind: 'table', h: 'Security', cols: ['Layer', 'Detail'], rows: [
+                ['**DTLS**', 'Encrypts the control channel'],
+                ['**Data DTLS**', 'Optional for client data'],
+                ['**Join**', 'AP authenticity'],
+                ['**Result**', 'Secure AP to WLC path']
+              ]},
+              { kind: 'table', h: 'Discovery process', cols: ['Step', 'Detail'], rows: [
+                ['**1**', 'AP looks for a WLC by broadcast, multicast, DNS or hostname'],
+                ['**2**', 'Discovery request and response'],
+                ['**3**', 'Join request and response'],
+                ['**4**', 'Configuration push']
+              ]},
+              { kind: 'table', h: 'Modes and data path', cols: ['Mode', 'Data over CAPWAP'], rows: [
+                ['**Local**', 'Yes, client data goes to the WLC'],
+                ['**FlexConnect**', 'No, the AP switches it locally'],
+                ['**Monitor**', 'Control only']
+              ]},
+              { kind: 'table', h: 'Overhead and design', cols: ['Point', 'Detail'], rows: [
+                ['**WLC capacity**', 'Tunnels scale with AP count'],
+                ['**Path**', 'WLC must be reachable'],
+                ['**Hairpin**', 'Data goes AP to WLC to LAN'],
+                ['**Alternative**', 'FlexConnect for remote branches']
+              ]},
+              { kind: 'code', h: 'CAPWAP verification', code:
+`  show ap join stats summary
+  show ap capwap ip
+  show ap summary
+  show ap config general` }
+            ],
+            commands: [
+              { label: 'Verify AP join and CAPWAP addressing', code:
+`show ap join stats summary
+show ap capwap ip
+show ap summary` },
+              { label: 'Check AP config and uptime', code:
+`show ap config general
+show ap uptime` },
+              { label: 'Debug join problems', code:
+`debug capwap event
+show ap join stats summary` }
+            ],
+            traps: [
+              'CAPWAP control is **UDP 5246**; data is **UDP 5247**.',
+              'Control is secured with **DTLS**, and data DTLS is optional.',
+              '**Local mode** tunnels client data to the WLC; **FlexConnect** keeps it at the AP.',
+              'APs **discover, join and then receive config**.',
+              'CAPWAP replaced the older **LWAPP**.',
+              'Blocking **UDP 5246** breaks the control channel and the AP cannot stay joined.'
+            ],
+            table: {
+              cols: ['Item', 'CAPWAP'],
+              rows: [
+                ['Control', 'UDP 5246'],
+                ['Data', 'UDP 5247'],
+                ['Security', 'DTLS'],
+                ['Local', 'Data to WLC'],
+                ['FlexConnect', 'Data at AP'],
+                ['Discover', 'DNS, broadcast, multicast'],
+                ['Join', 'Then config'],
+                ['Legacy', 'LWAPP']
+              ]
+            },
+            related: [
+              { t: '07. WLC', d: 'The controller side' },
+              { t: '01. WLAN', d: 'AP architecture' },
+              { t: '09. Mobility', d: 'CAPWAP and roaming' }
+            ],
+            glossary: ['CAPWAP', 'WLC', 'WLAN', 'Mobility']
+          },
+          {
+            id: 't09', num: '09', group: 'arch', title: 'Mobility',
+            blurb: 'Mobility groups, anchor and foreign controllers, and L2 versus L3',
+            overview: '**[[Mobility|Wireless mobility]]** keeps a client session alive while it moves between APs and even between **[[WLC|WLCs]]**. Controllers join a mobility group, and an anchor controller keeps the session while a foreign controller serves the client. Roaming works because mobility state is shared.',
+            keyIdea: 'A mobility group shares client state across controllers. The anchor is the original WLC, the foreign is the current one, and an L3 roam needs anchor forwarding.',
+            sections: [
+              { kind: 'table', h: 'Mobility group', cols: ['Item', 'Detail'], rows: [
+                ['**Group**', 'WLCs that trust each other'],
+                ['**Exchange**', 'Client MAC, IP and security state'],
+                ['**Scalability**', 'Group membership'],
+                ['**Security**', 'Shared keys or certificates']
+              ]},
+              { kind: 'table', h: 'Roles during a roam', cols: ['Role', 'WLC', 'Job'], rows: [
+                ['**Anchor**', 'First WLC', 'Holds the session and subnet'],
+                ['**Foreign**', 'Current WLC', 'Serves the client'],
+                ['**Controller**', 'Group member', 'Coordinates state']
+              ]},
+              { kind: 'table', h: 'Mobility versus roaming', cols: ['Term', 'Scope'], rows: [
+                ['**Roaming**', 'Client moves between APs or BSSIDs'],
+                ['**Mobility**', 'Controller handoff and forwarding path'],
+                ['**Fast roam**', 'Low-latency handoff']
+              ]},
+              { kind: 'table', h: 'Layer 2 versus Layer 3 mobility', cols: ['Type', 'Subnet', 'Forwarding'], rows: [
+                ['**L2**', 'Same subnet', 'Normal switched path'],
+                ['**L3**', 'Different subnet', 'Anchor forwards traffic']
+              ]},
+              { kind: 'code', h: 'Mobility configuration', code:
+`  wireless mobility group name CORP
+  wireless mobility member 192.0.2.10
+  wireless mobility keepalive interval 30` },
+              { kind: 'table', h: 'Mobility commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%mobility group name%%**', 'Name the group'],
+                ['**%%mobility member%%**', 'Add a peer WLC'],
+                ['**%%keepalive%%**', 'Health check interval']
+              ]}
+            ],
+            commands: [
+              { label: 'Check group and peer state', code:
+`show wireless mobility summary
+show wireless mobility statistics` },
+              { label: 'Check a roaming client', code:
+`show wireless mobility client
+show wireless client summary` },
+              { label: 'Check AP and mobility detail', code:
+`show ap mobility summary
+show ap summary` }
+            ],
+            traps: [
+              'A **mobility group** shares client state across controllers.',
+              'The **anchor** is the original controller; the **foreign** is the current one.',
+              'An **L2 roam** stays in the same subnet; an **L3 roam** needs anchor forwarding.',
+              'Mobility is the infrastructure that makes **roaming** seamless.',
+              '`show wireless mobility summary` is the first mobility check.',
+              'If the mobility tunnel is down, a cross-controller roam can drop the session.'
+            ],
+            table: {
+              cols: ['Item', 'Mobility'],
+              rows: [
+                ['Group', 'Trusted WLCs'],
+                ['Anchor', 'Original WLC'],
+                ['Foreign', 'Current WLC'],
+                ['L2', 'Same subnet'],
+                ['L3', 'Anchor forwards'],
+                ['Keepalive', 'Health check'],
+                ['Roam', 'At AP level'],
+                ['Verify', 'Show wireless mobility']
+              ]
+            },
+            related: [
+              { t: '10. Roaming', d: 'The client-side event' },
+              { t: '07. WLC', d: 'Controller coordination' },
+              { t: '08. CAPWAP', d: 'The transport underneath' }
+            ],
+            glossary: ['Mobility', 'Roaming', 'WLC', 'CAPWAP', 'DHCP']
+          },
+          {
+            id: 't10', num: '10', group: 'arch', title: 'Roaming',
+            blurb: 'L2 and L3 roams, 802.11r/k/v and the sticky client problem',
+            overview: '**[[Roaming]]** is a client moving from one AP or BSS to another while keeping its session. Roams differ by scope and speed: Layer 2 versus Layer 3, intra-controller versus inter-controller, and 802.11r fast transition for a low-latency handoff. Roaming depends on **[[Mobility]]** sharing the client state.',
+            keyIdea: 'Reassociation happens at the new BSSID. 802.11r pre-distributes keys, k provides neighbour reports, and v assists the transition. Sticky clients are fixed with steering plus k/v/r.',
+            sections: [
+              { kind: 'table', h: 'Roaming types', cols: ['Type', 'Scope'], rows: [
+                ['**L2**', 'Same subnet, normal switching'],
+                ['**L3**', 'Different subnet, anchor forwarding'],
+                ['**Intra-WLC**', 'Same controller'],
+                ['**Inter-WLC**', 'Across controllers']
+              ]},
+              { kind: 'table', h: 'The handoff moment', cols: ['Step', 'Detail'], rows: [
+                ['**1**', 'Client reassociates to the new AP'],
+                ['**2**', 'WLC and mobility update state'],
+                ['**3**', 'Frames follow the client'],
+                ['**4**', 'Old AP releases the client']
+              ]},
+              { kind: 'table', h: '802.11r fast transition', cols: ['Item', 'Detail'], rows: [
+                ['**What**', 'Pre-authenticated PMK'],
+                ['**FT**', 'Fast transition'],
+                ['**Result**', 'Handoff in milliseconds'],
+                ['**Use**', 'Voice and real-time traffic']
+              ]},
+              { kind: 'table', h: '802.11k and 802.11v', cols: ['Standard', 'Detail'], rows: [
+                ['**802.11k**', 'Neighbour reports'],
+                ['**802.11v**', 'BSS transition assistance'],
+                ['**Result**', 'Better AP choice']
+              ]},
+              { kind: 'table', h: 'Sticky clients', cols: ['Problem', 'Cause', 'Fix'], rows: [
+                ['**Clings to a weak AP**', 'RSSI threshold', '802.11v and steering'],
+                ['**Poor RF use**', 'No steering', 'Band steering'],
+                ['**Slow roam**', 'No fast transition', '802.11r']
+              ]},
+              { kind: 'table', h: 'Requirements for seamless roaming', cols: ['Need', 'Mechanism'], rows: [
+                ['**Same SSID**', 'ESS'],
+                ['**Same security**', 'PMK and 802.1X'],
+                ['**State sharing**', 'Mobility group'],
+                ['**Fast keys**', '802.11r']
+              ]}
+            ],
+            commands: [
+              { label: 'Check client roaming state', code:
+`show wireless client summary
+show wireless client mac <MAC>
+show ap summary` },
+              { label: 'Check mobility view of the client', code:
+`show wireless mobility client
+show wireless mobility summary` },
+              { label: 'Trace reassociation events', code:
+`debug dot11
+show wireless client summary` }
+            ],
+            traps: [
+              'An **L2 roam stays in the same subnet**, while an **L3 roam uses the anchor**.',
+              '**802.11r is fast transition with pre-distributed keys**; k and v assist roaming.',
+              '**Intra-WLC** and **inter-WLC** roams use different paths.',
+              'A **sticky client** is fixed with steering and 802.11k/v/r.',
+              'Seamless roaming needs the **same SSID, security and shared state**.',
+              'The client **reassociates to the new BSSID** during a roam.'
+            ],
+            table: {
+              cols: ['Item', 'Roaming'],
+              rows: [
+                ['L2', 'Same subnet'],
+                ['L3', 'Anchor path'],
+                ['Intra-WLC', 'One controller'],
+                ['Inter-WLC', 'Mobility group'],
+                ['802.11r', 'Fast keys'],
+                ['802.11k/v', 'Neighbour and assist'],
+                ['Sticky', 'Band steering'],
+                ['Seamless', 'Same SSID and security']
+              ]
+            },
+            related: [
+              { t: '09. Mobility', d: 'State sharing across WLCs' },
+              { t: '04. BSSID', d: 'The target of reassociation' },
+              { t: '11. WPA2', d: 'Security that must stay consistent' }
+            ],
+            glossary: ['Roaming', 'Mobility', 'BSSID', 'WLAN', 'WLC']
+          },
+          {
+            id: 't11', num: '11', group: 'sec', title: 'WPA2',
+            blurb: 'AES-CCMP, PSK versus 802.1X, and the 4-way handshake',
+            overview: '**[[WPA2]]** is the long-standing Wi-Fi security standard. It uses AES-CCMP for encryption and either 802.1X enterprise authentication or a pre-shared key for personal networks. The exam tests the two modes, the 4-way handshake, and why a static PSK is a weak point.',
+            keyIdea: 'WPA2 is AES-CCMP, not TKIP. Personal uses a PSK, enterprise uses 802.1X and RADIUS, and the 4-way handshake derives the PTK from the PMK and both nonces.',
+            sections: [
+              { kind: 'table', h: 'WPA2 modes', cols: ['Mode', 'Authentication', 'Use'], rows: [
+                ['**Personal**', 'PSK passphrase', 'Small networks'],
+                ['**Enterprise**', '802.1X and RADIUS', 'Corporate networks']
+              ]},
+              { kind: 'table', h: 'Encryption, AES-CCMP', cols: ['Item', 'Detail'], rows: [
+                ['**Cipher**', 'AES'],
+                ['**Protocol**', 'CCMP'],
+                ['**Key**', 'Per-session PTK'],
+                ['**Standard**', 'IEEE 802.11i']
+              ]},
+              { kind: 'table', h: 'The 4-way handshake', cols: ['Step', 'Detail'], rows: [
+                ['**1**', 'AP sends ANonce'],
+                ['**2**', 'Client sends SNonce and MIC'],
+                ['**3**', 'AP confirms and installs the key'],
+                ['**4**', 'Client confirms']
+              ]},
+              { kind: 'table', h: 'PSK weakness', cols: ['Item', 'Detail'], rows: [
+                ['**PMK source**', 'The passphrase'],
+                ['**Attack**', 'Offline dictionary guessing'],
+                ['**Risk**', 'Shared and static'],
+                ['**Rotation**', 'Rarely changed']
+              ]},
+              { kind: 'table', h: 'Enterprise 802.1X flow', cols: ['Stage', 'Protocol'], rows: [
+                ['**Authentication**', 'EAP over 802.1X'],
+                ['**Server**', 'RADIUS'],
+                ['**Key**', 'MSK becomes the PMK'],
+                ['**Session**', 'PTK']
+              ]},
+              { kind: 'code', h: 'WPA2 WLC configuration', code:
+`  wlan CorpData 1 Corp
+   security wpa akm dot1x
+   security dot1x server-auth
+   no security wpa akm psk
+   security wpa ccmp` },
+              { kind: 'table', h: 'WPA2 commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%akm dot1x%%**', 'Enterprise authentication'],
+                ['**%%akm psk%%**', 'Personal authentication'],
+                ['**%%ccmp%%**', 'AES encryption']
+              ]}
+            ],
+            commands: [
+              { label: 'Check the WLAN security profile', code:
+`show wlan summary
+show wlan id 1` },
+              { label: 'Check clients and associations', code:
+`show wireless client summary
+show dot11 associations` },
+              { label: 'Check authentication detail', code:
+`show auth-list
+show wireless client summary` }
+            ],
+            traps: [
+              'WPA2 uses **AES-CCMP**, not TKIP.',
+              'Personal is **PSK**; enterprise is **802.1X with RADIUS**.',
+              'The **4-way handshake** derives the PTK from the PMK and both nonces.',
+              'A static PSK is exposed to **offline dictionary attacks**.',
+              'The **MSK from RADIUS becomes the PMK** in enterprise mode.',
+              'WPA2 is defined by **IEEE 802.11i**.'
+            ],
+            table: {
+              cols: ['Item', 'WPA2'],
+              rows: [
+                ['Cipher', 'AES-CCMP'],
+                ['Personal', 'PSK'],
+                ['Enterprise', '802.1X'],
+                ['Handshake', '4-way'],
+                ['PTK', 'ANonce and SNonce'],
+                ['PMK', 'Passphrase or MSK'],
+                ['Weak point', 'PSK'],
+                ['Standard', '802.11i']
+              ]
+            },
+            related: [
+              { t: '12. WPA3', d: 'The successor' },
+              { t: '03. SSID', d: 'Security per WLAN' },
+              { t: '02. 802.11', d: 'Wireless standards' }
+            ],
+            glossary: ['WPA2', 'WPA3', 'AAA', 'RADIUS', 'SSID']
+          },
+          {
+            id: 't12', num: '12', group: 'sec', title: 'WPA3',
+            blurb: 'SAE, forward secrecy, mandatory PMF and 192-bit enterprise',
+            overview: '**[[WPA3]]** is the security upgrade over **[[WPA2]]**. SAE replaces the PSK exchange with a dictionary-resistant authentication, forward secrecy protects past traffic, and protected management frames harden the air. Enterprise mode adds an optional 192-bit suite for high-assurance networks.',
+            keyIdea: 'WPA3 Personal uses SAE, which defeats offline dictionary attacks. PMF is mandatory, forward secrecy protects old sessions, and transition mode keeps legacy clients working at a security cost.',
+            sections: [
+              { kind: 'table', h: 'WPA3 Personal, SAE', cols: ['Item', 'Detail'], rows: [
+                ['**Handshake**', 'SAE, also called dragonfly'],
+                ['**Dictionary attack**', 'Offline guessing prevented'],
+                ['**Forward secrecy**', 'Yes'],
+                ['**Result**', 'Stronger per-session keys']
+              ]},
+              { kind: 'table', h: 'WPA3 Enterprise', cols: ['Aspect', 'Detail'], rows: [
+                ['**Authentication**', '802.1X and RADIUS'],
+                ['**Suite**', '192-bit CNSA'],
+                ['**Certificates**', 'Server and client'],
+                ['**Result**', 'High-assurance security']
+              ]},
+              { kind: 'table', h: 'PMF, protected management frames', cols: ['Item', 'Detail'], rows: [
+                ['**What**', 'Protects management frames'],
+                ['**Against**', 'Deauthentication and forgery'],
+                ['**In WPA3**', 'Mandatory'],
+                ['**Benefit**', 'Safer roaming and association']
+              ]},
+              { kind: 'table', h: 'WPA3 versus WPA2', cols: ['Feature', 'WPA2', 'WPA3'], rows: [
+                ['**Personal**', 'PSK 4-way', 'SAE'],
+                ['**Dictionary attack**', 'Vulnerable', 'Resistant'],
+                ['**Forward secrecy**', 'No', 'Yes'],
+                ['**PMF**', 'Optional', 'Mandatory'],
+                ['**Enterprise**', '802.1X', '802.1X plus 192-bit']
+              ]},
+              { kind: 'table', h: 'Transition mode', cols: ['Mode', 'Detail'], rows: [
+                ['**WPA3-only**', 'Most secure, but legacy clients cannot join'],
+                ['**Transition**', 'Allows WPA2 and WPA3 clients'],
+                ['**Risk**', 'Mixed mode keeps the weaker WPA2 exposure']
+              ]},
+              { kind: 'code', h: 'WPA3 WLC configuration', code:
+`  wlan Secure 3 SecureData
+   security wpa psk sae
+   security pmf
+   security wpa ccmp` },
+              { kind: 'table', h: 'WPA3 commands', cols: ['Command', 'Meaning'], rows: [
+                ['**%%akm sae%%**', 'WPA3 personal'],
+                ['**%%pmf%%**', 'Protected management frames'],
+                ['**%%ccmp%%**', 'AES encryption']
+              ]}
+            ],
+            commands: [
+              { label: 'Check the WPA3 WLAN', code:
+`show wlan summary
+show wlan id 3` },
+              { label: 'Check client security state', code:
+`show wireless client summary
+show ap dot11 5ghz security` },
+              { label: 'Check PMF and authentication', code:
+`show auth-list
+show wlan id 3` }
+            ],
+            traps: [
+              'WPA3 Personal uses **SAE**, which defeats offline dictionary attacks.',
+              'WPA3 adds **forward secrecy and mandatory PMF**.',
+              'WPA3 Enterprise uses **802.1X with an optional 192-bit suite**.',
+              '**Transition mode** keeps legacy WPA2 clients working at a security cost.',
+              'SAE replaces the **PSK authentication** in WPA3 Personal.',
+              'PMF protects **management frames** such as deauthentication.'
+            ],
+            table: {
+              cols: ['Item', 'WPA3'],
+              rows: [
+                ['Personal', 'SAE'],
+                ['Enterprise', '802.1X and 192-bit'],
+                ['Forward secrecy', 'Yes'],
+                ['PMF', 'Mandatory'],
+                ['Dictionary attack', 'Stopped'],
+                ['Legacy', 'Transition mode'],
+                ['Encryption', 'AES-based'],
+                ['Compared with WPA2', 'Hardened']
+              ]
+            },
+            related: [
+              { t: '11. WPA2', d: 'The predecessor' },
+              { t: '03. SSID', d: 'Per-WLAN security' },
+              { t: '10. Roaming', d: 'Fast transition and PMF' }
+            ],
+            glossary: ['WPA3', 'WPA2', 'AAA', 'RADIUS', 'WLAN']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'fund', label: 'WLAN Fundamentals', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'rf', label: 'RF & Channels', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'arch', label: 'Architecture & Mobility', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' },
+          { key: 'sec', label: 'Security', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'WLAN', def: 'Wireless LAN. A network built on IEEE 802.11 where clients associate to access points over shared radio spectrum.' },
+          { term: '802.11', def: 'The IEEE standard family for wireless LANs. It defines the MAC and PHY layers, management frames, and the a, b, g, n, ac and ax amendments.' },
+          { term: 'SSID', def: 'Service Set Identifier. The human-readable wireless network name, up to 32 characters, advertised in beacons.' },
+          { term: 'BSSID', def: 'Basic Service Set Identifier. The 48-bit MAC address of one AP radio, which identifies a specific BSS.' },
+          { term: 'Channels', def: 'The RF sub-bands APs transmit on. In 2.4 GHz the non-overlapping set is 1, 6 and 11; 5 GHz adds many channels including DFS.' },
+          { term: 'RF', def: 'Radio frequency. The shared wireless medium, described by signal strength, noise, attenuation, interference and antenna behaviour.' },
+          { term: 'WLC', def: 'Wireless LAN Controller. The central device that configures APs, runs RRM, handles authentication and coordinates roaming.' },
+          { term: 'CAPWAP', def: 'Control And Provisioning of Wireless Access Points. The AP to WLC protocol, using UDP 5246 for control and UDP 5247 for data.' },
+          { term: 'Mobility', def: 'The controller-side infrastructure that shares client state across WLCs so sessions survive movement between APs and subnets.' },
+          { term: 'Roaming', def: 'A client moving from one AP or BSS to another while keeping its session, using reassociation and shared mobility state.' },
+          { term: 'WPA2', def: 'Wi-Fi Protected Access 2. The 802.11i security standard using AES-CCMP, with PSK or 802.1X authentication and a 4-way handshake.' },
+          { term: 'WPA3', def: 'Wi-Fi Protected Access 3. The newer standard using SAE for personal networks, forward secrecy, mandatory PMF and optional 192-bit enterprise security.' },
+          { term: 'VLAN', def: 'Virtual LAN. A Layer 2 broadcast domain, mapped per SSID or WLAN profile so wireless clients land in the right network.' },
+          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol. It supplies client IP addresses, and mobility must preserve the address across a roam where possible.' },
+          { term: 'RADIUS', def: 'Remote Authentication Dial-In User Service. The AAA server used by WPA2 and WPA3 enterprise for 802.1X authentication and key material.' },
+          { term: 'AAA', def: 'Authentication, Authorization and Accounting. The framework behind enterprise wireless identity, normally implemented with RADIUS.' }
+        ];
+
+        const quiz = [
+          { q: 'Which standard family defines wireless LANs?', options: ['802.11', '802.1Q', '802.3', '802.1X'], answer: 0, why: 'The IEEE 802.11 family defines WLAN MAC and PHY behaviour.' },
+          { q: 'What kind of medium is wireless RF?', options: ['Dedicated and lossless', 'Shared and error-prone', 'Full duplex only', 'Optical'], answer: 1, why: 'All nearby radios share the medium, so interference and retries are normal.' },
+          { q: 'What is a BSS?', options: ['All APs under one SSID', 'A controller cluster', 'One AP radio and its clients', 'A VLAN interface'], answer: 2, why: 'A basic service set is one AP radio plus associated clients.' },
+          { q: 'What is an ESS?', options: ['One AP with no clients', 'A single controller port', 'A management frame', 'Many BSSes under one SSID'], answer: 3, why: 'The extended service set groups BSSes so clients can roam under one SSID.' },
+          { q: 'What is the SSID?', options: ['The wireless network name', 'The AP radio MAC', 'The controller IP', 'The VLAN tag'], answer: 0, why: 'The SSID is the human-readable network name advertised in beacons.' },
+          { q: 'What is the BSSID?', options: ['The network name', 'The AP radio MAC address', 'The client IP address', 'The WLC serial number'], answer: 1, why: 'The BSSID is the 48-bit MAC of a specific AP radio.' },
+          { q: 'What is the maximum SSID length?', options: ['16 characters', '64 characters', '32 characters', '128 characters'], answer: 2, why: 'An SSID can be up to 32 characters long.' },
+          { q: 'Is hiding an SSID a security control?', options: ['Yes, it encrypts traffic', 'Yes, it blocks association', 'Only on 6 GHz', 'No, clients still probe for it'], answer: 3, why: 'Hidden SSIDs are not security; clients reveal the name in probes.' },
+          { q: 'How often is a beacon typically sent?', options: ['About every 100 ms', 'Every 1 second', 'Every 10 seconds', 'Only on association'], answer: 0, why: 'Beacons advertise the BSS about ten times per second.' },
+          { q: 'Which access method does 802.11 use?', options: ['CSMA/CD', 'CSMA/CA with ACKs', 'Token passing', 'Polling only'], answer: 1, why: 'Wireless avoids collisions and confirms unicast frames with ACKs.' },
+          { q: 'Why does 802.11 use ACKs?', options: ['To encrypt frames', 'To assign IP addresses', 'It cannot detect collisions while transmitting', 'To select channels'], answer: 2, why: 'A station cannot hear a collision during transmission, so the receiver acknowledges frames.' },
+          { q: 'Which frames run discovery and association?', options: ['Data frames', 'Control frames', 'QoS frames', 'Management frames'], answer: 3, why: 'Beacon, probe, authentication and association are management frames.' },
+          { q: 'What problem does RTS/CTS mitigate?', options: ['The hidden node problem', 'IP address exhaustion', 'Channel bonding', 'VLAN mismatch'], answer: 0, why: 'RTS/CTS reserves the medium so hidden stations know to wait.' },
+          { q: 'Which amendment introduced MIMO?', options: ['802.11a', '802.11n', '802.11g', '802.11b'], answer: 1, why: '802.11n, or Wi-Fi 4, added MIMO and dual-band operation.' },
+          { q: 'Which band is central to 802.11ac?', options: ['2.4 GHz', '6 GHz', '5 GHz', '900 MHz'], answer: 2, why: '802.11ac, or Wi-Fi 5, operates in 5 GHz with wide channels.' },
+          { q: 'Which feature is associated with 802.11ax?', options: ['MIMO only', 'TKIP', 'Frame relay', 'OFDMA and 6 GHz'], answer: 3, why: 'Wi-Fi 6 adds OFDMA and extends to 6 GHz in Wi-Fi 6E.' },
+          { q: 'Which 2.4 GHz channels are non-overlapping in the US?', options: ['1, 6 and 11', '1, 2 and 3', '36, 40 and 44', '52, 56 and 60'], answer: 0, why: 'The common non-overlapping 2.4 GHz plan is 1, 6 and 11.' },
+          { q: 'What is the channel spacing in 2.4 GHz?', options: ['20 MHz', '5 MHz', '40 MHz', '100 MHz'], answer: 1, why: '2.4 GHz channels are spaced 5 MHz apart, which is why they overlap.' },
+          { q: 'Why do DFS channels require extra care?', options: ['They are encrypted', 'They only support 802.11b', 'They must avoid radar', 'They cannot carry voice'], answer: 2, why: 'DFS channels listen for radar and must vacate when radar is detected.' },
+          { q: 'What is the trade-off of a wider channel?', options: ['More channels but lower speed', 'No effect on throughput', 'It removes the need for RRM', 'More throughput but fewer channels'], answer: 3, why: 'Bonding channels raises throughput but consumes more spectrum.' },
+          { q: 'What does RRM automate?', options: ['Channel and power selection', 'Client DHCP addressing', 'WPA3 key exchange', 'VLAN assignment'], answer: 0, why: 'Radio resource management tunes channels, power and coverage.' },
+          { q: 'What does TPC adjust?', options: ['Channel width', 'Transmit power', 'SSID length', 'Roaming threshold'], answer: 1, why: 'Transmit power control adjusts AP power to balance coverage and interference.' },
+          { q: 'What does RSSI measure?', options: ['Signal-to-noise ratio', 'Throughput', 'Received signal strength', 'Channel width'], answer: 2, why: 'RSSI is the received signal level, usually expressed in dBm.' },
+          { q: 'What does SNR measure?', options: ['Signal compared with throughput', 'Power compared with antenna gain', 'Clients compared with APs', 'Signal compared with noise'], answer: 3, why: 'SNR is the difference between signal and noise in dB.' },
+          { q: 'What SNR is generally considered good?', options: ['About 25 dB or better', 'About 3 dB', 'About 5 dB', 'Zero dB'], answer: 0, why: 'A margin around 25 dB supports higher data rates and stability.' },
+          { q: 'How is EIRP calculated?', options: ['Tx power minus antenna gain', 'Tx power plus antenna gain minus cable loss', 'RSSI plus SNR', 'Channel width times clients'], answer: 1, why: 'EIRP combines radio power, antenna gain and cable loss.' },
+          { q: 'What does an increase of 3 dB represent?', options: ['Ten times the power', 'Half the power', 'Double the power', 'No change'], answer: 2, why: 'A 3 dB change doubles or halves power; 10 dB is a tenfold change.' },
+          { q: 'What is the capacity effect of smaller cells?', options: ['Less capacity per area', 'No effect', 'Only lower security', 'More capacity per area'], answer: 3, why: 'More APs create smaller cells and reuse spectrum for more aggregate capacity.' },
+          { q: 'What is a site survey used for?', options: ['Validating coverage and interference', 'Assigning IP addresses', 'Configuring WPA3', 'Replacing a WLC'], answer: 0, why: 'A survey validates RF coverage, interference and capacity before or after deployment.' },
+          { q: 'What is the main role of a WLC?', options: ['Layer 2 switching only', 'Centralized control of APs', 'Internet routing', 'DHCP relay only'], answer: 1, why: 'The WLC configures APs, runs RRM, handles authentication and coordinates roaming.' },
+          { q: 'Which UDP port carries CAPWAP control?', options: ['5247', '1812', '5246', '4789'], answer: 2, why: 'CAPWAP control uses UDP 5246.' },
+          { q: 'Which UDP port carries CAPWAP data?', options: ['5246', '443', '4500', '5247'], answer: 3, why: 'CAPWAP data uses UDP 5247 in Local mode.' },
+          { q: 'How is CAPWAP control protected?', options: ['DTLS', 'TKIP', 'IPsec ESP only', 'Plain text'], answer: 0, why: 'DTLS encrypts the CAPWAP control channel, and data DTLS is optional.' },
+          { q: 'In Local mode, where does client data go?', options: ['Only to the local switch', 'Through the WLC', 'Directly to the internet', 'Nowhere'], answer: 1, why: 'Local mode tunnels client data to the WLC over CAPWAP.' },
+          { q: 'In FlexConnect mode, where does client data go?', options: ['Through the WLC', 'Through the mobility anchor', 'It stays local at the AP', 'To the RADIUS server'], answer: 2, why: 'FlexConnect switches client data locally, which suits remote branches.' },
+          { q: 'What is the correct AP join order?', options: ['Receive config, discover, join', 'Join, discover, reboot', 'Authenticate, route, discover', 'Discover, join, receive config'], answer: 3, why: 'The AP discovers a WLC, joins it and then receives its configuration.' },
+          { q: 'Which controller platform is the modern IOS-XE model?', options: ['Catalyst 9800', 'Aironet 1200', 'Cat 2960', 'ASA 5505'], answer: 0, why: 'The Catalyst 9800 series runs IOS-XE and is the current WLC family.' },
+          { q: 'What does a mobility group share?', options: ['Only AP firmware', 'Client state across WLCs', 'Only VLANs', 'Only DHCP scopes'], answer: 1, why: 'Mobility group members exchange client MAC, IP, security and roaming state.' },
+          { q: 'Which controller is the anchor during a roam?', options: ['The current WLC', 'The RADIUS server', 'The original WLC', 'The core switch'], answer: 2, why: 'The anchor holds the original session and forwards traffic for an L3 roam.' },
+          { q: 'Which controller is the foreign during a roam?', options: ['The original WLC', 'The DHCP server', 'The AP itself', 'The current WLC'], answer: 3, why: 'The foreign controller is the one currently serving the client.' },
+          { q: 'What scope does an L2 roam have?', options: ['The same subnet', 'A different subnet', 'A different mobility group', 'A different SSID'], answer: 0, why: 'An L2 roam keeps the client in the same subnet and uses normal switching.' },
+          { q: 'What does an L3 roam require?', options: ['A new SSID', 'Anchor forwarding', 'A new PSK', 'A new BSSID only'], answer: 1, why: 'When the subnet changes, the anchor controller forwards traffic for the client.' },
+          { q: 'What does 802.11r provide?', options: ['Neighbour reports', 'Band steering', 'Fast transition with pre-distributed keys', 'DFS radar detection'], answer: 2, why: '802.11r pre-authenticates and distributes keys for a fast reassociation.' },
+          { q: 'What does 802.11k provide?', options: ['Fast keys', 'Transmit power control', 'SAE authentication', 'Neighbour reports'], answer: 3, why: '802.11k gives clients neighbour reports so they can choose an AP.' },
+          { q: 'What does 802.11v provide?', options: ['BSS transition assistance', 'AES encryption', 'Channel bonding', 'CAPWAP discovery'], answer: 0, why: '802.11v helps steer clients to a better AP with transition management.' },
+          { q: 'How do you fix a sticky client?', options: ['Disable all SSIDs', 'Band steering plus 802.11k/v/r', 'Use TKIP', 'Remove the WLC'], answer: 1, why: 'Steering and the k/v/r standards encourage a client to move to a better AP.' },
+          { q: 'Which encryption does WPA2 use?', options: ['TKIP', 'WEP', 'AES-CCMP', 'DES'], answer: 2, why: 'WPA2 uses AES with CCMP; TKIP belongs to WPA1.' },
+          { q: 'How many messages are in the WPA2 handshake?', options: ['Two', 'Three', 'Six', 'Four'], answer: 3, why: 'The 4-way handshake derives and confirms the pairwise transient key.' },
+          { q: 'Which authentication does WPA2 Enterprise use?', options: ['802.1X with RADIUS', 'A shared PSK only', 'WEP keys', 'No authentication'], answer: 0, why: 'Enterprise mode uses 802.1X and a RADIUS server for per-user authentication.' },
+          { q: 'What is the main weakness of WPA2 Personal?', options: ['No encryption', 'Offline dictionary attacks on the PSK', 'No SSID', 'No roaming'], answer: 1, why: 'A captured handshake allows offline guessing of a weak pre-shared key.' },
+          { q: 'What replaces the PSK handshake in WPA3 Personal?', options: ['TKIP', 'WEP', 'SAE', 'CAPWAP'], answer: 2, why: 'Simultaneous Authentication of Equals resists offline dictionary attacks.' },
+          { q: 'What is the status of PMF in WPA3?', options: ['Optional', 'Disabled', 'Only on 2.4 GHz', 'Mandatory'], answer: 3, why: 'Protected management frames are required in WPA3.' },
+          { q: 'Does WPA3 provide forward secrecy?', options: ['Yes', 'No', 'Only in transition mode', 'Only with TKIP'], answer: 0, why: 'WPA3 protects past sessions even if a future key is compromised.' },
+          { q: 'What does WPA3 transition mode allow?', options: ['Only WPA3 clients', 'WPA2 clients to join', 'No encryption', 'WEP clients'], answer: 1, why: 'Transition mode supports both WPA2 and WPA3 clients during migration.' },
+          { q: 'What enterprise suite does WPA3 optionally add?', options: ['64-bit', 'WEP 40-bit', '192-bit', 'TKIP'], answer: 2, why: 'WPA3 Enterprise can use a 192-bit CNSA suite for high-assurance networks.' }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'wifi.theme', done: 'wifi.done', best: 'wifi.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
