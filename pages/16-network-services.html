@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Network Services — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 16 Network Services: DHCP, DHCP snooping, DHCP relay, DNS, NTP, SNMP and Syslog, plus FTP, TFTP, HTTP, HTTPS, SSH, Telnet, SMTP, POP3, IMAP, LDAP, SIP and RTP.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Network Services — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">SVC</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Network Services</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 16</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 16</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">19 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 16 &mdash; Network Services</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">The services every network depends on: DHCP, DNS, NTP, SNMP and Syslog, alongside the file, web, remote-access and communication protocols the exam expects you to recognise on sight.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Network Services &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 16 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `**[[DHCP]]**, **[[DNS]]**, **[[NTP]]**, **[[SNMP]]** and **[[Syslog]]** are the services every network depends on, and the exam tests their ports, message flows and failure modes. This level also covers the file, web, remote-access and communication protocols you are expected to recognise on sight.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'addr', title: 'DHCP',
+            blurb: 'DORA, UDP 67/68, lease timers T1 and T2, pools and options',
+            overview: '**[[DHCP]] (Dynamic Host Configuration Protocol)** automatically supplies hosts with an IP address, mask, default gateway, DNS servers, domain name and lease duration. The server listens on **UDP 67**, the client on **UDP 68**, and the four-message exchange is remembered as **DORA**.',
+            keyIdea: 'DORA: Discover, Offer, Request, Acknowledge. T1 renews at 50%, T2 rebinds at 87.5%.',
+            sections: [
+              { kind: 'table', h: 'Ports and roles', cols: ['Item', 'Value'], rows: [
+                ['Server port', '**UDP 67**'],
+                ['Client port', '**UDP 68**'],
+                ['First message', 'DHCPDISCOVER (broadcast)'],
+                ['Lease renewal', 'T1 = 50% of lease'],
+                ['Rebind', 'T2 = 87.5% of lease']
+              ]},
+              { kind: 'code', h: 'DORA exchange', code:
+`  Client                          Server
+    | DHCPDISCOVER (broadcast)  ->   |
+    | <-  DHCPOFFER                  |
+    | DHCPREQUEST (broadcast)   ->   |
+    | <-  DHCPACK                    |` },
+              { kind: 'table', h: 'Message types', cols: ['Message', 'Purpose'], rows: [
+                ['DISCOVER', 'Client looks for a server'],
+                ['OFFER', 'Server proposes an address'],
+                ['REQUEST', 'Client asks for the offered address'],
+                ['ACK', 'Server confirms the lease'],
+                ['NAK', 'Server refuses (wrong subnet or lease lost)'],
+                ['RELEASE', 'Client gives the address back'],
+                ['DECLINE', 'Client rejects an address already in use']
+              ]},
+              { kind: 'code', h: 'Server configuration', code:
+`  ip dhcp excluded-address 10.1.1.1 10.1.1.10
+  !
+  ip dhcp pool LAN
+   network 10.1.1.0 255.255.255.0
+   default-router 10.1.1.1
+   dns-server 10.1.1.53
+   lease 0 8` },
+              { kind: 'para', h: 'Options', p: '**Option 53** is the message type, **Option 54** is the server identifier, and **Option 82** is the relay agent information added by a relay.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip dhcp binding
+  show ip dhcp pool
+  show ip dhcp server statistics` }
+            ],
+            commands: [
+              { label: 'Exclude and build a pool', code:
+`ip dhcp excluded-address 10.1.1.1 10.1.1.10
+ip dhcp pool LAN
+ network 10.1.1.0 255.255.255.0
+ default-router 10.1.1.1
+ dns-server 10.1.1.53` },
+              { label: 'Verify leases', code:
+`show ip dhcp binding\nshow ip dhcp server statistics` }
+            ],
+            traps: [
+              '**UDP 67 is the server, UDP 68 is the client.**',
+              'DORA is **Discover, Offer, Request, ACK**.',
+              'DISCOVER starts as a **broadcast** and does not cross a Layer 3 boundary.',
+              '**T1 = 50%** renews with the original server; **T2 = 87.5%** rebinds with any server.',
+              '**%%ip dhcp excluded-address%%** is global config, not part of the pool.',
+              'Choose the gateway with **%%default-router%%** and DNS with **%%dns-server%%**.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Server / client port', 'UDP 67 / UDP 68'],
+                ['Exchange', 'Discover, Offer, Request, ACK'],
+                ['T1 / T2', '50% / 87.5% of the lease'],
+                ['Gateway option', 'default-router'],
+                ['DNS option', 'dns-server'],
+                ['Relay option', 'Option 82'],
+                ['Message type option', 'Option 53'],
+                ['Exclusion', 'ip dhcp excluded-address (global)']
+              ]
+            },
+            related: [
+              { t: '02. DHCP Snooping', d: 'Stop rogue servers' },
+              { t: '03. DHCP Relay', d: 'Serve remote subnets' }
+            ],
+            glossary: ['DHCP', 'DHCP Relay']
+          },
+          {
+            id: 't02', num: '02', group: 'addr', title: 'DHCP Snooping',
+            blurb: 'Trusted and untrusted ports, the binding table, rate limits and starvation',
+            overview: '**[[DHCP Snooping]]** is a **Layer 2 switch security feature** that blocks DHCP server messages arriving on client-facing ports. It builds a **binding database** of MAC, IP, VLAN, interface and lease that **[[Dynamic ARP Inspection]]** and **[[IP Source Guard]]** can reuse.',
+            keyIdea: 'Untrusted by default. Trust only the port toward the real server or relay.',
+            sections: [
+              { kind: 'table', h: 'Port model', cols: ['Port type', 'Behaviour'], rows: [
+                ['**Trusted**', 'May receive DHCP server messages (OFFER, ACK, NAK)'],
+                ['**Untrusted**', 'Server messages are dropped; only client messages allowed'],
+                ['Default state', '**Untrusted**']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  ip dhcp snooping
+  ip dhcp snooping vlan 10,20
+  !
+  interface GigabitEthernet0/1
+   ip dhcp snooping trust
+  !
+  interface GigabitEthernet0/2
+   ip dhcp snooping limit rate 10` },
+              { kind: 'table', h: 'What it checks', cols: ['Check', 'Why'], rows: [
+                ['Server messages on untrusted port', 'Blocks rogue DHCP servers'],
+                ['Binding table entries', 'Feeds DAI and IP Source Guard'],
+                ['Rate limit', 'Mitigates DHCP starvation'],
+                ['Option 82', 'Circuit ID and Remote ID identify the port']
+              ]},
+              { kind: 'para', h: 'Starvation', p: 'A **DHCP starvation** attack exhausts the pool with bogus MAC addresses. **Rate limiting** slows it down, but rate limiting is not the same thing as starvation detection.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip dhcp snooping
+  show ip dhcp snooping binding
+  show ip dhcp snooping statistics` }
+            ],
+            commands: [
+              { label: 'Enable snooping', code:
+`ip dhcp snooping\nip dhcp snooping vlan 10\ninterface GigabitEthernet0/1\n ip dhcp snooping trust` },
+              { label: 'Verify bindings', code:
+`show ip dhcp snooping binding` }
+            ],
+            traps: [
+              'DHCP snooping is a **Layer 2 switch feature**.',
+              'Ports are **untrusted by default**; trust only toward the server/relay.',
+              '**DHCPOFFER, DHCPACK and DHCPNAK** are server-originated messages.',
+              'The **binding database** feeds **DAI** and **IP Source Guard**.',
+              '**Rate limiting** mitigates starvation but is not detection.',
+              'Global enable plus **per-VLAN** enable are both required.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Layer', 'Layer 2 switch feature'],
+                ['Default port state', 'Untrusted'],
+                ['Trusted toward', 'Legitimate DHCP server or relay'],
+                ['Binding contents', 'MAC, IP, VLAN, interface, lease'],
+                ['Consumers', 'DAI, IP Source Guard'],
+                ['Option 82', 'Circuit ID and Remote ID'],
+                ['Attack mitigated', 'DHCP starvation (via rate limit)'],
+                ['Global command', 'ip dhcp snooping']
+              ]
+            },
+            related: [
+              { t: '01. DHCP', d: 'The protocol being protected' },
+              { t: '03. DHCP Relay', d: 'What you trust toward' }
+            ],
+            glossary: ['DHCP Snooping', 'DHCP', 'Dynamic ARP Inspection', 'IP Source Guard']
+          },
+          {
+            id: 't03', num: '03', group: 'addr', title: 'DHCP Relay',
+            blurb: 'ip helper-address, giaddr, and serving clients in another subnet',
+            overview: '**[[DHCP Relay]]** forwards DHCP broadcasts across a Layer 3 boundary. A client-facing interface configured with **%%ip helper-address%%** becomes a relay agent: it forwards the request toward the server and fills in **%%giaddr%%** so the server can pick the right scope.',
+            keyIdea: 'ip helper-address goes on the client-facing interface; giaddr tells the server which subnet the client lives in.',
+            sections: [
+              { kind: 'code', h: 'Why it exists', code:
+`  Broadcasts do not cross routers.
+  Client VLAN 10 -> router -> DHCP server in VLAN 99
+
+  Without relay: no answer.` },
+              { kind: 'table', h: 'Relay concepts', cols: ['Term', 'Meaning'], rows: [
+                ['**%%giaddr%%**', 'Gateway IP address, the client-facing interface address'],
+                ['**Option 82**', 'Extra relay information: Circuit ID and Remote ID'],
+                ['Helper address', 'Destination the relay forwards to'],
+                ['Server choice', 'Uses giaddr to select the pool/scope']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  interface GigabitEthernet0/0.10
+   encapsulation dot1Q 10
+   ip address 10.1.10.1 255.255.255.0
+   ip helper-address 10.1.99.10` },
+              { kind: 'para', h: 'Not just DHCP', p: '**%%ip helper-address%%** forwards several UDP broadcast services by default, including TFTP and DNS, and can be tuned with **%%ip forward-protocol%%**.' },
+              { kind: 'code', h: 'Verification', code:
+`  show ip interface GigabitEthernet0/0.10
+  show running-config | include helper` }
+            ],
+            commands: [
+              { label: 'Configure relay', code:
+`interface GigabitEthernet0/0.10\n ip helper-address 10.1.99.10` },
+              { label: 'Verify', code:
+`show running-config | include helper` }
+            ],
+            traps: [
+              'Configure **%%ip helper-address%%** on the **client-facing** Layer 3 interface.',
+              '**%%giaddr%%** and **Option 82** are not the same thing.',
+              'A helper forwards **more than DHCP** unless you restrict protocols.',
+              'Multiple helpers are **not** DHCP failover; that is a server feature.',
+              'The interface address becomes the **giaddr**.',
+              'The server still needs a **route back** to the relay.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Command', 'ip helper-address SERVER-IP'],
+                ['Placed on', 'Client-facing Layer 3 interface or SVI'],
+                ['giaddr', 'Client subnet identifier'],
+                ['Option 82', 'Relay agent information'],
+                ['Also forwards', 'Other UDP broadcasts (TFTP, DNS)'],
+                ['Requirement', 'Layer 3 reachability to the server']
+              ]
+            },
+            related: [
+              { t: '01. DHCP', d: 'The messages being relayed' },
+              { t: '02. DHCP Snooping', d: 'Trust joint design' }
+            ],
+            glossary: ['DHCP Relay', 'DHCP']
+          },
+          {
+            id: 't04', num: '04', group: 'addr', title: 'DNS',
+            blurb: 'Recursive vs iterative, hierarchy, and the record types worth memorising',
+            overview: '**[[DNS]]** resolves names to addresses. Queries normally use **UDP 53**, while **TCP 53** carries zone transfers and exchanges that cannot complete over UDP. Resolution is hierarchical: root, TLD, then the authoritative server, usually via a recursive resolver.',
+            keyIdea: 'Recursive = resolver does the work. Iterative = server gives a referral. A = IPv4, AAAA = IPv6, PTR = reverse.',
+            sections: [
+              { kind: 'table', h: 'Query types', cols: ['Type', 'Meaning'], rows: [
+                ['**Recursive**', 'Resolver returns the final answer for the client'],
+                ['**Iterative**', 'Server returns the best information or a referral'],
+                ['Caching', 'Controlled by the record TTL']
+              ]},
+              { kind: 'code', h: 'Hierarchy', code:
+`  Client
+    | recursive query
+    v
+  Recursive resolver
+    | iterative queries
+    v
+  Root -> TLD -> Authoritative server` },
+              { kind: 'table', h: 'Record types', cols: ['Record', 'Purpose'], rows: [
+                ['**A**', 'IPv4 address'],
+                ['**AAAA**', 'IPv6 address'],
+                ['**CNAME**', 'Alias to another hostname'],
+                ['**MX**', 'Mail server plus preference (lower wins)'],
+                ['**PTR**', 'Reverse lookup'],
+                ['**NS**', 'Delegated nameserver'],
+                ['**SRV**', 'Service discovery'],
+                ['**SOA**', 'Zone authority information']
+              ]},
+              { kind: 'code', h: 'Device configuration', code:
+`  ip name-server 10.1.1.53
+  ip domain lookup
+  ip domain name example.com` },
+              { kind: 'code', h: 'Verification', code:
+`  show hosts
+  nslookup example.com` }
+            ],
+            commands: [
+              { label: 'Point the device at DNS', code:
+`ip name-server 10.1.1.53\nip domain lookup\nip domain name example.com` },
+              { label: 'Verify resolution', code:
+`show hosts` }
+            ],
+            traps: [
+              '**UDP 53** for queries, **TCP 53** for zone transfers.',
+              '**Recursive** returns the final answer; **iterative** returns a referral.',
+              '**Lower MX preference wins.**',
+              '**PTR** is reverse lookup, **CNAME** is an alias.',
+              '**%%no ip domain lookup%%** disables resolution on the device.',
+              'TTL controls caching, not the record type.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Ports', 'UDP 53, TCP 53'],
+                ['Recursive', 'Resolver chases the answer'],
+                ['Iterative', 'Referral to the next server'],
+                ['IPv4 record', 'A'],
+                ['IPv6 record', 'AAAA'],
+                ['Reverse record', 'PTR'],
+                ['Mail record', 'MX (lower preference better)'],
+                ['Device command', 'ip name-server']
+              ]
+            },
+            related: [
+              { t: '01. DHCP', d: 'Hands out DNS servers' },
+              { t: '05. NTP', d: 'Other infrastructure service' }
+            ],
+            glossary: ['DNS', 'DHCP']
+          },
+          {
+            id: 't05', num: '05', group: 'addr', title: 'NTP',
+            blurb: 'UDP 123, stratum levels, modes, authentication and verification',
+            overview: '**[[NTP]]** synchronises clocks over **UDP 123** using a **stratum** hierarchy. Accurate time matters for log timestamps, troubleshooting, certificates and authentication.',
+            keyIdea: 'Stratum 0 is the reference clock, stratum 1 is directly attached, and stratum 16 means unsynchronised.',
+            sections: [
+              { kind: 'table', h: 'Stratum hierarchy', cols: ['Stratum', 'Meaning'], rows: [
+                ['**0**', 'Reference clock (GPS, atomic)'],
+                ['**1**', 'Server directly synchronised to stratum 0'],
+                ['**2+**', 'One greater than the selected source'],
+                ['**16**', 'Unsynchronised or unusable']
+              ]},
+              { kind: 'table', h: 'Operating modes', cols: ['Mode', 'Use'], rows: [
+                ['Client/server', 'Device syncs to a server'],
+                ['Peer', 'Peers can sync to each other'],
+                ['Master', 'Device serves its own clock at a configured stratum']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  ntp server 10.1.1.5
+  ntp source Loopback0
+  !
+  ntp authentication-key 1 md5 SECRET
+  ntp trusted-key 1
+  ntp authenticate
+  ntp server 10.1.1.5 key 1` },
+              { kind: 'code', h: 'Verification', code:
+`  show ntp status
+  show ntp associations
+  show clock` }
+            ],
+            commands: [
+              { label: 'Client configuration', code:
+`ntp server 10.1.1.5\nntp source Loopback0` },
+              { label: 'Authenticated client', code:
+`ntp authentication-key 1 md5 SECRET\nntp trusted-key 1\nntp authenticate\nntp server 10.1.1.5 key 1` },
+              { label: 'Verify', code:
+`show ntp status\nshow ntp associations` }
+            ],
+            traps: [
+              '**NTP uses UDP 123.**',
+              '**Stratum 0** is the reference clock; **stratum 1** is directly attached.',
+              'A synced device is normally **one stratum above its source**.',
+              '**Stratum 16** means unsynchronised.',
+              'Lower stratum is preferred but does not decide every selection.',
+              'An asterisk beside a peer in **%%show ntp associations%%** marks the selected source.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'UDP 123'],
+                ['Stratum 0', 'Reference clock'],
+                ['Stratum 1', 'Directly attached server'],
+                ['Stratum 16', 'Unsynchronised'],
+                ['Server command', 'ntp server IP'],
+                ['Peer command', 'ntp peer IP'],
+                ['Serve local clock', 'ntp master N'],
+                ['Source address', 'ntp source Loopback0']
+              ]
+            },
+            related: [
+              { t: '07. Syslog', d: 'Needs accurate timestamps' },
+              { t: '11. HTTPS', d: 'Certificates depend on time' }
+            ],
+            glossary: ['NTP', 'Syslog']
+          },
+          {
+            id: 't06', num: '06', group: 'addr', title: 'SNMP',
+            blurb: 'UDP 161/162, communities versus v3 users, traps versus informs',
+            overview: '**[[SNMP]]** monitors and manages devices. Requests and responses use **UDP 161**, notifications use **UDP 162**. Versions 1 and 2c rely on community strings, which are **not encryption**; **SNMPv3** adds users, authentication and privacy.',
+            keyIdea: '161 request/response, 162 notifications. TRAP is unacknowledged, INFORM is acknowledged.',
+            sections: [
+              { kind: 'table', h: 'Versions', cols: ['Version', 'Security'], rows: [
+                ['v1', 'Community string, cleartext'],
+                ['v2c', 'Community string, adds GETBULK and informs'],
+                ['**v3**', 'Users, **authNoPriv** or **authPriv**']
+              ]},
+              { kind: 'table', h: 'Operations', cols: ['Operation', 'Purpose'], rows: [
+                ['**GET**', 'Read one object'],
+                ['**GETNEXT**', 'Walk the MIB tree'],
+                ['**GETBULK**', 'Bulk retrieval, v2 and later'],
+                ['**SET**', 'Write a writable object'],
+                ['**TRAP**', 'Notification, no acknowledgement'],
+                ['**INFORM**', 'Notification with acknowledgement']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  snmp-server community READONLY ro
+  snmp-server host 10.1.1.20 version 2c READONLY
+  !
+  snmp-server group ADMINS v3 priv
+  snmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS` },
+              { kind: 'para', h: 'MIB and OID', p: 'A **MIB** organises managed objects and an **OID** addresses one object in that tree. The Cisco enterprise OID is **%%1.3.6.1.4.1.9%%**.' },
+              { kind: 'code', h: 'Verification', code:
+`  show snmp
+  show snmp user
+  show snmp group` }
+            ],
+            commands: [
+              { label: 'v2c basics', code:
+`snmp-server community READONLY ro\nsnmp-server host 10.1.1.20 version 2c READONLY` },
+              { label: 'v3 user', code:
+`snmp-server group ADMINS v3 priv\nsnmp-server user netops ADMINS v3 auth sha AUTHPASS priv aes 128 PRIVPASS` },
+              { label: 'Verify', code:
+`show snmp\nshow snmp user` }
+            ],
+            traps: [
+              '**UDP 161** requests, **UDP 162** notifications.',
+              'Community strings are **not encryption**.',
+              '**TRAP** has no acknowledgement; **INFORM** does.',
+              '**GETBULK** is v2 and later, never v1.',
+              '**authNoPriv** authenticates only; **authPriv** encrypts too.',
+              'SNMPv3 uses **users and groups**, not communities.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Request port', 'UDP 161'],
+                ['Notification port', 'UDP 162'],
+                ['v1 / v2c security', 'Community string (cleartext)'],
+                ['v3 security', 'Users, auth and priv'],
+                ['TRAP vs INFORM', 'No ack vs ack'],
+                ['GETBULK', 'v2 and later'],
+                ['MIB vs OID', 'Structure vs identifier'],
+                ['Cisco OID', '1.3.6.1.4.1.9']
+              ]
+            },
+            related: [
+              { t: '07. Syslog', d: 'The other monitoring path' },
+              { t: '05. NTP', d: 'Timestamps for events' }
+            ],
+            glossary: ['SNMP', 'Syslog']
+          },
+          {
+            id: 't07', num: '07', group: 'addr', title: 'Syslog',
+            blurb: 'Severity 0-7, thresholds, remote hosts and local buffers',
+            overview: '**[[Syslog]]** transports event messages from devices to a collector, commonly over **UDP 514**. Cisco severities run **0 to 7**, where **0** is the most severe and **7** is debugging. A threshold includes that level and everything numerically lower.',
+            keyIdea: 'Severity 0 is an emergency, 7 is debug. logging trap 4 sends 0 through 4.',
+            sections: [
+              { kind: 'table', h: 'Severity levels', cols: ['Level', 'Name', 'Meaning'], rows: [
+                ['**0**', 'Emergency', 'System unusable'],
+                ['**1**', 'Alert', 'Immediate action needed'],
+                ['**2**', 'Critical', 'Critical condition'],
+                ['**3**', 'Error', 'Error condition'],
+                ['**4**', 'Warning', 'Warning condition'],
+                ['**5**', 'Notification', 'Normal but significant'],
+                ['**6**', 'Informational', 'Informational'],
+                ['**7**', 'Debugging', 'Most verbose']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  logging host 10.1.1.30
+  logging trap 4
+  logging source-interface Loopback0
+  logging buffered 16384
+  service timestamps log datetime msec` },
+              { kind: 'para', h: 'Where logs go', p: '**%%logging buffered%%** keeps messages in RAM, **%%logging console%%** controls the console, and **%%logging monitor%%** controls VTY display, which also needs **%%terminal monitor%%** in the session.' },
+              { kind: 'code', h: 'Verification', code:
+`  show logging
+  clear logging` }
+            ],
+            commands: [
+              { label: 'Send to a collector', code:
+`logging host 10.1.1.30\nlogging trap 4\nlogging source-interface Loopback0` },
+              { label: 'Local buffer and timestamps', code:
+`logging buffered 16384\nservice timestamps log datetime msec` },
+              { label: 'Verify', code:
+`show logging` }
+            ],
+            traps: [
+              'Traditional Cisco syslog uses **UDP 514**.',
+              'Severity **0 is most severe**, **7 is debug**.',
+              'A threshold includes that level and all **lower numbers**.',
+              '**%%logging trap 4%%** sends **0 through 4**.',
+              '**%%logging buffered%%** is local RAM, not a remote server.',
+              '**%%terminal monitor%%** is needed to see logs on a VTY.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Transport', 'UDP 514'],
+                ['Severity range', '0 to 7'],
+                ['Most severe', '0 emergency'],
+                ['Most verbose', '7 debugging'],
+                ['Threshold', 'Selected level and lower numbers'],
+                ['Remote host', 'logging host IP'],
+                ['Local storage', 'logging buffered'],
+                ['Timestamps', 'service timestamps log datetime msec']
+              ]
+            },
+            related: [
+              { t: '05. NTP', d: 'Accurate log times' },
+              { t: '06. SNMP', d: 'Polling versus logging' }
+            ],
+            glossary: ['Syslog', 'NTP', 'SNMP']
+          },
+          {
+            id: 't08', num: '08', group: 'web', title: 'FTP',
+            blurb: 'TCP 21 control, 20 active data, passive mode, and cleartext credentials',
+            overview: '**[[FTP]]** transfers files over **TCP** with separate **control** and **data** connections. The control channel is **TCP 21**; in **active mode** the server sources data from **TCP 20**, while **passive mode** uses a dynamic high port on the server. Credentials and payload are cleartext.',
+            keyIdea: 'Control and data are separate connections. Active: server connects out. Passive: client connects in.',
+            sections: [
+              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
+                ['**TCP 21**', 'Control connection'],
+                ['**TCP 20**', 'Server source port for active-mode data'],
+                ['Dynamic high port', 'Passive-mode data listener']
+              ]},
+              { kind: 'table', h: 'Modes', cols: ['Mode', 'Who initiates data', 'Common problem'], rows: [
+                ['**Active**', 'Server toward client', 'Client firewall or NAT blocks it'],
+                ['**Passive**', 'Client toward server', 'Server passive range blocked']
+              ]},
+              { kind: 'code', h: 'Cisco file transfer', code:
+`  copy ftp: flash:
+  copy running-config ftp://user:pass@10.1.1.20/r1.cfg
+  ip ftp username netops
+  ip ftp password SECRET` },
+              { kind: 'table', h: 'Secure relatives', cols: ['Protocol', 'Underlay'], rows: [
+                ['**FTPS**', 'FTP plus TLS'],
+                ['**SFTP**', 'SSH-based transfer, not FTP at all'],
+                ['**SCP**', 'SSH copy, TCP 22']
+              ]}
+            ],
+            commands: [
+              { label: 'Set credentials and copy', code:
+`ip ftp username netops\nip ftp password SECRET\ncopy running-config ftp://10.1.1.20/r1.cfg` },
+              { label: 'Verify', code:
+`show running-config | include ftp` }
+            ],
+            traps: [
+              '**TCP 21 is control**, not data.',
+              '**TCP 20** is the server source port in **active** mode.',
+              'Passive mode uses a **dynamic server port**.',
+              'Credentials and data are **cleartext**.',
+              '**SFTP is not FTP** — it runs over SSH.',
+              'TCP 21 open does **not** guarantee transfers work.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Control port', 'TCP 21'],
+                ['Active data port', 'TCP 20 (server source)'],
+                ['Passive data port', 'Dynamic server port'],
+                ['Encryption', 'None'],
+                ['FTPS', 'FTP over TLS'],
+                ['SFTP', 'SSH-based, not FTP'],
+                ['Direction', 'Both control and data needed']
+              ]
+            },
+            related: [
+              { t: '09. TFTP', d: 'The UDP cousin' },
+              { t: '12. SSH', d: 'Carries SCP and SFTP' }
+            ],
+            glossary: ['FTP', 'TFTP', 'SSH']
+          },
+          {
+            id: 't09', num: '09', group: 'web', title: 'TFTP',
+            blurb: 'UDP 69, RRQ and WRQ, and why it is everywhere in Cisco operations',
+            overview: '**[[TFTP]]** is a minimal, connectionless file transfer protocol over **UDP 69**. It has no authentication, encryption or directory listing, which is exactly why it is used for IOS images, configuration backups and IP phone firmware on trusted networks.',
+            keyIdea: 'UDP 69, RRQ to read, WRQ to write, DATA and ACK blocks, no security at all.',
+            sections: [
+              { kind: 'table', h: 'Basics', cols: ['Item', 'TFTP'], rows: [
+                ['Transport', '**UDP**'],
+                ['Well-known port', '**69**'],
+                ['Authentication', 'None'],
+                ['Encryption', 'None'],
+                ['Directory listing', 'None']
+              ]},
+              { kind: 'code', h: 'Exchange', code:
+`  Client --RRQ--> Server
+  Server --DATA block 1--> Client
+  Client --ACK 1--> Server
+  ... repeat per block until the last one` },
+              { kind: 'code', h: 'Cisco usage', code:
+`  copy running-config tftp:
+  copy tftp: flash:
+  archive
+   path tftp://10.1.1.20/$h-$t` }
+            ],
+            commands: [
+              { label: 'Backup and restore', code:
+`copy running-config tftp:\ncopy tftp: flash:` }
+            ],
+            traps: [
+              '**TFTP is UDP 69**, not TCP.',
+              'No authentication, no encryption, no listing.',
+              '**RRQ** reads a file, **WRQ** writes one.',
+              'Data moves in acknowledged blocks.',
+              'The transfer port moves to a dynamic port after the first exchange.',
+              'TFTP is fine on a trusted management network, not the internet.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Transport', 'UDP'],
+                ['Port', '69'],
+                ['Read request', 'RRQ'],
+                ['Write request', 'WRQ'],
+                ['Security', 'None'],
+                ['Typical use', 'IOS images, config backups, phone firmware'],
+                ['Contrast with FTP', 'FTP uses TCP 21 control']
+              ]
+            },
+            related: [
+              { t: '08. FTP', d: 'TCP-based alternative' },
+              { t: '01. DHCP', d: 'Helper addresses also forward TFTP' }
+            ],
+            glossary: ['TFTP', 'FTP', 'DHCP']
+          },
+          {
+            id: 't10', num: '10', group: 'web', title: 'HTTP',
+            blurb: 'TCP 80, request and response, status classes and the device web server',
+            overview: '**[[HTTP]]** is the stateless request and response protocol of the web on **TCP 80**. On Cisco devices it is also the embedded web server used for GUI and REST management, which is why the exam pairs it with **[[HTTPS]]**.',
+            keyIdea: 'TCP 80, stateless, methods GET and POST, status 2xx success, 4xx client, 5xx server.',
+            sections: [
+              { kind: 'table', h: 'Methods', cols: ['Method', 'Use'], rows: [
+                ['**GET**', 'Retrieve a resource'],
+                ['**POST**', 'Submit data'],
+                ['**PUT**', 'Replace a resource'],
+                ['**DELETE**', 'Remove a resource']
+              ]},
+              { kind: 'table', h: 'Status classes', cols: ['Class', 'Meaning'], rows: [
+                ['**2xx**', 'Success'],
+                ['**3xx**', 'Redirect'],
+                ['**4xx**', 'Client error'],
+                ['**5xx**', 'Server error']
+              ]},
+              { kind: 'code', h: 'Cisco web management', code:
+`  ip http server
+  ip http authentication local
+  ip http access-class 10
+  ip http secure-server` },
+              { kind: 'para', h: 'Why not plain HTTP', p: 'Plain HTTP sends credentials and session data in cleartext. Management should use **%%ip http secure-server%%** so the GUI and REST API run over TLS.' }
+            ],
+            commands: [
+              { label: 'Enable web management', code:
+`ip http server\nip http authentication local\nip http access-class 10` },
+              { label: 'Verify', code:
+`show running-config | include ip http` }
+            ],
+            traps: [
+              'HTTP is **TCP 80**; HTTPS is **443**.',
+              'HTTP is **stateless** — each request stands alone.',
+              '**2xx** success, **4xx** client, **5xx** server.',
+              'Device management should use **HTTPS**, not HTTP.',
+              'An access-class is part of the management stack, not optional polish.',
+              'Status 404 is a client error, not a server error.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 80'],
+                ['Model', 'Request and response'],
+                ['State', 'Stateless'],
+                ['Methods', 'GET, POST, PUT, DELETE'],
+                ['Success', '2xx'],
+                ['Client error', '4xx'],
+                ['Server error', '5xx'],
+                ['Secure twin', 'HTTPS on 443']
+              ]
+            },
+            related: [
+              { t: '11. HTTPS', d: 'The secure version' },
+              { t: '12. SSH', d: 'CLI equivalent' }
+            ],
+            glossary: ['HTTP', 'HTTPS']
+          },
+          {
+            id: 't11', num: '11', group: 'web', title: 'HTTPS',
+            blurb: 'TCP 443, TLS, trustpoints, and why certificates need correct time',
+            overview: '**[[HTTPS]]** is **HTTP over TLS** on **TCP 443**. It encrypts the management session and authenticates the server with a certificate, which is why the device needs an RSA keypair and a trustpoint, and why clock accuracy matters.',
+            keyIdea: '443, TLS, certificate-based server authentication. Generate RSA keys, then enable ip http secure-server.',
+            sections: [
+              { kind: 'table', h: 'HTTP versus HTTPS', cols: ['Layer', 'HTTP', 'HTTPS'], rows: [
+                ['Port', '80', '**443**'],
+                ['Encryption', 'None', '**TLS record**'],
+                ['Server auth', 'None', '**Certificate**'],
+                ['Typical use', 'Legacy GUI', 'Management and REST']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  crypto key generate rsa modulus 2048
+  !
+  crypto pki trustpoint HTTPS-TP
+   enrollment selfsigned
+   subject-name CN=r1.example.com
+   revocation-check none
+   rsakeypair HTTPS-TP
+  !
+  crypto pki enroll HTTPS-TP
+  ip http secure-server` },
+              { kind: 'para', h: 'Time matters', p: 'Certificate validity is checked against the clock. If **[[NTP]]** is wrong, a valid certificate can appear expired or not yet valid.' }
+            ],
+            commands: [
+              { label: 'Enable secure server', code:
+`crypto key generate rsa modulus 2048\nip http secure-server` },
+              { label: 'Verify', code:
+`show ip http server secure status` }
+            ],
+            traps: [
+              '**HTTPS is TCP 443**; HTTP is 80.',
+              'An **RSA keypair is required** before the secure server works.',
+              '**%%ip http secure-server%%** enables it; **%%ip http server%%** is the insecure twin.',
+              'Server authentication uses a **certificate**.',
+              'Bad clock equals bad certificate validation — fix **NTP**.',
+              'Web GUI and REST access should always be HTTPS.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 443'],
+                ['Underlay', 'TLS'],
+                ['Cisco command', 'ip http secure-server'],
+                ['Key requirement', 'RSA keypair'],
+                ['Authentication', 'Certificate'],
+                ['Certificate source', 'Self-signed or CA'],
+                ['Depends on', 'Accurate time via NTP']
+              ]
+            },
+            related: [
+              { t: '10. HTTP', d: 'The insecure original' },
+              { t: '05. NTP', d: 'Certificate validity' },
+              { t: '12. SSH', d: 'Other encrypted management path' }
+            ],
+            glossary: ['HTTPS', 'HTTP', 'NTP', 'SSH']
+          },
+          {
+            id: 't12', num: '12', group: 'remote', title: 'SSH',
+            blurb: 'TCP 22, key generation, VTY restriction and SCP',
+            overview: '**[[SSH]]** provides encrypted CLI access on **TCP 22**. It gives confidentiality, integrity, server authentication via host keys and user authentication via local or AAA credentials. On IOS you set a hostname and domain, generate RSA keys, force version 2 and restrict VTY lines.',
+            keyIdea: 'TCP 22. Hostname plus domain, generate RSA keys, ip ssh version 2, transport input ssh.',
+            sections: [
+              { kind: 'table', h: 'What SSH provides', cols: ['Property', 'Meaning'], rows: [
+                ['Confidentiality', 'Session is encrypted'],
+                ['Integrity', 'Tampering is detected'],
+                ['Server authentication', 'Host keys prove the device identity'],
+                ['User authentication', 'Password, public key or AAA']
+              ]},
+              { kind: 'code', h: 'Enable SSH', code:
+`  hostname R1
+  ip domain name example.com
+  crypto key generate rsa modulus 2048
+  ip ssh version 2
+  !
+  username netops privilege 15 secret SECRET
+  line vty 0 15
+   login local
+   transport input ssh` },
+              { kind: 'code', h: 'Verification', code:
+`  show ip ssh
+  show ssh
+  show crypto key mypubkey rsa` }
+            ],
+            commands: [
+              { label: 'Enable SSHv2', code:
+`hostname R1\nip domain name example.com\ncrypto key generate rsa modulus 2048\nip ssh version 2` },
+              { label: 'Restrict VTY to SSH', code:
+`line vty 0 15\n login local\n transport input ssh` },
+              { label: 'Verify', code:
+`show ip ssh` }
+            ],
+            traps: [
+              '**SSH is TCP 22**; Telnet is 23.',
+              'A **hostname and domain name** are needed before generating RSA keys.',
+              '**%%transport input ssh%%** also blocks Telnet on those lines.',
+              '**SCP rides SSH on TCP 22.**',
+              'SSH server and client are separate roles.',
+              'An ACL blocking TCP 22 breaks SSH even when configured correctly.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 22'],
+                ['Version to force', 'SSHv2'],
+                ['Key command', 'crypto key generate rsa'],
+                ['Prerequisite', 'Hostname and domain name'],
+                ['VTY command', 'transport input ssh'],
+                ['Auth option', 'login local or AAA'],
+                ['Secure copy', 'SCP over TCP 22'],
+                ['Replaces', 'Telnet']
+              ]
+            },
+            related: [
+              { t: '13. Telnet', d: 'The insecure original' },
+              { t: '08. FTP', d: 'Where SFTP fits' }
+            ],
+            glossary: ['SSH', 'Telnet', 'FTP']
+          },
+          {
+            id: 't13', num: '13', group: 'remote', title: 'Telnet',
+            blurb: 'TCP 23, unencrypted CLI, and why transport input ssh matters',
+            overview: '**[[Telnet]]** is a legacy remote terminal protocol on **TCP 23**. It carries commands, output and credentials in cleartext, so anything on the path can read the session. **[[SSH]]** is the replacement and **%%transport input ssh%%** removes Telnet from the VTY lines.',
+            keyIdea: 'TCP 23 and no encryption. If the question asks for secure CLI access, the answer is SSH.',
+            sections: [
+              { kind: 'table', h: 'Telnet versus SSH', cols: ['Item', 'Telnet', 'SSH'], rows: [
+                ['Port', '**23**', '**22**'],
+                ['Encryption', 'None', '**Yes**'],
+                ['Credentials', 'Cleartext', 'Encrypted'],
+                ['Server auth', 'None', 'Host keys'],
+                ['Status', 'Legacy', 'Preferred']
+              ]},
+              { kind: 'code', h: 'Disable Telnet on VTY lines', code:
+`  line vty 0 15
+   transport input ssh` },
+              { kind: 'para', h: 'Why it lingers', p: 'Telnet survives in labs and legacy console servers, and it is still useful for testing whether a TCP port is open, but it should not carry administrative credentials on a production network.' }
+            ],
+            commands: [
+              { label: 'Remove Telnet access', code:
+`line vty 0 15\n transport input ssh` },
+              { label: 'Verify', code:
+`show running-config | section line vty` }
+            ],
+            traps: [
+              '**Telnet is TCP 23**; SSH is 22, FTP control is 21.',
+              'Telnet is **unencrypted** end to end.',
+              '**%%transport input ssh%%** allows SSH and denies Telnet.',
+              'Telnet has no server authentication.',
+              'Secure CLI means SSH, not Telnet over a VPN.',
+              'Closing the VTY to Telnet does not close the console port.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 23'],
+                ['Encryption', 'None'],
+                ['Credentials', 'Cleartext'],
+                ['Replacement', 'SSH on TCP 22'],
+                ['VTY command', 'transport input ssh'],
+                ['Typical use today', 'Labs and legacy console servers']
+              ]
+            },
+            related: [
+              { t: '12. SSH', d: 'The secure replacement' },
+              { t: '08. FTP', d: 'Also cleartext by default' }
+            ],
+            glossary: ['Telnet', 'SSH']
+          },
+          {
+            id: 't14', num: '14', group: 'comm', title: 'SMTP',
+            blurb: 'TCP 25 relay, 587 submission, 465 SMTPS, and store-and-forward',
+            overview: '**[[SMTP]]** sends and relays mail between servers on **TCP 25**, with **587** for authenticated submission and **465** for SMTP over TLS. It is a push protocol: mail is stored on the server and later pulled by clients with **[[POP3]]** or **[[IMAP]]**.',
+            keyIdea: 'SMTP pushes mail. 4xx is temporary, 5xx is permanent. The dot ends the DATA section.',
+            sections: [
+              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
+                ['**TCP 25**', 'Server-to-server relay'],
+                ['**TCP 587**', 'Client submission with authentication'],
+                ['**TCP 465**', 'SMTPS, TLS from the start']
+              ]},
+              { kind: 'code', h: 'A session', code:
+`  EHLO client.example.com
+  MAIL FROM:<alice@example.com>
+  RCPT TO:<bob@example.com>
+  DATA
+  Subject: hello
+  ...body...
+  .
+  QUIT` },
+              { kind: 'table', h: 'Where it fits', cols: ['Hop', 'Protocol'], rows: [
+                ['Client to server submission', 'SMTP 587'],
+                ['Server to server relay', 'SMTP 25'],
+                ['Client retrieval', 'POP3 or IMAP']
+              ]},
+              { kind: 'para', h: 'Open relays', p: 'A server that relays mail for anyone is an **open relay**, the classic spam vector and a favourite exam trap. Relay should require authentication or a trusted network.' }
+            ],
+            commands: [
+              { label: 'Cisco mail server (legacy)', code:
+`mail-server 10.1.1.25` },
+              { label: 'Verify', code:
+`show running-config | include mail-server` }
+            ],
+            traps: [
+              '**SMTP is TCP 25** for relay, **587** for submission, **465** for SMTPS.',
+              'SMTP **pushes**; POP3 and IMAP **pull**.',
+              'A single **dot** ends the DATA section.',
+              '**4xx is transient, 5xx is permanent.**',
+              'Open relays are an abuse risk.',
+              'Mail is stored on the server until a client retrieves it.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Ports', '25, 587, 465'],
+                ['Direction', 'Push and send'],
+                ['Client retrieval', 'POP3 or IMAP'],
+                ['Data terminator', 'A single dot'],
+                ['4xx / 5xx', 'Transient / permanent'],
+                ['Risk', 'Open relay'],
+                ['Store and forward', 'Yes']
+              ]
+            },
+            related: [
+              { t: '15. POP3', d: 'Download and delete' },
+              { t: '16. IMAP', d: 'Keep and sync' }
+            ],
+            glossary: ['SMTP', 'POP3', 'IMAP']
+          },
+          {
+            id: 't15', num: '15', group: 'comm', title: 'POP3',
+            blurb: 'TCP 110, 995 secure, download-and-delete, single-device model',
+            overview: '**[[POP3]]** downloads mail from a server to one client on **TCP 110**, or **995** with TLS. Mail is typically deleted from the server after download, which suits a single device but breaks multi-device synchronisation.',
+            keyIdea: '110 plain, 995 secure, download and delete. Use IMAP when several devices need the same mailbox.',
+            sections: [
+              { kind: 'table', h: 'Model', cols: ['Aspect', 'POP3'], rows: [
+                ['Port', '**TCP 110**'],
+                ['Secure port', '**TCP 995**'],
+                ['Storage', 'Client local'],
+                ['Delete after download', '**Default behaviour**'],
+                ['Sync across devices', '**No**']
+              ]},
+              { kind: 'code', h: 'Session flow', code:
+`  USER alice
+  PASS SECRET
+  STAT
+  LIST
+  RETR 1
+  DELE 1
+  QUIT   <- deletion is committed here` },
+              { kind: 'para', h: 'The deletion detail', p: 'Messages marked with **DELE** are only removed when the session ends with **QUIT**. Aborting the session leaves the mailbox intact.' }
+            ],
+            commands: [
+              { label: 'Typical ports to permit', code:
+`! POP3 plain\npermit tcp any host 10.1.1.25 eq 110\n! POP3 over TLS\npermit tcp any host 10.1.1.25 eq 995` }
+            ],
+            traps: [
+              '**POP3 is TCP 110**; secure is **995**.',
+              'Default behaviour is **download and delete**.',
+              '**No synchronisation** across devices.',
+              '**IMAP** is the multi-device answer.',
+              'DELE only commits at **QUIT**.',
+              'One mailbox is effectively one client at a time.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 110'],
+                ['Secure port', 'TCP 995'],
+                ['Storage', 'Client local'],
+                ['Delete', 'After download'],
+                ['Sync', 'None'],
+                ['Contrast', 'IMAP keeps mail on the server'],
+                ['Delete commit', 'At QUIT']
+              ]
+            },
+            related: [
+              { t: '14. SMTP', d: 'How mail arrives' },
+              { t: '16. IMAP', d: 'The synchronised alternative' }
+            ],
+            glossary: ['POP3', 'SMTP', 'IMAP']
+          },
+          {
+            id: 't16', num: '16', group: 'comm', title: 'IMAP',
+            blurb: 'TCP 143, 993 secure, server-side storage and folder sync',
+            overview: '**[[IMAP]]** keeps mail on the server on **TCP 143**, or **993** with TLS, and synchronises folders, read state and messages across clients. It adds server-side search and partial fetch, making it the choice for multi-device users.',
+            keyIdea: '143 plain, 993 secure, mail stays on the server and syncs everywhere.',
+            sections: [
+              { kind: 'table', h: 'IMAP versus POP3', cols: ['Aspect', 'IMAP', 'POP3'], rows: [
+                ['Port', '**143** (993 TLS)', '110 (995 TLS)'],
+                ['Storage', '**Server**', 'Client local'],
+                ['Folders', '**Server-side**', 'Limited'],
+                ['Multi-device sync', '**Yes**', 'No'],
+                ['Search', '**Server-side**', 'No']
+              ]},
+              { kind: 'code', h: 'Session flavour', code:
+`  a1 LOGIN alice SECRET
+  a2 LIST "" "*"
+  a3 SELECT INBOX
+  a4 FETCH 1 BODY[]
+  a5 LOGOUT` },
+              { kind: 'para', h: 'Why it scales better', p: 'Because the mailbox lives on the server, a phone, laptop and web client all see the same folders and read state. The cost is server storage and a dependency on connectivity.' }
+            ],
+            commands: [
+              { label: 'Ports to permit', code:
+`permit tcp any host 10.1.1.25 eq 143\npermit tcp any host 10.1.1.25 eq 993` }
+            ],
+            traps: [
+              '**IMAP is TCP 143**; secure is **993**.',
+              'Mail **stays on the server**.',
+              'IMAP is **online and synchronised**; POP3 is offline and download-based.',
+              'Folders and server-side SEARCH are IMAP features.',
+              'Multi-device sync is the reason to choose IMAP.',
+              'Deleting in one client syncs to the others.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 143'],
+                ['Secure port', 'TCP 993'],
+                ['Storage', 'Server'],
+                ['Sync', 'Multi-device'],
+                ['Search', 'Server-side'],
+                ['Folders', 'Server-side'],
+                ['Contrast', 'POP3 downloads and deletes']
+              ]
+            },
+            related: [
+              { t: '15. POP3', d: 'The download alternative' },
+              { t: '14. SMTP', d: 'How mail arrives' }
+            ],
+            glossary: ['IMAP', 'POP3', 'SMTP']
+          },
+          {
+            id: 't17', num: '17', group: 'comm', title: 'LDAP',
+            blurb: 'TCP 389, LDAPS 636, the DIT, DNs and search filters',
+            overview: '**[[LDAP]]** is the protocol used to query and manage directory services such as **Active Directory** or OpenLDAP. It runs on **TCP 389**, can be protected with StartTLS on 389, and uses **636** for LDAPS where TLS starts with the connection. Data lives in a hierarchical **Directory Information Tree**.',
+            keyIdea: 'LDAP is a protocol, Active Directory is a directory service. 389 plain or StartTLS, 636 LDAPS.',
+            sections: [
+              { kind: 'table', h: 'Ports', cols: ['Port', 'Use'], rows: [
+                ['**TCP 389**', 'LDAP, optionally upgraded with StartTLS'],
+                ['**TCP 636**', 'LDAPS, TLS from the start'],
+                ['**TCP 3268**', 'AD Global Catalog'],
+                ['**TCP 3269**', 'AD Global Catalog over TLS']
+              ]},
+              { kind: 'table', h: 'Structure', cols: ['Term', 'Meaning'], rows: [
+                ['**DIT**', 'Directory Information Tree'],
+                ['**DN**', 'Distinguished Name, the full path to an entry'],
+                ['**RDN**', 'Relative Distinguished Name, one component'],
+                ['**Schema**', 'Defines allowed object classes and attributes']
+              ]},
+              { kind: 'code', h: 'Operations and filters', code:
+`  BIND     authenticate the session
+  SEARCH   look up entries
+  COMPARE  test an attribute value
+  ADD / MODIFY / DELETE
+
+  (&(objectClass=user)(department=netops))   AND
+  (|(title=engineer)(title=architect))       OR` },
+              { kind: 'para', h: 'Where it fits in the exam', p: 'Cisco devices can use LDAP through AAA or a web GUI login against a directory. The recurring trap is confusing the **protocol** with the **directory product**.' }
+            ],
+            commands: [
+              { label: 'Ports to permit', code:
+`permit tcp any host 10.1.1.40 eq 389\npermit tcp any host 10.1.1.40 eq 636` }
+            ],
+            traps: [
+              '**LDAP is a protocol**; Active Directory is a directory service.',
+              '**TCP 389** is LDAP, **TCP 636** is LDAPS.',
+              '**StartTLS** protects LDAP while staying on 389.',
+              '**3268 and 3269** are the AD Global Catalog ports.',
+              'A **BIND** establishes the session but is not always password authentication.',
+              'Filter operators: **%%&%% is AND, %%|%% is OR**.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Port', 'TCP 389'],
+                ['Secure port', 'TCP 636 (LDAPS)'],
+                ['StartTLS', 'Upgrades 389 in place'],
+                ['AD Global Catalog', '3268 / 3269'],
+                ['Structure', 'Directory Information Tree'],
+                ['Entry name', 'Distinguished Name'],
+                ['Session start', 'BIND'],
+                ['Filter operators', '& AND, | OR']
+              ]
+            },
+            related: [
+              { t: '04. DNS', d: 'Another hierarchical naming system' },
+              { t: '12. SSH', d: 'AAA-backed login' }
+            ],
+            glossary: ['LDAP', 'DNS', 'SSH']
+          },
+          {
+            id: 't18', num: '18', group: 'comm', title: 'SIP',
+            blurb: 'Signaling on 5060, TLS on 5061, and SDP for media negotiation',
+            overview: '**[[SIP]]** is the **signaling** protocol for voice and unified communications on **TCP or UDP 5060**, with **5061** for TLS. It locates users, sets up and tears down sessions, but carries **no voice** — that is **[[RTP]]**. **SDP** inside SIP negotiates the media parameters.',
+            keyIdea: 'SIP signals, RTP carries. 5060 plain, 5061 TLS. Audio flows endpoint to endpoint after the ACK.',
+            sections: [
+              { kind: 'table', h: 'SIP versus RTP', cols: ['Protocol', 'Job', 'Port'], rows: [
+                ['**SIP**', 'Signaling and call setup', '**5060 / 5061 TLS**'],
+                ['**RTP**', 'Media payload', 'Dynamic, even, 16384 and above'],
+                ['**RTCP**', 'Media statistics', 'RTP port plus one']
+              ]},
+              { kind: 'table', h: 'Methods', cols: ['Method', 'Purpose'], rows: [
+                ['**INVITE**', 'Start a session'],
+                ['**ACK**', 'Confirm the final response'],
+                ['**BYE**', 'End the session'],
+                ['**REGISTER**', 'Bind a user to a location'],
+                ['**CANCEL**', 'Abort a pending request']
+              ]},
+              { kind: 'code', h: 'Call flow', code:
+`  INVITE  ->  proxy  ->  callee
+  180 Ringing
+  200 OK
+  ACK
+  <-- RTP flows directly between endpoints -->` },
+              { kind: 'para', h: 'The NAT symptom', p: 'NAT usually breaks the **media path**, not signaling. The call rings and connects, but audio is one-way or absent. Fix it with a media relay or by pinning RTP through a gateway.' }
+            ],
+            commands: [
+              { label: 'Ports to permit', code:
+`permit udp any any range 16384 32767\npermit tcp any host 10.1.1.60 eq 5060\npermit tcp any host 10.1.1.60 eq 5061` }
+            ],
+            traps: [
+              '**SIP is signaling on 5060**; RTP carries the audio.',
+              'Methods are text and HTTP-like: INVITE, ACK, BYE, REGISTER.',
+              'Media flows **directly between endpoints** after the ACK.',
+              'NAT breaks the **media** first — one-way audio is the clue.',
+              '**5061** is SIP over TLS.',
+              'SDP inside SIP negotiates codecs and addresses.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Ports', '5060, 5061 TLS'],
+                ['Job', 'Signaling'],
+                ['Media', 'RTP'],
+                ['Methods', 'INVITE, ACK, BYE, REGISTER'],
+                ['Media negotiation', 'SDP'],
+                ['NAT symptom', 'One-way audio'],
+                ['Transport', 'TCP or UDP 5060']
+              ]
+            },
+            related: [
+              { t: '19. RTP', d: 'The media half' },
+              { t: '03. DHCP Relay', d: 'Where giaddr shows up' }
+            ],
+            glossary: ['SIP', 'RTP']
+          },
+          {
+            id: 't19', num: '19', group: 'comm', title: 'RTP',
+            blurb: 'UDP media with sequence numbers, timestamps, and RTCP alongside',
+            overview: '**[[RTP]]** carries the actual voice and video for real-time sessions over **UDP**, using sequence numbers, timestamps and payload types. **RTCP** is its control companion, reporting QoS statistics such as jitter and loss.',
+            keyIdea: 'RTP is media over UDP on even ports from 16384, RTCP is odd and one port up. It never retransmits.',
+            sections: [
+              { kind: 'table', h: 'The trio', cols: ['Protocol', 'Function', 'Port'], rows: [
+                ['**SIP**', 'Signaling', '5060 / 5061'],
+                ['**RTP**', 'Media payload', 'Even, 16384 and above'],
+                ['**RTCP**', 'Control and QoS stats', 'Odd, RTP port plus one']
+              ]},
+              { kind: 'table', h: 'Header fields', cols: ['Field', 'Use'], rows: [
+                ['**Sequence number**', 'Detects loss and reordering'],
+                ['**Timestamp**', 'Drives playout and jitter calculation'],
+                ['**Payload type**', 'Identifies the codec'],
+                ['**SSRC**', 'Identifies the stream']
+              ]},
+              { kind: 'code', h: 'Why UDP', code:
+`  Voice cannot wait for a retransmit.
+  Lost packet -> conceal and move on.
+
+  DSCP EF marks the voice queue.` },
+              { kind: 'para', h: 'QoS link', p: 'Voice is marked **DSCP EF (46)** and placed in the priority queue. **Jitter** and loss hurt call quality more than raw bandwidth does.' }
+            ],
+            commands: [
+              { label: 'Mark and queue voice', code:
+`class-map match-any VOICE\n match dscp ef\npolicy-map WAN\n class VOICE\n  priority percent 20\ninterface GigabitEthernet0/1\n service-policy output WAN` }
+            ],
+            traps: [
+              '**RTP is media over UDP**; RTCP is control on the next port.',
+              'RTP **never retransmits** — freshness beats reliability.',
+              '**DSCP EF** marks voice traffic.',
+              'Jitter, not bandwidth, is the usual voice killer.',
+              'SIP sets up, **RTP carries**.',
+              'Ports are **even from 16384**, with RTCP odd.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Job', 'Media payload'],
+                ['Transport', 'UDP'],
+                ['Ports', 'Even, 16384 and above'],
+                ['RTCP', 'Odd, port plus one'],
+                ['Header fields', 'Sequence, timestamp, payload type, SSRC'],
+                ['Retransmission', 'None'],
+                ['Voice marking', 'DSCP EF'],
+                ['Quality enemy', 'Jitter and loss']
+              ]
+            },
+            related: [
+              { t: '18. SIP', d: 'The signaling half' },
+              { t: '11. HTTPS', d: 'Another TLS-protected service' }
+            ],
+            glossary: ['RTP', 'SIP']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'addr', label: 'Addressing & Management', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'web', label: 'File & Web', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'remote', label: 'Remote Management', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
+          { key: 'comm', label: 'Email & Communication', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'DHCP', def: 'Dynamic Host Configuration Protocol. UDP 67 server and UDP 68 client, DORA exchange, leases with T1 at 50% and T2 at 87.5%.' },
+          { term: 'DHCP Snooping', def: 'Layer 2 switch security feature that blocks DHCP server messages on untrusted ports and builds a binding database.' },
+          { term: 'DHCP Relay', def: 'Forwards DHCP between subnets using ip helper-address and fills giaddr so the server picks the right scope.' },
+          { term: 'Dynamic ARP Inspection', def: 'Validates ARP packets against the DHCP snooping binding table to stop ARP spoofing.' },
+          { term: 'IP Source Guard', def: 'Filters traffic using the DHCP snooping binding table to stop source address spoofing.' },
+          { term: 'DNS', def: 'Domain Name System. Resolves names to addresses over UDP 53 and TCP 53, with A, AAAA, CNAME, MX, PTR, NS, SRV and SOA records.' },
+          { term: 'NTP', def: 'Network Time Protocol. Synchronises clocks over UDP 123 using a stratum hierarchy from reference clock to client.' },
+          { term: 'SNMP', def: 'Simple Network Management Protocol. UDP 161 for requests, UDP 162 for notifications; v3 adds authentication and privacy.' },
+          { term: 'Syslog', def: 'Event logging transport, traditionally UDP 514, with Cisco severities 0 (emergency) through 7 (debugging).' },
+          { term: 'FTP', def: 'File Transfer Protocol. TCP 21 control and separate data connection, TCP 20 in active mode, cleartext credentials.' },
+          { term: 'TFTP', def: 'Trivial File Transfer Protocol. UDP 69 with RRQ and WRQ, no authentication or encryption.' },
+          { term: 'HTTP', def: 'Stateless web request and response protocol on TCP 80, using methods such as GET and POST.' },
+          { term: 'HTTPS', def: 'HTTP over TLS on TCP 443, authenticating the server with a certificate.' },
+          { term: 'SSH', def: 'Secure Shell. Encrypted CLI access on TCP 22, replacing Telnet, and the transport for SCP.' },
+          { term: 'Telnet', def: 'Legacy unencrypted remote terminal protocol on TCP 23.' },
+          { term: 'SMTP', def: 'Simple Mail Transfer Protocol. Pushes and relays mail on TCP 25, with 587 for submission and 465 for SMTPS.' },
+          { term: 'POP3', def: 'Post Office Protocol v3. TCP 110 or 995 secure, downloads mail and typically deletes it from the server.' },
+          { term: 'IMAP', def: 'Internet Message Access Protocol. TCP 143 or 993 secure, keeps mail on the server and synchronises across devices.' },
+          { term: 'LDAP', def: 'Lightweight Directory Access Protocol. TCP 389 with optional StartTLS, TCP 636 for LDAPS, querying a Directory Information Tree.' },
+          { term: 'SIP', def: 'Session Initiation Protocol. Signaling for voice and video on 5060, or 5061 with TLS, negotiating media with SDP.' },
+          { term: 'RTP', def: 'Real-time Transport Protocol. Carries media over UDP on even ports from 16384, with RTCP on the next odd port.' }
+        ];
+
+        const quiz = [
+          { q: 'Which port does a DHCP server listen on?', options: ['UDP 67', 'UDP 68', 'TCP 67', 'UDP 69'], answer: 0, why: 'The server uses UDP 67; the client uses UDP 68.' },
+          { q: 'What does DORA stand for?', options: ['Discover, Offer, Request, Acknowledge', 'Detect, Open, Route, Assign', 'Discover, Open, Reply, Accept', 'Dynamic, Offer, Renew, Acknowledge'], answer: 0, why: 'The four-message DHCP exchange.' },
+          { q: 'At what percentage of the lease does T1 fire?', options: ['50%', '87.5%', '75%', '100%'], answer: 0, why: 'T1 is 50% (renew), T2 is 87.5% (rebind).' },
+          { q: 'Where should ip helper-address be configured?', options: ['Client-facing Layer 3 interface', 'DHCP server interface', 'Any loopback', 'The DHCP pool'], answer: 0, why: 'The relay sits on the client-facing interface so it can fill giaddr.' },
+          { q: 'What does giaddr tell the DHCP server?', options: ['The client subnet', 'The DNS server address', 'The lease duration', 'The MAC address'], answer: 0, why: 'giaddr identifies the subnet so the server can select the scope.' },
+          { q: 'DHCP snooping ports are by default?', options: ['Untrusted', 'Trusted', 'Disabled', 'Trunking'], answer: 0, why: 'All ports start untrusted; you trust only the path to the server.' },
+          { q: 'Which feature uses the DHCP snooping binding table?', options: ['Dynamic ARP Inspection', 'OSPF', 'NTP', 'SNMP'], answer: 0, why: 'DAI and IP Source Guard both consume the binding table.' },
+          { q: 'Rate limiting on DHCP snooping primarily mitigates?', options: ['DHCP starvation', 'ARP spoofing', 'DNS tunnelling', 'VLAN hopping'], answer: 0, why: 'Rate limits slow pool exhaustion attacks.' },
+          { q: 'Which protocol and port carries standard DNS queries?', options: ['UDP 53', 'TCP 53', 'UDP 123', 'TCP 389'], answer: 0, why: 'Queries use UDP 53; TCP 53 is for zone transfers and large exchanges.' },
+          { q: 'Which DNS record maps a name to IPv6?', options: ['AAAA', 'A', 'PTR', 'MX'], answer: 0, why: 'A is IPv4 and AAAA is IPv6.' },
+          { q: 'With MX records, which preference is preferred?', options: ['Lower', 'Higher', 'Either', 'Only 0'], answer: 0, why: 'A lower MX preference is preferred.' },
+          { q: 'What does a recursive DNS resolver do?', options: ['Returns the final answer', 'Returns only a referral', 'Caches nothing', 'Forwards to the client'], answer: 0, why: 'Iterative queries return referrals; recursive resolution returns the answer.' },
+          { q: 'NTP uses which transport port?', options: ['UDP 123', 'UDP 161', 'TCP 123', 'UDP 514'], answer: 0, why: 'NTP runs over UDP 123.' },
+          { q: 'What is stratum 1 in NTP?', options: ['Directly synchronised to a reference clock', 'The reference clock itself', 'An unsynchronised source', 'A client only'], answer: 0, why: 'Stratum 0 is the reference clock; stratum 1 is directly attached to it.' },
+          { q: 'What does stratum 16 indicate?', options: ['Unsynchronised', 'Highly accurate', 'Reference clock', 'Broadcast mode'], answer: 0, why: 'Stratum 16 means the source is unsynchronised and unusable.' },
+          { q: 'Which SNMP operation requires an acknowledgement?', options: ['INFORM', 'TRAP', 'GET', 'SET'], answer: 0, why: 'INFORM is acknowledged; TRAP is fire and forget.' },
+          { q: 'Which SNMP version introduced GETBULK?', options: ['v2', 'v1', 'v3 only', 'v2c only with informs'], answer: 0, why: 'GETBULK arrived with SNMPv2.' },
+          { q: 'What does SNMPv3 authPriv provide?', options: ['Authentication and encryption', 'Authentication only', 'Community strings', 'Read-only access'], answer: 0, why: 'authNoPriv is authentication only; authPriv adds privacy.' },
+          { q: 'Which syslog severity is the most severe?', options: ['0', '7', '4', '1'], answer: 0, why: '0 is emergency, the most severe; 7 is debugging.' },
+          { q: 'What does logging trap 4 send?', options: ['Levels 0 through 4', 'Only level 4', 'Levels 4 through 7', 'All levels'], answer: 0, why: 'A threshold includes that level and everything numerically lower.' },
+          { q: 'FTP active mode uses which server source port for data?', options: ['TCP 20', 'TCP 21', 'TCP 22', 'UDP 69'], answer: 0, why: 'The control channel is 21; active-mode data comes from TCP 20.' },
+          { q: 'In passive FTP, who initiates the data connection?', options: ['The client', 'The server', 'Neither', 'The firewall'], answer: 0, why: 'Passive mode has the client connect to a server-chosen port.' },
+          { q: 'TFTP runs over which transport?', options: ['UDP 69', 'TCP 69', 'UDP 21', 'TCP 21'], answer: 0, why: 'TFTP is connectionless over UDP 69.' },
+          { q: 'What does an RRQ do in TFTP?', options: ['Requests a file to read', 'Writes a file', 'Deletes a file', 'Lists a directory'], answer: 0, why: 'RRQ reads, WRQ writes.' },
+          { q: 'Which HTTP status class means client error?', options: ['4xx', '2xx', '3xx', '5xx'], answer: 0, why: '2xx success, 3xx redirect, 4xx client error, 5xx server error.' },
+          { q: 'HTTPS uses which port?', options: ['TCP 443', 'TCP 80', 'TCP 22', 'UDP 443'], answer: 0, why: 'HTTPS is HTTP over TLS on TCP 443.' },
+          { q: 'What must exist before enabling the Cisco secure web server?', options: ['An RSA keypair', 'A BGP session', 'A DHCP pool', 'An NTP master'], answer: 0, why: 'The secure server needs a keypair and trustpoint.' },
+          { q: 'Which command restricts VTY lines to SSH only?', options: ['transport input ssh', 'login local', 'ip ssh version 2', 'crypto key generate rsa'], answer: 0, why: 'transport input ssh permits SSH and denies Telnet.' },
+          { q: 'Telnet uses which port?', options: ['TCP 23', 'TCP 22', 'TCP 21', 'UDP 23'], answer: 0, why: 'Telnet is TCP 23 and unencrypted.' },
+          { q: 'SMTP server-to-server relay uses which port?', options: ['TCP 25', 'TCP 587', 'TCP 465', 'TCP 110'], answer: 0, why: '25 is relay, 587 submission, 465 SMTPS.' },
+          { q: 'Which protocol pushes mail between servers?', options: ['SMTP', 'POP3', 'IMAP', 'LDAP'], answer: 0, why: 'SMTP pushes; POP3 and IMAP pull.' },
+          { q: 'What terminates the SMTP DATA section?', options: ['A single dot', 'QUIT', 'A blank line', 'END'], answer: 0, why: 'A line with a single dot ends the message body.' },
+          { q: 'POP3 default behaviour is to?', options: ['Download and delete', 'Keep and sync', 'Push to the server', 'Index on the server'], answer: 0, why: 'POP3 downloads and typically removes mail from the server.' },
+          { q: 'Which port is POP3 over TLS?', options: ['TCP 995', 'TCP 993', 'TCP 465', 'TCP 110'], answer: 0, why: 'POP3S is 995; IMAPS is 993.' },
+          { q: 'Why choose IMAP over POP3?', options: ['Mail stays on the server and syncs', 'It encrypts by default', 'It uses UDP', 'It deletes mail faster'], answer: 0, why: 'IMAP keeps mail on the server so multiple devices stay in sync.' },
+          { q: 'LDAP uses which port?', options: ['TCP 389', 'TCP 636', 'TCP 3268', 'UDP 389'], answer: 0, why: 'LDAP is 389; LDAPS is 636.' },
+          { q: 'Which pair describes the LDAP structure?', options: ['DIT and DN', 'MIB and OID', 'A and AAAA', 'AVG and AVF'], answer: 0, why: 'The Directory Information Tree holds entries named by Distinguished Names.' },
+          { q: 'In an LDAP filter, what does the ampersand mean?', options: ['AND', 'OR', 'NOT', 'Wildcard'], answer: 0, why: 'Ampersand is AND and pipe is OR.' },
+          { q: 'SIP is responsible for?', options: ['Signaling and session setup', 'Carrying voice media', 'Reporting jitter statistics', 'Translating addresses'], answer: 0, why: 'SIP signals; RTP carries the media.' },
+          { q: 'Which SIP method ends an established session?', options: ['BYE', 'INVITE', 'REGISTER', 'ACK'], answer: 0, why: 'INVITE starts, ACK confirms, BYE ends.' },
+          { q: 'A one-way audio problem after NAT usually means?', options: ['The media path is broken', 'Signaling never reached the proxy', 'DNS failed', 'The codec is unsupported'], answer: 0, why: 'Signaling often succeeds while RTP cannot traverse NAT.' },
+          { q: 'RTP typically uses which transport?', options: ['UDP', 'TCP', 'SCTP', 'ICMP'], answer: 0, why: 'RTP uses UDP so it can skip retransmissions.' },
+          { q: 'RTCP normally uses which port?', options: ['RTP port plus one', 'RTP port minus one', '5060', 'TCP 162'], answer: 0, why: 'RTCP is the next odd port after the even RTP port.' },
+          { q: 'Which DSCP marking is used for voice?', options: ['EF', 'AF11', 'CS1', 'Default'], answer: 0, why: 'Expedited Forwarding is the standard voice marking.' }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'ns.theme', done: 'ns.done', best: 'ns.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
