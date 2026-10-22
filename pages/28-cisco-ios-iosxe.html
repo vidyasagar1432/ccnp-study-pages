@@ -1,0 +1,4768 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cisco IOS and IOS XE — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Cisco IOS and IOS XE for CCNP Enterprise (ENCOR 350-401): Operate the box from the CLI, license it correctly, manage images and configuration files, recover it when it will not boot, then secure and automate the IOS XE platform.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Cisco IOS and IOS XE — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">IOS</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Cisco IOS and IOS XE</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 28</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 28</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">11 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 28 &mdash; Cisco IOS and IOS XE</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Operate the box from the CLI, license it correctly, manage images and configuration files, recover it when it will not boot, then secure and automate the IOS XE platform.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Cisco IOS and IOS XE &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 28 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = "**[[Cisco IOS]]** starts with the **CLI** and its configuration modes, then **[[Cisco Licensing]]** and **[[Smart Licensing]]** decide what the image may run. The **[[IOS File System]]**, **[[IOS Upgrade]]**, **[[Configuration Archive]]** and **[[ROMMON]]** recovery keep the device bootable, while **[[IOS XE]]**, **[[YANG]]**, **[[RESTCONF]]**, **[[NETCONF]]** and **[[Device Hardening]]** cover the modern platform.";
+
+        const topics = [
+ {
+  "num": "01",
+  "id": "t01",
+  "group": "cli",
+  "title": "CLI",
+  "blurb": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur",
+  "overview": "The **[[Cisco IOS|Cisco CLI]]** is the primary configuration interface: **exec commands** run in privileged mode, **configure commands** in config mode. Built-in help, **tab completion**, and %%do%% let you verify from anywhere. The exam tests mode navigation, shortcuts, and help features.",
+  "keyIdea": "**Config mode vs EXEC mode** — where each command lives.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Two command classes",
+    "cols": [
+     "Class",
+     "Mode",
+     "Examples"
+    ],
+    "rows": [
+     [
+      "EXEC",
+      "user/privileged",
+      "show, ping"
+     ],
+     [
+      "Configure",
+      "config mode",
+      "interface, router"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show%% runs in EXEC; %%interface%% in config.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Help features",
+    "cols": [
+     "Feature",
+     "Command",
+     "Result"
+    ],
+    "rows": [
+     [
+      "%%?%%",
+      "%%?%%",
+      "all commands"
+     ],
+     [
+      "%%show ?%%",
+      "partial",
+      "subcommands"
+     ],
+     [
+      "%%show x?%%",
+      "no space",
+      "completions"
+     ],
+     [
+      "%%show co?%%",
+      "word",
+      "candidates"
+     ],
+     [
+      "Error",
+      "%%% Invalid input%%",
+      "wrong syntax"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "%%?%% = **context help**; %%?%% after word = **next keyword**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Shortcuts",
+    "cols": [
+     "Shortcut",
+     "Action"
+    ],
+    "rows": [
+     [
+      "Tab",
+      "complete word"
+     ],
+     [
+      "Up arrow",
+      "history"
+     ],
+     [
+      "Ctrl+Z",
+      "exit config"
+     ],
+     [
+      "Ctrl+C",
+      "abort"
+     ],
+     [
+      "Ctrl+Shift+6",
+      "interrupt"
+     ],
+     [
+      "%%do%%",
+      "run EXEC in config"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Tab + Ctrl+Z** are the daily lifesavers."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Privilege levels",
+    "cols": [
+     "Level",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "0",
+      "minimal"
+     ],
+     [
+      "1",
+      "user mode"
+     ],
+     [
+      "15",
+      "privileged"
+     ],
+     [
+      "custom",
+      "via %%privilege%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Level 15 = enable (full).**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verification style",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%show running-config%%",
+      "live"
+     ],
+     [
+      "%%show startup-config%%",
+      "saved"
+     ],
+     [
+      "%%show version%%",
+      "image/uptime"
+     ],
+     [
+      "%%show interfaces%%",
+      "status"
+     ],
+     [
+      "%%terminal length 0%%",
+      "no paging"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show%% family** drives troubleshooting."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Output modifiers",
+    "cols": [
+     "Modifier",
+     "Use"
+    ],
+    "rows": [
+     [
+      "`",
+      "include X`"
+     ],
+     [
+      "`",
+      "exclude X`"
+     ],
+     [
+      "`",
+      "section X`"
+     ],
+     [
+      "`",
+      "begin X`"
+     ],
+     [
+      "`",
+      "redirect tftp:`"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Pipes **filter and save** long output."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "enable\nconfigure terminal\ninterface GigabitEthernet0/1\n ip address 10.0.0.1 255.255.255.0\n no shutdown\nend\nshow running-config | include ip address"
+   }
+  ],
+  "traps": [
+   "**Config mode vs EXEC mode** — where each command lives.",
+   "%%?%% vs %%?%% after word — **no-space = completion**.",
+   "%%do%% allows **EXEC inside config**.",
+   "Ctrl+Z / %%end%% = **exit config mode**.",
+   "Abbreviation ok but must be **unambiguous**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "CLI"
+   ],
+   "rows": [
+    [
+     "EXEC",
+     "show"
+    ],
+    [
+     "Config",
+     "interface"
+    ],
+    [
+     "Help",
+     "?"
+    ],
+    [
+     "Complete",
+     "Tab"
+    ],
+    [
+     "Exit",
+     "end/Ctrl+Z"
+    ],
+    [
+     "In config",
+     "do"
+    ],
+    [
+     "Privilege",
+     "15"
+    ],
+    [
+     "Filter",
+     "\\"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Configuration Modes",
+    "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
+   },
+   {
+    "t": "03. Licensing",
+    "d": "Licensing controls feature entitlements on IOS XE."
+   }
+  ],
+  "glossary": [
+   "Cisco IOS"
+  ]
+ },
+ {
+  "num": "02",
+  "id": "t02",
+  "group": "cli",
+  "title": "Configuration Modes",
+  "blurb": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g.",
+  "overview": "[[Cisco IOS|IOS]] organizes configuration into **hierarchical modes**: **global → interface/line/router → submode (e.g. under an interface)**. Each mode's prompt reflects the context, and commands apply to that scope only. The exam tests entering, exiting, and nesting modes.",
+  "keyIdea": "**Prompt reveals the mode** — read it.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Mode hierarchy",
+    "cols": [
+     "Mode",
+     "Prompt",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "Privileged EXEC",
+      "%%#%%",
+      "all EXEC"
+     ],
+     [
+      "Global config",
+      "%%(config)#%%",
+      "device-wide"
+     ],
+     [
+      "Interface",
+      "%%(config-if)#%%",
+      "one interface"
+     ],
+     [
+      "Line",
+      "%%(config-line)#%%",
+      "console/vty"
+     ],
+     [
+      "Router",
+      "%%(config-router)#%%",
+      "routing protocol"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Prompt tells you where you are.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Entering modes",
+    "cols": [
+     "Command",
+     "From",
+     "To"
+    ],
+    "rows": [
+     [
+      "%%configure terminal%%",
+      "exec",
+      "global"
+     ],
+     [
+      "%%interface Gi0/1%%",
+      "global",
+      "interface"
+     ],
+     [
+      "%%line console 0%%",
+      "global",
+      "line"
+     ],
+     [
+      "%%router ospf 1%%",
+      "global",
+      "router"
+     ],
+     [
+      "%%access-list 100%%",
+      "global",
+      "still global"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Submodes are entered from **global config**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Exiting modes",
+    "cols": [
+     "Command",
+     "Action"
+    ],
+    "rows": [
+     [
+      "%%exit%%",
+      "up one level"
+     ],
+     [
+      "%%end%%",
+      "back to EXEC"
+     ],
+     [
+      "Ctrl+Z",
+      "same as end"
+     ],
+     [
+      "%%interface Gi0/2%%",
+      "switch context"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%exit%% = one level; %%end%% = all the way out.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Common global commands",
+    "cols": [
+     "Command",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "%%hostname%%",
+      "device"
+     ],
+     [
+      "%%ip route%%",
+      "routing"
+     ],
+     [
+      "%%access-list%%",
+      "ACLs"
+     ],
+     [
+      "%%snmp-server%%",
+      "NMS"
+     ],
+     [
+      "%%logging%%",
+      "syslog"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Global config = **device-wide settings**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Interface submode commands",
+    "cols": [
+     "Command",
+     "Scope"
+    ],
+    "rows": [
+     [
+      "%%ip address%%",
+      "that interface"
+     ],
+     [
+      "%%no shutdown%%",
+      "admin up"
+     ],
+     [
+      "%%description%%",
+      "label"
+     ],
+     [
+      "%%speed%%/%%duplex%%",
+      "L1"
+     ],
+     [
+      "%%channel-group%%",
+      "bundle"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Interface commands affect **only that interface**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "`do` inside config",
+    "cols": [
+     "Feature",
+     "Use"
+    ],
+    "rows": [
+     [
+      "%%do show%%",
+      "EXEC from config"
+     ],
+     [
+      "%%do ping%%",
+      "test from config"
+     ],
+     [
+      "Saves exit",
+      "quick verify"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%do%% runs EXEC without leaving config mode.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "configure terminal\n hostname R1\n interface GigabitEthernet0/1\n  ip address 10.0.0.1 255.255.255.0\n  no shutdown\n  exit\n line vty 0 4\n  password cisco\n  exit\n end\nshow running-config"
+   }
+  ],
+  "traps": [
+   "**Prompt reveals the mode** — read it.",
+   "%%exit%% = one level; **%%end%%/Ctrl+Z = to EXEC**.",
+   "Interface commands are **interface-scoped**.",
+   "%%do%% runs EXEC **inside config**.",
+   "Global config first; **submodes nest under it**."
+  ],
+  "table": {
+   "cols": [
+    "Mode",
+    "Prompt"
+   ],
+   "rows": [
+    [
+     "Global",
+     "(config)#"
+    ],
+    [
+     "Interface",
+     "(config-if)#"
+    ],
+    [
+     "Line",
+     "(config-line)#"
+    ],
+    [
+     "Router",
+     "(config-router)#"
+    ],
+    [
+     "Exit",
+     "one level"
+    ],
+    [
+     "End",
+     "to EXEC"
+    ],
+    [
+     "do",
+     "EXEC in config"
+    ],
+    [
+     "Scope",
+     "context"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "01. CLI",
+    "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
+   },
+   {
+    "t": "03. Licensing",
+    "d": "Licensing controls feature entitlements on IOS XE."
+   }
+  ],
+  "glossary": [
+   "Cisco IOS"
+  ]
+ },
+ {
+  "num": "03",
+  "id": "t03",
+  "group": "license",
+  "title": "Licensing",
+  "blurb": "Licensing controls feature entitlements on IOS XE.",
+  "overview": "**[[Cisco Licensing|Licensing]]** controls feature entitlements on [[IOS XE|IOS XE]]. Legacy **EULA** models (classic LICENSE) are being replaced by **[[Smart Licensing]]**. Packages like **network-advantage** bundle features; images carry a %%universalk9%% and licenses gate functions. The exam tests package tiers and how licenses are evaluated.",
+  "keyIdea": "**universalK9 = one image; licenses gate features.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "License packages (classic)",
+    "cols": [
+     "Package",
+     "Features"
+    ],
+    "rows": [
+     [
+      "ipbase",
+      "base routing"
+     ],
+     [
+      "ipservices",
+      "advanced"
+     ],
+     [
+      "Security (in newer)",
+      "security"
+     ],
+     [
+      "network-advantage",
+      "full (modern)"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Advantage tiers bundle more features.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "How licenses gate features",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Entitlement",
+      "feature flag"
+     ],
+     [
+      "Evaluation",
+      "60-day eval"
+     ],
+     [
+      "Permanent",
+      "installed"
+     ],
+     [
+      "Enforcement",
+      "config denied"
+     ],
+     [
+      "Product",
+      "per PID"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Without a license, the feature **won't enable**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "License types",
+    "cols": [
+     "Type",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Eval",
+      "temporary (60 d)"
+     ],
+     [
+      "Evaluation period",
+      "grace"
+     ],
+     [
+      "Permanent",
+      "owned"
+     ],
+     [
+      "Subscription",
+      "time-based"
+     ],
+     [
+      "RTU",
+      "right-to-use"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Eval licenses let you try features.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Image packages",
+    "cols": [
+     "Image",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "universalK9",
+      "all features licensed"
+     ],
+     [
+      "Feature-based",
+      "smaller footprint"
+     ],
+     [
+      "Universal",
+      "future-proof"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**universalK9 = single image, feature gated by license.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Checking licenses",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%show license%%",
+      "installed"
+     ],
+     [
+      "%%show license summary%%",
+      "status"
+     ],
+     [
+      "%%show license feature%%",
+      "available"
+     ],
+     [
+      "%%license install%%",
+      "activate"
+     ],
+     [
+      "%%license boot level%%",
+      "set tier"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show license summary%%** is the day-1 check."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Classic vs Smart",
+    "cols": [
+     "Aspect",
+     "Classic",
+     "Smart"
+    ],
+    "rows": [
+     [
+      "Activation",
+      "PAK/license file",
+      "portal"
+     ],
+     [
+      "Reporting",
+      "manual",
+      "automatic"
+     ],
+     [
+      "Enforcement",
+      "local",
+      "CSSM"
+     ],
+     [
+      "Model",
+      "perpetual",
+      "subscription"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Smart Licensing is the **modern default**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show license\nshow license summary\nshow license feature\nlicense install bootflash:license.lic\nlicense boot level network-advantage\nreload"
+   }
+  ],
+  "traps": [
+   "**universalK9 = one image; licenses gate features.**",
+   "Eval = **60 days** default.",
+   "%%show license summary%% = verify.",
+   "Tiers: **ipbase < ipservices/advantage**.",
+   "**Smart Licensing** is the modern licensing path."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Licensing"
+   ],
+   "rows": [
+    [
+     "Image",
+     "universalK9"
+    ],
+    [
+     "Gate",
+     "features"
+    ],
+    [
+     "Eval",
+     "60 d"
+    ],
+    [
+     "Check",
+     "show license"
+    ],
+    [
+     "Tier",
+     "advantage"
+    ],
+    [
+     "Install",
+     "license install"
+    ],
+    [
+     "Modern",
+     "Smart"
+    ],
+    [
+     "Model",
+     "subscription"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "02. Configuration Modes",
+    "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
+   },
+   {
+    "t": "04. Smart Licensing",
+    "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
+   }
+  ],
+  "glossary": [
+   "Cisco Licensing",
+   "IOS XE",
+   "Smart Licensing"
+  ]
+ },
+ {
+  "num": "04",
+  "id": "t04",
+  "group": "license",
+  "title": "Smart Licensing",
+  "blurb": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev",
+  "overview": "**[[Smart Licensing]]** replaces PAK files with a **central portal (CSSM)** that manages entitlements across devices. Devices **report usage**; **Smart Licensing Using Policy (SLUP)** is the latest model with evaluation/callback behavior. The exam tests registration, call-home, and the policy model.",
+  "keyIdea": "**Smart Licensing = CSSM + registration token.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "How it works",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "CSSM",
+      "portal entitlement"
+     ],
+     [
+      "Registration",
+      "token from portal"
+     ],
+     [
+      "Report",
+      "usage to portal"
+     ],
+     [
+      "Call-home",
+      "transport"
+     ],
+     [
+      "Enforcement",
+      "policy"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Devices register to **CSSM via a token**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Communication",
+    "cols": [
+     "Channel",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "Call-home",
+      "device → Cisco"
+     ],
+     [
+      "Smart transport",
+      "HTTPS"
+     ],
+     [
+      "Offline",
+      "via file"
+     ],
+     [
+      "Proxy",
+      "HTTPS proxy"
+     ],
+     [
+      "Direct",
+      "internet"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**HTTPS call-home** is the normal path."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Smart Licensing Using Policy (SLUP)",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Default",
+      "policy-based"
+     ],
+     [
+      "Evaluation",
+      "90 days"
+     ],
+     [
+      "Tags",
+      "license types"
+     ],
+     [
+      "Enrollment",
+      "via CSSM"
+     ],
+     [
+      "Enforcement",
+      "after eval"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "SLUP gives **evaluation + flexible enforcement**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "License tiers (network)",
+    "cols": [
+     "Tier",
+     "Features"
+    ],
+    "rows": [
+     [
+      "network-essentials",
+      "base"
+     ],
+     [
+      "network-advantage",
+      "full"
+     ],
+     [
+      "dna-essentials/advantage",
+      "DNA"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Tier = capability level** bought per device."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Registration flow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "get token"
+     ],
+     [
+      "2",
+      "%%license smart register idtoken <t>%%"
+     ],
+     [
+      "3",
+      "device registers"
+     ],
+     [
+      "4",
+      "entitlements match"
+     ],
+     [
+      "5",
+      "usage reported"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Token → register → **entitlements appear**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Troubleshooting",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Auth fail",
+      "token"
+     ],
+     [
+      "No report",
+      "call-home"
+     ],
+     [
+      "Eval expiry",
+      "period"
+     ],
+     [
+      "Offline",
+      "manual file"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show license status%%** diagnoses registration."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "license smart register idtoken TOKEN\nlicense smart deregister\nshow license status\nshow license summary\nshow call-home\nlicense smart reservation request local"
+   }
+  ],
+  "traps": [
+   "**Smart Licensing = CSSM + registration token.**",
+   "Transport = **call-home / HTTPS**.",
+   "**SLUP = policy-based, 90-day eval**.",
+   "Tiers: **essentials vs advantage**.",
+   "%%license smart register idtoken%% = enable."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Smart Licensing"
+   ],
+   "rows": [
+    [
+     "Portal",
+     "CSSM"
+    ],
+    [
+     "Token",
+     "register"
+    ],
+    [
+     "Transport",
+     "call-home"
+    ],
+    [
+     "Model",
+     "policy"
+    ],
+    [
+     "Eval",
+     "90 d"
+    ],
+    [
+     "Tiers",
+     "essentials/advantage"
+    ],
+    [
+     "Check",
+     "show license status"
+    ],
+    [
+     "vs PAK",
+     "no files"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "03. Licensing",
+    "d": "Licensing controls feature entitlements on IOS XE."
+   },
+   {
+    "t": "05. File Systems",
+    "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
+   }
+  ],
+  "glossary": [
+   "Smart Licensing"
+  ]
+ },
+ {
+  "num": "05",
+  "id": "t05",
+  "group": "files",
+  "title": "File Systems",
+  "blurb": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p",
+  "overview": "[[Cisco IOS|IOS]] uses a **[[IOS File System|virtual file system]]** with prefixes like **flash:, bootflash:, system:, nvram:**, and network prefixes (**tftp:, ftp:, scp:**). %%dir%%, %%copy%%, and %%show flash%% navigate it. The exam tests prefixes, copy syntax, and where configs live.",
+  "keyIdea": "**running-config = system:; startup-config = nvram:**.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "File system prefixes",
+    "cols": [
+     "Prefix",
+     "Location"
+    ],
+    "rows": [
+     [
+      "%%flash:%%",
+      "flash device"
+     ],
+     [
+      "%%bootflash:%%",
+      "boot flash (XE)"
+     ],
+     [
+      "%%nvram:%%",
+      "startup config"
+     ],
+     [
+      "%%system:%%",
+      "running config"
+     ],
+     [
+      "%%disk0:%%",
+      "removable"
+     ],
+     [
+      "%%tftp:%%",
+      "network"
+     ],
+     [
+      "%%ftp:%% / %%scp:%%",
+      "network"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Prefix = which storage the command touches.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Where things live",
+    "cols": [
+     "Data",
+     "Location"
+    ],
+    "rows": [
+     [
+      "IOS image",
+      "flash/bootflash"
+     ],
+     [
+      "Running config",
+      "system: running-config"
+     ],
+     [
+      "Startup config",
+      "nvram:startup-config"
+     ],
+     [
+      "Config files",
+      "flash"
+     ],
+     [
+      "Crash info",
+      "flash"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**running-config in RAM; startup-config in NVRAM.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Directory commands",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%dir%%",
+      "list"
+     ],
+     [
+      "%%dir flash:%%",
+      "flash"
+     ],
+     [
+      "%%show flash:%%",
+      "usage"
+     ],
+     [
+      "%%cd%% / %%pwd%%",
+      "navigate"
+     ],
+     [
+      "%%show file systems%%",
+      "all"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show file systems%%** lists available prefixes."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Copy operations",
+    "code": "copy flash: flash:\ncopy running-config startup-config\ncopy tftp: flash:\ncopy startup-config running-config"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Copy",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%copy run start%%",
+      "save"
+     ],
+     [
+      "%%copy start run%%",
+      "restore"
+     ],
+     [
+      "%%copy tftp: flash:%%",
+      "get image"
+     ],
+     [
+      "%%copy flash: tftp:%%",
+      "back up"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Copy = **from to**, ask for names interactively."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "File details",
+    "cols": [
+     "Item",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Size",
+      "%%dir%%"
+     ],
+     [
+      "Free space",
+      "%%dir flash:%%"
+     ],
+     [
+      "CRC",
+      "%%verify%%"
+     ],
+     [
+      "Show all",
+      "%%show file systems%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Verify image integrity with **%%verify /md5 flash:image.bin%%**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "NVRAM vs Flash",
+    "cols": [
+     "Aspect",
+     "NVRAM",
+     "Flash"
+    ],
+    "rows": [
+     [
+      "Content",
+      "startup-config",
+      "image + files"
+     ],
+     [
+      "Volatile?",
+      "no",
+      "no"
+     ],
+     [
+      "Size",
+      "small",
+      "large"
+     ],
+     [
+      "Uses",
+      "boot config",
+      "image/backup"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NVRAM = config; Flash = files/image.**"
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show file systems\ndir bootflash:\ncopy running-config startup-config\ncopy tftp://10.0.0.5/ios.bin bootflash:\nshow flash:\nverify /md5 bootflash:ios.bin"
+   }
+  ],
+  "traps": [
+   "**running-config = system:; startup-config = nvram:**.",
+   "Prefixes: **flash:, bootflash:, tftp:**.",
+   "%%copy run start%% = save to **NVRAM**.",
+   "%%dir%% lists; %%show file systems%% shows **all prefixes**.",
+   "Image integrity via **%%verify /md5%%**."
+  ],
+  "table": {
+   "cols": [
+    "Prefix",
+    "Holds"
+   ],
+   "rows": [
+    [
+     "flash",
+     "image/files"
+    ],
+    [
+     "bootflash",
+     "XE image"
+    ],
+    [
+     "nvram",
+     "startup config"
+    ],
+    [
+     "system",
+     "running config"
+    ],
+    [
+     "tftp",
+     "network"
+    ],
+    [
+     "Save",
+     "copy run start"
+    ],
+    [
+     "List",
+     "dir"
+    ],
+    [
+     "Integrity",
+     "verify"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "04. Smart Licensing",
+    "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
+   },
+   {
+    "t": "06. Software Upgrade",
+    "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
+   }
+  ],
+  "glossary": [
+   "Cisco IOS",
+   "IOS File System"
+  ]
+ },
+ {
+  "num": "06",
+  "id": "t06",
+  "group": "files",
+  "title": "Software Upgrade",
+  "blurb": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify.",
+  "overview": "**Upgrading [[IOS XE|IOS XE]]** = copy the new image to flash, **set it as boot**, reload, and verify. Since the image isn't run in-place, you must **point %%boot system%% at it**. Rollback uses the old image. The exam tests the sequence and verification.",
+  "keyIdea": "**%%boot system flash:%% is required** — image won't auto-boot.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Upgrade flow",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "check space"
+     ],
+     [
+      "2",
+      "copy image"
+     ],
+     [
+      "3",
+      "verify checksum"
+     ],
+     [
+      "4",
+      "%%boot system flash:%%"
+     ],
+     [
+      "5",
+      "save config"
+     ],
+     [
+      "6",
+      "reload"
+     ],
+     [
+      "7",
+      "verify version"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Follow the **order: space → copy → boot → reload → verify.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Getting the image",
+    "cols": [
+     "Source",
+     "Command"
+    ],
+    "rows": [
+     [
+      "TFTP",
+      "%%copy tftp: flash:%%"
+     ],
+     [
+      "FTP",
+      "%%copy ftp: flash:%%"
+     ],
+     [
+      "SCP",
+      "%%copy scp: flash:%%"
+     ],
+     [
+      "USB",
+      "%%copy usb0: flash:%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Network copy is the **common path**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Boot statements",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%boot system flash:ios-xe.bin%%",
+      "boot file"
+     ],
+     [
+      "%%no boot system%%",
+      "clear"
+     ],
+     [
+      "%%show boot%%",
+      "verify"
+     ],
+     [
+      "%%show version%%",
+      "running image"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%boot system%% tells the device which image to load.**"
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Verifying integrity",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%verify /md5 flash:img.bin%%",
+      "checksum"
+     ],
+     [
+      "%%dir flash:%%",
+      "size"
+     ],
+     [
+      "%%show flash:%%",
+      "usage"
+     ],
+     [
+      "%%show version%%",
+      "loaded"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Compare **MD5** before you trust the copy."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Reload and rollback",
+    "cols": [
+     "Action",
+     "Command"
+    ],
+    "rows": [
+     [
+      "Save",
+      "%%copy run start%%"
+     ],
+     [
+      "Reload",
+      "%%reload%%"
+     ],
+     [
+      "Rollback",
+      "old boot statement + reload"
+     ],
+     [
+      "Validate",
+      "%%show version%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Keep the **previous image** for rollback."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Upgrade vs SMU",
+    "cols": [
+     "Term",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "Full image",
+      "full upgrade"
+     ],
+     [
+      "SMU",
+      "patch on running image"
+     ],
+     [
+      "Patch",
+      "no full reload"
+     ],
+     [
+      "Major",
+      "version jump"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**SMU = targeted patch**, not a full image."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "copy tftp://10.0.0.5/ios-xe-new.bin bootflash:\nverify /md5 bootflash:ios-xe-new.bin\nboot system bootflash:ios-xe-new.bin\ncopy running-config startup-config\nreload\nshow version\nshow boot"
+   }
+  ],
+  "traps": [
+   "**%%boot system flash:%% is required** — image won't auto-boot.",
+   "**%%verify /md5%%** before install.",
+   "**%%show boot%% / %%show version%%** confirm load.",
+   "Copy needs **space + checksum**.",
+   "Rollback = revert **boot statement + reload**."
+  ],
+  "table": {
+   "cols": [
+    "Step",
+    "Command"
+   ],
+   "rows": [
+    [
+     "Copy",
+     "copy tftp: flash:"
+    ],
+    [
+     "Verify",
+     "verify /md5"
+    ],
+    [
+     "Boot",
+     "boot system flash:"
+    ],
+    [
+     "Save",
+     "copy run start"
+    ],
+    [
+     "Reload",
+     "reload"
+    ],
+    [
+     "Check",
+     "show version"
+    ],
+    [
+     "Rollback",
+     "old boot"
+    ],
+    [
+     "Patch",
+     "SMU"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "05. File Systems",
+    "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
+   },
+   {
+    "t": "07. Configuration Backup",
+    "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
+   }
+  ],
+  "glossary": [
+   "IOS XE"
+  ]
+ },
+ {
+  "num": "07",
+  "id": "t07",
+  "group": "files",
+  "title": "Configuration Backup",
+  "blurb": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP",
+  "overview": "**[[Configuration Archive|Configuration backup]]** protects the running/startup config by copying it to external storage (**TFTP/SCP/FTP/USB**) or the **archive** feature. %%show archive%% tracks versions. The exam tests copy targets, %%archive%% config, and restore paths.",
+  "keyIdea": "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What to back up",
+    "cols": [
+     "Data",
+     "Source"
+    ],
+    "rows": [
+     [
+      "Running config",
+      "system:running-config"
+     ],
+     [
+      "Startup config",
+      "nvram:startup-config"
+     ],
+     [
+      "Image",
+      "flash (separate)"
+     ],
+     [
+      "Archive",
+      "auto snapshots"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Back up **running/startup config + image** (note 06)."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Copy targets",
+    "cols": [
+     "Target",
+     "Command"
+    ],
+    "rows": [
+     [
+      "TFTP",
+      "%%copy running-config tftp:%%"
+     ],
+     [
+      "SCP",
+      "%%copy running-config scp:%%"
+     ],
+     [
+      "FTP",
+      "%%copy running-config ftp:%%"
+     ],
+     [
+      "USB",
+      "%%copy running-config usb0:%%"
+     ],
+     [
+      "Flash",
+      "%%copy run flash:config.bak%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "External storage = **off-box protection**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "The archive feature",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%archive%%",
+      "enter archive mode"
+     ],
+     [
+      "%%path tftp://...%%",
+      "destination"
+     ],
+     [
+      "%%write-memory%%",
+      "auto-save"
+     ],
+     [
+      "%%maximum 14%%",
+      "versions kept"
+     ],
+     [
+      "%%show archive%%",
+      "list"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Archive = **versioned, automatic snapshots**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Restore paths",
+    "cols": [
+     "From",
+     "Command"
+    ],
+    "rows": [
+     [
+      "TFTP",
+      "%%copy tftp: running-config%%"
+     ],
+     [
+      "Startup",
+      "%%copy start run%%"
+     ],
+     [
+      "Archive",
+      "%%configure replace file:%%"
+     ],
+     [
+      "Flash",
+      "%%copy flash: running-config%%"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Restore by **copying the file back into place**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Version management",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Archive max",
+      "keep N"
+     ],
+     [
+      "Increment",
+      "numbered"
+     ],
+     [
+      "Diff",
+      "%%show archive config differences%%"
+     ],
+     [
+      "Timestamp",
+      "in name"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%show archive%%** lists every saved generation."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Best practice",
+    "cols": [
+     "Step",
+     "Why"
+    ],
+    "rows": [
+     [
+      "Schedule",
+      "automation"
+     ],
+     [
+      "Off-box",
+      "survive device loss"
+     ],
+     [
+      "Verify",
+      "compare hashes"
+     ],
+     [
+      "Document",
+      "restore steps"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Backup is **only useful if you can restore**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "archive\n path tftp://10.0.0.5/archive\n write-memory\n maximum 14\nshow archive\ncopy running-config tftp://10.0.0.5/r1-run.cfg\ncopy tftp://10.0.0.5/r1-run.cfg running-config"
+   }
+  ],
+  "traps": [
+   "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
+   "%%show archive%% = **version list**.",
+   "%%copy run start%% ≠ off-box backup (NVRAM only).",
+   "**%%configure replace%%** applies archived config.",
+   "Always **off-box** for real DR."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Backup"
+   ],
+   "rows": [
+    [
+     "Source",
+     "running/startup"
+    ],
+    [
+     "Targets",
+     "tftp/scp/ftp"
+    ],
+    [
+     "Archive",
+     "auto versions"
+    ],
+    [
+     "Path",
+     "archive path"
+    ],
+    [
+     "Max",
+     "maximum"
+    ],
+    [
+     "List",
+     "show archive"
+    ],
+    [
+     "Restore",
+     "copy back"
+    ],
+    [
+     "Best",
+     "off-box"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "06. Software Upgrade",
+    "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
+   },
+   {
+    "t": "08. Recovery",
+    "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
+   }
+  ],
+  "glossary": [
+   "Configuration Archive"
+  ]
+ },
+ {
+  "num": "08",
+  "id": "t08",
+  "group": "files",
+  "title": "Recovery",
+  "blurb": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots.",
+  "overview": "**[[ROMMON|Recovery]]** covers regaining access after **lost passwords, corrupt images, or failed boots**. Methods: **password recovery** (config register trick), **[[ROMMON]]** for image recovery, and **emergency-access** on modern IOS XE. The exam tests the recovery steps and the **config-register**.",
+  "keyIdea": "**0x2142 = skip startup config**; 0x2102 = normal.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Config-register",
+    "cols": [
+     "Register",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "0x2102",
+      "normal boot + ROM monitor"
+     ],
+     [
+      "0x2142",
+      "ignore startup-config"
+     ],
+     [
+      "0x2100",
+      "boot to ROMMON"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**0x2142 ignores the startup config** for recovery."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Password recovery steps",
+    "cols": [
+     "Step",
+     "Action"
+    ],
+    "rows": [
+     [
+      "1",
+      "power cycle / break"
+     ],
+     [
+      "2",
+      "set register 0x2142"
+     ],
+     [
+      "3",
+      "boot"
+     ],
+     [
+      "4",
+      "copy start run"
+     ],
+     [
+      "5",
+      "change password"
+     ],
+     [
+      "6",
+      "reset register 0x2102"
+     ],
+     [
+      "7",
+      "save + reload"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**Break sequence** drops to ROMMON to change the register."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "ROMMON / ROM monitor",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Access",
+      "break / register 0"
+     ],
+     [
+      "Purpose",
+      "boot without image"
+     ],
+     [
+      "Commands",
+      "%%boot%%, %%dir%%, %%set%%"
+     ],
+     [
+      "Image boot",
+      "%%boot flash:...%%"
+     ],
+     [
+      "XE",
+      "%%rommon%% with xmodem/usb"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "ROMMON = **minimal bootloader environment**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Image recovery",
+    "cols": [
+     "Method",
+     "Use"
+    ],
+    "rows": [
+     [
+      "ROMMON %%boot%%",
+      "load from flash"
+     ],
+     [
+      "USB",
+      "boot device image"
+     ],
+     [
+      "Xmodem",
+      "console slow load"
+     ],
+     [
+      "TFTP in ROMMON",
+      "network"
+     ],
+     [
+      "Emergency access",
+      "XE modern"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Recover a **corrupt image from ROMMON**."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Emergency access (IOS XE)",
+    "cols": [
+     "Command",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "%%platform console virtual%%",
+      "virtual console"
+     ],
+     [
+      "%%enable%% recovery",
+      "via emergency"
+     ],
+     [
+      "%%security password%%",
+      "set"
+     ],
+     [
+      "%%exit%%",
+      "back"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**%%platform console virtual%%** unlocks modern recovery."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Recovery flow table",
+    "cols": [
+     "Problem",
+     "Fix"
+    ],
+    "rows": [
+     [
+      "Lost enable",
+      "0x2142 + reset"
+     ],
+     [
+      "No image",
+      "ROMMON boot/TFTP"
+     ],
+     [
+      "Corrupt image",
+      "verify + recopy"
+     ],
+     [
+      "Locked out",
+      "console break"
+     ],
+     [
+      "XE password",
+      "emergency access"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Match **problem to the right recovery path**."
+     }
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "confreg 0x2142\nboot\ncopy startup-config running-config\nenable secret NewPass\nconfig-register 0x2102\ncopy running-config startup-config\nreload"
+   }
+  ],
+  "traps": [
+   "**0x2142 = skip startup config**; 0x2102 = normal.",
+   "Break = **ROMMON**.",
+   "Password recovery: **register → boot → copy start run**.",
+   "**Emergency access** on IOS XE (%%platform console virtual%%).",
+   "Restore **0x2102** before reload."
+  ],
+  "table": {
+   "cols": [
+    "Register",
+    "Meaning"
+   ],
+   "rows": [
+    [
+     "0x2102",
+     "normal boot"
+    ],
+    [
+     "0x2142",
+     "ignore config"
+    ],
+    [
+     "0x2100",
+     "ROMMON"
+    ],
+    [
+     "Recovery",
+     "0x2142"
+    ],
+    [
+     "Reset",
+     "0x2102"
+    ],
+    [
+     "ROMMON",
+     "break"
+    ],
+    [
+     "XE",
+     "emergency"
+    ],
+    [
+     "Image",
+     "recopy/boot"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "07. Configuration Backup",
+    "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
+   },
+   {
+    "t": "09. IOS XE Architecture (Linux-based / daemons)",
+    "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
+   }
+  ],
+  "glossary": [
+   "ROMMON"
+  ]
+ },
+ {
+  "num": "09",
+  "id": "t09",
+  "group": "platform",
+  "title": "IOS XE Architecture (Linux-based / daemons)",
+  "blurb": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing",
+  "overview": "**[[IOS XE]]** is IOS re-architected to run as **applications (daemons) on top of a Linux kernel**, where a single **IOSd daemon** implements the classic [[Cisco IOS|IOS]] control plane inside a **Controller** container. This modular design gives process isolation, **in-service patching (SMU/EEM)**, sub-packaging, and cleaner software management (install mode). The exam tests the daemon/controller model and how it differs from monolithic IOS.",
+  "keyIdea": "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "The fundamental split",
+    "cols": [
+     "Component",
+     "Role"
+    ],
+    "rows": [
+     [
+      "**Linux kernel**",
+      "hosts the platform"
+     ],
+     [
+      "**IOSd daemon**",
+      "runs the classic IOS control plane"
+     ],
+     [
+      "**Controller**",
+      "container/orchestration framework"
+     ],
+     [
+      "**Manager / Protocols**",
+      "platform services, data plane"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IOS XE = **Linux kernel + modular daemons**, with **IOSd** as the IOS process."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Key daemons / processes",
+    "cols": [
+     "Process",
+     "Function"
+    ],
+    "rows": [
+     [
+      "**IOSd**",
+      "routing/switching control plane"
+     ],
+     [
+      "**fman** / **FMAN-FP**",
+      "features and forwarding managers"
+     ],
+     [
+      "**Controller**",
+      "runs the system"
+     ],
+     [
+      "**hman**",
+      "hardware state/device management"
+     ],
+     [
+      "**Platform processes**",
+      "power, fan, line-card mgmt"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The control plane lives mostly in **IOSd**; hardware is handled by platform daemons."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "IOS XE vs classic IOS",
+    "cols": [
+     "Aspect",
+     "Classic IOS",
+     "IOS XE"
+    ],
+    "rows": [
+     [
+      "Architecture",
+      "monolithic",
+      "modular daemons on Linux"
+     ],
+     [
+      "Process isolation",
+      "limited",
+      "strong"
+     ],
+     [
+      "Package/upgrade",
+      "boot one image",
+      "subpackages / SMU"
+     ],
+     [
+      "Patching",
+      "full reload",
+      "SMU without full reload"
+     ],
+     [
+      "Management",
+      "CLI",
+      "+ RESTCONF/NetConf, gNMI"
+     ],
+     [
+      "Dynamic behavior",
+      "static",
+      "EEM, NBAR, streaming telemetry"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**IOS XE supports streaming telemetry and model-driven mgmt** (note 10) that classic IOS lacks."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Subpackages and packaging",
+    "cols": [
+     "Package",
+     "Meaning"
+    ],
+    "rows": [
+     [
+      "**RPMs / subpackages**",
+      "individual components"
+     ],
+     [
+      "**SMU**",
+      "Small Maintenance Upgrade (patch)"
+     ],
+     [
+      "**FSU**",
+      "Feature Set Upgrade"
+     ],
+     [
+      "**Composite image**",
+      "bundled install"
+     ],
+     [
+      "**Software Add-ons**",
+      "optional feature packages"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "IOS XE install mode uses **SMUs (patches)** that do not require a full reload."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Config/persistence and reload behavior",
+    "cols": [
+     "Behavior",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "CLI config",
+      "still Cisco CLI"
+     ],
+     [
+      "Running config",
+      "in memory (Linux processes)"
+     ],
+     [
+      "Startup",
+      "NVRAM"
+     ],
+     [
+      "Non-volatile state",
+      "daemon-managed"
+     ],
+     [
+      "Atomic reload",
+      "reboot of Linux + daemons"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "From the operator's view the CLI is identical, but behind it are **Linux processes**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Verification",
+    "code": "show version\nshow platform\nshow platform software ?\nshow processes cpu\nshow logging\nshow running-config"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%show platform software%%",
+      "software components"
+     ],
+     [
+      "%%show processes cpu%%",
+      "daemon CPU usage"
+     ],
+     [
+      "%%show version%%",
+      "IOS XE image"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "show version\nshow platform\nshow processes cpu\nshow processes memory\nshow platform software process cpu\nshow running-config"
+   }
+  ],
+  "traps": [
+   "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
+   "**IOSd** is the daemon running the classic IOS control plane.",
+   "SMU = **patch without full reload** (differs from classic IOS).",
+   "IOS XE adds **model-driven management (RESTCONF/NetConf) and streaming telemetry**.",
+   "For the operator, **CLI stays the same** — the architecture underneath changed."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "IOS XE"
+   ],
+   "rows": [
+    [
+     "Base",
+     "Linux kernel"
+    ],
+    [
+     "IOS process",
+     "IOSd"
+    ],
+    [
+     "Model",
+     "modular daemons"
+    ],
+    [
+     "Isolation",
+     "strong"
+    ],
+    [
+     "Patch",
+     "SMU"
+    ],
+    [
+     "Management",
+     "CLI + model-driven"
+    ],
+    [
+     "Telemetry",
+     "streaming"
+    ],
+    [
+     "vs IOS",
+     "modular, not monolithic"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "08. Recovery",
+    "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
+   },
+   {
+    "t": "10. YANG & RESTCONF on IOS XE",
+    "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
+   }
+  ],
+  "glossary": [
+   "IOS XE",
+   "Cisco IOS"
+  ]
+ },
+ {
+  "num": "10",
+  "id": "t10",
+  "group": "platform",
+  "title": "YANG & RESTCONF on IOS XE",
+  "blurb": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and",
+  "overview": "**[[YANG]]** is a **data-modeling language** that describes device configuration/state as a structured tree, and **[[RESTCONF]]** plus **[[NETCONF]]** are the model-driven protocols that read/write that model over a network. On IOS XE they enable **programmatic, model-driven configuration and telemetry** instead of screen-scraping the CLI. The exam tests YANG's purpose, RESTCONF vs NETCONF differences, and enabling them on IOS XE.",
+  "keyIdea": "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "What YANG is",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "Type",
+      "data-modeling language (RFC 6020/7950)"
+     ],
+     [
+      "Purpose",
+      "describe configuration + operational state"
+     ],
+     [
+      "Form",
+      "structured tree of nodes"
+     ],
+     [
+      "Vendor",
+      "Cisco native + OpenConfig models"
+     ],
+     [
+      "Use",
+      "NETCONF/RESTCONF/gNMI"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**YANG defines the data model** (what a network looks like); NETCONF/RESTCONF move that"
+     }
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "",
+    "p": "data."
+   },
+   {
+    "kind": "table",
+    "h": "NETCONF vs RESTCONF",
+    "cols": [
+     "Aspect",
+     "NETCONF",
+     "RESTCONF"
+    ],
+    "rows": [
+     [
+      "Transport",
+      "**SSH (port 830)**",
+      "**HTTPS (port 443)**"
+     ],
+     [
+      "Payload",
+      "XML",
+      "JSON/XML"
+     ],
+     [
+      "API style",
+      "RPC (operations)",
+      "RESTful (GET/POST/PUT/DELETE)"
+     ],
+     [
+      "Standard",
+      "RFC 6241",
+      "RFC 8040"
+     ],
+     [
+      "Push/notifications",
+      "yes (nc-notify)",
+      "less native"
+     ],
+     [
+      "Use",
+      "change mgmt, streaming",
+      "simple web apps"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**NETCONF = SSH/XML/RPC**; **RESTCONF = HTTPS/JSON/REST**."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "How they work on IOS XE",
+    "code": "Client --YANG model--> device\nDevice exposes config/state per YANG tree\nClient reads/writes via NETCONF (SSH 830) or RESTCONF (HTTPS 443)"
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The YANG model is the **contract**; NETCONF/RESTCONF are the **verbs** to act on it."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "Enabling on IOS XE",
+    "code": "! enable RESTCONF\nrestconf\n!\n! enable NETCONF\nnetconf-yang\n!\n! optional\nnetconf-yang ssh port 830\nip http secure-server"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%restconf%%",
+      "enable RESTCONF (HTTPS 443)"
+     ],
+     [
+      "%%netconf-yang%%",
+      "enable NETCONF (SSH 830)"
+     ],
+     [
+      "%%ip http secure-server%%",
+      "HTTPS support for RESTCONF"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "YANG data models",
+    "cols": [
+     "Model",
+     "Source"
+    ],
+    "rows": [
+     [
+      "**Cisco-IOS-XE-native**",
+      "maps to native CLI"
+     ],
+     [
+      "OpenConfig",
+      "vendor-neutral"
+     ],
+     [
+      "IETF models",
+      "standard"
+     ],
+     [
+      "YANG modules",
+      "contain containers/lists/leafs"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "The **native model mirrors the CLI**; OpenConfig is cross-vendor."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Typical operations",
+    "cols": [
+     "Operation",
+     "RESTCONF",
+     "NETCONF"
+    ],
+    "rows": [
+     [
+      "Read config/state",
+      "GET",
+      "get / get-config"
+     ],
+     [
+      "Create/update",
+      "PUT/POST/PATCH",
+      "edit-config"
+     ],
+     [
+      "Delete",
+      "DELETE",
+      "edit-config (delete)"
+     ],
+     [
+      "Subscribe telemetry",
+      "—",
+      "subscribe (RFC)"
+     ],
+     [
+      "Datastore",
+      "running/candidate",
+      "running, candidate"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "conf t\n restconf\n netconf-yang\n ip http secure-server\n end\n!\nshow restconf\nshow netconf-yang sessions\nshow netconf-yang datastore"
+   }
+  ],
+  "traps": [
+   "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
+   "**NETCONF = SSH (830) + XML + RPC**; **RESTCONF = HTTPS (443) + JSON/XML + REST**.",
+   "Enable with **%%restconf%%** and **%%netconf-yang%%**.",
+   "The **native YANG model mirrors the CLI**.",
+   "Model-driven management is the enabler for **SDN automation and telemetry**."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "YANG / RESTCONF"
+   ],
+   "rows": [
+    [
+     "YANG",
+     "data model (tree)"
+    ],
+    [
+     "NETCONF",
+     "SSH 830, XML, RPC"
+    ],
+    [
+     "RESTCONF",
+     "HTTPS 443, JSON, REST"
+    ],
+    [
+     "Enable NETCONF",
+     "netconf-yang"
+    ],
+    [
+     "Enable RESTCONF",
+     "restconf"
+    ],
+    [
+     "Native model",
+     "Cisco-IOS-XE-native"
+    ],
+    [
+     "Open model",
+     "OpenConfig"
+    ],
+    [
+     "Use",
+     "automation/telemetry"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "09. IOS XE Architecture (Linux-based / daemons)",
+    "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
+   },
+   {
+    "t": "11. Device-Level Security Hardening (IOS XE)",
+    "d": "Device-level security hardening protects the management plane and platform itself — not just the dat"
+   }
+  ],
+  "glossary": [
+   "YANG",
+   "RESTCONF",
+   "NETCONF"
+  ]
+ },
+ {
+  "num": "11",
+  "id": "t11",
+  "group": "platform",
+  "title": "Device-Level Security Hardening (IOS XE)",
+  "blurb": "Device-level security hardening protects the management plane and platform itself — not just the dat",
+  "overview": "**[[Device Hardening|Device-level security hardening]]** protects the management plane and platform itself — not just the data plane. It covers **login/AAA security, role-based access, control-plane policing (CoPP), SNMP management, and out-of-band/management-plane protection**. The exam tests AAA models, usernames/roles, management-plane protection, and the principle of least privilege.",
+  "keyIdea": "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
+  "sections": [
+   {
+    "kind": "table",
+    "h": "Authentication, Authorization, Accounting (AAA)",
+    "cols": [
+     "Component",
+     "Function"
+    ],
+    "rows": [
+     [
+      "**Authentication**",
+      "verify who (login)"
+     ],
+     [
+      "**Authorization**",
+      "what they may do"
+     ],
+     [
+      "**Accounting**",
+      "log what they did"
+     ],
+     [
+      "Server",
+      "TACACS+ or RADIUS"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "**TACACS+ (TCP 49)** separates auth/authorization/accounting and encrypts all three;"
+     }
+    ]
+   },
+   {
+    "kind": "para",
+    "h": "",
+    "p": "**RADIUS (UDP 1812/1813)** combines them."
+   },
+   {
+    "kind": "code",
+    "h": "AAA configuration (model)",
+    "code": "aaa new-model\naaa authentication login default group tacacs+ local\naaa authorization exec default group tacacs+ local\naaa accounting exec default start-stop group tacacs+\n!\nusername admin privilege 15 secret StrongPass\ntacacs-server host 192.168.1.10 key SecretKey"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%aaa new-model%%",
+      "enable AAA"
+     ],
+     [
+      "%%aaa authentication login%%",
+      "login method"
+     ],
+     [
+      "%%aaa authorization exec%%",
+      "privilege per session"
+     ],
+     [
+      "%%aaa accounting%%",
+      "audit trail"
+     ],
+     [
+      "%%username ... privilege%%",
+      "local user + level"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Local users, privileges & roles",
+    "cols": [
+     "Item",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "%%username admin privilege 15%%",
+      "highest level local user"
+     ],
+     [
+      "%%privilege level%% (0–15)",
+      "granular command access"
+     ],
+     [
+      "%%role%% / %%parser view%%",
+      "role-based access"
+     ],
+     [
+      "%%enable secret%%",
+      "privileged password (hashed)"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Use **least privilege**: give users only the levels/roles they need."
+     }
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Management plane / control plane protection",
+    "cols": [
+     "Control",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "**CoPP (control-plane policing / protection)**",
+      "rate-limit control-plane traffic"
+     ],
+     [
+      "**Management-plane protection (MPP)**",
+      "restrict mgmt protocols to mgmt interfaces"
+     ],
+     [
+      "SSH vs Telnet",
+      "encrypt management sessions"
+     ],
+     [
+      "ACL on vty",
+      "limit who can reach line vty"
+     ]
+    ]
+   },
+   {
+    "kind": "list",
+    "h": "",
+    "items": [
+     {
+      "t": "Key point",
+      "d": "Apply **CoPP** to stop control-plane DoS; **MPP** restricts management-plane access."
+     }
+    ]
+   },
+   {
+    "kind": "code",
+    "h": "CoPP configuration",
+    "code": "class-map match-any TELNET-CP\n match protocol telnet\n!\npolicy-map COPP\n class TELNET-CP\n  police cir 8000 bc 1500\n   conform-action transmit\n   exceed-action drop\n!\ncontrol-plane\n service-policy input COPP"
+   },
+   {
+    "kind": "table",
+    "h": "",
+    "cols": [
+     "Command",
+     "Purpose"
+    ],
+    "rows": [
+     [
+      "%%control-plane%%",
+      "enter control plane"
+     ],
+     [
+      "%%service-policy input%%",
+      "apply CoPP"
+     ],
+     [
+      "%%police cir%%",
+      "limit rate"
+     ]
+    ]
+   },
+   {
+    "kind": "table",
+    "h": "Other hardening measures",
+    "cols": [
+     "Measure",
+     "Detail"
+    ],
+    "rows": [
+     [
+      "SSH only + %%transport input ssh%%",
+      "disable Telnet"
+     ],
+     [
+      "SNMPv3",
+      "encrypted, authenticated"
+     ],
+     [
+      "%%login block-for%%",
+      "brute-force protection"
+     ],
+     [
+      "%%no ip http server%%",
+      "disable unencrypted HTTP"
+     ],
+     [
+      "NTP authentication",
+      "prevent spoofing"
+     ],
+     [
+      "Logging / NTP / identity",
+      "visibility"
+     ]
+    ]
+   }
+  ],
+  "commands": [
+   {
+    "label": "Configuration and verification",
+    "code": "line vty 0 4\n transport input ssh\n login local\n!\nip ssh version 2\nusername admin privilege 15 secret StrongPass\nenable secret HashedSecret\n!\nno ip http server\nsnmp-server group MGT v3 priv\ncontrol-plane\n service-policy input COPP\n!\nshow aaa\nshow control-plane\nshow ip ssh"
+   }
+  ],
+  "traps": [
+   "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
+   "Use **SSH, not Telnet** — Telnet is cleartext.",
+   "**CoPP protects the control plane**; MPP protects the management plane.",
+   "**%%enable secret%% is hashed; %%enable password%%** is weak/cleartext-capable.",
+   "Enforce **least privilege** with privilege levels and roles."
+  ],
+  "table": {
+   "cols": [
+    "Item",
+    "Hardening"
+   ],
+   "rows": [
+    [
+     "AAA",
+     "TACACS+ / RADIUS"
+    ],
+    [
+     "Local user",
+     "username + privilege"
+    ],
+    [
+     "Password",
+     "enable secret"
+    ],
+    [
+     "Remote mgmt",
+     "SSH (no Telnet)"
+    ],
+    [
+     "Control plane",
+     "CoPP"
+    ],
+    [
+     "Mgmt plane",
+     "MPP"
+    ],
+    [
+     "SNMP",
+     "v3"
+    ],
+    [
+     "Least privilege",
+     "levels/roles"
+    ]
+   ]
+  },
+  "related": [
+   {
+    "t": "10. YANG & RESTCONF on IOS XE",
+    "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
+   },
+   {
+    "t": "01. CLI",
+    "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
+   }
+  ],
+  "glossary": [
+   "Device Hardening"
+  ]
+ }
+];
+
+        const GROUPS = [{"key": "cli", "label": "CLI Operation", "chip": "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300", "dot": "bg-indigo-600", "bullet": "text-indigo-600 dark:text-indigo-400"}, {"key": "license", "label": "Licensing", "chip": "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300", "dot": "bg-emerald-600", "bullet": "text-emerald-600 dark:text-emerald-400"}, {"key": "files", "label": "File & Image Management", "chip": "bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300", "dot": "bg-amber-600", "bullet": "text-amber-600 dark:text-amber-400"}, {"key": "platform", "label": "Architecture, Automation & Security", "chip": "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300", "dot": "bg-violet-600", "bullet": "text-violet-600 dark:text-violet-400"}];
+
+        const groups = GROUPS;
+
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+ {
+  "term": "Cisco IOS",
+  "def": "Cisco IOS (Internetwork Operating System) is the classic network OS: a monolithic control-plane image with the CLI as its face. The CLI runs two families — exec (show, ping, config mode entry) and configure (global/interface/line submodes) — plus built-in help, tab completion, and ?. The..."
+ },
+ {
+  "term": "Cisco Licensing",
+  "def": "Licensing gates feature entitlements on IOS XE: which technology packages a device may run. The legacy model used PAK keys + product activation keys / license files (EULA-based, per-box, manual); the modern model is Smart Licensing with usage reporting to a central portal. Packages on platforms:..."
+ },
+ {
+  "term": "IOS XE",
+  "def": "IOS XE is IOS re-architected to run on Linux: the classic IOS control plane is now the IOSd daemon on a Linux kernel, with other processes (platform, routing, data) as separate daemons — crash isolation, easier patches (SMUs), and native integration with model-driven management (NETCONF/RESTCONF..."
+ },
+ {
+  "term": "Smart Licensing",
+  "def": "Smart Licensing replaces PAK-based keys with a central portal — CSSM (Cisco Software Central) — that manages entitlements across all devices. Devices report usage to CSSM (directly or via an on-prem Smart License Manager (SSM)), and Smart Licensing Using Policy (SLP) even grants right-to-use —..."
+ },
+ {
+  "term": "IOS File System",
+  "def": "IOS exposes a virtual file system: prefixes name where things live — flash:/bootflash: (images — the OS storage), nvram: (startup-config), system: (running config/processes), usbflash0:, and network prefixes (tftp:/ftp:/scp:). Commands: dir, show flash, copy, delete, mkdir. Knowing the layout =..."
+ },
+ {
+  "term": "Configuration Archive",
+  "def": "Configuration backup protects the config by copying it to external storage (TFTP/FTP/SCP/USB — or a central repo like RANCID/Git) and via the IOS archive feature: archive log config keeps a numbered rollback point of config changes (show archive, configure replace) — instant diff-and-revert..."
+ },
+ {
+  "term": "ROMMON",
+  "def": "ROMMON (ROM Monitor) is the tiny boot firmware that runs before IOS: it handles power-on self-test and image loading, and it's the rescue environment — when flash is empty/corrupt you drop to rommon 1 > and recover via xmodem/tftp or a USB boot helper. The config register (e.g. 0x2142 = ignore..."
+ },
+ {
+  "term": "YANG",
+  "def": "YANG (RFC 6020/7950) is the data modeling language that describes a device's configuration and state as a tree of containers, lists, and leafs. It is the vocabulary both NETCONF and RESTCONF operate on: \"model the interface\" → YANG defines it → protocols read/write it. One model, two protocols,..."
+ },
+ {
+  "term": "RESTCONF",
+  "def": "RESTCONF (RFC 8040) is the IETF standard that exposes YANG models over HTTP(S) using REST verbs — the REST-friendly sibling of NETCONF. It uses GET/POST/PUT/PATCH/DELETE against YANG-defined resources with JSON or XML payloads, on HTTP(S) port 443 (often with basic/token auth). Simpler than..."
+ },
+ {
+  "term": "NETCONF",
+  "def": "NETCONF (RFC 6241) is the IETF standard for managing network devices over SSH using XML RPCs: <get-config>, <edit-config>, <commit> against YANG-modeled datastores. It supports transactions/rollback (candidate/running datastores), filtering, and event notifications — the \"deep\" programmatic..."
+ },
+ {
+  "term": "Device Hardening",
+  "def": "Device hardening is the practice of locking down the device itself: disable unneeded services, enforce strong AAA, encrypt management, secure access lines, control-plane protection, and restrict remote config so the router/switch is not the soft target. It's the \"defense at the box\" layer..."
+ },
+ {
+  "term": "IOS Upgrade",
+  "def": "Upgrading IOS/IOS XE = copy the new image to flash (copy tftp flash), make it the boot image (boot system flash:… or install on IOS XE), reload, then verify (show version). Images are NOT run in-place — they're loaded at boot. IOS XE adds SMU/install mode (activation without touching the rest)..."
+ }
+];
+
+        const quiz = [
+ {
+  "q": "In CLI, which value matches \"EXEC\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "Tab"
+  ],
+  "answer": 0,
+  "why": "The CLI quick review pairs \"EXEC\" with \"show\"."
+ },
+ {
+  "q": "In CLI, which value matches \"Exit\"?",
+  "options": [
+   "one level",
+   "end/Ctrl+Z",
+   "show",
+   "interface"
+  ],
+  "answer": 1,
+  "why": "The CLI quick review pairs \"Exit\" with \"end/Ctrl+Z\"."
+ },
+ {
+  "q": "In CLI, which value matches \"Filter\"?",
+  "options": [
+   "show",
+   "interface",
+   "\\",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The CLI quick review pairs \"Filter\" with \"\\\"."
+ },
+ {
+  "q": "In Configuration Modes, which value matches \"Global\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "(config)#"
+  ],
+  "answer": 3,
+  "why": "The Configuration Modes quick review pairs \"Global\" with \"(config)#\"."
+ },
+ {
+  "q": "In Configuration Modes, which value matches \"Exit\"?",
+  "options": [
+   "one level",
+   "end/Ctrl+Z",
+   "show",
+   "interface"
+  ],
+  "answer": 0,
+  "why": "The Configuration Modes quick review pairs \"Exit\" with \"one level\"."
+ },
+ {
+  "q": "In Configuration Modes, which value matches \"Scope\"?",
+  "options": [
+   "show",
+   "context",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The Configuration Modes quick review pairs \"Scope\" with \"context\"."
+ },
+ {
+  "q": "In Licensing, which value matches \"Image\"?",
+  "options": [
+   "recopy/boot",
+   "show",
+   "universalK9",
+   "interface"
+  ],
+  "answer": 2,
+  "why": "The Licensing quick review pairs \"Image\" with \"universalK9\"."
+ },
+ {
+  "q": "In Licensing, which value matches \"Tier\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "advantage"
+  ],
+  "answer": 3,
+  "why": "The Licensing quick review pairs \"Tier\" with \"advantage\"."
+ },
+ {
+  "q": "In Licensing, which value matches \"Model\"?",
+  "options": [
+   "subscription",
+   "policy",
+   "modular daemons",
+   "show"
+  ],
+  "answer": 0,
+  "why": "The Licensing quick review pairs \"Model\" with \"subscription\"."
+ },
+ {
+  "q": "In Smart Licensing, which value matches \"Portal\"?",
+  "options": [
+   "show",
+   "CSSM",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The Smart Licensing quick review pairs \"Portal\" with \"CSSM\"."
+ },
+ {
+  "q": "In Smart Licensing, which value matches \"Eval\"?",
+  "options": [
+   "60 d",
+   "show",
+   "90 d",
+   "interface"
+  ],
+  "answer": 2,
+  "why": "The Smart Licensing quick review pairs \"Eval\" with \"90 d\"."
+ },
+ {
+  "q": "In Smart Licensing, which value matches \"vs PAK\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "no files"
+  ],
+  "answer": 3,
+  "why": "The Smart Licensing quick review pairs \"vs PAK\" with \"no files\"."
+ },
+ {
+  "q": "In File Systems, which value matches \"flash\"?",
+  "options": [
+   "image/files",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The File Systems quick review pairs \"flash\" with \"image/files\"."
+ },
+ {
+  "q": "In File Systems, which value matches \"tftp\"?",
+  "options": [
+   "show",
+   "network",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The File Systems quick review pairs \"tftp\" with \"network\"."
+ },
+ {
+  "q": "In File Systems, which value matches \"Integrity\"?",
+  "options": [
+   "show",
+   "interface",
+   "verify",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The File Systems quick review pairs \"Integrity\" with \"verify\"."
+ },
+ {
+  "q": "In Software Upgrade, which value matches \"Copy\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "copy tftp: flash:"
+  ],
+  "answer": 3,
+  "why": "The Software Upgrade quick review pairs \"Copy\" with \"copy tftp: flash:\"."
+ },
+ {
+  "q": "In Software Upgrade, which value matches \"Reload\"?",
+  "options": [
+   "reload",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The Software Upgrade quick review pairs \"Reload\" with \"reload\"."
+ },
+ {
+  "q": "In Software Upgrade, which value matches \"Patch\"?",
+  "options": [
+   "show",
+   "SMU",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The Software Upgrade quick review pairs \"Patch\" with \"SMU\"."
+ },
+ {
+  "q": "In Configuration Backup, which value matches \"Source\"?",
+  "options": [
+   "show",
+   "interface",
+   "running/startup",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The Configuration Backup quick review pairs \"Source\" with \"running/startup\"."
+ },
+ {
+  "q": "In Configuration Backup, which value matches \"Max\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "maximum"
+  ],
+  "answer": 3,
+  "why": "The Configuration Backup quick review pairs \"Max\" with \"maximum\"."
+ },
+ {
+  "q": "In Configuration Backup, which value matches \"Best\"?",
+  "options": [
+   "off-box",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The Configuration Backup quick review pairs \"Best\" with \"off-box\"."
+ },
+ {
+  "q": "In Recovery, which value matches \"0x2102\"?",
+  "options": [
+   "show",
+   "normal boot",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The Recovery quick review pairs \"0x2102\" with \"normal boot\"."
+ },
+ {
+  "q": "In Recovery, which value matches \"Reset\"?",
+  "options": [
+   "show",
+   "interface",
+   "0x2102",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The Recovery quick review pairs \"Reset\" with \"0x2102\"."
+ },
+ {
+  "q": "In Recovery, which value matches \"Image\"?",
+  "options": [
+   "universalK9",
+   "show",
+   "interface",
+   "recopy/boot"
+  ],
+  "answer": 3,
+  "why": "The Recovery quick review pairs \"Image\" with \"recopy/boot\"."
+ },
+ {
+  "q": "In IOS XE Architecture (Linux-based / daemons), which value matches \"Base\"?",
+  "options": [
+   "Linux kernel",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The IOS XE Architecture (Linux-based / daemons) quick review pairs \"Base\" with \"Linux kernel\"."
+ },
+ {
+  "q": "In IOS XE Architecture (Linux-based / daemons), which value matches \"Patch\"?",
+  "options": [
+   "show",
+   "SMU",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The IOS XE Architecture (Linux-based / daemons) quick review pairs \"Patch\" with \"SMU\"."
+ },
+ {
+  "q": "In IOS XE Architecture (Linux-based / daemons), which value matches \"vs IOS\"?",
+  "options": [
+   "show",
+   "interface",
+   "modular, not monolithic",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The IOS XE Architecture (Linux-based / daemons) quick review pairs \"vs IOS\" with \"modular, not monolithic\"."
+ },
+ {
+  "q": "In YANG & RESTCONF on IOS XE, which value matches \"YANG\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "data model (tree)"
+  ],
+  "answer": 3,
+  "why": "The YANG & RESTCONF on IOS XE quick review pairs \"YANG\" with \"data model (tree)\"."
+ },
+ {
+  "q": "In YANG & RESTCONF on IOS XE, which value matches \"Enable RESTCONF\"?",
+  "options": [
+   "restconf",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The YANG & RESTCONF on IOS XE quick review pairs \"Enable RESTCONF\" with \"restconf\"."
+ },
+ {
+  "q": "In YANG & RESTCONF on IOS XE, which value matches \"Use\"?",
+  "options": [
+   "show",
+   "automation/telemetry",
+   "interface",
+   "?"
+  ],
+  "answer": 1,
+  "why": "The YANG & RESTCONF on IOS XE quick review pairs \"Use\" with \"automation/telemetry\"."
+ },
+ {
+  "q": "In Device-Level Security Hardening (IOS XE), which value matches \"AAA\"?",
+  "options": [
+   "show",
+   "interface",
+   "TACACS+ / RADIUS",
+   "?"
+  ],
+  "answer": 2,
+  "why": "The Device-Level Security Hardening (IOS XE) quick review pairs \"AAA\" with \"TACACS+ / RADIUS\"."
+ },
+ {
+  "q": "In Device-Level Security Hardening (IOS XE), which value matches \"Control plane\"?",
+  "options": [
+   "show",
+   "interface",
+   "?",
+   "CoPP"
+  ],
+  "answer": 3,
+  "why": "The Device-Level Security Hardening (IOS XE) quick review pairs \"Control plane\" with \"CoPP\"."
+ },
+ {
+  "q": "In Device-Level Security Hardening (IOS XE), which value matches \"Least privilege\"?",
+  "options": [
+   "levels/roles",
+   "show",
+   "interface",
+   "?"
+  ],
+  "answer": 0,
+  "why": "The Device-Level Security Hardening (IOS XE) quick review pairs \"Least privilege\" with \"levels/roles\"."
+ }
+];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'ios.theme', done: 'ios.done', best: 'ios.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
