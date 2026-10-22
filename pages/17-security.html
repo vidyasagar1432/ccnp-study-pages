@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security — CCNP Enterprise (ENCOR 350-401)</title>
+<meta name="description" content="Level 17 Security: AAA, TACACS+, RADIUS, ACLs, port security, Dynamic ARP Inspection, IP Source Guard, Storm Control, CoPP, device hardening, secure management and infrastructure protection.">
+<meta name="color-scheme" content="dark light">
+
+<script>
+  // Tailwind's configuration is set first, so it applies to whichever copy of
+  // Tailwind ends up loading below (CDN or the vendored one).
+  window.tailwind = {
+    config: {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  };
+</script>
+<script>
+  // Tailwind (Play CDN) comes from the CDN, with a vendored copy in this repo
+  // as the offline fallback, so the page stays fully styled with no network.
+  // A host that hangs is dropped after 6 seconds instead of blocking the page.
+  (function () {
+    var sources = [
+      'https://cdn.tailwindcss.com',
+      '../vendor/tailwindcss.js'
+    ];
+    var i = 0;
+    function next() {
+      if (i >= sources.length) return;
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      var timer = setTimeout(function () {
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); }
+      s.onload = done;
+      s.onerror = function () { done(); next(); };
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+<script>
+  // Vue 3 comes from a CDN. If the primary host is blocked we try a mirror,
+  // then the copy vendored in this repo, so the page still works offline.
+  // The app boots as soon as window.Vue appears (see boot() at the end).
+  (function () {
+    var sources = [
+      'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+      'https://unpkg.com/vue@3/dist/vue.global.prod.js',
+      '../vendor/vue.global.prod.js'
+    ];
+    var i = 0;
+    function next() {
+      if (window.Vue) return;
+      if (i >= sources.length) {
+        // Every source failed. Tell the boot code to show the fallback panel.
+        window.__osiVueFailed = true;
+        try { window.dispatchEvent(new Event('osi:vue-failed')); } catch (e) { /* ignore */ }
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = sources[i++];
+      s.async = false;
+      // A host that hangs must not stall the page: drop it after 6 seconds
+      // and move on to the next source (the vendored copy is a local file).
+      var timer = setTimeout(function () {
+        if (window.Vue) return;
+        if (s.parentNode) s.parentNode.removeChild(s);
+        next();
+      }, 6000);
+      function done() { clearTimeout(timer); next(); }
+      s.onload = done;
+      s.onerror = done;
+      document.head.appendChild(s);
+    }
+    next();
+  })();
+</script>
+
+<style>
+  [v-cloak] { display: none !important; }
+  html { scroll-padding-top: 76px; }
+  body { -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid transparent; background-clip: content-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #475569; background-clip: content-box; }
+
+  .mdc {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: rgba(100, 116, 139, 0.16);
+    border: 1px solid rgba(100, 116, 139, 0.28);
+    border-radius: 4px;
+    padding: 0.05em 0.35em;
+    white-space: nowrap;
+  }
+  .term {
+    font-weight: 600;
+    color: #0369a1;
+    background: rgba(14, 165, 233, 0.12);
+    border-bottom: 1px dashed rgba(2, 132, 199, 0.5);
+    border-radius: 3px;
+    padding: 0 0.25em;
+    white-space: nowrap;
+  }
+  /* A long chip label must never push the page sideways on a phone. */
+  @media (max-width: 640px) {
+    .term { white-space: normal; overflow-wrap: anywhere; }
+  }
+  .dark .term { color: #7dd3fc; background: rgba(14, 165, 233, 0.14); border-bottom-color: rgba(125, 211, 252, 0.45); }
+
+  .prose-block strong { color: #0f172a; font-weight: 700; }
+  .dark .prose-block strong { color: #f1f5f9; }
+  .prose-block p { line-height: 1.7; }
+
+  .card-hover { transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .card-hover:hover { border-color: #0ea5e9; box-shadow: 0 8px 24px -12px rgba(14, 165, 233, 0.5); }
+
+  .fade-enter-active, .fade-leave-active { transition: opacity .18s ease; }
+  .fade-enter-from, .fade-leave-to { opacity: 0; }
+
+  @media print {
+    header, aside, footer, .no-print { display: none !important; }
+    .print-block { break-inside: avoid; }
+  }
+</style>
+</head>
+
+<body class="min-h-screen bg-slate-100 text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
+
+<!-- Shown only if both Vue CDNs fail to load. Plain HTML, so it renders unstyled-but-readable. -->
+<div id="cdn-fallback" style="display:none;max-width:680px;margin:12vh auto;padding:28px;font-family:system-ui,sans-serif;border:1px solid #334155;border-radius:14px;background:#0f172a;color:#e2e8f0">
+  <h1 style="margin:0 0 10px;font-size:1.15rem">Security — could not load Vue</h1>
+  <p style="margin:0 0 8px;line-height:1.6;color:#94a3b8">This page renders its content with Vue 3 from a CDN, and every source &mdash; both public CDNs and the copy vendored under <code style="background:#1e293b;padding:1px 5px;border-radius:4px">../vendor/</code> &mdash; was unreachable. Reconnect to the internet and reload the page.</p>
+  <p style="margin:0;line-height:1.6;color:#94a3b8">If this file was copied out of the repo on its own, put <code style="background:#1e293b;padding:1px 5px;border-radius:4px">vue.global.prod.js</code> next to it and the page will load it as a last resort.</p>
+</div>
+
+<div id="app" v-cloak class="min-h-screen">
+
+  <!-- ================= Header ================= -->
+  <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+    <div class="mx-auto flex h-14 max-w-[1500px] items-center gap-2 px-3 sm:px-5">
+
+      <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 lg:hidden dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-label="Toggle navigation" @click="mobileNav = !mobileNav">
+        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+
+      <div class="flex min-w-0 items-center gap-2.5">
+        <a href="../index.html" title="All CCNP levels" class="flex min-w-0 items-center gap-2.5 rounded-lg transition hover:opacity-75">
+        <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky-600 text-[9px] font-black tracking-tight text-white">SEC</span>
+        <div class="min-w-0">
+          <h1 class="truncate text-sm font-bold leading-tight tracking-tight">Security</h1>
+          <p class="hidden truncate text-[11px] leading-tight text-slate-500 sm:block">CCNP Enterprise &middot; ENCOR 350-401 &middot; Level 17</p>
+        </div>
+        </a>
+      </div>
+
+      <div class="ml-auto flex items-center gap-2">
+
+        <div class="relative hidden md:block">
+          <svg class="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+          <input v-model="query" type="search" placeholder="Search topics, terms..."
+                 class="w-56 rounded-lg border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-8 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/25 dark:border-slate-700 dark:bg-slate-950 dark:placeholder:text-slate-500">
+          <button v-if="query" type="button" @click="query = ''"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  aria-label="Clear search">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+
+          <div v-if="query" class="absolute right-0 top-[42px] z-50 w-[22rem] max-w-[80vw] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900">
+            <div class="border-b border-slate-200 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700">
+              {{ searchHits.length }} match{{ searchHits.length === 1 ? '' : 'es' }}
+            </div>
+            <ul class="max-h-72 overflow-y-auto">
+              <li v-for="hit in searchHits" :key="hit.id" class="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                <button type="button" class="w-full px-3 py-2 text-left hover:bg-slate-50 dark:hover:bg-slate-800/60" @click="goTo(hit.id)">
+                  <span class="block text-[13px] font-semibold">{{ hit.num }}. {{ hit.title }}</span>
+                  <span class="mt-0.5 block text-[12px] leading-snug text-slate-500 dark:text-slate-400">{{ hit.snippet }}</span>
+                </button>
+              </li>
+              <li v-if="!searchHits.length" class="px-3 py-4 text-center text-[13px] text-slate-500">No matches for &ldquo;{{ query }}&rdquo;</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hidden items-center gap-2 sm:flex">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800">
+            <div class="h-full rounded-full bg-emerald-500 transition-all duration-500" :style="{ width: progressPct + '%' }"></div>
+          </div>
+          <span class="w-9 text-right text-[11px] font-semibold tabular-nums text-slate-500 dark:text-slate-400">{{ studiedCount }}/{{ topics.length }}</span>
+        </div>
+
+        <button type="button" @click="setAll(!allExpanded)"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="allExpanded ? 'Collapse all sections' : 'Expand all sections'" :title="allExpanded ? 'Collapse all sections' : 'Expand all sections'">
+          <svg v-if="!allExpanded" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 9 5-5 5 5M7 15l5 5 5-5"/></svg>
+        </button>
+
+        <button type="button" @click="toggleTheme"
+                class="grid h-9 w-9 place-items-center rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                :aria-label="dark ? 'Switch to light theme' : 'Switch to dark theme'">
+          <svg v-if="dark" class="h-4.5 w-4.5" style="height:18px;width:18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+          <svg v-else class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile search -->
+    <div class="border-t border-slate-200 px-3 py-2 md:hidden dark:border-slate-800">
+      <input v-model="query" type="search" placeholder="Search topics and terms..."
+             class="w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 text-sm outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-950">
+    </div>
+  </header>
+
+  <div class="mx-auto flex max-w-[1500px]">
+
+    <!-- ================= Sidebar ================= -->
+    <aside class="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-72 shrink-0 overflow-y-auto border-r border-slate-200 bg-white px-4 py-6 lg:block dark:border-slate-800 dark:bg-slate-900/60">
+
+      <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+
+      <nav class="mt-2 space-y-0.5">
+        <a href="#overview" @click.prevent="goTo('overview')"
+           class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+          <span class="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span>
+          Overview
+        </a>
+
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id)"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] transition"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+                <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+                <button type="button" @click.stop="toggleStudied(t.id)" :aria-label="'Mark ' + t.title + ' as studied'"
+                        class="grid h-4 w-4 shrink-0 place-items-center rounded-full border transition"
+                        :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-slate-300 text-transparent hover:border-sky-500 dark:border-slate-600'">
+                  <svg class="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                </button>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-5 space-y-0.5 border-t border-slate-200 pt-4 dark:border-slate-800">
+          <a href="#quiz" @click.prevent="goTo('quiz')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'quiz' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-violet-200 text-[10px] font-bold text-violet-700 dark:bg-violet-500/25 dark:text-violet-300">?</span>
+            Self-check quiz
+          </a>
+          <a href="#glossary" @click.prevent="goTo('glossary')"
+             class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium transition"
+             :class="activeId === 'glossary' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800'">
+            <span class="grid h-5 w-5 shrink-0 place-items-center rounded bg-emerald-200 text-[10px] font-bold text-emerald-700 dark:bg-emerald-500/25 dark:text-emerald-300">A</span>
+            Glossary
+          </a>
+        </div>
+      </nav>
+
+      <div class="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-3 text-[12px] leading-relaxed text-slate-600 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400">
+        <p class="font-semibold text-slate-700 dark:text-slate-300">Keyboard shortcuts</p>
+        <p class="mt-1"><kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">/</kbd> search &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">t</kbd> theme &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">e</kbd> expand &middot; <kbd class="rounded border border-slate-300 bg-white px-1 font-mono text-[10px] dark:border-slate-600 dark:bg-slate-900">Esc</kbd> clear</p>
+      </div>
+    </aside>
+
+    <!-- Mobile drawer -->
+    <div v-if="mobileNav" class="fixed inset-0 z-50 lg:hidden">
+      <div class="absolute inset-0 bg-slate-900/60" @click="mobileNav = false"></div>
+      <nav class="absolute left-0 top-0 h-full w-72 overflow-y-auto border-r border-slate-200 bg-white px-4 py-5 dark:border-slate-800 dark:bg-slate-900">
+        <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">Contents</p>
+        <a href="#overview" @click.prevent="goTo('overview'); mobileNav = false"
+           class="mt-2 flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-medium"
+           :class="activeId === 'overview' ? 'bg-sky-50 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+          <span class="grid h-5 w-5 place-items-center rounded text-[10px] font-bold bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300">&#9733;</span> Overview
+        </a>
+        <div v-for="grp in groups" :key="grp.key" class="mt-5">
+          <p class="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+          <ul class="mt-1.5 space-y-0.5">
+            <li v-for="t in topicsOf(grp.key)" :key="t.id">
+              <a :href="'#' + t.id" @click.prevent="goTo(t.id); mobileNav = false"
+                 class="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px]"
+                 :class="activeId === t.id ? 'bg-sky-50 font-semibold text-sky-700 dark:bg-sky-500/15 dark:text-sky-300' : 'text-slate-600 dark:text-slate-400'">
+                <span class="grid h-5 w-5 place-items-center rounded bg-slate-200 text-[10px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">{{ t.num }}</span>
+                <span class="min-w-0 flex-1 truncate">{{ t.title }}</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </div>
+
+    <!-- ================= Main ================= -->
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <section id="overview">
+        <div class="card-hover rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-bold text-sky-700 dark:bg-sky-500/20 dark:text-sky-300">LEVEL 17</span>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">ENCOR 350-401</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">DIFFICULTY: MEDIUM</span>
+            <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">12 TOPICS</span>
+          </div>
+
+          <h2 class="mt-4 text-2xl font-black tracking-tight sm:text-3xl">Level 17 &mdash; Security</h2>
+
+          <div class="prose-block mt-4 max-w-3xl text-[15px] leading-7 text-slate-600 dark:text-slate-300" v-html="md(heroIntro)"></div>
+
+          <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div v-for="grp in groups" :key="grp.key" class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">{{ grp.label }}</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="t in topicsOf(grp.key)" :key="t.id" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="font-bold" :class="groupMeta[grp.key].bullet">{{ t.num }}</span>
+                  <span class="min-w-0 truncate">{{ t.title }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">What this level gives you</p>
+              <p class="mt-2 text-[13px] leading-relaxed text-slate-600 dark:text-slate-300">Who gets in and what they may do: AAA with TACACS+ and RADIUS, ACLs, Layer 2 features such as port security, DAI, IP Source Guard and Storm Control, plus CoPP, hardening and infrastructure protection.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Topics -->
+      <div class="mt-8 space-y-8">
+        <section v-for="t in visibleTopics" :id="t.id" :key="t.id" class="print-block">
+
+          <!-- Topic header -->
+          <div class="flex flex-wrap items-center gap-3">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
+                  :class="groupMeta[t.group].dot">{{ t.num }}</span>
+            <h2 class="text-xl font-black tracking-tight sm:text-2xl">{{ t.title }}</h2>
+            <span class="rounded-full px-2.5 py-0.5 text-[11px] font-bold" :class="groupMeta[t.group].chip">
+              {{ groupMeta[t.group].label }}
+            </span>
+            <button type="button" @click="toggleStudied(t.id)"
+                    class="ml-auto flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[12px] font-semibold transition"
+                    :class="isStudied(t.id) ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'border-slate-300 text-slate-500 hover:border-sky-500 hover:text-sky-600 dark:border-slate-700 dark:text-slate-400'">
+              <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+              {{ isStudied(t.id) ? 'Studied' : 'Mark studied' }}
+            </button>
+          </div>
+
+          <p class="mt-1.5 text-[13px] text-slate-500 dark:text-slate-400">{{ t.blurb }}</p>
+
+          <!-- Overview -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Overview</p>
+            <div class="prose-block mt-2 text-[15px] leading-7 text-slate-700 dark:text-slate-200" v-html="md(t.overview)"></div>
+            <div class="mt-4 flex gap-3 rounded-xl border-l-4 border-sky-500 bg-sky-50/70 p-3.5 dark:bg-sky-500/10">
+              <p class="text-[13px] leading-relaxed text-sky-900 dark:text-sky-100" v-html="md(t.keyIdea)"></p>
+            </div>
+          </div>
+
+          <!-- Core concepts -->
+          <div class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Core Concepts</p>
+
+            <div v-for="(sec, si) in t.sections" :key="si" class="mt-4">
+              <h3 v-if="sec.h" class="text-[13px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ sec.h }}</h3>
+
+              <ul v-if="sec.kind === 'list'" class="mt-2 space-y-2">
+                <li v-for="(it, ii) in sec.items" :key="ii" class="flex gap-2.5 text-[14px] leading-relaxed text-slate-700 dark:text-slate-300">
+                  <span class="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500"></span>
+                  <span><strong class="font-semibold text-slate-900 dark:text-slate-100">{{ it.t }}</strong> &mdash; <span v-html="md(it.d)"></span></span>
+                </li>
+              </ul>
+
+              <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
+
+              <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
+                <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
+              </div>
+
+              <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full border-collapse text-left text-[13px]">
+                  <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                    <tr>
+                      <th v-for="(c, ci) in sec.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(row, ri) in sec.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                      <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Commands -->
+          <div v-if="t.commands && t.commands.length" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'cmds')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Configuration &amp; Commands</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'cmds') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'cmds')" class="space-y-4 px-5 pb-5">
+              <div v-for="(cmd, ci) in t.commands" :key="ci" class="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-slate-700 dark:bg-slate-800/60">
+                  <span class="text-[11px] font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">{{ cmd.label }}</span>
+                  <button type="button" @click="copy(cmd.code, t.id + '-' + ci)"
+                          class="ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition"
+                          :class="copiedId === t.id + '-' + ci ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300' : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700 dark:hover:bg-slate-700 dark:hover:text-slate-200'">
+                    <svg v-if="copiedId === t.id + '-' + ci" class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 13 4 4L19 7"/></svg>
+                    <svg v-else class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+                    {{ copiedId === t.id + '-' + ci ? 'Copied' : 'Copy' }}
+                  </button>
+                </div>
+                <pre class="overflow-x-auto bg-slate-900 p-3.5 text-[12.5px] leading-relaxed text-slate-100"><code>{{ cmd.code }}</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- Exam traps -->
+          <div v-if="t.traps && t.traps.length" class="card-hover mt-3 rounded-2xl border border-amber-300/70 bg-amber-50/50 shadow-sm dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'traps')">
+              <svg class="h-4 w-4 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Exam Traps</span>
+              <span class="rounded-full bg-amber-200 px-2 text-[10px] font-bold text-amber-800 dark:bg-amber-500/25 dark:text-amber-300">{{ t.traps.length }}</span>
+              <span class="ml-auto text-slate-400 dark:text-slate-500">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'traps') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <ul v-if="isOpen(t.id, 'traps')" class="space-y-2 px-5 pb-5">
+              <li v-for="(tr, ti) in t.traps" :key="ti" class="flex gap-2.5 text-[13.5px] leading-relaxed text-amber-950 dark:text-amber-100/90">
+                <span class="mt-[3px] shrink-0 font-bold text-amber-600 dark:text-amber-400">&#9888;</span>
+                <span class="prose-block" v-html="md(tr)"></span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Quick review table -->
+          <div v-if="t.table" class="card-hover mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900/60">
+            <button type="button" class="flex w-full items-center gap-2 px-5 py-3 text-left" @click="toggleBlock(t.id, 'table')">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Quick Review Table</span>
+              <span class="ml-auto text-slate-400">
+                <svg class="h-4 w-4 transition-transform" :class="isOpen(t.id, 'table') ? 'rotate-180' : ''" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              </span>
+            </button>
+            <div v-if="isOpen(t.id, 'table')" class="overflow-x-auto px-5 pb-5">
+              <table class="w-full border-collapse text-left text-[13px]">
+                <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
+                  <tr>
+                    <th v-for="(c, ci) in t.table.cols" :key="ci" class="px-3 py-2 font-bold">{{ c }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, ri) in t.table.rows" :key="ri" class="border-t border-slate-200 dark:border-slate-700/70">
+                    <td v-for="(cell, cj) in row" :key="cj" class="px-3 py-2 align-top leading-relaxed text-slate-700 dark:text-slate-300" v-html="md(cell)"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Related + glossary -->
+          <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="t.related && t.related.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Related Notes</p>
+              <ul class="mt-2 space-y-1.5">
+                <li v-for="(r, ri) in t.related" :key="ri" class="flex gap-2 text-[13px] text-slate-600 dark:text-slate-300">
+                  <span class="mt-[7px] h-1 w-1 shrink-0 rounded-full bg-slate-400"></span>
+                  <span><strong class="font-semibold text-slate-800 dark:text-slate-100">{{ r.t }}</strong> &mdash; {{ r.d }}</span>
+                </li>
+              </ul>
+            </div>
+            <div v-if="t.glossary && t.glossary.length" class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Glossary Terms Used</p>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <button v-for="g in t.glossary" :key="g" type="button" @click="jumpToTerm(g)"
+                        class="rounded-md bg-slate-100 px-2 py-1 text-[12px] font-medium text-slate-700 transition hover:bg-sky-100 hover:text-sky-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-300">{{ g }}</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ================= Quiz ================= -->
+      <section id="quiz" class="mt-10">
+        <div class="rounded-2xl border border-violet-300/70 bg-white p-5 shadow-sm dark:border-violet-500/30 dark:bg-slate-900/60 sm:p-6">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-xl bg-violet-600 text-sm font-black text-white">?</span>
+            <h2 class="text-xl font-black tracking-tight">Self-check quiz</h2>
+            <span class="rounded-full bg-violet-100 px-2.5 py-1 text-[11px] font-bold text-violet-700 dark:bg-violet-500/20 dark:text-violet-300">{{ quiz.length }} QUESTIONS</span>
+            <span v-if="bestScore !== null" class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300">BEST {{ bestScore }}/{{ quiz.length }}</span>
+          </div>
+          <p class="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-slate-600 dark:text-slate-300">Every question is drawn straight from the exam traps in the notes above. Pick an answer for each, then grade yourself &mdash; explanations appear afterwards.</p>
+
+          <ol class="mt-5 space-y-4">
+            <li v-for="(q, qi) in quiz" :key="qi" class="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-700 dark:bg-slate-800/40">
+              <p class="text-[14px] font-semibold leading-relaxed text-slate-800 dark:text-slate-100">
+                <span class="mr-1.5 text-slate-400">{{ qi + 1 }}.</span><span v-html="md(q.q)"></span>
+              </p>
+              <div class="mt-3 grid gap-2">
+                <button v-for="(o, oi) in q.options" :key="oi" type="button" @click="pick(qi, oi)"
+                        class="flex items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-[13.5px] leading-relaxed transition"
+                        :class="optionClass(qi, oi)">
+                  <span class="mt-[2px] grid h-4 w-4 shrink-0 place-items-center rounded-full border text-[9px] font-bold"
+                        :class="optionDotClass(qi, oi)">{{ 'ABCD'[oi] }}</span>
+                  <span><span v-html="md(o)"></span></span>
+                </button>
+              </div>
+              <p v-if="quizGraded" class="mt-3 flex gap-2 rounded-lg border-l-4 p-2.5 text-[13px] leading-relaxed"
+                 :class="picked[qi] === q.answer ? 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100' : 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:text-rose-100'">
+                <span class="font-bold">{{ picked[qi] === q.answer ? 'Correct.' : 'Not quite.' }}</span>
+                <span v-html="md(q.why)"></span>
+              </p>
+            </li>
+          </ol>
+
+          <div class="mt-5 flex flex-wrap items-center gap-3">
+            <button type="button" @click="gradeQuiz" class="rounded-lg bg-violet-600 px-4 py-2 text-[13.5px] font-bold text-white transition hover:bg-violet-700">Grade answers</button>
+            <button type="button" @click="resetQuiz" class="rounded-lg border border-slate-300 px-4 py-2 text-[13.5px] font-semibold text-slate-600 transition hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800">Reset</button>
+            <p v-if="quizGraded" class="text-[14px] font-bold" :class="quizScore === quiz.length ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-200'">
+              Score: {{ quizScore }}/{{ quiz.length }}
+              <span v-if="quizScore === quiz.length" class="ml-1 text-emerald-600 dark:text-emerald-400">&mdash; perfect run.</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= Glossary ================= -->
+      <section id="glossary" class="mt-8">
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/60 sm:p-6">
+          <h2 class="text-xl font-black tracking-tight">Glossary</h2>
+          <p class="mt-1 text-[13.5px] text-slate-600 dark:text-slate-300">Every term highlighted in the notes above, defined in one line.</p>
+
+          <div class="mt-4 grid gap-2 sm:grid-cols-2">
+            <div v-for="g in glossary" :key="g.term" :id="'term-' + slug(g.term)"
+                 class="rounded-lg border border-slate-200 px-3 py-2.5 dark:border-slate-700/70">
+              <p class="text-[13.5px] font-bold text-slate-800 dark:text-slate-100">{{ g.term }}</p>
+              <p class="mt-0.5 text-[13px] leading-relaxed text-slate-600 dark:text-slate-400" v-html="md(g.def)"></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="mt-10 border-t border-slate-200 py-6 text-center text-[12px] text-slate-400 dark:border-slate-800 dark:text-slate-500">
+        Security &middot; CCNP Enterprise (ENCOR 350-401) &middot; Level 17 &middot; content ported from the vault notes
+      </footer>
+    </main>
+  </div>
+</div>
+
+<script>
+// Boot: the app is created once Vue is actually available. If the primary CDN
+// host is blocked, the mirror script injected in <head> is polled for instead.
+(function boot() {
+  var settled = false;
+
+  function showFallback() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'block';
+  }
+
+  function mount() {
+    settled = true;
+    var fb = document.getElementById('cdn-fallback');
+    if (fb) fb.style.display = 'none';
+
+    Vue.createApp({
+      setup() {
+        const { ref, computed } = Vue;
+
+        /* ---------------- Content ---------------- */
+        const heroIntro = `Security on the exam is layered: **[[AAA]]** with **[[TACACS+]]** or **[[RADIUS]]** controls who gets in, **[[ACL|ACLs]]** decide what traffic may pass, and the Layer 2 features (**[[Port Security]]**, **[[Dynamic ARP Inspection]]**, **[[IP Source Guard]]**, **[[Storm Control]]**) stop attacks at the access edge. **[[CoPP]]** and **[[Device Hardening]]** protect the box itself.`;
+
+        const topics = [
+          {
+            id: 't01', num: '01', group: 'auth', title: 'AAA',
+            blurb: 'Authentication, authorization, accounting and how method lists are built',
+            overview: '**[[AAA]]** answers three questions: **authentication** (who are you), **authorization** (what may you do) and **accounting** (what did you do). Cisco IOS can use the **local database** or a central server, and everything starts with **%%aaa new-model%%** plus a method list per service.',
+            keyIdea: 'aaa new-model, then a method list per service. Authentication is identity, authorization is permission, accounting is a record.',
+            sections: [
+              { kind: 'table', h: 'The three A pieces', cols: ['Component', 'Question', 'Example'], rows: [
+                ['**Authentication**', 'Who are you?', 'Username and password, or a certificate'],
+                ['**Authorization**', 'What are you allowed to do?', 'Which commands, which privilege level'],
+                ['**Accounting**', 'What did you do?', 'Command logs, session start and stop']
+              ]},
+              { kind: 'code', h: 'Order of operation', code:
+`  Login attempt
+     |
+     v
+  Authentication  ->  fail: rejected
+     |
+     v
+  Authorization   ->  decides allowed actions
+     |
+     v
+  Accounting      ->  records what happened` },
+              { kind: 'code', h: 'Basic configuration', code:
+`  aaa new-model
+  !
+  aaa authentication login default group tacacs+ local
+  aaa authorization exec default group tacacs+ local
+  aaa authorization commands 15 default group tacacs+ local
+  aaa accounting exec default start-stop group tacacs+
+  !
+  username netops privilege 15 secret SECRET` },
+              { kind: 'para', h: 'Method list fallback', p: 'Methods are tried left to right. **%%group tacacs+ local%%** means try the server first and fall back to the local database, which is what keeps you logged in when the server dies.' },
+              { kind: 'code', h: 'Verification', code:
+`  show aaa method-lists
+  show running-config | include aaa
+  test aaa group tacacs+ netops SECRET legacy` }
+            ],
+            commands: [
+              { label: 'Turn on AAA with local fallback', code:
+`aaa new-model\naaa authentication login default group tacacs+ local\naaa authorization exec default group tacacs+ local` },
+              { label: 'Privilege 15 command authorization', code:
+`aaa authorization commands 15 default group tacacs+ local` },
+              { label: 'Verify', code:
+`show aaa method-lists` }
+            ],
+            traps: [
+              '**Authentication is not authorization** — identity versus permission.',
+              '**Accounting does not grant access**, it only records.',
+              'In **%%aaa authorization commands 15%%** the **15 is a privilege level**, not a count.',
+              'Method lists are consulted **left to right**.',
+              '**%%aaa new-model%%** changes login behaviour immediately; keep a local fallback.',
+              'Console, VTY and EXEC can each use a different method list.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['A pieces', 'Authentication, Authorization, Accounting'],
+                ['Enable AAA', 'aaa new-model'],
+                ['Method list order', 'Left to right, first success wins'],
+                ['Local fallback', 'group tacacs+ local'],
+                ['Command authorization', 'aaa authorization commands LEVEL'],
+                ['Accounting', 'start-stop records session activity'],
+                ['Verify', 'show aaa method-lists']
+              ]
+            },
+            related: [
+              { t: '02. TACACS+', d: 'Device administration protocol' },
+              { t: '03. RADIUS', d: 'Network access protocol' }
+            ],
+            glossary: ['AAA', 'TACACS+', 'RADIUS']
+          },
+          {
+            id: 't02', num: '02', group: 'auth', title: 'TACACS+',
+            blurb: 'TCP 49, full body encryption, and granular per-command control',
+            overview: '**[[TACACS+]]** is a Cisco-developed AAA protocol for **device administration**. It runs over **TCP 49**, separates authentication, authorization and accounting, and supports **per-command authorization**. The whole packet body is encrypted with the shared secret, while the header stays readable.',
+            keyIdea: 'TCP 49. Encrypts the body, not the header. Separate AAA and per-command authorization.',
+            sections: [
+              { kind: 'table', h: 'TACACS+ versus RADIUS', cols: ['Feature', 'TACACS+', 'RADIUS'], rows: [
+                ['Transport', '**TCP 49**', '**UDP 1812 / 1813**'],
+                ['AAA separation', '**Separate** functions', 'Combined in one exchange'],
+                ['Encryption', '**Whole body**', 'Password only'],
+                ['Authorization', '**Per command**', 'Per session or service'],
+                ['Typical use', '**Device administration**', 'Network access (802.1X, VPN)']
+              ]},
+              { kind: 'code', h: 'Server and client configuration', code:
+`  aaa new-model
+  tacacs server ISE1
+   address ipv4 10.1.1.50
+   key SHAREDSECRET
+  !
+  aaa group server tacacs+ ADMINS
+   server name ISE1
+  !
+  aaa authentication login default group ADMINS local
+  aaa authorization commands 15 default group ADMINS local` },
+              { kind: 'para', h: 'Read the trap carefully', p: 'It is inaccurate to say the whole IP packet is encrypted. The **TACACS+ body** is encrypted with the shared secret; the **header remains visible**.' },
+              { kind: 'code', h: 'Verification', code:
+`  show tacacs
+  test aaa group tacacs+ netops SECRET legacy` }
+            ],
+            commands: [
+              { label: 'Define the server', code:
+`tacacs server ISE1\n address ipv4 10.1.1.50\n key SHAREDSECRET` },
+              { label: 'Use it for login and commands', code:
+`aaa authentication login default group tacacs+ local\naaa authorization commands 15 default group tacacs+ local` },
+              { label: 'Verify', code:
+`show tacacs` }
+            ],
+            traps: [
+              '**TACACS+ uses TCP 49**, not UDP.',
+              'RADIUS is **UDP 1812 and 1813**.',
+              'Only the **packet body** is encrypted; the header is visible.',
+              'TACACS+ separates **authentication, authorization and accounting**.',
+              'Per-command authorization is the TACACS+ strength.',
+              'TACACS+ is preferred for **device administration**; RADIUS for **network access**.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Transport', 'TCP 49'],
+                ['Encryption', 'Packet body only'],
+                ['AAA model', 'Separate functions'],
+                ['Authorization', 'Per command'],
+                ['Best fit', 'Router and switch administration'],
+                ['Server config', 'tacacs server NAME'],
+                ['Verify', 'show tacacs']
+              ]
+            },
+            related: [
+              { t: '01. AAA', d: 'The framework' },
+              { t: '03. RADIUS', d: 'The open-standard alternative' }
+            ],
+            glossary: ['TACACS+', 'AAA', 'RADIUS']
+          },
+          {
+            id: 't03', num: '03', group: 'auth', title: 'RADIUS',
+            blurb: 'UDP 1812 and 1813, combined AAA, and the 802.1X workhorse',
+            overview: '**[[RADIUS]]** is the open-standard AAA protocol used for **network access**: 802.1X, wireless, VPN and remote access. Authentication uses **UDP 1812** and accounting uses **UDP 1813**. It combines authentication and authorization in one exchange and encrypts only the password.',
+            keyIdea: 'UDP 1812 auth, 1813 accounting. Password only is encrypted. The switch or AP is the client, not the laptop.',
+            sections: [
+              { kind: 'table', h: 'Ports and roles', cols: ['Item', 'Value'], rows: [
+                ['Authentication', '**UDP 1812**'],
+                ['Accounting', '**UDP 1813**'],
+                ['Legacy ports', 'UDP 1645 / 1646'],
+                ['Client (NAS)', 'Switch, AP, WLC or VPN gateway'],
+                ['Encryption', '**Password field only**']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  aaa new-model
+  radius server ISE1
+   address ipv4 10.1.1.50 auth-port 1812 acct-port 1813
+   key SHAREDSECRET
+  !
+  aaa group server radius ACCESS
+   server name ISE1
+  !
+  aaa authentication dot1x default group ACCESS
+  aaa accounting dot1x default start-stop group ACCESS` },
+              { kind: 'table', h: 'Where it wins', cols: ['Scenario', 'Why RADIUS'], rows: [
+                ['802.1X wired and wireless', 'Standard and widely supported'],
+                ['VPN and remote access', 'Deployed everywhere'],
+                ['Multi-vendor estate', 'Open standard'],
+                ['Accounting of sessions', 'Start-stop records']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show radius server
+  show radius statistics
+  test aaa group radius netops SECRET new-code` }
+            ],
+            commands: [
+              { label: 'Define the server', code:
+`radius server ISE1\n address ipv4 10.1.1.50 auth-port 1812 acct-port 1813\n key SHAREDSECRET` },
+              { label: 'Use it for 802.1X', code:
+`aaa authentication dot1x default group radius\naaa accounting dot1x default start-stop group radius` },
+              { label: 'Verify', code:
+`show radius statistics` }
+            ],
+            traps: [
+              '**UDP 1812 authentication, UDP 1813 accounting.**',
+              'The **switch or AP is the RADIUS client**, not the user device.',
+              'RADIUS encrypts the **password only**, not the whole payload.',
+              'RADIUS **combines** authentication and authorization.',
+              'TACACS+ is the per-command device-admin choice.',
+              'Legacy 1645 and 1646 still appear on old exams and old gear.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Auth port', 'UDP 1812'],
+                ['Accounting port', 'UDP 1813'],
+                ['Encryption', 'Password field only'],
+                ['AAA model', 'Combined authn and authz'],
+                ['Client role', 'Switch, AP, WLC, VPN gateway'],
+                ['Best fit', '802.1X, wireless, VPN'],
+                ['Server config', 'radius server NAME']
+              ]
+            },
+            related: [
+              { t: '02. TACACS+', d: 'Device administration alternative' },
+              { t: '01. AAA', d: 'The framework' }
+            ],
+            glossary: ['RADIUS', 'AAA', 'TACACS+']
+          },
+          {
+            id: 't04', num: '04', group: 'auth', title: 'ACL',
+            blurb: 'Wildcard masks, standard versus extended, placement and the implicit deny',
+            overview: '**[[ACL|Access Control Lists]]** are ordered rules that permit or deny traffic by address, protocol and port. They are used for filtering, management access, NAT selection, route-map matching, QoS classification and control-plane protection. The **first match wins**, and anything unmatched hits the **implicit deny**.',
+            keyIdea: 'First match wins, implicit deny at the end, wildcard 0 means match and 1 means ignore.',
+            sections: [
+              { kind: 'table', h: 'Standard versus extended', cols: ['Type', 'Matches', 'Numbers'], rows: [
+                ['**Standard**', '**Source only**', '1 to 99, 1300 to 1999'],
+                ['**Extended**', 'Source, destination, protocol, port', '100 to 199, 2000 to 2699']
+              ]},
+              { kind: 'code', h: 'Wildcard logic', code:
+`  Wildcard = inverse of the subnet mask
+  0 = must match
+  1 = ignore this bit
+
+  255.255.255.0  ->  0.0.0.255` },
+              { kind: 'code', h: 'Examples', code:
+`  access-list 10 permit 10.1.1.0 0.0.0.255
+  access-list 10 permit host 10.1.1.50
+  access-list 10 deny any
+  !
+  ip access-list extended WEB-IN
+   permit tcp any host 10.1.1.80 eq 443
+   deny ip any any log
+  !
+  interface GigabitEthernet0/1
+   ip access-group WEB-IN in` },
+              { kind: 'table', h: 'Placement guideline', cols: ['Type', 'Place', 'Reason'], rows: [
+                ['**Extended**', 'Close to the source', 'Stops unwanted traffic early'],
+                ['**Standard**', 'Close to the destination', 'Only knows the source address']
+              ]},
+              { kind: 'para', h: 'Order matters', p: 'A **%%permit ip any any%%** at the top makes every rule below it unreachable. Put specific rules first and the broad permit last.' }
+            ],
+            commands: [
+              { label: 'Named extended ACL', code:
+`ip access-list extended WEB-IN\n permit tcp any host 10.1.1.80 eq 443\n deny ip any any log` },
+              { label: 'Apply to an interface', code:
+`interface GigabitEthernet0/1\n ip access-group WEB-IN in` },
+              { label: 'Verify', code:
+`show access-lists\nshow ip interface GigabitEthernet0/1` }
+            ],
+            traps: [
+              '**First match wins** — order decides everything.',
+              'There is an **implicit deny** at the end of every ACL.',
+              'Wildcard **0 means match**, 1 means ignore. It is the inverse of the mask.',
+              '**Standard ACLs match source only**; extended match source, destination, protocol, port.',
+              'Place extended ACLs near the source and standard ACLs near the destination.',
+              'An ACL applied in the wrong direction does nothing useful.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Evaluation', 'Top down, first match wins'],
+                ['End of list', 'Implicit deny'],
+                ['Wildcard 0 / 1', 'Match / ignore'],
+                ['Standard', 'Source only'],
+                ['Extended', 'Source, destination, protocol, port'],
+                ['Extended placement', 'Near the source'],
+                ['Standard placement', 'Near the destination'],
+                ['Interface command', 'ip access-group NAME in|out']
+              ]
+            },
+            related: [
+              { t: '09. CoPP', d: 'ACLs classify control-plane traffic' },
+              { t: '11. Secure Management', d: 'Protecting VTY lines' }
+            ],
+            glossary: ['ACL', 'CoPP', 'Device Hardening', 'Control Plane', 'Data Plane']
+          },
+          {
+            id: 't05', num: '05', group: 'l2', title: 'Port Security',
+            blurb: 'Secure MAC limits, violation modes and sticky learning',
+            overview: '**[[Port Security]]** restricts which **source MAC addresses** may appear on a switchport and how many may be learned. It runs at the access layer to stop unauthorised devices and MAC flooding. It is not a replacement for 802.1X or DAI.',
+            keyIdea: 'Default maximum is 1, default violation is shutdown, sticky MACs land in the running-config.',
+            sections: [
+              { kind: 'table', h: 'Violation modes', cols: ['Mode', 'Behaviour'], rows: [
+                ['**Shutdown** (default)', 'Err-disables the port and logs'],
+                ['**Restrict**', 'Drops violating traffic, increments counters and logs'],
+                ['**Protect**', 'Drops violating traffic silently']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   switchport port-security
+   switchport port-security maximum 2
+   switchport port-security mac-address sticky
+   switchport port-security violation restrict
+   switchport port-security aging time 10` },
+              { kind: 'table', h: 'MAC address types', cols: ['Type', 'Survives reload'], rows: [
+                ['**Static**', 'Yes, it is in the config'],
+                ['**Sticky**', 'Yes if the config is saved'],
+                ['**Dynamic**', 'No']
+              ]},
+              { kind: 'code', h: 'Recovery and verification', code:
+`  errdisable recovery cause psecure-violation
+  errdisable recovery interval 300
+  !
+  show port-security
+  show port-security interface GigabitEthernet0/1` }
+            ],
+            commands: [
+              { label: 'Secure an access port', code:
+`interface GigabitEthernet0/1\n switchport mode access\n switchport port-security\n switchport port-security maximum 2\n switchport port-security mac-address sticky` },
+              { label: 'Auto-recover from err-disable', code:
+`errdisable recovery cause psecure-violation` },
+              { label: 'Verify', code:
+`show port-security interface GigabitEthernet0/1\nshow port-security address` }
+            ],
+            traps: [
+              'Default maximum secure MACs is **1**.',
+              'Default violation mode is **shutdown**.',
+              '**Shutdown** means err-disabled, not merely dropped packets.',
+              '**Restrict** drops and logs; **protect** drops silently.',
+              '**Sticky MACs go into the running-config**, and survive a reload only if saved.',
+              'Port security limits **MAC addresses**, not IP addresses.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Limits', 'Source MAC addresses per port'],
+                ['Default maximum', '1'],
+                ['Default violation', 'Shutdown (err-disable)'],
+                ['Restrict', 'Drop plus counters and logs'],
+                ['Protect', 'Drop silently'],
+                ['Sticky', 'Written to running-config'],
+                ['Dynamic MACs', 'Lost on reload'],
+                ['Recovery', 'errdisable recovery cause psecure-violation']
+              ]
+            },
+            related: [
+              { t: '07. IP Source Guard', d: 'Adds IP and MAC checking' },
+              { t: '06. Dynamic ARP Inspection', d: 'Other Layer 2 control' }
+            ],
+            glossary: ['Port Security', 'Dynamic ARP Inspection', 'IP Source Guard']
+          },
+          {
+            id: 't06', num: '06', group: 'l2', title: 'Dynamic ARP Inspection',
+            blurb: 'ARP validation per VLAN, trust boundaries, ARP ACLs and rate limits',
+            overview: '**[[Dynamic ARP Inspection]]** stops **ARP spoofing and poisoning** by validating ARP packets received on **untrusted** ports. It normally checks against the **DHCP snooping binding table**, and uses **ARP ACLs** for hosts with static addresses.',
+            keyIdea: 'Enabled per VLAN, untrusted by default, trust only uplinks. It validates both requests and replies.',
+            sections: [
+              { kind: 'table', h: 'Dependency chain', cols: ['Feature', 'Role'], rows: [
+                ['**DHCP snooping**', 'Builds the IP to MAC binding table'],
+                ['**DAI**', 'Validates ARP against those bindings'],
+                ['**ARP ACL**', 'Covers static-IP hosts with no binding']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  ip arp inspection vlan 10,20
+  !
+  interface GigabitEthernet0/1
+   ip arp inspection trust
+  !
+  ip arp inspection validate src-mac dst-mac ip
+  ip arp inspection limit rate 15` },
+              { kind: 'table', h: 'Validation checks', cols: ['Check', 'What it compares'], rows: [
+                ['**src-mac**', 'Ethernet source MAC against ARP sender MAC'],
+                ['**dst-mac**', 'Ethernet destination MAC against ARP target MAC'],
+                ['**ip**', 'ARP addresses against the binding table']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show ip arp inspection
+  show ip arp inspection statistics vlan 10
+  show ip dhcp snooping binding` }
+            ],
+            commands: [
+              { label: 'Enable per VLAN and trust the uplink', code:
+`ip arp inspection vlan 10\ninterface GigabitEthernet0/1\n ip arp inspection trust` },
+              { label: 'Verify', code:
+`show ip arp inspection statistics vlan 10` }
+            ],
+            traps: [
+              'DAI is enabled **per VLAN**.',
+              'Interfaces are **untrusted by default** for DAI.',
+              'Trust **uplinks and infrastructure**, never endpoint ports.',
+              'DAI inspects **requests and replies**, not only replies.',
+              'Static-IP hosts need an **ARP ACL**.',
+              'Legitimate traffic dropped? Check the **DHCP snooping binding table** first.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Protects against', 'ARP spoofing and poisoning'],
+                ['Enable scope', 'Per VLAN'],
+                ['Default trust', 'Untrusted'],
+                ['Binding source', 'DHCP snooping table'],
+                ['Static hosts', 'ARP ACL'],
+                ['Checks', 'src-mac, dst-mac, ip'],
+                ['Rate limit', 'Configured per interface']
+              ]
+            },
+            related: [
+              { t: '05. Port Security', d: 'Access-port admission control' },
+              { t: '07. IP Source Guard', d: 'Source address enforcement' }
+            ],
+            glossary: ['Dynamic ARP Inspection', 'DHCP Snooping', 'IP Source Guard']
+          },
+          {
+            id: 't07', num: '07', group: 'l2', title: 'IP Source Guard',
+            blurb: 'Source IP and MAC allowlisting from the snooping binding table',
+            overview: '**[[IP Source Guard]]** prevents a host from using an address it does not own by building a per-interface allowlist of source **IP, MAC and VLAN** bindings. Those bindings usually come from **DHCP snooping**, with **%%ip source binding%%** covering static hosts.',
+            keyIdea: 'ip verify source checks the IP; adding port-security also checks the MAC. It is not the same as enabling port security.',
+            sections: [
+              { kind: 'table', h: 'Modes', cols: ['Command', 'What is checked'], rows: [
+                ['**%%ip verify source%%**', 'Source IP only'],
+                ['**%%ip verify source port-security%%**', 'Source IP **and** source MAC']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  interface GigabitEthernet0/1
+   switchport mode access
+   ip verify source port-security
+  !
+  ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2` },
+              { kind: 'table', h: 'Which feature does what', cols: ['Feature', 'Enforces'], rows: [
+                ['**Port Security**', 'Source MAC admission'],
+                ['**IP Source Guard**', 'Source IP and optionally MAC'],
+                ['**DAI**', 'ARP contents'],
+                ['**DHCP Snooping**', 'DHCP message trust']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show ip source binding
+  show ip verify source
+  show ip dhcp snooping binding` }
+            ],
+            commands: [
+              { label: 'Enable on an access port', code:
+`interface GigabitEthernet0/1\n ip verify source port-security` },
+              { label: 'Static binding', code:
+`ip source binding 0011.2233.4455 vlan 10 10.1.10.50 interface GigabitEthernet0/2` },
+              { label: 'Verify', code:
+`show ip source binding\nshow ip verify source` }
+            ],
+            traps: [
+              '**%%ip verify source%%** filters on **source IP**.',
+              'Adding **port-security** to the command also validates the **source MAC**.',
+              'That keyword is **not** the same as configuring **%%switchport port-security%%**.',
+              'Static-IP hosts need an **%%ip source binding%%**.',
+              'Deploy on **host-facing access ports**, not uplinks.',
+              'IPSG protects addressing; **DAI** protects ARP.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Protects against', 'Source IP spoofing'],
+                ['IP only mode', 'ip verify source'],
+                ['IP plus MAC mode', 'ip verify source port-security'],
+                ['Binding source', 'DHCP snooping table'],
+                ['Static host', 'ip source binding'],
+                ['Deploy on', 'Host-facing access ports'],
+                ['Verify', 'show ip source binding']
+              ]
+            },
+            related: [
+              { t: '05. Port Security', d: 'MAC-level admission' },
+              { t: '06. Dynamic ARP Inspection', d: 'ARP-level validation' }
+            ],
+            glossary: ['IP Source Guard', 'Port Security', 'Dynamic ARP Inspection', 'DHCP Snooping']
+          },
+          {
+            id: 't08', num: '08', group: 'l2', title: 'Storm Control',
+            blurb: 'Limiting broadcast, multicast and unknown unicast per interface',
+            overview: '**[[Storm Control]]** limits excessive **broadcast, multicast and unknown-unicast** traffic on a switchport. It is a flood-control mechanism, not a loop-prevention mechanism: **STP** stops loops, storm control limits the damage while the loop exists.',
+            keyIdea: 'It watches three traffic types, not known unicast, and normally suppresses rather than shutting the port.',
+            sections: [
+              { kind: 'table', h: 'Traffic types', cols: ['Type', 'Monitored'], rows: [
+                ['**Broadcast**', 'Yes'],
+                ['**Multicast**', 'Yes'],
+                ['**Unknown unicast**', 'Yes'],
+                ['**Known unicast**', '**No**']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  interface GigabitEthernet0/1
+   storm-control broadcast level 20
+   storm-control multicast level 20
+   storm-control action trap
+   storm-control action shutdown` },
+              { kind: 'table', h: 'Threshold units', cols: ['Unit', 'Meaning'], rows: [
+                ['**Percentage**', 'Share of interface bandwidth'],
+                ['**pps**', 'Packets per second'],
+                ['**bps**', 'Bits per second']
+              ]},
+              { kind: 'para', h: 'Hysteresis', p: 'A **rising** threshold starts suppression and a **falling** threshold clears it. That gap prevents the port flapping between normal and suppressed states.' }
+            ],
+            commands: [
+              { label: 'Limit broadcast and multicast', code:
+`interface GigabitEthernet0/1\n storm-control broadcast level 20\n storm-control multicast level 20` },
+              { label: 'Choose the action', code:
+`storm-control action trap\nstorm-control action shutdown` },
+              { label: 'Verify', code:
+`show storm-control\nshow interfaces counters` }
+            ],
+            traps: [
+              'Storm control covers **broadcast, multicast and unknown unicast**.',
+              '**Unknown unicast is not all unicast.**',
+              'It runs at the **interface level**.',
+              'It is **not a replacement for STP**.',
+              'Default behaviour **suppresses** traffic instead of shutting the port.',
+              '**%%action trap%%** notifies; it does not shut the interface.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Monitors', 'Broadcast, multicast, unknown unicast'],
+                ['Ignores', 'Known unicast'],
+                ['Scope', 'Per switchport'],
+                ['Units', 'Percentage, pps or bps'],
+                ['Default action', 'Suppress excess'],
+                ['action trap', 'Notify only'],
+                ['action shutdown', 'Err-disable the port'],
+                ['Relationship', 'Complements STP, does not replace it']
+              ]
+            },
+            related: [
+              { t: '05. Port Security', d: 'Other access-port control' },
+              { t: '09. CoPP', d: 'Control-plane equivalent' }
+            ],
+            glossary: ['Storm Control', 'CoPP', 'Routing Loop']
+          },
+          {
+            id: 't09', num: '09', group: 'infra', title: 'CoPP',
+            blurb: 'Protecting the CPU with class-maps, policy-maps and policing',
+            overview: '**[[CoPP]]** protects the device CPU by rate-limiting traffic **destined to the device**. It uses the QoS building blocks: an **ACL** identifies traffic, a **class-map** groups it, a **policy-map** sets policing, and the **%%control-plane%%** applies it before packets reach the processor.',
+            keyIdea: 'CoPP polices traffic to the control plane. Data plane transit traffic is not affected.',
+            sections: [
+              { kind: 'table', h: 'The three planes', cols: ['Plane', 'Purpose', 'Examples'], rows: [
+                ['**Data**', 'Forwards transit traffic', 'CEF-switched packets'],
+                ['**Control**', 'Protocols and traffic to the device', 'OSPF, BGP, STP, ICMP'],
+                ['**Management**', 'Administration', 'SSH, SNMP, HTTPS, Syslog']
+              ]},
+              { kind: 'code', h: 'Processing path', code:
+`  Packet to the device
+     |
+  ACL / class-map
+     |
+  policy-map  ->  police  ->  transmit or drop
+     |
+  Control plane / CPU` },
+              { kind: 'code', h: 'Configuration skeleton', code:
+`  ip access-list extended COPP-MGMT
+   permit tcp any host 192.0.2.1 eq 22
+  !
+  class-map match-any COPP-MGMT-CLASS
+   match access-group name COPP-MGMT
+  !
+  policy-map COPP-POLICY
+   class COPP-MGMT-CLASS
+    police 8000 conform-action transmit exceed-action drop
+  !
+  control-plane
+   service-policy input COPP-POLICY` },
+              { kind: 'para', h: 'Why it matters', p: 'A flood aimed at the device can starve routing protocols and management access even while transit traffic keeps flowing. CoPP keeps the CPU reachable, which is why an explicit permit for routing and management traffic is essential.' }
+            ],
+            commands: [
+              { label: 'Build the policy', code:
+`class-map match-any COPP-MGMT-CLASS\n match access-group name COPP-MGMT\npolicy-map COPP-POLICY\n class COPP-MGMT-CLASS\n  police 8000 conform-action transmit exceed-action drop` },
+              { label: 'Apply to the control plane', code:
+`control-plane\n service-policy input COPP-POLICY` },
+              { label: 'Verify', code:
+`show policy-map control-plane\nshow policy-map interface` }
+            ],
+            traps: [
+              'CoPP protects the **control plane**, not transit traffic.',
+              'It uses **ACL, class-map, policy-map and policing**.',
+              'The policy is applied under **%%control-plane%%** with **%%service-policy input%%**.',
+              'A missing permit for routing or management traffic can lock you out.',
+              'CoPP is not Storm Control: different scope and different purpose.',
+              'CoPP polices traffic **to** the device, not through it.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Protects', 'Device CPU and control plane'],
+                ['Building blocks', 'ACL, class-map, policy-map, police'],
+                ['Applied under', 'control-plane'],
+                ['Direction', 'Input'],
+                ['Scope', 'Traffic destined to the device'],
+                ['Risk', 'Over-policing breaks routing or SSH'],
+                ['Verify', 'show policy-map control-plane']
+              ]
+            },
+            related: [
+              { t: '04. ACL', d: 'Classifies the traffic' },
+              { t: '08. Storm Control', d: 'Interface-level flood control' }
+            ],
+            glossary: ['CoPP', 'ACL', 'Control Plane', 'Data Plane', 'Storm Control']
+          },
+          {
+            id: 't10', num: '10', group: 'infra', title: 'Device Hardening',
+            blurb: 'Secrets, SSH-only access, brute-force protection and line security',
+            overview: '**[[Device Hardening]]** reduces the attack surface of the device itself: strong secret storage, SSH instead of Telnet, login rate limiting, management-plane ACLs, and securing the console, VTY and AUX lines.',
+            keyIdea: 'enable secret not enable password, SSH not Telnet, and lock the lines with ACLs and rate limits.',
+            sections: [
+              { kind: 'table', h: 'What to harden', cols: ['Area', 'Action'], rows: [
+                ['Passwords', '**%%enable secret%%** with a strong hash'],
+                ['Remote access', 'SSH only, **%%transport input ssh%%**'],
+                ['Brute force', '**%%login block-for%%** with a quiet period'],
+                ['Management access', 'ACL on VTY lines'],
+                ['Unused services', 'Disable finger, http, cdp where not needed'],
+                ['Lines', 'Secure console, VTY and AUX']
+              ]},
+              { kind: 'code', h: 'Configuration', code:
+`  enable secret STRONGSECRET
+  service password-encryption
+  !
+  login block-for 120 attempts 3 within 60
+  !
+  ip access-list standard MGMT-ALLOWED
+   permit 10.1.1.0 0.0.0.255
+  !
+  line vty 0 15
+   access-class MGMT-ALLOWED in
+   transport input ssh
+   exec-timeout 5 0
+   logging synchronous` },
+              { kind: 'table', h: 'Secret types', cols: ['Command', 'Storage'], rows: [
+                ['**%%enable secret%%**', 'Strong one-way hash'],
+                ['**%%enable password%%**', 'Cleartext unless encrypted'],
+                ['**%%service password-encryption%%**', 'Type 7, reversible obfuscation']
+              ]},
+              { kind: 'code', h: 'Verification', code:
+`  show running-config | include enable
+  show login
+  show users` }
+            ],
+            commands: [
+              { label: 'Secret and SSH-only lines', code:
+`enable secret STRONGSECRET\nline vty 0 15\n transport input ssh\n access-class MGMT-ALLOWED in` },
+              { label: 'Brute-force protection', code:
+`login block-for 120 attempts 3 within 60` },
+              { label: 'Verify', code:
+`show login\nshow running-config | include enable` }
+            ],
+            traps: [
+              'Use **%%enable secret%%**, never **%%enable password%%**.',
+              '**Type 7 is reversible obfuscation**, not encryption.',
+              '**%%service password-encryption%%** does not make secrets strong.',
+              '**%%login block-for%%** slows brute force but does not replace strong passwords.',
+              'Always keep a management ACL and a local fallback account.',
+              'Disable unused services rather than relying on obscurity.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['Best secret', 'enable secret'],
+                ['Type 7', 'Reversible obfuscation'],
+                ['Remote access', 'SSH only'],
+                ['Brute force', 'login block-for'],
+                ['VTY protection', 'access-class in'],
+                ['Line timeout', 'exec-timeout'],
+                ['Unused services', 'Disable them']
+              ]
+            },
+            related: [
+              { t: '11. Secure Management', d: 'Protecting management protocols' },
+              { t: '01. AAA', d: 'Centralised credentials' }
+            ],
+            glossary: ['Device Hardening', 'AAA', 'SSH', 'ACL']
+          },
+          {
+            id: 't11', num: '11', group: 'infra', title: 'Secure Management',
+            blurb: 'Encrypted, authenticated and restricted management paths',
+            overview: '**Secure management** means management traffic is **encrypted**, **authenticated**, **authorised**, **restricted** to trusted sources and **logged**. That rules out Telnet and plain HTTP and points to **SSH**, **HTTPS**, **SNMPv3** and **Syslog** with correct time.',
+            keyIdea: 'SSH instead of Telnet, HTTPS instead of HTTP, SNMPv3 instead of v2c, and log everything.',
+            sections: [
+              { kind: 'table', h: 'Insecure and secure pairs', cols: ['Insecure', 'Secure'], rows: [
+                ['Telnet (23)', '**SSH (22)**'],
+                ['HTTP (80)', '**HTTPS (443)**'],
+                ['SNMPv2c', '**SNMPv3**'],
+                ['TFTP', 'SCP or SFTP'],
+                ['Syslog cleartext', 'Syslog over TLS where supported']
+              ]},
+              { kind: 'code', h: 'Management hardening', code:
+`  ip ssh version 2
+  ip http secure-server
+  no ip http server
+  !
+  snmp-server group ADMINS v3 priv
+  !
+  logging host 10.1.1.30
+  logging source-interface Loopback0
+  ntp server 10.1.1.5` },
+              { kind: 'table', h: 'The goals', cols: ['Goal', 'How'], rows: [
+                ['Encrypted', 'SSH, HTTPS, SNMPv3 authPriv'],
+                ['Authenticated', 'AAA, certificates, host keys'],
+                ['Authorised', 'Privilege levels, command authorization'],
+                ['Restricted', 'Management ACLs, out-of-band access'],
+                ['Audited', 'Syslog, accounting, NTP timestamps']
+              ]},
+              { kind: 'para', h: 'Out of band', p: 'A separate management VRF or dedicated management interface keeps administrative traffic away from user data, so a data-plane problem cannot lock you out.' }
+            ],
+            commands: [
+              { label: 'Encrypted management stack', code:
+`ip ssh version 2\nip http secure-server\nno ip http server\nsnmp-server group ADMINS v3 priv` },
+              { label: 'Logging and time', code:
+`logging host 10.1.1.30\nlogging source-interface Loopback0\nntp server 10.1.1.5` },
+              { label: 'Verify', code:
+`show ip ssh\nshow snmp user\nshow logging` }
+            ],
+            traps: [
+              'Telnet is insecure; **SSH** is the management answer.',
+              'Plain HTTP is insecure; **HTTPS** is the management answer.',
+              '**SNMPv2c community strings are not encryption** — use v3.',
+              'Management ACLs belong on the VTY lines and the management interface.',
+              'Logging needs **NTP** to be useful for correlation.',
+              'Out-of-band management survives data-plane failures.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['CLI', 'SSH on TCP 22'],
+                ['Web', 'HTTPS on TCP 443'],
+                ['Monitoring', 'SNMPv3 with authPriv'],
+                ['Logging', 'Syslog to a central host'],
+                ['Time', 'NTP for accurate timestamps'],
+                ['Restriction', 'Management ACL and VRF'],
+                ['Audit', 'AAA accounting plus Syslog']
+              ]
+            },
+            related: [
+              { t: '10. Device Hardening', d: 'Device-level configuration' },
+              { t: '03. RADIUS', d: 'Central authentication' }
+            ],
+            glossary: ['Device Hardening', 'SSH', 'SNMP', 'NTP', 'Syslog', 'AAA']
+          },
+          {
+            id: 't12', num: '12', group: 'infra', title: 'Infrastructure Security',
+            blurb: 'uRPF, routing protocol authentication and infrastructure protection',
+            overview: '**Infrastructure security** protects routers, switches and the routing protocols themselves: spoofed source addresses handled by **uRPF**, forged routing updates blocked by protocol authentication, and control-plane resources protected by **CoPP**.',
+            keyIdea: 'Strict uRPF breaks asymmetric routing, loose uRPF does not. Routing protocols need authentication.',
+            sections: [
+              { kind: 'table', h: 'uRPF modes', cols: ['Mode', 'Command', 'Requirement'], rows: [
+                ['**Strict**', '**%%ip verify unicast source reachable-via rx%%**', 'Reverse path uses the incoming interface'],
+                ['**Loose**', '**%%ip verify unicast source reachable-via any%%**', 'Source reachable through any interface']
+              ]},
+              { kind: 'code', h: 'Routing protocol authentication', code:
+`  ! OSPF
+  interface GigabitEthernet0/0
+   ip ospf authentication message-digest
+   ip ospf message-digest-key 1 md5 OSPFSecret
+  !
+  ! EIGRP
+  key chain EIGRP-KEYS
+   key 1
+    key-string EIGRPSecret
+  interface GigabitEthernet0/0
+   ip authentication key-chain eigrp 100 EIGRP-KEYS` },
+              { kind: 'table', h: 'BGP protection', cols: ['Mechanism', 'What it does'], rows: [
+                ['**TCP MD5**', 'Authenticates the TCP session'],
+                ['**TTL security**', 'Restricts how many hops away a peer may be'],
+                ['Neither', 'General-purpose encryption']
+              ]},
+              { kind: 'para', h: 'Layered defence', p: 'Infrastructure protection is cumulative: **uRPF** for spoofing, **authentication** for routing sessions, **CoPP** for the CPU, and **Layer 2 controls** for the access edge. No single feature covers everything.' }
+            ],
+            commands: [
+              { label: 'Strict and loose uRPF', code:
+`interface GigabitEthernet0/0\n ip verify unicast source reachable-via rx\n!\ninterface GigabitEthernet0/1\n ip verify unicast source reachable-via any` },
+              { label: 'OSPF authentication', code:
+`interface GigabitEthernet0/0\n ip ospf authentication message-digest\n ip ospf message-digest-key 1 md5 OSPFSecret` },
+              { label: 'Verify', code:
+`show ip interface GigabitEthernet0/0\nshow ip ospf interface` }
+            ],
+            traps: [
+              '**Strict uRPF breaks asymmetric routing**; that is the classic trap.',
+              '**Loose uRPF** only requires the source to be reachable somewhere.',
+              '**TCP MD5** authenticates the session, **TTL security** limits hop distance.',
+              'Neither BGP mechanism encrypts the payload.',
+              'OSPF and EIGRP authentication stop forged routing updates.',
+              'DAI depends on DHCP snooping bindings; do not treat them as independent.'
+            ],
+            table: {
+              cols: ['Item', 'Key point'],
+              rows: [
+                ['uRPF strict', 'Reverse path on the incoming interface'],
+                ['uRPF loose', 'Source reachable anywhere'],
+                ['Asymmetric routing', 'Strict uRPF can drop legitimate traffic'],
+                ['OSPF security', 'Message-digest authentication'],
+                ['EIGRP security', 'Key chain authentication'],
+                ['BGP TCP MD5', 'Session authentication'],
+                ['BGP TTL security', 'Hop-distance restriction'],
+                ['Overall', 'Layer defences, not one feature']
+              ]
+            },
+            related: [
+              { t: '09. CoPP', d: 'CPU protection' },
+              { t: '10. Device Hardening', d: 'Device-level controls' }
+            ],
+            glossary: ['CoPP', 'Device Hardening', 'BGP', 'Routing Loop', 'Control Plane']
+          }
+        ];
+
+        const GROUPS = [
+          { key: 'auth', label: 'Authentication & Access Control', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
+          { key: 'l2', label: 'Layer 2 Security', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
+          { key: 'infra', label: 'Infrastructure Protection', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' }
+        ];
+        const groups = GROUPS;
+        const groupMeta = GROUPS.reduce(function (m, g) { m[g.key] = g; return m; }, {});
+
+        const glossary = [
+          { term: 'AAA', def: 'Authentication, Authorization and Accounting. Identity, permission and audit trail, configured with aaa new-model and method lists.' },
+          { term: 'TACACS+', def: 'Cisco AAA protocol for device administration over TCP 49, with separate AAA functions, per-command authorization and body encryption.' },
+          { term: 'RADIUS', def: 'Open-standard AAA protocol for network access over UDP 1812 (authentication) and 1813 (accounting), encrypting only the password.' },
+          { term: 'ACL', def: 'Access Control List. Ordered permit and deny rules evaluated top down with first match winning and an implicit deny at the end.' },
+          { term: 'Port Security', def: 'Switchport feature limiting the source MAC addresses allowed on a port, with shutdown, restrict and protect violation modes.' },
+          { term: 'Dynamic ARP Inspection', def: 'Validates ARP packets on untrusted ports against DHCP snooping bindings or ARP ACLs to stop ARP spoofing.' },
+          { term: 'IP Source Guard', def: 'Per-interface source address allowlist built from DHCP snooping bindings, optionally validating MAC as well as IP.' },
+          { term: 'Storm Control', def: 'Limits broadcast, multicast and unknown-unicast traffic on a switchport to contain floods.' },
+          { term: 'CoPP', def: 'Control Plane Policing. Rate-limits traffic destined to the device CPU using ACLs, class-maps, policy-maps and policing.' },
+          { term: 'Device Hardening', def: 'Reducing the attack surface of a device: strong secrets, SSH-only access, login rate limits, ACLs and disabled services.' },
+          { term: 'DHCP Snooping', def: 'Layer 2 feature that builds the IP to MAC binding table used by DAI and IP Source Guard.' },
+          { term: 'Control Plane', def: 'The plane that runs routing protocols and processes traffic addressed to the device.' },
+          { term: 'Data Plane', def: 'The plane that forwards transit traffic through the device.' },
+          { term: 'SSH', def: 'Encrypted remote management on TCP 22, replacing Telnet.' },
+          { term: 'SNMP', def: 'Monitoring protocol on UDP 161 and 162; version 3 adds authentication and privacy.' },
+          { term: 'NTP', def: 'Time synchronisation over UDP 123, needed for accurate log and certificate handling.' },
+          { term: 'Syslog', def: 'Centralised event logging, traditionally UDP 514, used for audit and troubleshooting.' },
+          { term: 'BGP', def: 'Path-vector routing protocol whose sessions can be protected with TCP MD5 or TTL security.' },
+          { term: 'Routing Loop', def: 'A cycle in forwarding or redistribution that storm control and TTL limits help contain.' }
+        ];
+
+        const quiz = [
+          { q: 'Which command enables AAA on a Cisco device?', options: ['aaa new-model', 'aaa enable', 'ip aaa', 'login aaa'], answer: 0, why: 'All AAA configuration starts with aaa new-model.' },
+          { q: 'What does authentication answer?', options: ['Who are you?', 'What may you do?', 'What did you do?', 'Where are you going?'], answer: 0, why: 'Authorization covers permission and accounting covers records.' },
+          { q: 'In aaa authorization commands 15, what does 15 mean?', options: ['Privilege level', 'Fifteen commands', 'Timeout seconds', 'Retry count'], answer: 0, why: 'It is the privilege level whose commands are being authorized.' },
+          { q: 'What does accounting do?', options: ['Records activity', 'Grants access', 'Encrypts the session', 'Assigns addresses'], answer: 0, why: 'Accounting only records; it does not authorize.' },
+          { q: 'TACACS+ uses which transport and port?', options: ['TCP 49', 'UDP 49', 'UDP 1812', 'TCP 1813'], answer: 0, why: 'TACACS+ runs over TCP 49.' },
+          { q: 'How much of a TACACS+ packet is encrypted?', options: ['The body', 'The whole IP packet', 'Only the password', 'Nothing'], answer: 0, why: 'The body is encrypted; the header stays visible.' },
+          { q: 'Which protocol supports per-command authorization?', options: ['TACACS+', 'RADIUS', 'LDAP', 'Kerberos'], answer: 0, why: 'TACACS+ separates functions and supports command-level control.' },
+          { q: 'RADIUS authentication uses which port?', options: ['UDP 1812', 'UDP 1813', 'TCP 49', 'UDP 1645'], answer: 0, why: '1812 authenticates and 1813 accounts.' },
+          { q: 'In RADIUS, who is the client?', options: ['The switch, AP or VPN gateway', 'The user laptop', 'The DNS server', 'The CA'], answer: 0, why: 'The network access server is the RADIUS client.' },
+          { q: 'What does RADIUS encrypt?', options: ['The password field', 'The whole packet', 'Nothing', 'Only accounting'], answer: 0, why: 'RADIUS protects the password, not the entire payload.' },
+          { q: 'Which is preferred for network access such as 802.1X?', options: ['RADIUS', 'TACACS+', 'SNMP', 'Syslog'], answer: 0, why: 'RADIUS is the open standard for network access.' },
+          { q: 'When two ACL lines both match, which is used?', options: ['The first one', 'The most specific one', 'The last one', 'Both'], answer: 0, why: 'ACLs are evaluated top down and stop at the first match.' },
+          { q: 'What happens to traffic that matches no ACL line?', options: ['It is denied', 'It is permitted', 'It is logged and permitted', 'It is queued'], answer: 0, why: 'Every ACL ends with an implicit deny.' },
+          { q: 'In a wildcard mask, what does a 0 bit mean?', options: ['Must match', 'Ignore', 'Invert', 'Deny'], answer: 0, why: '0 means the bit must match; 1 means ignore it.' },
+          { q: 'Which ACL type can match destination port?', options: ['Extended', 'Standard', 'Both', 'Neither'], answer: 0, why: 'Standard ACLs match source only; extended add destination, protocol and port.' },
+          { q: 'Where should an extended ACL be placed?', options: ['Near the source', 'Near the destination', 'On a loopback', 'Only inbound on VTY'], answer: 0, why: 'Extended ACLs filter unwanted traffic early when placed near the source.' },
+          { q: 'What is the default port-security maximum on a Cisco access port?', options: ['1', '2', '10', 'Unlimited'], answer: 0, why: 'The default secure MAC maximum is one.' },
+          { q: 'What is the default port-security violation mode?', options: ['Shutdown', 'Restrict', 'Protect', 'Log'], answer: 0, why: 'The default is shutdown, which err-disables the port.' },
+          { q: 'Which violation mode drops traffic silently?', options: ['Protect', 'Restrict', 'Shutdown', 'Trap'], answer: 0, why: 'Protect drops without logging or counters.' },
+          { q: 'Where do sticky MAC addresses appear?', options: ['Running-config', 'The ARP table', 'The routing table', 'The DHCP pool'], answer: 0, why: 'Sticky learning writes the MAC into the configuration.' },
+          { q: 'Which MAC type is normally lost on reload?', options: ['Dynamic', 'Static', 'Sticky saved to config', 'Reserved'], answer: 0, why: 'Dynamic secure MACs are not persisted.' },
+          { q: 'DAI is enabled at which scope?', options: ['Per VLAN', 'Per interface only', 'Globally only', 'Per VRF'], answer: 0, why: 'ip arp inspection vlan enables it per VLAN.' },
+          { q: 'What is the default DAI trust state of an interface?', options: ['Untrusted', 'Trusted', 'Disabled', 'Monitor'], answer: 0, why: 'Interfaces are untrusted until trusted explicitly.' },
+          { q: 'What normally supplies DAI with IP to MAC bindings?', options: ['DHCP snooping', 'ARP ACL', 'CDP', 'LLDP'], answer: 0, why: 'The DHCP snooping binding table is the usual source.' },
+          { q: 'Which hosts need an ARP ACL with DAI?', options: ['Static-IP hosts', 'DHCP clients', 'Wireless clients', 'Routers'], answer: 0, why: 'Hosts without DHCP bindings need ARP ACL entries.' },
+          { q: 'Which DAI check compares the Ethernet source MAC with the ARP sender MAC?', options: ['src-mac', 'dst-mac', 'ip', 'port'], answer: 0, why: 'src-mac validates the sender MAC consistency.' },
+          { q: 'What does ip verify source check?', options: ['Source IP', 'Destination IP', 'ARP contents', 'MAC only'], answer: 0, why: 'IP Source Guard validates the source address by default.' },
+          { q: 'What adds MAC validation to IP Source Guard?', options: ['port-security keyword', 'switchport port-security', 'arp inspection', 'dhcp snooping trust'], answer: 0, why: 'ip verify source port-security validates IP and MAC; it is not the same as enabling port security.' },
+          { q: 'Which command shows IP Source Guard bindings?', options: ['show ip source binding', 'show ip route', 'show mac address-table', 'show arp'], answer: 0, why: 'That command displays the source bindings.' },
+          { q: 'Storm control monitors which traffic types?', options: ['Broadcast, multicast, unknown unicast', 'All unicast', 'Only broadcast', 'Only multicast'], answer: 0, why: 'Known unicast is not part of storm control.' },
+          { q: 'What does Storm Control do by default when the threshold is exceeded?', options: ['Suppresses traffic', 'Shuts the port', 'Reboots the switch', 'Disables STP'], answer: 0, why: 'Default behaviour suppresses rather than shutting the port.' },
+          { q: 'What provides hysteresis in storm control?', options: ['Rising and falling thresholds', 'A single level', 'action trap', 'The errdisable timer'], answer: 0, why: 'Separate rising and falling thresholds prevent flapping.' },
+          { q: 'What does CoPP protect?', options: ['The control plane CPU', 'Transit traffic', 'The access edge', 'The ARP table'], answer: 0, why: 'CoPP rate-limits traffic destined to the device itself.' },
+          { q: 'Where is the CoPP policy applied?', options: ['control-plane service-policy input', 'An access port', 'A VLAN', 'A loopback'], answer: 0, why: 'The policy is attached under control-plane with service-policy input.' },
+          { q: 'Which QoS component defines the policing actions in CoPP?', options: ['Policy-map', 'Prefix-list', 'Route-map', 'ACL'], answer: 0, why: 'The policy-map holds the class actions including police.' },
+          { q: 'Which is better than enable password for storing a secret?', options: ['enable secret', 'service password-encryption', 'Type 7', 'Telnet'], answer: 0, why: 'enable secret uses a strong hash.' },
+          { q: 'What is Type 7 encoding?', options: ['Reversible obfuscation', 'Strong hashing', 'AES encryption', 'Certificate signing'], answer: 0, why: 'Type 7 can be reversed and is not real encryption.' },
+          { q: 'Which command slows brute-force login attempts?', options: ['login block-for', 'exec-timeout', 'logging synchronous', 'ip ssh version 2'], answer: 0, why: 'login block-for applies a quiet period after failed attempts.' },
+          { q: 'Which pair is the secure management replacement for Telnet and HTTP?', options: ['SSH and HTTPS', 'TFTP and SNMPv2c', 'FTP and LDAP', 'RADIUS and TACACS+'], answer: 0, why: 'SSH replaces Telnet and HTTPS replaces HTTP.' },
+          { q: 'Which SNMP version should management use?', options: ['SNMPv3', 'SNMPv2c', 'SNMPv1', 'Any'], answer: 0, why: 'SNMPv3 adds authentication and privacy; community strings are not encryption.' },
+          { q: 'Strict uRPF requires what?', options: ['Reverse path via the incoming interface', 'Source reachable through any interface', 'A BGP session', 'A static route'], answer: 0, why: 'Strict mode checks the reverse path against the receiving interface.' },
+          { q: 'Which mode suits asymmetric routing?', options: ['Loose uRPF', 'Strict uRPF', 'Both equally', 'Neither'], answer: 0, why: 'Loose mode only requires the source to be reachable somewhere.' },
+          { q: 'What does BGP TTL security do?', options: ['Restricts hop distance to peers', 'Encrypts BGP payload', 'Replaces TCP MD5', 'Authenticates users'], answer: 0, why: 'TTL security limits how far away a legitimate peer may be.' },
+          { q: 'Which mechanism authenticates an OSPF neighbour?', options: ['Message-digest authentication', 'TTL security', 'ARP ACL', 'Port security'], answer: 0, why: 'OSPF uses message-digest authentication on the interface or area.' }
+        ];
+
+        /* ---------------- Helpers ---------------- */
+        const AMP = String.fromCharCode(38);
+        const esc = (s) => String(s)
+          .replace(/&/g, AMP + 'amp;')
+          .replace(/</g, AMP + 'lt;')
+          .replace(/>/g, AMP + 'gt;');
+
+        // Lightweight inline formatter: %%code%%, **bold**, [[Wiki Link]] / [[Wiki Link|label]]
+        const md = (raw) => {
+          if (raw === null || raw === undefined) return '';
+          const tokens = [];
+          let s = esc(String(raw));
+          s = s.replace(/%%([^%]+)%%/g, (m, c) => {
+            tokens.push('<code class="mdc">' + c + '</code>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, target, label) => {
+            const name = target.trim();
+            const text = (label || target).trim();
+            tokens.push('<span class="term">' + text + '</span>');
+            return '\u0000' + (tokens.length - 1) + '\u0000';
+          });
+          s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+          s = s.replace(/\u0000(\d+)\u0000/g, (m, i) => tokens[Number(i)]);
+          return s;
+        };
+
+        const slug = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+        /* ---------------- State ---------------- */
+        const KEYS = { theme: 'sec.theme', done: 'sec.done', best: 'sec.quizbest' };
+
+        const loadJSON = (key, fb) => {
+          try { const v = JSON.parse(localStorage.getItem(key)); return (v === null || v === undefined) ? fb : v; }
+          catch (e) { return fb; }
+        };
+        const save = (key, val) => {
+          try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) { /* private mode */ }
+        };
+
+        const dark = ref(true);
+        const query = ref('');
+        const activeId = ref('overview');
+        const mobileNav = ref(false);
+        const copiedId = ref('');
+        const expandAll = ref(false);
+
+        const openState = ref({});
+        const studied = ref(loadJSON(KEYS.done, {}));
+        const bestScore = ref(loadJSON(KEYS.best, null));
+
+        const picked = ref(quiz.map(() => -1));
+        const quizGraded = ref(false);
+
+        /* ---------------- Computeds ---------------- */
+        const visibleTopics = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return topics;
+          return topics.filter(t => topicHaystack(t).indexOf(q) !== -1);
+        });
+
+        const studiedCount = computed(() => topics.filter(t => studied.value[t.id]).length);
+        const progressPct = computed(() => topics.length ? Math.round((studiedCount.value / topics.length) * 100) : 0);
+        const allExpanded = computed(() => topics.every(t => isOpen(t.id, 'cmds')));
+
+        const quizScore = computed(() => quiz.reduce((acc, q, i) => acc + (picked.value[i] === q.answer ? 1 : 0), 0));
+
+        const searchHits = computed(() => {
+          const q = query.value.trim().toLowerCase();
+          if (!q) return [];
+          const hits = [];
+          topics.forEach(t => {
+            if (topicHaystack(t).indexOf(q) !== -1) {
+              hits.push({ id: t.id, num: t.num, title: t.title, snippet: snippetFor(t, q) });
+            }
+          });
+          return hits.slice(0, 8);
+        });
+
+        function topicHaystack(t) {
+          const parts = [t.title, t.blurb, t.overview, t.keyIdea];
+          t.sections.forEach(sec => {
+            parts.push(sec.h);
+            if (sec.p) parts.push(sec.p);
+            if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
+            if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
+          });
+          t.traps.forEach(x => parts.push(x));
+          t.glossary.forEach(x => parts.push(x));
+          return parts.join(' ').toLowerCase();
+        }
+
+        function snippetFor(t, q) {
+          const pool = [t.overview || '', t.keyIdea || ''].concat(t.sections.map(s => s.h || ''));
+          for (let i = 0; i < pool.length; i++) {
+            const idx = pool[i].toLowerCase().indexOf(q);
+            if (idx !== -1) {
+              const start = Math.max(0, idx - 45);
+              return (start ? '...' : '') + pool[i].slice(start, start + 115).replace(/\[|\]/g, '').trim() + '...';
+            }
+          }
+          return t.blurb;
+        }
+
+        /* ---------------- Methods ---------------- */
+        function topicsOf(key) {
+          return topics.filter(t => t.group === key);
+        }
+
+        function isStudied(id) { return !!studied.value[id]; }
+
+        function toggleStudied(id) {
+          const next = Object.assign({}, studied.value);
+          if (next[id]) { delete next[id]; } else { next[id] = true; }
+          studied.value = next;
+          save(KEYS.done, next);
+        }
+
+        function isOpen(id, block) {
+          const st = openState.value[id];
+          if (st && typeof st[block] === 'boolean') return st[block];
+          return block === 'traps' || block === 'table';
+        }
+
+        function toggleBlock(id, block) {
+          const next = Object.assign({}, openState.value);
+          const cur = Object.assign({}, next[id] || {});
+          cur[block] = !isOpen(id, block);
+          next[id] = cur;
+          openState.value = next;
+        }
+
+        function setAll(open) {
+          const next = {};
+          topics.forEach(t => { next[t.id] = { traps: open, cmds: open, table: open }; });
+          openState.value = next;
+          expandAll.value = open;
+        }
+
+        function toggleTheme() {
+          dark.value = !dark.value;
+          applyTheme();
+        }
+
+        function applyTheme() {
+          try { localStorage.setItem(KEYS.theme, dark.value ? 'dark' : 'light'); } catch (e) { /* ignore */ }
+          if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.classList.toggle('dark', dark.value);
+          }
+        }
+
+        function goTo(id) {
+          if (typeof document === 'undefined') return;
+          const el = document.getElementById(id);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          activeId.value = id;
+          if (typeof history !== 'undefined' && history.replaceState) {
+            history.replaceState(null, '', '#' + id);
+          }
+        }
+
+        function jumpToTerm(term) {
+          goTo('glossary');
+          if (typeof setTimeout !== 'undefined') {
+            setTimeout(() => {
+              const el = document.getElementById('term-' + slug(term));
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 350);
+          }
+        }
+
+        function copy(text, id) {
+          const done_ = () => {
+            copiedId.value = id;
+            if (typeof setTimeout !== 'undefined') setTimeout(() => { copiedId.value = ''; }, 1600);
+          };
+          if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done_, () => {});
+          } else if (typeof document !== 'undefined' && document.body) {
+            try {
+              const ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed';
+              ta.style.opacity = '0';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              done_();
+            } catch (e) { /* ignore */ }
+          }
+        }
+
+        function pick(qi, oi) {
+          if (quizGraded.value) return;
+          const next = picked.value.slice();
+          next[qi] = oi;
+          picked.value = next;
+        }
+
+        function gradeQuiz() {
+          quizGraded.value = true;
+          const s = quizScore.value;
+          if (bestScore.value === null || s > bestScore.value) {
+            bestScore.value = s;
+            save(KEYS.best, s);
+          }
+        }
+
+        function resetQuiz() {
+          picked.value = quiz.map(() => -1);
+          quizGraded.value = false;
+        }
+
+        function optionClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-50 text-slate-800 dark:bg-sky-500/15 dark:text-slate-100'
+              : 'border-slate-200 bg-white text-slate-700 hover:border-sky-400 hover:bg-sky-50/60 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-300 dark:hover:bg-slate-800';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/15 dark:text-emerald-100';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-500/15 dark:text-rose-100';
+          return 'border-slate-200 bg-white text-slate-500 dark:border-slate-700 dark:bg-slate-800/40 dark:text-slate-500';
+        }
+
+        function optionDotClass(qi, oi) {
+          const q = quiz[qi];
+          if (!quizGraded.value) {
+            return picked.value[qi] === oi
+              ? 'border-sky-500 bg-sky-500 text-white'
+              : 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400';
+          }
+          if (oi === q.answer) return 'border-emerald-500 bg-emerald-500 text-white';
+          if (picked.value[qi] === oi) return 'border-rose-500 bg-rose-500 text-white';
+          return 'border-slate-300 text-slate-400 dark:border-slate-600 dark:text-slate-600';
+        }
+
+        function onKey(e) {
+          if (typeof e === 'undefined') return;
+          const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+          const typing = tag === 'input' || tag === 'textarea' || tag === 'select';
+          if (e.key === 'Escape') {
+            query.value = '';
+            mobileNav.value = false;
+            if (typing && e.target && e.target.blur) e.target.blur();
+            return;
+          }
+          if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+          if (e.key === '/') { e.preventDefault(); const el = document.querySelector('input[type=search]'); if (el) el.focus(); }
+          else if (e.key === 't') { toggleTheme(); }
+          else if (e.key === 'e') { setAll(!allExpanded.value); }
+        }
+
+        function onScroll() {
+          if (typeof document === 'undefined') return;
+          const ids = ['overview'].concat(topics.map(t => t.id)).concat(['quiz', 'glossary']);
+          let current = ids[0];
+          for (let i = 0; i < ids.length; i++) {
+            const el = document.getElementById(ids[i]);
+            if (!el) continue;
+            const box = el.getBoundingClientRect();
+            // Skip sections that have not been laid out yet (zero height).
+            if (box.height === 0) continue;
+            if (box.top <= 140) current = ids[i];
+          }
+          if (current !== activeId.value) {
+            activeId.value = current;
+            // Before the page has loaded the layout is still settling, so the
+            // URL is left alone: a deep link must not be overwritten by a
+            // section that is only provisionally the active one.
+            const loaded = typeof document.readyState === 'string' && document.readyState === 'complete';
+            if (loaded && typeof history !== 'undefined' && history.replaceState) {
+              history.replaceState(null, '', '#' + current);
+            }
+          }
+        }
+
+        return {
+          heroIntro, topics, groups, groupMeta, glossary, quiz,
+          dark, query, activeId, mobileNav, copiedId, expandAll,
+          studied, studiedCount, progressPct, picked, quizGraded, quizScore, bestScore,
+          visibleTopics, searchHits, allExpanded,
+          md, slug, topicsOf, isStudied, toggleStudied, isOpen, toggleBlock, setAll,
+          toggleTheme, goTo, jumpToTerm, copy, pick, gradeQuiz, resetQuiz,
+          optionClass, optionDotClass, onKey, onScroll, applyTheme
+        };
+      },
+
+      mounted() {
+        // Theme: stored preference, else follow the OS
+        try {
+          const stored = localStorage.getItem(KEYS.theme);
+          if (stored) {
+            this.dark = stored === 'dark';
+          } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            this.dark = false;
+          }
+        } catch (e) { /* ignore */ }
+        this.applyTheme();
+
+        // Open the deep link on load. The Tailwind Play CDN injects its
+        // stylesheet after first paint, which shifts the layout, so the
+        // target position is re-applied once the page has settled.
+        //
+        // The requested target is captured here, before the scroll spy gets
+        // a chance to write its own value into the URL hash.
+        const requested = (window.location.hash || '').replace('#', '');
+        const known = ['overview', 'quiz', 'glossary'].concat(this.topics.map(t => t.id));
+        const deepLink = known.indexOf(requested) !== -1 ? requested : null;
+
+        const applyHash = (behavior) => {
+          if (!deepLink) return;
+          const el = document.getElementById(deepLink);
+          if (!el) return;
+          el.scrollIntoView({ behavior: behavior, block: 'start' });
+          this.activeId = deepLink;
+          if (window.history && window.history.replaceState) {
+            window.history.replaceState(null, '', '#' + deepLink);
+          }
+        };
+
+        // 'instant' is required here: <html> carries scroll-smooth, which makes
+        // behavior:'auto' animate and land mid-flight.
+        const settleHash = () => {
+          applyHash('instant');
+          setTimeout(() => applyHash('instant'), 400);
+          setTimeout(() => applyHash('instant'), 1200);
+        };
+
+        if (document.readyState === 'complete') {
+          settleHash();
+        } else {
+          window.addEventListener('load', settleHash);
+        }
+
+        // Scroll spy
+        let ticking = false;
+        const handler = () => {
+          if (ticking) return;
+          ticking = true;
+          window.requestAnimationFrame(() => {
+            this.onScroll();
+            ticking = false;
+          });
+        };
+        window.addEventListener('scroll', handler, { passive: true });
+        window.addEventListener('resize', handler, { passive: true });
+        window.addEventListener('keydown', this.onKey);
+        this.onScroll();
+      }
+    }).mount('#app');
+  }
+
+  function start() {
+    if (settled) return;
+    if (window.Vue) { mount(); return; }
+    if (window.__osiVueFailed) { showFallback(); return; }
+    // Vue is still downloading: keep checking. The loader decides when to
+    // give up, so a slow connection is never mistaken for a failed one.
+    setTimeout(start, 100);
+  }
+
+  window.addEventListener('osi:vue-failed', showFallback);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
+})();
+</script>
+</body>
+</html>
