@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How Ethernet Works: Frames, MAC Addresses, and Switching — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>15 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">How Ethernet Works: Frames, MAC Addresses, and Switching</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">A frame on the wire, a table of MAC addresses, and a decision at every port. Here is the machinery behind the link light.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Ethernet</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">MAC</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Switching</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Layer 2</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Ethernet Is a Set of Rules, Not a Cable</h2>
+          <p>Ethernet began as an experiment in sharing one coaxial cable, and it kept the same basic contract through every speed increase: put a frame on the wire, address it to a 48-bit station address, check it with a CRC, and hope it arrives. The cable changed from thick coax to twisted pair to fibre. The shared medium became a switch port. The frame stayed.</p>
+          <p>That is why Ethernet is easy to use and hard to reason about. It is <strong>connectionless, unacknowledged, and best effort</strong>. It does not promise delivery, order, or even that a frame will not arrive twice. Everything above it — IP, TCP, QUIC — either repairs those gaps or lives with them.</p>
+          <p>What Ethernet actually defines is a small set of things:</p>
+          <ul>
+            <li>A frame format with source and destination MAC addresses and a checksum.</li>
+            <li>A rule for when a station may transmit.</li>
+            <li>A way for switches to learn where addresses live and forward frames port to port.</li>
+            <li>A link layer that runs over many physical media at many speeds.</li>
+          </ul>
+
+          <h2>2. The Frame on the Wire</h2>
+          <p>Everything a switch does begins with the frame. Here is the structure on a copper or fibre link:</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 310" class="mx-auto w-full max-w-4xl" role="img" aria-label="Ethernet frame fields: preamble, start frame delimiter, destination and source MAC, optional 802.1Q tag, type, payload, FCS, and interframe gap, plus the 48-bit MAC address layout">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="30" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">THE ETHERNET FRAME</text>
+
+                <!-- fields -->
+                <rect x="40" y="52" width="64" height="64" rx="4" class="fill-slate-500/15" stroke="rgb(148,163,184)" />
+                <text x="72" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">Preamble</text>
+                <text x="72" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">7 B</text>
+
+                <rect x="110" y="52" width="28" height="64" rx="4" class="fill-slate-500/15" stroke="rgb(148,163,184)" />
+                <text x="124" y="78" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">SFD</text>
+                <text x="124" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">1 B</text>
+
+                <rect x="144" y="52" width="84" height="64" rx="4" class="fill-sky-500/15" stroke="#38BDF8" />
+                <text x="186" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">Dest. MAC</text>
+                <text x="186" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">6 B</text>
+
+                <rect x="234" y="52" width="84" height="64" rx="4" class="fill-teal-500/15" stroke="#14B8A6" />
+                <text x="276" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">Source MAC</text>
+                <text x="276" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">6 B</text>
+
+                <rect x="324" y="52" width="66" height="64" rx="4" fill="#A78BFA" fill-opacity="0.10" stroke="#A78BFA" stroke-dasharray="3 2" />
+                <text x="357" y="78" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">802.1Q</text>
+                <text x="357" y="94" text-anchor="middle" font-size="6.5" fill="rgb(100,116,139)" stroke="none">4 B opt.</text>
+
+                <rect x="396" y="52" width="48" height="64" rx="4" class="fill-amber-500/15" stroke="#F59E0B" />
+                <text x="420" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">Type</text>
+                <text x="420" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">2 B</text>
+
+                <rect x="450" y="52" width="300" height="64" rx="4" class="fill-emerald-500/15" stroke="#10B981" />
+                <text x="600" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">Payload</text>
+                <text x="600" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">46–1500 B</text>
+
+                <rect x="756" y="52" width="44" height="64" rx="4" class="fill-rose-500/15" stroke="#F43F5E" />
+                <text x="778" y="78" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">FCS</text>
+                <text x="778" y="94" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">4 B</text>
+
+                <rect x="806" y="52" width="58" height="64" rx="4" fill="rgb(148,163,184)" fill-opacity="0.05" stroke="rgb(148,163,184)" stroke-dasharray="3 2" />
+                <text x="835" y="78" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">IFG</text>
+                <text x="835" y="94" text-anchor="middle" font-size="6.5" fill="rgb(100,116,139)" stroke="none">12 B gap</text>
+
+                <!-- annotations -->
+                <text x="40" y="134" font-size="8.5" fill="rgb(100,116,139)" stroke="none">64 B minimum = 6 + 6 + 2 + 46 + 4. Padding fills a short payload.</text>
+                <text x="40" y="150" font-size="8.5" fill="rgb(100,116,139)" stroke="none">1518 B maximum = 6 + 6 + 2 + 1500 + 4 · 1522 B when the 802.1Q tag is present.</text>
+                <text x="40" y="166" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Preamble and SFD are not counted in the frame size. The IFG is the mandatory gap before the next frame.</text>
+
+                <!-- MAC address -->
+                <text x="40" y="200" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">THE 48-BIT MAC ADDRESS</text>
+                <rect x="40" y="216" width="250" height="34" rx="4" class="fill-sky-500/15" stroke="#38BDF8" />
+                <text x="165" y="237" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">OUI — vendor (24 bits)</text>
+                <rect x="290" y="216" width="250" height="34" rx="4" class="fill-emerald-500/15" stroke="#10B981" />
+                <text x="415" y="237" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">Device-specific (24 bits)</text>
+
+                <text x="40" y="272" font-family="monospace" font-size="9" fill="currentColor" stroke="none">00:1A:2B : 3C:4D:5E</text>
+                <text x="40" y="288" font-size="7.5" fill="rgb(100,116,139)" stroke="none">OUI 00:1A:2B · device 3C:4D:5E</text>
+
+                <text x="570" y="226" font-size="8" fill="rgb(100,116,139)" stroke="none">I/G bit (first octet, bit 0): 0 = unicast, 1 = multicast</text>
+                <text x="570" y="242" font-size="8" fill="rgb(100,116,139)" stroke="none">U/L bit (bit 1): 0 = globally unique, 1 = locally assigned</text>
+                <text x="570" y="258" font-size="8" fill="rgb(100,116,139)" stroke="none">Broadcast: FF:FF:FF:FF:FF:FF</text>
+                <text x="570" y="274" font-size="8" fill="rgb(100,116,139)" stroke="none">Switches learn the source and look up the destination</text>
+                <text x="570" y="290" font-size="8" fill="rgb(100,116,139)" stroke="none">within a VLAN — never outside it.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">The frame, field by field. Sizes exclude the 8-byte preamble/SFD.</p>
+          </div>
+
+          <h3>Preamble and SFD</h3>
+          <p>Seven bytes of alternating 1 and 0 let the receiver's clock synchronize; the start frame delimiter (0xAB) marks the last chance to lock before the destination address. Together they are often called the 8-byte preamble, but they are not part of the 64-byte minimum frame size.</p>
+
+          <h3>Destination and source MAC</h3>
+          <p>Six bytes each. The destination comes first so a switch can begin its lookup as soon as the frame arrives. The source is what the switch learns from.</p>
+
+          <h3>The optional 802.1Q tag</h3>
+          <p>Four bytes inserted after the source address: a 2-byte tag protocol identifier (0x8100) and a 2-byte tag control field containing a 3-bit priority, a drop-eligibility bit, and a 12-bit VLAN ID. Only present on tagged links; an access port adds or removes it.</p>
+
+          <h3>Type or length</h3>
+          <p>A value of 0x0600 or greater is an EtherType and names the protocol inside — 0x0800 IPv4, 0x0806 ARP, 0x86DD IPv6, 0x8100 VLAN. A value of 1500 or less is a length, from the original IEEE 802.3 framing. Modern networks use EtherType almost exclusively.</p>
+
+          <h3>Payload and padding</h3>
+          <p>46 to 1500 bytes. If the upper-layer packet is shorter than 46 bytes, padding is added so the frame reaches the 64-byte minimum. That minimum is not arbitrary: it is the time a 10 Mb/s sender needs to hear a collision before it finishes transmitting.</p>
+
+          <h3>FCS</h3>
+          <p>A 32-bit CRC over the destination address through the payload. The receiver recomputes it; a mismatch means the frame is dropped, silently. Ethernet never asks for a retransmission.</p>
+
+          <h3>The interframe gap</h3>
+          <p>After a frame, every station waits at least 96 bit times — 12 byte times — before sending the next one. It gives the receiver time to prepare and keeps the link from being a continuous stream. Like the preamble, it is not counted in the frame size.</p>
+
+          <h2>3. MAC Addresses</h2>
+          <p>A MAC address is 48 bits, written as six octets — twelve hex digits. The first 24 bits are the organizationally unique identifier assigned to the vendor; the last 24 identify the individual interface. In practice, that is where the guarantee ends: virtual machines, hypervisors, and NIC teams assign addresses in software, and the address can move.</p>
+          <ul>
+            <li><strong>Unicast</strong> — the I/G bit is 0. One intended receiver.</li>
+            <li><strong>Multicast</strong> — the I/G bit is 1. A group, identified by a range of addresses such as 01:00:5E:xx:xx:xx for IPv4 multicast.</li>
+            <li><strong>Broadcast</strong> — FF:FF:FF:FF:FF:FF. Every station in the broadcast domain.</li>
+            <li><strong>Locally administered</strong> — the U/L bit is 1. Common for virtual interfaces and generated addresses.</li>
+          </ul>
+          <p>MAC addresses are local to the link. A router receives a frame addressed to its own MAC, strips the Ethernet header, routes the packet, and builds a new frame with a new source and destination MAC. The original MACs do not survive the hop.</p>
+
+          <h2>4. What a Switch Actually Does</h2>
+          <p>A switch is a learning bridge with many ports. For every frame, it performs the same short sequence: learn the source, look up the destination, then forward, filter, or flood.</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 360" class="mx-auto w-full max-w-4xl" role="img" aria-label="Flowchart of switch forwarding: learn the source MAC, look up the destination, then flood broadcast and unknown unicast, filter frames destined for the same port, or forward to the known port">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="30" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">THE SWITCHING DECISION</text>
+
+                <!-- left column -->
+                <rect x="40" y="60" width="200" height="50" rx="8" class="fill-sky-500/15" stroke="#38BDF8" />
+                <text x="52" y="80" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Frame arrives</text>
+                <text x="52" y="96" font-size="8" fill="rgb(100,116,139)" stroke="none">on port 3</text>
+
+                <line x1="140" y1="110" x2="140" y2="132" stroke="rgb(148,163,184)" />
+                <polygon points="136,132 140,140 144,132" fill="rgb(148,163,184)" stroke="none" />
+
+                <rect x="40" y="140" width="200" height="50" rx="8" class="fill-teal-500/15" stroke="#14B8A6" />
+                <text x="52" y="160" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Learn source MAC</text>
+                <text x="52" y="176" font-size="8" fill="rgb(100,116,139)" stroke="none">table: MAC → port 3</text>
+
+                <line x1="140" y1="190" x2="140" y2="212" stroke="rgb(148,163,184)" />
+                <polygon points="136,212 140,220 144,212" fill="rgb(148,163,184)" stroke="none" />
+
+                <rect x="40" y="220" width="200" height="44" rx="8" class="fill-slate-500/15" stroke="rgb(148,163,184)" />
+                <text x="52" y="238" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Look up destination</text>
+                <text x="52" y="254" font-size="8" fill="rgb(100,116,139)" stroke="none">in the MAC table</text>
+
+                <!-- bus -->
+                <line x1="240" y1="242" x2="300" y2="242" stroke="rgb(148,163,184)" />
+                <line x1="300" y1="67" x2="300" y2="277" stroke="rgb(148,163,184)" />
+
+                <line x1="300" y1="67" x2="322" y2="67" stroke="rgb(148,163,184)" />
+                <polygon points="322,63 330,67 322,71" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="300" y1="137" x2="322" y2="137" stroke="rgb(148,163,184)" />
+                <polygon points="322,133 330,137 322,141" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="300" y1="207" x2="322" y2="207" stroke="rgb(148,163,184)" />
+                <polygon points="322,203 330,207 322,211" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="300" y1="277" x2="322" y2="277" stroke="rgb(148,163,184)" />
+                <polygon points="322,273 330,277 322,281" fill="rgb(148,163,184)" stroke="none" />
+
+                <!-- outcomes -->
+                <rect x="330" y="40" width="230" height="54" rx="8" class="fill-amber-500/15" stroke="#F59E0B" />
+                <text x="342" y="60" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Broadcast / multicast</text>
+                <text x="342" y="77" font-size="8" fill="rgb(100,116,139)" stroke="none">flood every other port</text>
+
+                <rect x="330" y="110" width="230" height="54" rx="8" class="fill-amber-500/15" stroke="#F59E0B" />
+                <text x="342" y="130" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Unknown unicast</text>
+                <text x="342" y="147" font-size="8" fill="rgb(100,116,139)" stroke="none">flood every other port</text>
+
+                <rect x="330" y="180" width="230" height="54" rx="8" class="fill-rose-500/15" stroke="#F43F5E" />
+                <text x="342" y="200" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Known, same port</text>
+                <text x="342" y="217" font-size="8" fill="rgb(100,116,139)" stroke="none">filter — drop the frame</text>
+
+                <rect x="330" y="250" width="230" height="54" rx="8" class="fill-emerald-500/15" stroke="#10B981" />
+                <text x="342" y="270" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">Known, other port</text>
+                <text x="342" y="287" font-size="8" fill="rgb(100,116,139)" stroke="none">forward only to that port</text>
+
+                <text x="40" y="332" font-size="9" fill="rgb(100,116,139)" stroke="none">Source learning happens first, always — even for frames the switch then drops.</text>
+                <text x="40" y="348" font-size="9" fill="rgb(100,116,139)" stroke="none">An unknown destination is flooded inside its VLAN. That is the fallback, not a fault.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">One frame, four possible outcomes. The MAC table decides which.</p>
+          </div>
+
+          <h3>Learn the source</h3>
+          <p>The switch reads the source MAC and records it against the ingress port and VLAN. If the address is already known, the entry is refreshed. If it is known on a different port, the entry moves — which is normal when a laptop changes desks and suspicious when it happens continuously.</p>
+
+          <h3>Look up the destination</h3>
+          <p>The destination MAC is looked up in the same table. Three cases matter:</p>
+          <ul>
+            <li><strong>Known, different port</strong> — forward out that port only.</li>
+            <li><strong>Known, same port</strong> — filter; the destination is on the segment the frame came from, so there is no reason to send it back.</li>
+            <li><strong>Unknown, broadcast, or multicast</strong> — flood out every other port in the VLAN.</li>
+          </ul>
+          <p>Default aging is typically 300 seconds. An entry that is not refreshed is removed, and the next frame to that address is flooded until the station speaks again. That is why a quiet device can look like an unknown destination for one packet.</p>
+          <p>Older documentation calls it the CAM table; modern CLIs call it the MAC address table. It is the same thing: a per-VLAN map of address to port.</p>
+
+          <h2>5. Flooding Is Part of the Design</h2>
+          <p>The first frame of almost every conversation is flooded, because the switch has not yet learned where the destination is. ARP is the classic example: a host broadcasts "who has 10.0.0.1?" and the switch floods it. The reply teaches every switch on the path where the responder lives.</p>
+          <p>Flooding is scoped to the VLAN. It is not a network-wide broadcast, and it is not a failure. It becomes a problem only when it is excessive: a MAC table that is full, an aging timer that is too short, a one-way link that never lets the switch learn a source, or a loop that keeps relearning the same addresses on different ports.</p>
+
+          <h2>6. What Ethernet Does Not Do</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Ethernet does not…</th>
+                <th>Consequence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Have a TTL or hop limit</td><td>A loop circulates frames until the link saturates; spanning tree must prevent it</td></tr>
+              <tr><td>Acknowledge frames</td><td>Loss is invisible at Layer 2; TCP or the application must notice</td></tr>
+              <tr><td>Retransmit</td><td>A frame with a bad FCS is dropped and forgotten</td></tr>
+              <tr><td>Reorder or deduplicate</td><td>Upper layers own ordering and duplicate detection</td></tr>
+              <tr><td>Choose a path</td><td>Switches forward on addresses, not on cost or policy</td></tr>
+              <tr><td>Provide congestion control</td><td>Buffers absorb bursts; sustained overload means drops</td></tr>
+              <tr><td>Carry MAC addresses across routers</td><td>Every routed hop builds a new Layer 2 header</td></tr>
+            </tbody>
+          </table>
+
+          <h2>7. Half Duplex, Collisions, and CSMA/CD</h2>
+          <p>On a shared medium, two stations can transmit at once and corrupt each other. Ethernet's original answer was carrier sense multiple access with collision detection:</p>
+          <ol>
+            <li><strong>Carrier sense</strong> — listen before sending.</li>
+            <li><strong>Multiple access</strong> — anyone may try when the medium is idle.</li>
+            <li><strong>Collision detection</strong> — keep listening while transmitting; if the signal does not match what was sent, a collision is in progress.</li>
+            <li><strong>Jam and back off</strong> — send a 32-bit jam signal so every station notices, then wait a random number of slot times before retrying.</li>
+          </ol>
+          <p>The backoff is truncated binary exponential: after the first collision, choose 0 or 1 slot; after the second, 0–3; and so on up to 10 doublings. After 16 attempts, the frame is dropped and counted. At 10 Mb/s a slot is 512 bit times, or 51.2 µs; that is exactly the time needed to send a 64-byte frame.</p>
+          <p>That is the real reason for the 64-byte minimum. A sender must still be transmitting when the collision signal returns from the far end of the collision domain. If the frame were shorter, the sender would have finished and moved on, and the collision would go unnoticed.</p>
+          <p>Half duplex is legacy. A modern switched link is full duplex: separate transmit and receive paths — a pair each way at 10/100 Mb/s, all four pairs with echo cancellation at 1000BASE-T, or a fibre pair — so there is no shared medium, no collisions, and CSMA/CD is disabled. If you see collisions on a full-duplex port, something is misconfigured.</p>
+
+          <h2>8. Autonegotiation and Duplex Mismatch</h2>
+          <p>Copper links negotiate speed and duplex with fast link pulses. Both ends advertise their abilities and pick the highest common setting. 1000BASE-T requires autonegotiation; fibre links generally do not negotiate duplex at all.</p>
+          <p>The classic failure is one side fixed and the other automatic. Autonegotiation cannot detect the fixed side's duplex, so it falls back to half duplex by parallel detection. The result is a link that comes up and passes traffic — badly:</p>
+          <ul>
+            <li><strong>Half-duplex side:</strong> sees collisions and late collisions, because the full-duplex side transmits whenever it wants.</li>
+            <li><strong>Full-duplex side:</strong> receives collision fragments, so FCS and alignment errors climb.</li>
+            <li><strong>Both sides:</strong> throughput collapses under load, but pings and light traffic work.</li>
+          </ul>
+          <p>Either set both ends to auto, or set both ends to the same fixed speed and duplex. Never mix. On fibre, duplex is always full; a mismatch there is a speed or optic problem, not autonegotiation.</p>
+
+          <h2>9. Flow Control, Buffers, and Drops</h2>
+          <p>Ethernet can ask a neighbor to pause. A PAUSE frame is sent to the reserved multicast address 01:80:C2:00:00:01 with EtherType 0x8808 and a timer in units of 512 bit times. It is hop-by-hop: it tells the directly connected transmitter to wait, not the original sender.</p>
+          <p>PAUSE is useful for a short burst and dangerous as a habit. It can create head-of-line blocking, where one congested port pauses traffic that was destined elsewhere, and it does not fix sustained oversubscription. Many enterprises disable it; lossless fabrics use priority flow control (802.1Qbb) to pause only selected classes of traffic.</p>
+          <p>Buffers do the rest. A switch absorbs microbursts, but once a queue is full, the frame is dropped. Ethernet has no selective backpressure toward the source, so the drop is silent at Layer 2 and visible only in counters or in TCP's reaction.</p>
+
+          <h2>10. VLANs and Broadcast Domains</h2>
+          <p>A VLAN is a logical partition of a switch. Frames are switched only between ports in the same VLAN, and the MAC table is kept per VLAN, so the same address can exist in two VLANs without conflict.</p>
+          <ul>
+            <li><strong>Access port</strong> — belongs to one VLAN, sends and receives untagged frames.</li>
+            <li><strong>Trunk port</strong> — carries several VLANs, tagging each frame with an 802.1Q header.</li>
+            <li><strong>Native VLAN</strong> — the one VLAN on a trunk that is sent untagged. Mismatched native VLANs merge two broadcast domains, which is both a design error and a security issue.</li>
+          </ul>
+          <p>The broadcast domain is the VLAN, not the switch and not the physical rack. Two ports on the same switch in different VLANs are as isolated at Layer 2 as two ports on different switches. A router or Layer 3 switch is required to move between them.</p>
+
+          <h2>11. Loops, Storms, and Spanning Tree</h2>
+          <p>Because Ethernet has no TTL, a loop is not a slowdown — it is a meltdown. A broadcast frame returns on another port, is flooded again, and multiplies. The MAC table flaps as the same source appears on different ports, unknown unicast flooding rises, and CPU and links saturate.</p>
+          <p>Spanning tree (STP, RSTP, MSTP) prevents this by blocking redundant ports so that only one active path exists. Storm control can rate-limit broadcast, multicast, or unknown unicast as a backstop. Neither is optional in a network with redundant cabling.</p>
+          <p>Loops also appear without redundant design: two wall ports patched together, a cable plugged into two ports on the same switch, or a misconfigured teaming setup. The symptom is often "the whole floor is down," not "one link is looping."</p>
+
+          <h2>12. Forwarding Modes and Modern Ethernet</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>How it decides</th>
+                <th>Trade-off</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Store-and-forward</td><td>Receives the whole frame, checks the FCS, then forwards</td><td>Higher latency, never forwards a corrupt frame; the default</td></tr>
+              <tr><td>Cut-through</td><td>Reads the destination MAC and forwards immediately</td><td>Very low latency, can propagate bad frames</td></tr>
+              <tr><td>Fragment-free</td><td>Waits for the first 64 bytes</td><td>Filters most collision fragments; a compromise</td></tr>
+            </tbody>
+          </table>
+          <p>At 10G and above, Ethernet is full duplex only, and forward error correction in the physical coding sublayer handles marginal bits before they become CRC errors. Link aggregation combines ports into one logical link, but it is still Ethernet underneath: hashing decides which member a frame uses, and a single conversation stays on one member.</p>
+          <p>Higher speeds also change the economics. A 400G port is not 40 times a 10G port in cost or in usefulness; oversubscription, buffer size, and the mix of elephant and mouse flows decide whether the link is actually better.</p>
+
+          <h2>13. Counters That Explain the Link</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Counter</th>
+                <th>Meaning</th>
+                <th>Usual cause</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>FCS / CRC errors</td><td>Frame arrived corrupt</td><td>Cable, connector, optic, EMI, duplex mismatch</td></tr>
+              <tr><td>Alignment errors</td><td>Frame ended on a non-octet boundary</td><td>Physical fault or duplex mismatch</td></tr>
+              <tr><td>Runts</td><td>Frames shorter than 64 bytes</td><td>Collision fragments, faulty NIC</td></tr>
+              <tr><td>Giants</td><td>Frames larger than the allowed size</td><td>MTU/jumbo mismatch, faulty NIC</td></tr>
+              <tr><td>Jabber</td><td>Oversized frame with a bad FCS</td><td>Failing NIC or transceiver</td></tr>
+              <tr><td>Collisions</td><td>Normal on half duplex</td><td>On full duplex: misconfiguration</td></tr>
+              <tr><td>Late collisions</td><td>Collision after the slot time</td><td>Duplex mismatch or excessive cable length</td></tr>
+              <tr><td>Input errors</td><td>Aggregate receive problems</td><td>Read the sub-counters</td></tr>
+              <tr><td>Output drops</td><td>Queue full at egress</td><td>Congestion, not a physical fault</td></tr>
+            </tbody>
+          </table>
+          <pre>show mac address-table
+show mac address-table aging-time
+show mac address-table address 001a.2b3c.4d5e
+show interfaces Gi1/0/1 counters errors
+show interfaces Gi1/0/1 status
+show interfaces Gi1/0/1 | include duplex|speed|collision|CRC
+
+# Linux
+ip link show
+bridge fdb show
+ethtool eth0
+ethtool -S eth0 | grep -Ei 'crc|err|drop|collision'</pre>
+
+          <h2>14. Three Cases</h2>
+          <h3>Case A: the server that kept moving</h3>
+          <p>A database server lost connections for a few seconds at a time. Its switch logs showed the same MAC address appearing on two different ports, alternating.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>MAC table</td><td>Same address on port 12 and port 24, changing every few seconds</td></tr>
+              <tr><td>Teaming</td><td>Both NICs active, but the switch was configured for active/standby</td></tr>
+              <tr><td>STP</td><td>No topology change; the two ports were not in a loop</td></tr>
+            </tbody>
+          </table>
+          <p>Every failover moved the MAC, so the table kept relearning. Traffic to the old port was flooded or black-holed until the next update. Fixing the teaming mode to match the switch restored stability. MAC flapping is not always a loop — sometimes it is a host that cannot decide which NIC is active.</p>
+
+          <h3>Case B: slow after the switch replacement</h3>
+          <p>A server link worked at about 30 Mb/s after a maintenance window replaced an access switch.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Switch port</td><td>100 Mb/s, half duplex</td></tr>
+              <tr><td>Server NIC</td><td>Fixed 100 Mb/s, full duplex</td></tr>
+              <tr><td>Counters</td><td>Late collisions and FCS errors rising together</td></tr>
+            </tbody>
+          </table>
+          <p>The old switch had been fixed at full duplex; the new one was left on auto and fell back to half. Setting both ends to auto, or both to 100/full, restored the link. The lesson is the rule: auto/auto or fixed/fixed, never one of each.</p>
+
+          <h3>Case C: the floor that melted</h3>
+          <p>Two wall ports were patched together during an office move. Within seconds, every port on the floor was saturated and the switch CPU was pinned.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>MAC table</td><td>Entries flapping between the two ports</td></tr>
+              <tr><td>Broadcast rate</td><td>Hundreds of thousands of frames per second</td></tr>
+              <tr><td>Spanning tree</td><td>Not blocking — both ports were access ports with BPDU filtering</td></tr>
+            </tbody>
+          </table>
+          <p>Removing the patch cord ended the storm. The permanent fixes were spanning tree on every access port, BPDU guard, and storm control as a backstop. Ethernet's lack of a TTL is not a detail; it is the reason loop prevention is mandatory.</p>
+
+          <h2>15. Exam Traps</h2>
+          <ul>
+            <li><strong>"Ethernet guarantees delivery."</strong> It is best effort and unacknowledged; TCP or the application handles loss.</li>
+            <li><strong>"A switch floods only broadcasts."</strong> It also floods unknown unicast and, unless snooping is configured, multicast.</li>
+            <li><strong>"A switch forwards frames with bad FCS."</strong> Store-and-forward drops them; cut-through may forward them.</li>
+            <li><strong>"MAC addresses are 32 bits."</strong> They are 48 bits; IPv4 addresses are 32 bits.</li>
+            <li><strong>"Frames carry MAC addresses across routers."</strong> Each routed hop rewrites the Layer 2 header.</li>
+            <li><strong>"The collision domain and broadcast domain are the same."</strong> A switch port is its own collision domain; a VLAN is a broadcast domain.</li>
+            <li><strong>"Full duplex uses CSMA/CD."</strong> It does not; collisions cannot occur on a full-duplex link.</li>
+            <li><strong>"Autonegotiation always figures out duplex."</strong> It cannot detect a fixed peer; the result is often half duplex.</li>
+            <li><strong>"The 64-byte minimum includes the preamble."</strong> It does not; 64 bytes runs from destination MAC through FCS, and the preamble adds 8 more on the wire.</li>
+            <li><strong>"A VLAN tag increases the MTU."</strong> The payload MTU stays 1500; the frame becomes 1522 bytes.</li>
+          </ul>
+
+          <h2>16. Key Takeaways</h2>
+          <ul>
+            <li>Ethernet is a frame format, a media-access rule, and a best-effort service — nothing more.</li>
+            <li>The frame is destination, source, type, payload, and FCS, with a 64-byte minimum and a 1518-byte maximum before tagging.</li>
+            <li>Switches learn source MACs, then forward, filter, or flood based on the destination and the MAC table.</li>
+            <li>Unknown unicast and broadcasts are flooded inside the VLAN; that is normal behaviour, not a bug.</li>
+            <li>Half duplex needs CSMA/CD and a 64-byte minimum; full duplex has neither collisions nor a reason to use it.</li>
+            <li>Duplex mismatch is the classic "slow but working" fault: late collisions on one side, FCS errors on the other.</li>
+            <li>Ethernet has no TTL and no acknowledgements, so loops are catastrophic and reliability belongs to the layers above.</li>
+            <li>VLANs define broadcast domains; routers move between them and rewrite the Layer 2 header.</li>
+          </ul>
+
+          <h2>17. Quick Review Questions</h2>
+          <ol>
+            <li>Which frame fields are included in the 64-byte minimum, and which are not?</li>
+            <li>Why does a switch flood the first frame of a conversation?</li>
+            <li>What does a switch do when the destination MAC is on the same port it arrived on?</li>
+            <li>Why is a 64-byte frame the minimum for collision detection?</li>
+            <li>What are the symptoms of a duplex mismatch on each side of the link?</li>
+            <li>What is the difference between a collision domain and a broadcast domain?</li>
+            <li>Why does a Layer 2 loop saturate a network so quickly?</li>
+            <li>What happens to the Ethernet header when a packet crosses a router?</li>
+            <li>Why is padding needed, and when is it removed?</li>
+            <li>What does an 802.1Q tag add, and how large is the resulting maximum frame?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="ethernet-standards-and-speeds.html">Ethernet Standards and Speeds: From 10BASE-T to 800G</a></li>
+            <li><a href="connectors-rj45-sfp-lc-sc.html">Connectors: RJ45, SFP, LC, SC — and What Each One Actually Is</a></li>
+            <li><a href="common-physical-problems.html">Common Physical Problems: A Field Guide to Layer 1 Faults</a></li>
+            <li><a href="encapsulation-and-decapsulation.html">Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped</a></li>
+            <li><a href="../../pages/04-ethernet-switching.html">Level 4 - Ethernet Switching</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
