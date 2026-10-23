@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physical vs Logical Topologies: Same Network, Two Views — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>12 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Physical vs Logical Topologies: Same Network, Two Views</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">The cable diagram and the forwarding diagram are not the same drawing. Confusing the two is one of the most common sources of bad designs, wrong troubleshooting, and missed exam questions.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Topology</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Design</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Switching</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Routing</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Two Definitions That Must Stay Separate</h2>
+          <p><strong>Physical topology</strong> answers: where do the cables run, and what is plugged into what? It is the cable plant, the patch panels, the access points on the ceiling, and the circuits from the carrier.</p>
+          <p><strong>Logical topology</strong> answers: how does traffic actually move? It is defined by forwarding behavior — MAC tables, VLANs, spanning tree state, IP subnets, routing adjacencies, overlays, and policy.</p>
+          <p>They are related but independent. The same physical layout can produce several different logical topologies, and a logical topology can be designed without changing a single cable. That is exactly why overlays, VLANs, and tunnels are powerful — and why they are easy to misdocument.</p>
+
+          <h2>2. Why the Distinction Matters</h2>
+          <ul>
+            <li><strong>Troubleshooting</strong> — a link that is physically up can be logically blocking (STP) or administratively unused (routing).</li>
+            <li><strong>Design</strong> — redundancy is a physical property; resilience is a logical one. Two links are useless if the control protocol blocks one and never fails over.</li>
+            <li><strong>Documentation</strong> — a cable map that omits VLANs and routing adjacencies cannot explain traffic flow.</li>
+            <li><strong>Security</strong> — the physical path may bypass a firewall even though the logical subnet diagram suggests otherwise.</li>
+            <li><strong>Cost</strong> — physical changes are slow and expensive; logical changes are fast and free, until they hit a hardware limit.</li>
+          </ul>
+
+          <h2>3. The Classic Physical Topologies</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Topology</th>
+                <th>How it is cabled</th>
+                <th>Strengths</th>
+                <th>Weaknesses</th>
+                <th>Typical era / use</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Bus</strong></td>
+                <td>One shared backbone with taps; terminators at both ends</td>
+                <td>Minimal cable, cheap to extend</td>
+                <td>One break or bad terminator kills the segment; shared collision domain; hard to troubleshoot</td>
+                <td>10BASE5/10BASE2 coax; legacy industrial</td>
+              </tr>
+              <tr>
+                <td><strong>Star</strong></td>
+                <td>Every device has a home run to a central device</td>
+                <td>One cable failure isolates one device; easy adds/moves/changes</td>
+                <td>Central device is a single point of failure; more cable</td>
+                <td>Modern Ethernet access layer</td>
+              </tr>
+              <tr>
+                <td><strong>Ring</strong></td>
+                <td>Each node connects to two neighbours, closing a loop</td>
+                <td>Deterministic access; protection switching on dual rings</td>
+                <td>A single break can take the ring down unless protected; latency grows with nodes</td>
+                <td>Token Ring, FDDI, SONET/SDH, metro fiber rings</td>
+              </tr>
+              <tr>
+                <td><strong>Full mesh</strong></td>
+                <td>Every node connects to every other node</td>
+                <td>Maximum path diversity and predictable latency</td>
+                <td>n(n−1)/2 links; cost and complexity explode</td>
+                <td>Small WAN cores, data-center spines, provider fabrics</td>
+              </tr>
+              <tr>
+                <td><strong>Partial mesh</strong></td>
+                <td>Some nodes have multiple paths, others do not</td>
+                <td>Balances resilience against cost</td>
+                <td>Failure impact depends on which links exist — must be documented</td>
+                <td>Most enterprise WANs</td>
+              </tr>
+              <tr>
+                <td><strong>Tree / hierarchical</strong></td>
+                <td>Access → distribution → core, branching</td>
+                <td>Scales, contains faults, matches administrative structure</td>
+                <td>Higher layers aggregate risk; oversubscription must be planned</td>
+                <td>Campus and building networks</td>
+              </tr>
+              <tr>
+                <td><strong>Point-to-point</strong></td>
+                <td>Exactly two endpoints on a link</td>
+                <td>Simple, predictable, no shared medium</td>
+                <td>Scales only by adding more links</td>
+                <td>WAN circuits, leaf-spine links, DCI</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>The link-count argument</h3>
+          <p>For <em>n</em> nodes, a full mesh needs <code>n(n−1)/2</code> links, a ring needs <em>n</em>, a star needs <em>n</em> (or <em>n−1</em> if you count only spokes), and a hub-and-spoke needs <em>n−1</em>. This is why full mesh survives only where the number of nodes is small or the value of a direct path is unusually high.</p>
+
+          <h2>4. The Classic Logical Topologies</h2>
+          <p>Logical topologies use the same vocabulary but describe forwarding:</p>
+          <ul>
+            <li><strong>Logical bus</strong> — a shared broadcast domain. Modern switched Ethernet is physically a star but logically a bus per VLAN: a broadcast reaches every port in the VLAN.</li>
+            <li><strong>Logical star</strong> — a central forwarding point. A switch is a logical star; a hub-and-spoke WAN is a logical star even when the underlying circuits form a mesh.</li>
+            <li><strong>Logical ring</strong> — traffic follows a closed path. Token Ring is the historical example; SONET/SDH rings still use it; STP can also produce a logical tree from a physical ring.</li>
+            <li><strong>Logical mesh</strong> — every node has a path to every other, though not necessarily a dedicated link. A routed network with full reachability is logically a mesh even if the physical topology is hierarchical.</li>
+            <li><strong>Logical tree</strong> — a loop-free hierarchy of forwarding. This is what spanning tree deliberately creates on a physical mesh.</li>
+            <li><strong>Overlay</strong> — a logical topology built on top of a different physical one: VXLAN over an IP fabric, DMVPN over internet links, SD-WAN over mixed underlays.</li>
+          </ul>
+
+          <h2>5. The Same Cables, Two Different Pictures</h2>
+          <p>The clearest example is a triangle of three switches with redundant links. Physically it is a ring (or a partial mesh). Logically, spanning tree must block one link to prevent a loop, so traffic follows a tree.</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 840 340" class="mx-auto w-full max-w-3xl" role="img" aria-label="Two panels showing the same three-switch triangle physically with three links, and logically with one link blocked by spanning tree">
+              <defs>
+                <marker id="topo-arrow" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+                  <polygon points="0 0, 9 3.5, 0 7" fill="rgb(16,185,129)" />
+                </marker>
+              </defs>
+              <g class="text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" stroke-width="1.5">
+
+                <!-- Physical panel -->
+                <rect x="20" y="20" width="390" height="300" rx="12" class="fill-sky-500/5" stroke="rgb(148,163,184)" stroke-width="1" />
+                <text x="215" y="46" text-anchor="middle" font-size="13" font-weight="600" fill="rgb(2,132,199)" stroke="none">Physical view — three links cabled</text>
+
+                <line x1="110" y1="100" x2="215" y2="230" stroke="rgb(100,116,139)" stroke-width="2" />
+                <line x1="215" y1="230" x2="320" y2="100" stroke="rgb(100,116,139)" stroke-width="2" />
+                <line x1="110" y1="100" x2="320" y2="100" stroke="rgb(100,116,139)" stroke-width="2" />
+
+                <circle cx="110" cy="100" r="22" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <circle cx="215" cy="230" r="22" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <circle cx="320" cy="100" r="22" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="110" y="104" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">A</text>
+                <text x="215" y="234" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">B</text>
+                <text x="320" y="104" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">C</text>
+
+                <text x="215" y="286" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">All three links are up and forwarding-capable at Layer 1.</text>
+                <text x="215" y="302" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">A naive reading says "we have redundancy everywhere".</text>
+
+                <!-- Logical panel -->
+                <rect x="430" y="20" width="390" height="300" rx="12" class="fill-emerald-500/5" stroke="rgb(148,163,184)" stroke-width="1" />
+                <text x="625" y="46" text-anchor="middle" font-size="13" font-weight="600" fill="rgb(5,150,105)" stroke="none">Logical view — STP blocks a link</text>
+
+                <line x1="520" y1="100" x2="625" y2="230" stroke="rgb(16,185,129)" stroke-width="2.5" marker-end="url(#topo-arrow)" />
+                <line x1="625" y1="230" x2="730" y2="100" stroke="rgb(16,185,129)" stroke-width="2.5" marker-end="url(#topo-arrow)" />
+                <line x1="520" y1="100" x2="730" y2="100" stroke="rgb(244,63,94)" stroke-width="2" stroke-dasharray="6 5" />
+                <text x="625" y="92" text-anchor="middle" font-size="9" fill="rgb(244,63,94)" stroke="none">BLOCKED (discarding)</text>
+                <line x1="615" y1="108" x2="635" y2="128" stroke="rgb(244,63,94)" stroke-width="2.5" />
+                <line x1="635" y1="108" x2="615" y2="128" stroke="rgb(244,63,94)" stroke-width="2.5" />
+
+                <circle cx="520" cy="100" r="22" class="fill-emerald-500/20" stroke="rgb(16,185,129)" />
+                <circle cx="625" cy="230" r="22" class="fill-emerald-500/20" stroke="rgb(16,185,129)" />
+                <circle cx="730" cy="100" r="22" class="fill-emerald-500/20" stroke="rgb(16,185,129)" />
+                <text x="520" y="104" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">A</text>
+                <text x="625" y="234" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">B</text>
+                <text x="730" y="104" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">C</text>
+
+                <text x="625" y="286" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">A→C traffic now goes A→B→C. The blocked link is a</text>
+                <text x="625" y="302" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">standby path, not usable capacity, until a failure occurs.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">Physical redundancy does not equal logical capacity. Spanning tree turns a physical loop into a logical tree — deliberately.</p>
+          </div>
+
+          <h2>6. Cases Where the Two Views Diverge</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Technology</th>
+                <th>Physical topology</th>
+                <th>Logical topology</th>
+                <th>Why it matters</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Switched Ethernet</td>
+                <td>Star (home runs to a switch)</td>
+                <td>Bus per VLAN (one broadcast domain)</td>
+                <td>Broadcast storms and ARP scope follow the VLAN, not the cabling</td>
+              </tr>
+              <tr>
+                <td>Redundant L2 triangle</td>
+                <td>Ring or partial mesh</td>
+                <td>Tree after STP blocks a link</td>
+                <td>Half your redundancy may be idle capacity</td>
+              </tr>
+              <tr>
+                <td>Hub-and-spoke WAN</td>
+                <td>Partial mesh of circuits</td>
+                <td>Logical star through the hub</td>
+                <td>Spoke-to-spoke traffic hairpins and doubles latency</td>
+              </tr>
+              <tr>
+                <td>DMVPN / SD-WAN</td>
+                <td>Hub-and-spoke or internet underlay</td>
+                <td>Logical full mesh via tunnels and policy</td>
+                <td>The underlay can be asymmetric; the overlay hides it</td>
+              </tr>
+              <tr>
+                <td>VXLAN / EVPN</td>
+                <td>Leaf-spine IP fabric (Clos)</td>
+                <td>Logical Layer 2 segments stretched across the fabric</td>
+                <td>VM mobility does not imply a single physical segment</td>
+              </tr>
+              <tr>
+                <td>MPLS L3VPN</td>
+                <td>Provider's internal topology</td>
+                <td>Per-customer logical mesh of VRFs</td>
+                <td>Your routing adjacencies are independent of provider links</td>
+              </tr>
+              <tr>
+                <td>Wireless LAN</td>
+                <td>APs at fixed locations with overlapping cells</td>
+                <td>BSS/SSID mapped to VLANs</td>
+                <td>Clients roam physically while staying in one logical subnet</td>
+              </tr>
+              <tr>
+                <td>Firewall insertion</td>
+                <td>One extra cable in the rack</td>
+                <td>New policy zone and stateful hop</td>
+                <td>A physical change alters every flow's logical path</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>7. Wire vs Flow: How to Read Each View</h2>
+          <h3>Reading the physical view</h3>
+          <ul>
+            <li>Which ports are patched to which switch ports? Is the link copper, fiber, or radio?</li>
+            <li>Which links are cross-connects or carrier circuits?</li>
+            <li>Where does power come from — is PoE budgeted per switch?</li>
+            <li>What is the single point of failure if a device or cable is removed?</li>
+          </ul>
+
+          <h3>Reading the logical view</h3>
+          <ul>
+            <li>What is the VLAN and subnet of each endpoint?</li>
+            <li>Where is the default gateway, and is it first-hop redundant?</li>
+            <li>Which links are forwarding versus blocking (STP, LACP, routing)?</li>
+            <li>Which routing protocol advertises each prefix, and what is the backup path?</li>
+            <li>Where does policy apply — ACLs, firewall zones, VRFs, overlays?</li>
+          </ul>
+
+          <h2>8. Overlays: Deliberate Divergence</h2>
+          <p>Overlay networks make the difference explicit. A physical underlay provides connectivity; a logical overlay provides the topology applications see.</p>
+          <ul>
+            <li><strong>VXLAN/EVPN</strong> — the underlay is a routed leaf-spine fabric, often with ECMP. The overlay is a set of Layer 2 segments identified by VNIs. VMs can move without changing subnets, even though the physical path changes entirely.</li>
+            <li><strong>DMVPN</strong> — spokes build tunnels to a hub and learn each other's addresses, so the logical topology becomes a partial or full mesh over a hub-and-spoke underlay.</li>
+            <li><strong>SD-WAN</strong> — the underlay is whatever circuits exist; the overlay selects paths per application based on policy and measured quality.</li>
+            <li><strong>VPNs</strong> — a tunnel is a logical point-to-point link that may traverse dozens of physical hops and multiple providers.</li>
+          </ul>
+          <p>The operational consequence: a traceroute shows the underlay, while the routing table shows the overlay. Both are correct, and neither alone explains the end-to-end path.</p>
+
+          <h2>9. Design and Troubleshooting Guidance</h2>
+          <ul>
+            <li><strong>Document both views.</strong> A physical diagram and a logical diagram answer different questions; keep both current.</li>
+            <li><strong>Do not count blocked links as capacity.</strong> STP blocking, standby firewall pairs, and backup routes are resilience, not throughput.</li>
+            <li><strong>Test failover, not just configuration.</strong> A redundant topology that never converges is only redundant on paper.</li>
+            <li><strong>Watch the physical path of logical shortcuts.</strong> A tunnel or overlay can bypass the firewall or inspection point you assumed was inline.</li>
+            <li><strong>Prefer routed links where loops are a risk.</strong> Layer 3 uses TTL and converges without blocking half the topology.</li>
+            <li><strong>Mind asymmetry.</strong> Logical paths can differ per direction, which breaks stateful devices and confuses captures.</li>
+            <li><strong>Check MTU across overlays.</strong> Each encapsulation layer reduces the usable payload; the logical path may be fine while large packets fail.</li>
+          </ul>
+
+          <h2>10. Exam Traps</h2>
+          <ul>
+            <li><strong>"A star topology has no redundancy."</strong> The central device is a single point, but the spokes are independent; dual-homed stars exist.</li>
+            <li><strong>"A ring is obsolete."</strong> SONET/SDH and metro fiber rings are still deployed, with protection switching measured in tens of milliseconds.</li>
+            <li><strong>"Mesh is always better."</strong> Full mesh costs grow quadratically and add control-plane state; partial mesh is the usual answer.</li>
+            <li><strong>"Logical topology equals VLAN layout."</strong> VLANs are one part of it; routing, STP state, overlays, and policy also define forwarding.</li>
+            <li><strong>"A physically redundant triangle gives double bandwidth."</strong> Only if the control protocol uses both paths — STP does not, by default.</li>
+            <li><strong>"Wireless has no physical topology."</strong> It has AP placement and RF cells; that is the physical layer of a wireless network.</li>
+            <li><strong>"The cable diagram shows the path packets take."</strong> It shows possible paths, not the selected one.</li>
+          </ul>
+
+          <h2>11. Key Takeaways</h2>
+          <ul>
+            <li><strong>Physical</strong> topology is the cable plant; <strong>logical</strong> topology is forwarding behavior.</li>
+            <li>The same physical network can present several logical topologies depending on VLANs, STP, routing, and overlays.</li>
+            <li>Physical redundancy is not logical capacity: blocked links, standby devices, and backup routes are for failure, not throughput.</li>
+            <li>Switched Ethernet is a physical star and a logical bus per VLAN; a triangle is physically a ring and logically a tree under STP.</li>
+            <li>Overlays deliberately separate the two views — underlay for connectivity, overlay for the topology applications see.</li>
+            <li>Design and troubleshoot with both drawings, and test the failure cases.</li>
+          </ul>
+
+          <h2>12. Quick Review Questions</h2>
+          <ol>
+            <li>Define physical and logical topology in one sentence each.</li>
+            <li>Why is switched Ethernet described as a physical star but a logical bus?</li>
+            <li>What does spanning tree change about a physical triangle, and why?</li>
+            <li>How many links does a full mesh of 6 sites need? How many for hub-and-spoke?</li>
+            <li>In a VXLAN fabric, which topology is the underlay and which is the overlay?</li>
+            <li>Why can a redundant topology still have a single point of failure?</li>
+            <li>Why is a cable diagram insufficient for troubleshooting a firewall bypass?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="network-devices.html">Network Devices: Hub, Switch, Router, Firewall, and Access Point</a></li>
+            <li><a href="lan-wan-man-pan.html">LAN, WAN, MAN, and PAN: Network Scope Explained</a></li>
+            <li><a href="why-networks-exist.html">Why Networks Exist: Sharing, Distance, and the Economics of Connection</a></li>
+            <li><a href="../../pages/02-network-topologies.html">Level 2 - Network Topologies</a></li>
+            <li><a href="../../pages/04-ethernet-switching.html">Level 4 - Ethernet Switching</a></li>
+            <li><a href="../../pages/08-stp.html">Level 8 - Spanning Tree</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
