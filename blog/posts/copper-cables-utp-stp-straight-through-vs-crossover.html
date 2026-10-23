@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Copper Cables: UTP, STP, Straight-Through vs Crossover — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>13 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Copper Cables: UTP, STP, Straight-Through vs Crossover</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Twisted pairs, shielding that actually works, category limits that matter, and which pin goes where — explained once, properly.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Cabling</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Copper</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Ethernet</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Pinouts</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Physical Layer</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Copper Still Runs the Access Layer</h2>
+          <p>Fibre owns the backbone, but copper owns the desk. It is cheap, it terminates in the field, it carries power as well as data, and it reaches 100 metres — enough for almost every floor plan. Even in a Wi-Fi-first design, the access points are usually copper-fed.</p>
+          <p>That longevity is exactly why copper faults are so common: the cable outlives several switch generations, gets moved, re-patched, stapled, kinked, and terminated by whoever was available that day. Understanding what is inside the jacket turns a category number into an engineering limit.</p>
+
+          <h2>2. What Twisting Is Actually Doing</h2>
+          <p>A twisted-pair cable is four pairs of insulated copper conductors, each pair twisted at a different rate, wrapped in a jacket. Each element exists for a reason:</p>
+          <ul>
+            <li><strong>The pair.</strong> Data travels as a differential signal: one wire carries the positive half, the other the negative. The receiver subtracts them, so noise that hits both wires equally cancels out.</li>
+            <li><strong>The twist.</strong> It keeps the two wires in the same electromagnetic neighbourhood, so interference couples to both almost equally. Different twist rates per pair stop pairs from lining up and coupling into each other.</li>
+            <li><strong>The jacket.</strong> Mechanical protection and, in plenum cable, fire safety.</li>
+          </ul>
+          <p>This is why the last few centimetres matter so much. Untwisting a pair at the termination removes the cancellation exactly where the signal is weakest — at the connector. Standards limit untwisted length at the termination (commonly 13 mm / 0.5 in), and a sloppy punch-down is a measurable performance defect, not just an aesthetic one.</p>
+
+          <h2>3. Categories and the Numbers That Matter</h2>
+          <p>A category is a specification: a frequency range plus limits on loss, crosstalk, and return loss. The headline speed is the least useful part of the table.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Bandwidth</th>
+                <th>Typical use</th>
+                <th>Distance limit</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Cat3</td><td>16 MHz</td><td>10BASE-T, voice</td><td>100 m</td><td>Obsolete for data; still found in old buildings</td></tr>
+              <tr><td>Cat5</td><td>100 MHz</td><td>100BASE-TX, 1000BASE-T</td><td>100 m</td><td>Superseded by Cat5e</td></tr>
+              <tr><td>Cat5e</td><td>100 MHz</td><td>1G, 2.5G, 5G</td><td>100 m</td><td>Enhanced crosstalk spec; the practical minimum today</td></tr>
+              <tr><td>Cat6</td><td>250 MHz</td><td>1G / 2.5G / 5G</td><td>100 m</td><td>10GBASE-T only to 55 m (often less in bundles)</td></tr>
+              <tr><td>Cat6A</td><td>500 MHz</td><td>10G</td><td>100 m</td><td>Usually shielded; the safe choice for 10G copper</td></tr>
+              <tr><td>Cat7</td><td>600 MHz</td><td>10G</td><td>100 m</td><td>ISO/IEC Class F, not a TIA category; GG45/TERA connectors</td></tr>
+              <tr><td>Cat8</td><td>2000 MHz</td><td>25G / 40G</td><td>30 m</td><td>Data-centre top-of-rack; Class I/II, shielded</td></tr>
+            </tbody>
+          </table>
+          <p>Two limits catch people out:</p>
+          <ul>
+            <li><strong>Cat6 at 10G is a 55-metre cable, not a 100-metre cable.</strong> In a dense bundle, alien crosstalk can push the usable length lower. If you need 10GBASE-T across a full 100 m run, specify Cat6A.</li>
+            <li><strong>The 100 m channel is 90 m permanent + 10 m of patch cords.</strong> Two 5 m cords, or one 10 m cord, not "90 m plus whatever is in the cabinet."</li>
+          </ul>
+          <p>Also watch for <strong>copper-clad aluminium (CCA)</strong> and counterfeit cable. CCA has higher resistance than solid copper: it may pass a basic wiremap test, then fail under PoE load, overheat in bundles, or fall short of the category it claims. Buy certified cable and check the print on the jacket.</p>
+
+          <h2>4. UTP, STP, and the Shielding Alphabet</h2>
+          <p>The industry uses two naming systems, and vendors mix them. The ISO/IEC notation is the precise one: <code>X/YTP</code>, where X is the overall shield and Y is the per-pair shield.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Construction</th>
+                <th>Common name</th>
+                <th>Shielding</th>
+                <th>When it helps</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>U/UTP</td><td>UTP</td><td>None</td><td>Offices, normal EMI; the default</td></tr>
+              <tr><td>F/UTP</td><td>FTP, ScTP</td><td>Overall foil, unshielded pairs</td><td>Moderate EMI, reduced alien crosstalk</td></tr>
+              <tr><td>U/FTP</td><td>STP (some vendors)</td><td>Foil per pair, no overall shield</td><td>High-frequency crosstalk control</td></tr>
+              <tr><td>S/FTP</td><td>STP, SFTP</td><td>Braid overall + foil per pair</td><td>Industrial and high-EMI environments</td></tr>
+              <tr><td>SF/UTP</td><td>SFTP</td><td>Braid and foil overall</td><td>Harsh electrical environments</td></tr>
+            </tbody>
+          </table>
+          <p>Shielding is not free protection. A shield only works if it is <strong>bonded to ground at both ends</strong> through proper connectors, patch panels, and building ground. A floating shield is an antenna: it collects interference and couples it into the pairs it was meant to protect. That is why a badly installed STP link can perform worse than UTP.</p>
+          <p>Use shielded cable when the environment demands it — near variable-frequency drives, welding, radio transmitters, or where alien crosstalk between dense 10G bundles is the limiting factor. Then treat grounding as part of the cabling job, not an afterthought.</p>
+
+          <h2>5. Construction Choices Beyond the Category</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Choice</th>
+                <th>Option</th>
+                <th>Where it belongs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Conductor</td><td>Solid vs stranded</td><td>Solid for permanent horizontal runs; stranded for patch cords that flex</td></tr>
+              <tr><td>Gauge</td><td>22, 23, 24 AWG</td><td>23 AWG is typical horizontal; 22 AWG for long or high-power PoE runs</td></tr>
+              <tr><td>Jacket rating</td><td>CMP, CMR, LSZH, outdoor</td><td>CMP in plenum air spaces; CMR in risers; LSZH where smoke toxicity matters; flooded/UV-rated outdoors</td></tr>
+              <tr><td>Shield</td><td>Foil, braid, both</td><td>Only where EMI or alien crosstalk justifies the grounding work</td></tr>
+            </tbody>
+          </table>
+          <p>Solid conductors have lower loss but break when flexed repeatedly — never use a solid run as a patch cord. Stranded cords are flexible but lossier, which is why the patch-cord allowance in the 100 m budget is only 10 m.</p>
+
+          <h2>6. Connectors and Pinouts</h2>
+          <p>Ethernet over copper uses the 8P8C modular connector, universally called RJ45. Eight positions, four pairs. Two wiring standards define which colour lands on which pin: <strong>T568A</strong> and <strong>T568B</strong>.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Pin</th>
+                <th>T568A</th>
+                <th>T568B</th>
+                <th>Pair (A / B)</th>
+                <th>10/100 Mb/s</th>
+                <th>1000BASE-T</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>White-green</td><td>White-orange</td><td>3 / 2</td><td>TX+</td><td>BI_DA+</td></tr>
+              <tr><td>2</td><td>Green</td><td>Orange</td><td>3 / 2</td><td>TX−</td><td>BI_DA−</td></tr>
+              <tr><td>3</td><td>White-orange</td><td>White-green</td><td>2 / 3</td><td>RX+</td><td>BI_DB+</td></tr>
+              <tr><td>4</td><td>Blue</td><td>Blue</td><td>1</td><td>—</td><td>BI_DC+</td></tr>
+              <tr><td>5</td><td>White-blue</td><td>White-blue</td><td>1</td><td>—</td><td>BI_DC−</td></tr>
+              <tr><td>6</td><td>Orange</td><td>Green</td><td>2 / 3</td><td>RX−</td><td>BI_DB−</td></tr>
+              <tr><td>7</td><td>White-brown</td><td>White-brown</td><td>4</td><td>—</td><td>BI_DD+</td></tr>
+              <tr><td>8</td><td>Brown</td><td>Brown</td><td>4</td><td>—</td><td>BI_DD−</td></tr>
+            </tbody>
+          </table>
+          <p>Both standards are valid. Pick one for the site, document it, and use it everywhere; mixing them mid-run creates accidental crossovers. In the United States, T568B is the commercial default and T568A is common in government and older installations.</p>
+          <p>Note the 10/100 column: only pairs on pins 1-2 and 3-6 carry data. Gigabit and above use all four pairs, in both directions simultaneously. That asymmetry explains a classic fault: one broken pair still allows a gigabit port to fall back to 100 Mb/s instead of going down.</p>
+
+          <h2>7. Straight-Through vs Crossover</h2>
+          <p>The difference is not the cable — it is which standard is used on each end.</p>
+          <ul>
+            <li><strong>Straight-through:</strong> T568B on both ends (or T568A on both ends). Pin 1 goes to pin 1, all the way across. Used between devices whose transmit and receive pins are already opposite: PC to switch, router to switch, access point to switch.</li>
+            <li><strong>Crossover:</strong> T568A on one end, T568B on the other. This swaps the transmit and receive pairs (1↔3 and 2↔6), so two devices with the same pin role can talk. Used between like devices: switch to switch, PC to PC, router to router.</li>
+            <li><strong>Rollover:</strong> a different cable entirely, with pins reversed 1-8 to 8-1. It is not Ethernet; it is a Cisco console cable.</li>
+          </ul>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 515" class="mx-auto w-full max-w-4xl" role="img" aria-label="Pinout comparison of a straight-through cable wired T568B on both ends and a crossover cable wired T568B on one end and T568A on the other">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="28" font-size="10.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">SAME CABLE, DIFFERENT WIRING</text>
+
+                <!-- Panel A -->
+                <text x="40" y="60" font-size="10" font-weight="600" fill="currentColor" stroke="none">STRAIGHT-THROUGH</text>
+                <text x="168" y="60" font-size="9" fill="rgb(100,116,139)" stroke="none">T568B ↔ T568B — pin 1 to pin 1, all the way across</text>
+
+                <rect x="150" y="74" width="36" height="132" rx="5" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <rect x="714" y="74" width="36" height="132" rx="5" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="168" y="222" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">T568B</text>
+                <text x="732" y="222" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">T568B</text>
+
+                <text x="144" y="89" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">1</text>
+                <text x="144" y="105" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">2</text>
+                <text x="144" y="121" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">3</text>
+                <text x="144" y="137" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">4</text>
+                <text x="144" y="153" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">5</text>
+                <text x="144" y="169" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">6</text>
+                <text x="144" y="185" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">7</text>
+                <text x="144" y="201" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">8</text>
+                <text x="756" y="89" font-size="8.5" fill="rgb(100,116,139)" stroke="none">1</text>
+                <text x="756" y="105" font-size="8.5" fill="rgb(100,116,139)" stroke="none">2</text>
+                <text x="756" y="121" font-size="8.5" fill="rgb(100,116,139)" stroke="none">3</text>
+                <text x="756" y="137" font-size="8.5" fill="rgb(100,116,139)" stroke="none">4</text>
+                <text x="756" y="153" font-size="8.5" fill="rgb(100,116,139)" stroke="none">5</text>
+                <text x="756" y="169" font-size="8.5" fill="rgb(100,116,139)" stroke="none">6</text>
+                <text x="756" y="185" font-size="8.5" fill="rgb(100,116,139)" stroke="none">7</text>
+                <text x="756" y="201" font-size="8.5" fill="rgb(100,116,139)" stroke="none">8</text>
+
+                <line x1="186" y1="86" x2="714" y2="86" stroke="#FB923C" />
+                <line x1="186" y1="102" x2="714" y2="102" stroke="#EA580C" />
+                <line x1="186" y1="118" x2="714" y2="118" stroke="#4ADE80" />
+                <line x1="186" y1="134" x2="714" y2="134" stroke="#3B82F6" />
+                <line x1="186" y1="150" x2="714" y2="150" stroke="#93C5FD" />
+                <line x1="186" y1="166" x2="714" y2="166" stroke="#16A34A" />
+                <line x1="186" y1="182" x2="714" y2="182" stroke="#C08457" />
+                <line x1="186" y1="198" x2="714" y2="198" stroke="#92400E" />
+
+                <!-- Panel A legend -->
+                <rect x="40" y="224" width="10" height="10" fill="#FB923C" stroke="none" />
+                <text x="54" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">1 W-OR</text>
+                <rect x="142" y="224" width="10" height="10" fill="#EA580C" stroke="none" />
+                <text x="156" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">2 OR</text>
+                <rect x="244" y="224" width="10" height="10" fill="#4ADE80" stroke="none" />
+                <text x="258" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">3 W-GR</text>
+                <rect x="346" y="224" width="10" height="10" fill="#3B82F6" stroke="none" />
+                <text x="360" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">4 BL</text>
+                <rect x="448" y="224" width="10" height="10" fill="#93C5FD" stroke="none" />
+                <text x="462" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">5 W-BL</text>
+                <rect x="550" y="224" width="10" height="10" fill="#16A34A" stroke="none" />
+                <text x="564" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">6 GR</text>
+                <rect x="652" y="224" width="10" height="10" fill="#C08457" stroke="none" />
+                <text x="666" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">7 W-BR</text>
+                <rect x="754" y="224" width="10" height="10" fill="#92400E" stroke="none" />
+                <text x="768" y="233" font-size="8" fill="rgb(100,116,139)" stroke="none">8 BR</text>
+                <text x="40" y="252" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Used for unlike ports: PC → switch, router → switch, access point → switch</text>
+
+                <!-- Panel B -->
+                <text x="40" y="284" font-size="10" font-weight="600" fill="currentColor" stroke="none">CROSSOVER</text>
+                <text x="128" y="284" font-size="9" fill="rgb(100,116,139)" stroke="none">T568B ↔ T568A — pairs 2 and 3 swap: 1↔3 and 2↔6</text>
+
+                <rect x="150" y="298" width="36" height="132" rx="5" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <rect x="714" y="298" width="36" height="132" rx="5" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="168" y="446" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">T568B</text>
+                <text x="732" y="446" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">T568A</text>
+
+                <text x="144" y="313" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">1</text>
+                <text x="144" y="329" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">2</text>
+                <text x="144" y="345" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">3</text>
+                <text x="144" y="361" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">4</text>
+                <text x="144" y="377" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">5</text>
+                <text x="144" y="393" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">6</text>
+                <text x="144" y="409" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">7</text>
+                <text x="144" y="425" text-anchor="end" font-size="8.5" fill="rgb(100,116,139)" stroke="none">8</text>
+                <text x="756" y="313" font-size="8.5" fill="rgb(100,116,139)" stroke="none">1</text>
+                <text x="756" y="329" font-size="8.5" fill="rgb(100,116,139)" stroke="none">2</text>
+                <text x="756" y="345" font-size="8.5" fill="rgb(100,116,139)" stroke="none">3</text>
+                <text x="756" y="361" font-size="8.5" fill="rgb(100,116,139)" stroke="none">4</text>
+                <text x="756" y="377" font-size="8.5" fill="rgb(100,116,139)" stroke="none">5</text>
+                <text x="756" y="393" font-size="8.5" fill="rgb(100,116,139)" stroke="none">6</text>
+                <text x="756" y="409" font-size="8.5" fill="rgb(100,116,139)" stroke="none">7</text>
+                <text x="756" y="425" font-size="8.5" fill="rgb(100,116,139)" stroke="none">8</text>
+
+                <path d="M186 310 C 380 310 520 342 714 342" fill="none" stroke="#FB923C" stroke-width="1.6" />
+                <path d="M186 326 C 380 326 520 390 714 390" fill="none" stroke="#EA580C" stroke-width="1.6" />
+                <path d="M186 342 C 380 342 520 310 714 310" fill="none" stroke="#4ADE80" stroke-width="1.6" />
+                <line x1="186" y1="358" x2="714" y2="358" stroke="#3B82F6" />
+                <line x1="186" y1="374" x2="714" y2="374" stroke="#93C5FD" />
+                <path d="M186 390 C 380 390 520 326 714 326" fill="none" stroke="#16A34A" stroke-width="1.6" />
+                <line x1="186" y1="406" x2="714" y2="406" stroke="#C08457" />
+                <line x1="186" y1="422" x2="714" y2="422" stroke="#92400E" />
+
+                <text x="40" y="458" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Used for like ports: switch → switch, PC → PC, router → router — only where Auto-MDIX is absent</text>
+
+                <text x="40" y="492" font-size="9.5" fill="rgb(100,116,139)" stroke="none">Auto-MDIX on modern ports makes either wiring work — but a crossover is still correct between two fixed-legacy devices.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">Left column: the wire that leaves pin <em>n</em>. Right column: where it lands.</p>
+          </div>
+
+          <p>Hold a crossover up to the light and the pairs appear to swap positions; hold a straight-through up and the colours match end to end. The diagram above is the electrical truth behind that.</p>
+
+          <h3>Do you still need a crossover?</h3>
+          <p>Most modern Ethernet ports implement <strong>Auto-MDIX</strong>, which detects the pairing and swaps transmit and receive internally. On gigabit and faster ports it is effectively universal, so a straight-through cable works between two switches. Crossover cables remain relevant for older 10/100 equipment, lab gear with Auto-MDIX disabled, and exam questions. Keep one in the bag; do not design around needing it.</p>
+          <p>The rollover cable is not interchangeable. It has a different purpose (console access), a different pinout (fully reversed), and usually a flat light-blue jacket. Plugging one into an Ethernet port does nothing useful.</p>
+
+          <h2>8. PoE Changes the Cable Math</h2>
+          <p>Power over Ethernet sends DC on the same pairs that carry data, which makes resistance a first-class concern:</p>
+          <ul>
+            <li><strong>Length costs voltage.</strong> A long run with thin conductors drops more volts, and the powered device sees less than the switch promised.</li>
+            <li><strong>Heat is cumulative.</strong> Bundled cables cannot shed heat as well as a single run, so high-power PoE in dense bundles needs larger conductors (22 AWG) and attention to conduit fill.</li>
+            <li><strong>CCA is disqualifying.</strong> Higher resistance means more loss and more heat exactly where PoE is least forgiving.</li>
+            <li><strong>All four pairs matter for 802.3bt.</strong> Higher-power standards use the spare pairs, so a cable with a damaged pair may data-fail, power-fail, or both.</li>
+          </ul>
+          <p>When a powered device reboots under load but idles fine, measure the delivered voltage and the cable length before replacing the device.</p>
+
+          <h2>9. Installation Rules That Prevent Callbacks</h2>
+          <ol>
+            <li><strong>Respect bend radius.</strong> Roughly four times the cable diameter for installation; never a sharp kink.</li>
+            <li><strong>Do not over-tension.</strong> Pulling harder than the spec stretches pairs and changes their electrical properties.</li>
+            <li><strong>Keep twists to the termination.</strong> Untwist no more than the standard allows — about 13 mm.</li>
+            <li><strong>Separate from power.</strong> Run data and mains in separate pathways; cross at right angles when they must meet.</li>
+            <li><strong>Use the right jacket.</strong> CMP in plenum spaces, CMR in risers, outdoor-rated outside — not "whatever was on the reel."</li>
+            <li><strong>Support and dress.</strong> Velcro for bundles, service loops at panels, no cable hanging from a connector.</li>
+            <li><strong>Label both ends</strong> with the same identifier, and record the run in the documentation.</li>
+            <li><strong>Certify, don't just beep.</strong> A continuity tester proves copper is connected; a certifier proves the link meets its category.</li>
+          </ol>
+
+          <h2>10. Testing: Wiremap Is the Minimum</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Test</th>
+                <th>What it catches</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Wiremap</td><td>Opens, shorts, reversed and crossed pairs, split pairs</td></tr>
+              <tr><td>Length / TDR</td><td>Runs over the limit, breaks, and their distance from the tester</td></tr>
+              <tr><td>Insertion loss</td><td>Too much attenuation — long runs, thin conductors, bad terminations</td></tr>
+              <tr><td>NEXT / PS NEXT</td><td>Crosstalk between pairs and between cables</td></tr>
+              <tr><td>ACRF</td><td>Attenuation-to-crosstalk ratio — the real usable bandwidth margin</td></tr>
+              <tr><td>Return loss</td><td>Impedance mismatches from bad terminations or crushed cable</td></tr>
+              <tr><td>Propagation delay / skew</td><td>Pair-length differences that break high-speed signalling</td></tr>
+            </tbody>
+          </table>
+          <p><strong>Split pairs</strong> deserve a note. If pins 1-2 come from one pair and 3-6 from another, a basic continuity test still passes because every pin is connected. The link then suffers severe crosstalk and may only train at a lower speed. Only a wiremap that checks pair membership — or a certifier — catches it.</p>
+
+          <h2>11. Fault Catalogue</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Fault</th>
+                <th>Symptom</th>
+                <th>Cause</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Open pair</td><td>Link down, or gigabit falls back to 100 Mb/s</td><td>Broken conductor, bad punch-down, damaged cord</td></tr>
+              <tr><td>Short</td><td>Link down or severe errors</td><td>Crushed cable, staple through the jacket, water</td></tr>
+              <tr><td>Split pair</td><td>Link trains but throughput is poor; CRC errors</td><td>Mis-ordered punch-down at one end</td></tr>
+              <tr><td>Reversed pair</td><td>Link fails or works only at low speed</td><td>Pair landed on the wrong pins at one end</td></tr>
+              <tr><td>Bad termination</td><td>Intermittent errors that change when the cable is wiggled</td><td>Untwisted too far, poor crimp, wrong plug for the cable</td></tr>
+              <tr><td>EMI</td><td>CRC errors correlated with equipment activity</td><td>Parallel mains, motors, radio transmitters</td></tr>
+              <tr><td>Water ingress</td><td>Loss that worsens over time; corrosion</td><td>Outdoor jacket used indoors, damaged sheath</td></tr>
+              <tr><td>CCA / counterfeit</td><td>PoE brownouts, heat, failing certification</td><td>Non-compliant cable sold as copper</td></tr>
+            </tbody>
+          </table>
+
+          <h2>12. Two Short Case Studies</h2>
+          <h3>Case A: the gigabit port that would only do 100 Mb/s</h3>
+          <p>A desk was moved and the new run linked at 100 Mb/s on a gigabit switch. Nothing was configured to limit speed.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Evidence</th>
+                <th>Reading</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Port status</td><td>Up, 100 Mb/s, full duplex</td></tr>
+              <tr><td>TDR</td><td>Open on pair 4-5 at 3 m from the jack</td></tr>
+              <tr><td>Inspection</td><td>One conductor not seated in the punch-down block</td></tr>
+            </tbody>
+          </table>
+          <p>Gigabit needs all four pairs; losing one leaves the port able to fall back to the two-pair 100BASE-TX mode. Re-terminating the jack restored 1 Gb/s. A link that "works but slowly" is often a partially working cable.</p>
+
+          <h3>Case B: the 10G run that failed at 70 metres</h3>
+          <p>A new 10GBASE-T link between two closets would not come up, while the same switch ports worked on a short lab cable.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Evidence</th>
+                <th>Reading</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Cable</td><td>Cat6, 70 m permanent link</td></tr>
+              <tr><td>Limit</td><td>10GBASE-T over Cat6 is specified to 55 m</td></tr>
+              <tr><td>Environment</td><td>Bundled with 23 other active cables (alien crosstalk)</td></tr>
+            </tbody>
+          </table>
+          <p>The cable was not defective; it was outside its specification for that speed. The fix was Cat6A (or fibre), not a new connector. Category is a distance-and-frequency contract, and 10G copper is where that contract is most often misunderstood.</p>
+
+          <h2>13. Field Checks</h2>
+          <pre># Linux
+ethtool eth0                         # speed, duplex, link, autoneg
+ethtool -S eth0 | grep -Ei 'crc|err|drop'
+ethtool --cable-test eth0            # supported NICs only
+
+# Cisco IOS / IOS XE
+show interfaces Gi1/0/1 | include error|CRC|duplex|rate
+show interfaces Gi1/0/1 counters errors
+show cable-diagnostics tdr interface Gi1/0/1
+show power inline Gi1/0/1 detail
+show inventory                       # part numbers for optics and cables</pre>
+          <p>For permanent links, a certifier report is worth more than any switch counter: it tells you which pair, which measurement, and how far down the run the defect sits.</p>
+
+          <h2>14. Exam Traps</h2>
+          <ul>
+            <li><strong>"Crossover cables connect like devices."</strong> Historically correct and still the expected exam answer, but Auto-MDIX makes it a non-issue on modern ports.</li>
+            <li><strong>"Cat6 does 10G at 100 m."</strong> It does 10GBASE-T to 55 m. Cat6A is the 100 m copper answer.</li>
+            <li><strong>"Cat7 is a TIA category."</strong> It is ISO/IEC Class F, with different connectors; TIA stops at Cat6A and Cat8 for twisted pair.</li>
+            <li><strong>"Shielded cable is always better."</strong> Only with proper bonding at both ends; a floating shield can make things worse.</li>
+            <li><strong>"T568A is wrong."</strong> Both T568A and T568B are valid; consistency matters, not the choice.</li>
+            <li><strong>"Gigabit uses two pairs."</strong> 1000BASE-T uses all four. Only 10/100 uses two.</li>
+            <li><strong>"A rollover cable is a crossover."</strong> It reverses all eight pins and is for console access, not Ethernet.</li>
+            <li><strong>"The 100 m limit includes unlimited patch cords."</strong> It is 90 m permanent plus 10 m of cords.</li>
+            <li><strong>"Solid cable is best everywhere."</strong> Solid for permanent runs; stranded for patch cords that flex.</li>
+          </ul>
+
+          <h2>15. Key Takeaways</h2>
+          <ul>
+            <li>Twisting cancels interference; untwisting at the termination throws that protection away.</li>
+            <li>The category number is a frequency and distance contract — Cat6 at 10G is 55 m, not 100 m.</li>
+            <li>Shielding only works when bonded at both ends; otherwise it is an antenna.</li>
+            <li>Straight-through is the same pinout at both ends; crossover is T568A on one end and T568B on the other.</li>
+            <li>Auto-MDIX made crossover cables situational, not obsolete in the exam or in legacy racks.</li>
+            <li>Copper carries power now, so resistance, gauge, and heat are part of the design.</li>
+            <li>A wiremap test is the minimum; certification is what proves a link meets its category.</li>
+          </ul>
+
+          <h2>16. Quick Review Questions</h2>
+          <ol>
+            <li>Why does untwisting a pair at the connector degrade performance?</li>
+            <li>What is the maximum 10GBASE-T distance over Cat6, and why?</li>
+            <li>What must be true for a shielded cable's shield to help rather than hurt?</li>
+            <li>Which pins carry data in 100BASE-TX, and which additional pairs does 1000BASE-T use?</li>
+            <li>How does a crossover cable differ from a straight-through at the pin level?</li>
+            <li>Why can a broken pair cause a gigabit link to run at 100 Mb/s instead of failing?</li>
+            <li>What is a split pair, and why does a basic continuity tester miss it?</li>
+            <li>Why is CCA cable a poor choice for PoE?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="why-the-physical-layer-comes-first.html">Why the Physical Layer Comes First: Signals, Media, and the Limits Above</a></li>
+            <li><a href="using-layers-to-troubleshoot.html">Using Layers to Troubleshoot: A Method, Not a Checklist</a></li>
+            <li><a href="mapping-protocols-and-devices-to-layers.html">Mapping Protocols and Devices to Layers: A Practical Reference</a></li>
+            <li><a href="osi-seven-layers.html">The 7 Layers of OSI: Models, Functions, Protocols, and Devices</a></li>
+            <li><a href="../../pages/01-physical-layer.html">Level 1 - Physical Layer</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
