@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSI Model vs TCP/IP Model: In-Depth Comparison — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose h4 { margin-top: 1.75rem; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Hub</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>12 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">OSI Model vs TCP/IP Model: In-Depth Comparison</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">A comprehensive breakdown of the OSI 7-layer model and the TCP/IP model, including their layers, protocols, encapsulation, data flow, key differences, and CCNP exam-relevant concepts.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">OSI</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">TCP/IP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Networking</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Introduction</h2>
+          <p>Network communication is complex. To make it manageable, networking models break this process down into smaller, standardized layers. The two most important models you'll encounter are the <strong>OSI (Open Systems Interconnection)</strong> model and the <strong>TCP/IP (Transmission Control Protocol/Internet Protocol)</strong> model.</p>
+          <p>The OSI model is a theoretical, vendor-neutral reference model developed by the ISO. The TCP/IP model is the practical model that powers the modern internet and is what real-world networks actually use today.</p>
+
+          <h2>2. The OSI Model (7 Layers)</h2>
+          <p>The OSI model consists of 7 layers, numbered from Layer 7 (closest to the user) to Layer 1 (closest to the physical medium). A common mnemonic to remember from top to bottom is <em>"All People Seem To Need Data Processing"</em>, and from bottom to top <em>"Please Do Not Throw Sausage Pizza Away"</em>.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Layer #</th>
+                <th>Name</th>
+                <th>PDU</th>
+                <th>Function</th>
+                <th>Devices/Examples</th>
+                <th>Protocols</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>7</td>
+                <td><strong>Application</strong></td>
+                <td>Data</td>
+                <td>Provides network services directly to end-user applications. Handles user interfaces, authentication, and resource availability.</td>
+                <td>End-user apps</td>
+                <td>HTTP/HTTPS, DNS, SMTP, POP3, IMAP, FTP, SNMP, Telnet, SSH</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><strong>Presentation</strong></td>
+                <td>Data</td>
+                <td>Translates, encrypts, compresses, and formats data. Ensures data is readable by the receiving application.</td>
+                <td>Gateways</td>
+                <td>SSL/TLS, JPEG, GIF, ASCII, EBCDIC, MPEG</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>Session</strong></td>
+                <td>Data</td>
+                <td>Establishes, manages, and terminates sessions between applications. Handles dialog control and synchronization.</td>
+                <td>Gateways</td>
+                <td>NetBIOS, RPC, PPTP, NFS</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Transport</strong></td>
+                <td>Segment (TCP) / Datagram (UDP)</td>
+                <td>Provides reliable or unreliable end-to-end delivery. Handles segmentation, flow control, error recovery, and port numbers.</td>
+                <td>Firewalls</td>
+                <td>TCP, UDP</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Network</strong></td>
+                <td>Packet</td>
+                <td>Logical addressing (IP), routing between different networks, path determination, and fragmentation.</td>
+                <td>Routers, Layer 3 switches</td>
+                <td>IP, ICMP, OSPF, EIGRP, RIP, BGP, IPsec, ARP (associated)</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Data Link</strong></td>
+                <td>Frame</td>
+                <td>Physical addressing (MAC), framing, error detection, access to the media, and flow control on local segments.</td>
+                <td>Switches, Bridges, NICs</td>
+                <td>Ethernet, IEEE 802.11 (Wi-Fi), PPP, HDLC, Frame Relay, STP</td>
+              </tr>
+              <tr>
+                <td>1</td>
+                <td><strong>Physical</strong></td>
+                <td>Bits</td>
+                <td>Defines electrical, mechanical, and procedural specifications. Transmits raw bits over the physical medium.</td>
+                <td>Hubs, Cables, Repeaters, Transceivers</td>
+                <td>Ethernet cables, Fiber, RS-232, DSL, IEEE 802.3 physical standards</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>3. The TCP/IP Model (4 Layers)</h2>
+          <p>The TCP/IP model is a protocol suite model originally developed by DARPA. It's more condensed than OSI and focuses on the protocols actually used on the internet. It has 4 layers:</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Layer #</th>
+                <th>Name</th>
+                <th>PDU</th>
+                <th>Function</th>
+                <th>Protocols</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>4</td>
+                <td><strong>Application</strong></td>
+                <td>Data</td>
+                <td>Combines OSI Layers 5, 6, and 7. Handles application services, data representation, and session management.</td>
+                <td>HTTP, HTTPS, DNS, SMTP, FTP, DHCP, Telnet, SSH, SNMP</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Transport</strong></td>
+                <td>Segment (TCP) / Datagram (UDP)</td>
+                <td>Same as OSI Layer 4. Provides reliable (TCP) or connectionless (UDP) communication between hosts.</td>
+                <td>TCP, UDP</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Internet</strong></td>
+                <td>Packet</td>
+                <td>Equivalent to OSI Layer 3. Handles logical addressing, routing, and internetwork communication.</td>
+                <td>IP (IPv4/IPv6), ICMP, IGMP, ARP, IPsec</td>
+              </tr>
+              <tr>
+                <td>1</td>
+                <td><strong>Network Access</strong></td>
+                <td>Frame / Bits</td>
+                <td>Combines OSI Layers 1 and 2. Handles physical transmission and access to the local network media.</td>
+                <td>Ethernet, Wi-Fi (802.11), PPP, MAC, Frame formats</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>4. Encapsulation and Data Flow</h2>
+          <p>When data travels across a network, each layer adds its own header (and sometimes trailer) in a process called <strong>encapsulation</strong>. On the receiving end, <strong>decapsulation</strong> occurs as each layer removes its corresponding header.</p>
+
+          <h3>Encapsulation Process (Sending Host)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Action</th>
+                <th>PDU Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Application/Presentation/Session (OSI) or Application (TCP/IP)</td>
+                <td>Data created by the application</td>
+                <td>Data</td>
+              </tr>
+              <tr>
+                <td>Transport</td>
+                <td>Adds TCP/UDP header (source/destination ports, sequence numbers)</td>
+                <td>Segment/Datagram</td>
+              </tr>
+              <tr>
+                <td>Network/Internet</td>
+                <td>Adds IP header (source/destination IP addresses)</td>
+                <td>Packet</td>
+              </tr>
+              <tr>
+                <td>Data Link/Network Access</td>
+                <td>Adds Layer 2 header/trailer (source/destination MAC, FCS)</td>
+                <td>Frame</td>
+              </tr>
+              <tr>
+                <td>Physical</td>
+                <td>Converts frame to electrical/optical/radio signals</td>
+                <td>Bits</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Example: Accessing a Website (HTTP/HTTPS)</h3>
+          <p>Let's walk through what happens when you type <code>https://example.com</code> into your browser:</p>
+          <ol>
+            <li><strong>Application Layer</strong> - Browser uses HTTP(S) to request the webpage. DNS resolves the domain name to an IP address.</li>
+            <li><strong>Transport Layer</strong> - TCP establishes a 3-way handshake (SYN, SYN-ACK, ACK) and segments the data. Source/destination ports are used (e.g., ephemeral source port to 443).</li>
+            <li><strong>Internet/Network Layer</strong> - IP adds source and destination IP addresses. Routing determines the path to the remote server.</li>
+            <li><strong>Network Access/Data Link Layer</strong> - Ethernet adds source/destination MAC addresses. ARP is used if the next-hop MAC isn't known.</li>
+            <li><strong>Physical Layer</strong> - The frame is converted to bits and transmitted across the medium.</li>
+            <li><strong>Decapsulation</strong> - Each hop and ultimately the destination reverses this process, stripping headers until the HTTP response reaches the browser.</li>
+          </ol>
+
+          <h2>5. OSI vs TCP/IP: Side-by-Side Comparison</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>OSI Model</th>
+                <th>TCP/IP Model</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Origin</strong></td>
+                <td>Developed by ISO in 1984 as a theoretical reference model</td>
+                <td>Developed by DARPA in the 1970s for ARPANET, evolved into the internet model</td>
+              </tr>
+              <tr>
+                <td><strong>Number of Layers</strong></td>
+                <td>7 Layers (Application, Presentation, Session, Transport, Network, Data Link, Physical)</td>
+                <td>4 Layers (Application, Transport, Internet, Network Access)</td>
+              </tr>
+              <tr>
+                <td><strong>Approach</strong></td>
+                <td>Vertical, generic, and protocol-independent. Designed before protocols existed.</td>
+                <td>Horizontal, practical, and protocol-driven. Built around TCP, IP, and UDP.</td>
+              </tr>
+              <tr>
+                <td><strong>Usage</strong></td>
+                <td>Primarily used for learning, troubleshooting, and conceptual understanding</td>
+                <td>Used in all real-world networks and the internet</td>
+              </tr>
+              <tr>
+                <td><strong>Transport Layer</strong></td>
+                <td>Guarantees reliable delivery (connection-oriented) and is strictly defined</td>
+                <td>TCP provides reliability, UDP is connectionless. Both are core to the model</td>
+              </tr>
+              <tr>
+                <td><strong>Addressing</strong></td>
+                <td>Uses different addressing at different layers (e.g., MAC at L2, IP at L3, ports at L4)</td>
+                <td>Similar addressing, but layers are more consolidated</td>
+              </tr>
+              <tr>
+                <td><strong>Model Type</strong></td>
+                <td>Reference model (guideline)</td>
+                <td>Protocol suite model (implementation-based)</td>
+              </tr>
+              <tr>
+                <td><strong>Strictness</strong></td>
+                <td>Very strict boundaries between layers</td>
+                <td>More flexible, layers often overlap in practice</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>6. Protocol Mapping: OSI to TCP/IP</h2>
+          <p>Understanding how protocols map between models is crucial for troubleshooting and exam questions.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>OSI Layer</th>
+                <th>TCP/IP Equivalent</th>
+                <th>Common Protocols/Technologies</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>7 - Application</td>
+                <td rowspan="3">Application</td>
+                <td>HTTP, HTTPS, DNS, SMTP, POP3, IMAP, FTP, SNMP, DHCP, SSH</td>
+              </tr>
+              <tr>
+                <td>6 - Presentation</td>
+                <td>TLS/SSL, ASCII, JPEG, encryption/compression</td>
+              </tr>
+              <tr>
+                <td>5 - Session</td>
+                <td>NetBIOS, RPC, session control</td>
+              </tr>
+              <tr>
+                <td>4 - Transport</td>
+                <td>Transport</td>
+                <td>TCP, UDP</td>
+              </tr>
+              <tr>
+                <td>3 - Network</td>
+                <td>Internet</td>
+                <td>IP, ICMP, OSPF, EIGRP, BGP, RIP, IPsec</td>
+              </tr>
+              <tr>
+                <td>2 - Data Link</td>
+                <td rowspan="2">Network Access</td>
+                <td>Ethernet, 802.11, PPP, HDLC, MAC, ARP</td>
+              </tr>
+              <tr>
+                <td>1 - Physical</td>
+                <td>UTP, Fiber, Coax, Wireless, Signaling standards</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>7. Troubleshooting with the Models</h2>
+          <p>The OSI model is especially powerful for structured troubleshooting. A popular approach is to start from the bottom up or top down depending on the issue.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Common Issues</th>
+                <th>Troubleshooting Tools/Commands</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Physical (1)</td>
+                <td>Cable damage, bad connectors, loose cables, interface down</td>
+                <td><code>show interfaces</code>, cable tester, TDR</td>
+              </tr>
+              <tr>
+                <td>Data Link (2)</td>
+                <td>MAC errors, duplex mismatch, VLAN misconfiguration, STP issues</td>
+                <td><code>show mac address-table</code>, <code>show interfaces</code>, <code>show spanning-tree</code></td>
+              </tr>
+              <tr>
+                <td>Network (3)</td>
+                <td>IP misconfiguration, routing issues, ACL blocks</td>
+                <td><code>ping</code>, <code>traceroute</code>, <code>show ip route</code></td>
+              </tr>
+              <tr>
+                <td>Transport (4)</td>
+                <td>Port blocking, TCP handshake failures, firewall rules</td>
+                <td><code>telnet &lt;ip&gt; &lt;port&gt;</code>, <code>nc</code>, packet captures</td>
+              </tr>
+              <tr>
+                <td>Session/Presentation/Application (5-7)</td>
+                <td>DNS failures, SSL issues, app misconfiguration</td>
+                <td><code>nslookup</code>/<code>dig</code>, browser dev tools, <code>curl</code>, logs</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>8. Key Takeaways for CCNP</h2>
+          <ul>
+            <li><strong>Know both models</strong> - OSI is for concepts/troubleshooting, TCP/IP is for real-world operation.</li>
+            <li><strong>Memorize PDUs</strong> - Bits (L1), Frame (L2), Packet (L3), Segment/Datagram (L4), Data (L5-7).</li>
+            <li><strong>Understand encapsulation</strong> - Be able to trace headers as data moves down the stack.</li>
+            <li><strong>Focus on transport</strong> - TCP is connection-oriented and reliable, UDP is connectionless and faster.</li>
+            <li><strong>Use OSI for troubleshooting</strong> - The layered approach helps isolate issues efficiently.</li>
+            <li><strong>Remember consolidation</strong> - TCP/IP combines OSI's upper layers into Application and lower layers into Network Access.</li>
+          </ul>
+
+          <h2>9. Quick Comparison Summary</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Answer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Which model is used on the internet?</td>
+                <td>TCP/IP Model</td>
+              </tr>
+              <tr>
+                <td>Which model has exactly 7 layers?</td>
+                <td>OSI Model</td>
+              </tr>
+              <tr>
+                <td>Which layer handles IP addressing?</td>
+                <td>OSI Layer 3 / TCP/IP Internet Layer</td>
+              </tr>
+              <tr>
+                <td>Which layer handles MAC addressing?</td>
+                <td>OSI Layer 2 / TCP/IP Network Access Layer</td>
+              </tr>
+              <tr>
+                <td>Which model is more theoretical?</td>
+                <td>OSI Model</td>
+              </tr>
+              <tr>
+                <td>Where do HTTP, DNS, and FTP operate?</td>
+                <td>OSI Layer 7 / TCP/IP Application Layer</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="../../pages/03-osi-tcpip.html">Level 3 - OSI & TCP/IP</a></li>
+            <li><a href="../../pages/29-troubleshooting.html">Level 29 - Troubleshooting</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
