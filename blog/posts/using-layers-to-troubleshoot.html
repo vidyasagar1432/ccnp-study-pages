@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Using Layers to Troubleshoot: A Method, Not a Checklist — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>13 min read</span>
+            <span>·</span>
+            <span>Troubleshooting</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Using Layers to Troubleshoot: A Method, Not a Checklist</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">The layered model is not a list to recite — it is a search strategy. Here is how to cut a fault in half, prove what still works, and avoid fixing the wrong layer.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Troubleshooting</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">OSI</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Methodology</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Diagnostics</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Why Layers Make Troubleshooting Faster</h2>
+          <p>A network fault has a huge search space: hundreds of devices, thousands of configurations. Layers reduce it by turning one question into a sequence of smaller ones, each with a cheap test and a clear pass/fail result.</p>
+          <blockquote>
+            <p><strong>Every test proves only that everything up to its layer works.</strong> A successful ping says nothing about whether a web server is listening. A failed ping does not prove the host is down.</p>
+          </blockquote>
+          <p>That asymmetry matters. Layers give you evidence, not conclusions. The goal is to find <em>the lowest layer that can explain the symptom</em>, fix that, and re-test — not to run every command you know.</p>
+
+          <h2>2. Three Strategies, and When to Use Each</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Strategy</th>
+                <th>Order</th>
+                <th>Best for</th>
+                <th>Weakness</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Bottom-up</strong></td>
+                <td>L1 → L7</td>
+                <td>Local, physical, new installs, "nothing works"</td>
+                <td>Slow when the problem is clearly application-level</td>
+              </tr>
+              <tr>
+                <td><strong>Top-down</strong></td>
+                <td>L7 → L1</td>
+                <td>One application fails while others work</td>
+                <td>Can chase software while a cable is unplugged</td>
+              </tr>
+              <tr>
+                <td><strong>Divide and conquer</strong></td>
+                <td>Start in the middle, bisect</td>
+                <td>Large networks, unknown scope, intermittent faults</td>
+                <td>Requires a known-good midpoint to compare against</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>The practical default is <strong>bottom-up until something passes, then jump to the symptom's layer</strong>. If the link is dead, no amount of DNS debugging will help. If the link, addressing, and routing all check out, jumping straight to the application saves time.</p>
+
+          <h2>3. Test Along the Path, Not Just the Stack</h2>
+          <p>Layers tell you <em>what</em> to test; the path tells you <em>where</em>. A packet crosses several independent segments, and each one can fail at a different layer.</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 380" class="mx-auto w-full max-w-4xl" role="img" aria-label="Path diagram from client through access switch, router, WAN, and server, with the layer question answered at each test point">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="30" y="32" font-size="10" font-weight="600" fill="rgb(100,116,139)" stroke="none">TEST AT THE LOWEST LAYER THAT COULD EXPLAIN THE SYMPTOM — THEN MOVE UP</text>
+
+                <!-- nodes -->
+                <rect x="30" y="58" width="90" height="60" rx="8" class="fill-sky-500/15" stroke="rgb(14,165,233)" />
+                <text x="75" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="currentColor" stroke="none">PC</text>
+                <text x="75" y="98" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">10.0.0.25</text>
+
+                <rect x="210" y="58" width="110" height="60" rx="8" class="fill-teal-500/15" stroke="rgb(20,184,166)" />
+                <text x="265" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="currentColor" stroke="none">Access switch</text>
+                <text x="265" y="98" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">VLAN 10</text>
+
+                <rect x="400" y="58" width="110" height="60" rx="8" class="fill-rose-500/15" stroke="rgb(244,63,94)" />
+                <text x="455" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="currentColor" stroke="none">Router</text>
+                <text x="455" y="98" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">10.0.0.1</text>
+
+                <rect x="590" y="58" width="120" height="60" rx="30" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="650" y="82" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">WAN / ISP</text>
+                <text x="650" y="98" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">multiple hops</text>
+
+                <rect x="790" y="58" width="90" height="60" rx="8" class="fill-violet-500/15" stroke="rgb(139,92,246)" />
+                <text x="835" y="82" text-anchor="middle" font-size="10.5" font-weight="600" fill="currentColor" stroke="none">Server</text>
+                <text x="835" y="98" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">10.20.0.9</text>
+
+                <!-- links -->
+                <line x1="120" y1="88" x2="210" y2="88" stroke="rgb(148,163,184)" />
+                <line x1="320" y1="88" x2="400" y2="88" stroke="rgb(148,163,184)" />
+                <line x1="510" y1="88" x2="590" y2="88" stroke="rgb(148,163,184)" />
+                <line x1="710" y1="88" x2="790" y2="88" stroke="rgb(148,163,184)" />
+
+                <text x="165" y="140" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">cable · MAC · VLAN</text>
+                <text x="360" y="140" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">IP · ARP · route</text>
+                <text x="550" y="140" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">TTL · NAT · MTU</text>
+                <text x="750" y="140" text-anchor="middle" font-size="8.5" fill="rgb(100,116,139)" stroke="none">port · TLS · HTTP</text>
+
+                <!-- layer ruler -->
+                <rect x="40" y="206" width="128" height="28" rx="6" class="fill-slate-500/20" stroke="rgb(148,163,184)" />
+                <text x="104" y="225" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">L1</text>
+                <text x="104" y="258" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">Is there a signal?</text>
+                <text x="104" y="274" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">link state, errors, PoE</text>
+
+                <rect x="204" y="206" width="128" height="28" rx="6" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="268" y="225" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">L2</text>
+                <text x="268" y="258" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">Did the frame arrive?</text>
+                <text x="268" y="274" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">MAC table, VLAN, STP</text>
+
+                <rect x="368" y="206" width="128" height="28" rx="6" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="432" y="225" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">L3</text>
+                <text x="432" y="258" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">Did the packet arrive?</text>
+                <text x="432" y="274" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">ping, traceroute, routes</text>
+
+                <rect x="532" y="206" width="128" height="28" rx="6" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="596" y="225" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">L4</text>
+                <text x="596" y="258" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">Is the port open?</text>
+                <text x="596" y="274" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">SYN/ACK, firewall state</text>
+
+                <rect x="696" y="206" width="128" height="28" rx="6" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="760" y="225" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">L7</text>
+                <text x="760" y="258" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">Did the request work?</text>
+                <text x="760" y="274" text-anchor="middle" font-size="8" fill="rgb(100,116,139)" stroke="none">DNS, TLS, HTTP status</text>
+
+                <text x="30" y="326" font-size="9.5" fill="rgb(100,116,139)" stroke="none">A passing test proves everything below it. A failing test localizes the fault — it does not always prove the host is down.</text>
+                <text x="30" y="344" font-size="9.5" fill="rgb(100,116,139)" stroke="none">Test the path as well as the stack: the same layer can fail on the client side, mid-path, or at the server.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">Each layer answers one question. The path tells you which segment to ask it about.</p>
+          </div>
+
+          <h2>4. What to Test at Each Layer</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Question</th>
+                <th>Evidence to collect</th>
+                <th>Failure looks like</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>L1</strong></td>
+                <td>Is there a signal?</td>
+                <td>Link state, speed/duplex, CRC and runts, PoE, optical power, cable test</td>
+                <td>Interface down, flapping, rising error counters, no PoE budget left</td>
+              </tr>
+              <tr>
+                <td><strong>L2</strong></td>
+                <td>Did the frame arrive on the right segment?</td>
+                <td>MAC table, VLAN membership, trunk allowed list, STP state, ARP cache, LACP state</td>
+                <td>MAC missing or on the wrong port, VLAN mismatch, port in blocking/discarding, incomplete ARP</td>
+              </tr>
+              <tr>
+                <td><strong>L3</strong></td>
+                <td>Did the packet reach the host?</td>
+                <td>IP/mask/gateway, route table, traceroute, ping with DF, ACL and NAT counters</td>
+                <td>No route, wrong mask, one-way forwarding, TTL expiry, fragmentation drop</td>
+              </tr>
+              <tr>
+                <td><strong>L4</strong></td>
+                <td>Is the service reachable on its port?</td>
+                <td>SYN/SYN-ACK capture, firewall connection table, load-balancer pool health, listening sockets</td>
+                <td>SYN sent with no reply, RST, connection hangs, NAT port exhaustion</td>
+              </tr>
+              <tr>
+                <td><strong>L5–L6</strong></td>
+                <td>Is the session and its encryption healthy?</td>
+                <td>TLS handshake and certificate chain, session timeouts, re-auth events, time skew</td>
+                <td>Certificate errors, handshake failure, sessions dropping at a fixed interval</td>
+              </tr>
+              <tr>
+                <td><strong>L7</strong></td>
+                <td>Did the application succeed?</td>
+                <td>HTTP status, DNS answer, authentication logs, application logs, response time</td>
+                <td>401/403/500, NXDOMAIN, timeout, wrong backend, slow query</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>5. Symptom-to-Layer Differentials</h2>
+          <p>Most tickets arrive as a symptom, not a layer. Translate first:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Symptom</th>
+                <th>Most likely layers</th>
+                <th>First test that discriminates</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>No link light at all</td><td>L1</td><td>Swap cable/port, check speed and PoE</td></tr>
+              <tr><td>Link up, cannot ping the gateway</td><td>L2–L3</td><td>ARP entry for the gateway; VLAN and SVI state</td></tr>
+              <tr><td>Can ping the gateway, not a remote host</td><td>L3</td><td><code>traceroute</code>; routing table on the first hop</td></tr>
+              <tr><td>Ping works, application port fails</td><td>L4</td><td>TCP connect to the port; firewall/ACL counters</td></tr>
+              <tr><td>Port opens, request fails</td><td>L6–L7</td><td>TLS handshake, HTTP status, DNS answer</td></tr>
+              <tr><td>Small transfers fine, large ones stall</td><td>L3–L4</td><td>Ping with DF at 1472 bytes; MSS clamping</td></tr>
+              <tr><td>Works on one subnet, fails on another</td><td>L3, L4</td><td>Compare routes, ACLs, and NAT rules per subnet</td></tr>
+              <tr><td>Wired works, wireless fails</td><td>L1–L2</td><td>Association, VLAN mapping, channel utilization</td></tr>
+              <tr><td>Intermittent, no pattern</td><td>L1–L2, L3</td><td>Error counters, STP topology changes, ECMP asymmetry</td></tr>
+              <tr><td>Slow but functional</td><td>L4–L7</td><td>Retransmissions, window size, server response time</td></tr>
+            </tbody>
+          </table>
+
+          <h2>6. The Tools, Mapped to Layers</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Linux / general</th>
+                <th>Cisco IOS</th>
+                <th>What it proves</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>L1</td><td><code>ethtool</code>, cable tester, optical meter</td><td><code>show interfaces</code>, <code>show controllers</code></td><td>Signal, encoding, error rates</td></tr>
+              <tr><td>L2</td><td><code>ip neigh</code>, <code>bridge fdb</code>, <code>tcpdump -e</code></td><td><code>show mac address-table</code>, <code>show vlan brief</code>, <code>show spanning-tree</code></td><td>Framing, VLAN, MAC reachability</td></tr>
+              <tr><td>L3</td><td><code>ip route</code>, <code>ping</code>, <code>traceroute</code>, <code>mtr</code></td><td><code>show ip route</code>, <code>show ip arp</code>, <code>show ip interface brief</code></td><td>Addressing and path selection</td></tr>
+              <tr><td>L4</td><td><code>ss -tlnp</code>, <code>nc -vz</code>, <code>telnet</code></td><td><code>show conn</code> (ASA), ACL hit counters</td><td>Port reachability and state</td></tr>
+              <tr><td>L5–L6</td><td><code>openssl s_client</code>, <code>date</code></td><td>Firewall TLS logs, PKI debugs</td><td>Handshake, certificates, time</td></tr>
+              <tr><td>L7</td><td><code>dig</code>, <code>curl -v</code>, app logs</td><td>Application logs, <code>show policy-map</code> for marking</td><td>Name resolution and application response</td></tr>
+              <tr><td>All</td><td><code>tcpdump</code>, Wireshark</td><td>Embedded packet capture, SPAN</td><td>Ground truth — what actually crossed the wire</td></tr>
+            </tbody>
+          </table>
+
+          <h2>7. Bisecting a Long Path</h2>
+          <p>When the path is long or the scope is unknown, do not start at either end. Start where a test is cheap and the answer splits the problem in half.</p>
+          <ol>
+            <li><strong>Capture at two points.</strong> Client egress and server ingress. If the packet appears at both, the network is not dropping it.</li>
+            <li><strong>Ping the midpoint.</strong> If the gateway answers but the server does not, the fault is beyond the gateway.</li>
+            <li><strong>Watch the direction.</strong> Request out, no reply back means the return path — often a firewall state or routing asymmetry issue.</li>
+            <li><strong>Compare layers at the same instant.</strong> A SYN arriving with no SYN-ACK is an L4 conclusion; do not reopen the L1 investigation.</li>
+            <li><strong>Narrow by changing one variable.</strong> Different source, different destination, different port, different time.</li>
+          </ol>
+          <p>Bisection is also how you separate "the network" from "the server": if a second client on a different segment succeeds, the fault is probably client-local or path-specific, not global.</p>
+
+          <h2>8. Worked Example: "The New App Times Out"</h2>
+          <p>Users cannot reach a newly deployed application through a recently inserted firewall. A layered investigation, in order:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Test</th>
+                <th>Result</th>
+                <th>Conclusion</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>L1</td><td>Interface status and errors</td><td>Up, no CRC growth</td><td>Physical path healthy</td></tr>
+              <tr><td>L2</td><td>ARP for the gateway; MAC table</td><td>Resolves correctly</td><td>Client is on the right segment</td></tr>
+              <tr><td>L3</td><td>Ping gateway and server IP</td><td>Both reply</td><td>Routing and return path work for ICMP</td></tr>
+              <tr><td>L4</td><td><code>nc -vz server 8443</code></td><td>Hangs, then times out</td><td>TCP is not completing — not a DNS or TLS problem yet</td></tr>
+              <tr><td>Capture</td><td>SYN at client, SYN at firewall outside</td><td>SYN in, no SYN-ACK out</td><td>Firewall policy or state, not the server</td></tr>
+              <tr><td>Firewall</td><td>Policy lookup and connection table</td><td>Rule exists but wrong zone; no state entry</td><td>Fix the zone mapping</td></tr>
+            </tbody>
+          </table>
+          <p>Now the same symptom, different cause. Suppose TCP <em>does</em> complete and TLS starts, but the transfer stalls after the handshake. That moves the investigation to L6/L7 and to MTU: the handshake fits in small packets, the certificate chain or first data burst does not.</p>
+          <pre># Confirm an MTU problem rather than guessing
+ping -M do -s 1472 203.0.113.10     # 1500-byte packet, DF set
+tracepath 203.0.113.10              # shows where PMTU drops
+tcpdump -i any -nn 'host 203.0.113.10 and tcp'   # retransmits?</pre>
+
+          <h2>9. Traps That Waste Time</h2>
+          <ul>
+            <li><strong>Ping is not a service test.</strong> ICMP can be permitted while the application port is blocked — and blocked while the port is open.</li>
+            <li><strong>A failed ping is not proof of downtime.</strong> ICMP may be filtered, rate-limited, or blocked on the return path.</li>
+            <li><strong>DNS is the default suspect, rarely the cause.</strong> Prove it with a direct-IP request before changing resolvers.</li>
+            <li><strong>Asymmetric routing breaks stateful devices.</strong> Traffic that leaves through the firewall and returns around it will be dropped — and it looks random.</li>
+            <li><strong>NAT hides the real addresses.</strong> A capture on the inside and outside shows different IPs and ports for the same flow.</li>
+            <li><strong>Stale ARP and stale MAC entries</strong> survive address changes and cause "it works from the router but not the host" symptoms.</li>
+            <li><strong>IPv4 succeeds, IPv6 fails.</strong> Happy Eyeballs hides this for web traffic but not for every application.</li>
+            <li><strong>Clock skew breaks TLS and Kerberos</strong> in ways that look like random authentication failures.</li>
+            <li><strong>A proxy is a new connection.</strong> Client-to-proxy and proxy-to-server can fail at different layers.</li>
+          </ul>
+
+          <h2>10. Document as You Go</h2>
+          <p>The method only pays off if the evidence is usable:</p>
+          <ul>
+            <li>Record <strong>what you tested, from where, and when</strong> — with time zones. Half of "intermittent" is a timestamp mismatch.</li>
+            <li>Save captures at <strong>both ends</strong> of the suspected path; a one-sided capture cannot prove direction.</li>
+            <li>Note the <strong>layer conclusion</strong> for each test, not just the command output.</li>
+            <li>When escalating, hand over the <strong>lowest passing test and the first failing test</strong>. That is the entire problem statement.</li>
+          </ul>
+
+          <h2>11. Exam Traps</h2>
+          <ul>
+            <li><strong>"Always troubleshoot bottom-up."</strong> It is the safe default, not a rule. Divide-and-conquer is expected for large or unknown-scope faults.</li>
+            <li><strong>"If ping fails, the host is down."</strong> ICMP filtering is common; verify with another method or from another point.</li>
+            <li><strong>"A cable problem is always Layer 1."</strong> Duplex mismatch shows up as L1/L2 errors but is configured at L1; VLAN and STP issues are L2 even when the cable is fine.</li>
+            <li><strong>"If DNS resolves, the network is fine."</strong> Name resolution says nothing about the service port or the application.</li>
+            <li><strong>"Traceroute shows the full path."</strong> It shows the forward path of probe packets; the return path can differ and is often the problem.</li>
+            <li><strong>"The firewall is dropping it."</strong> Prove it with counters or captures; guessing costs more time than measuring.</li>
+          </ul>
+
+          <h2>12. Key Takeaways</h2>
+          <ul>
+            <li>Layers are a search strategy: each test narrows the fault to a smaller set of causes.</li>
+            <li>A passing test proves everything below it; a failing test localizes but does not always prove absence.</li>
+            <li>Use bottom-up for "nothing works," top-down for "one app fails," and bisection for long paths.</li>
+            <li>Test the path as well as the stack — the same layer can fail at the client, mid-path, or server.</li>
+            <li>The first failing test, not the loudest symptom, defines the problem.</li>
+            <li>Capture at two points before changing anything; ground truth beats inference.</li>
+          </ul>
+
+          <h2>13. Quick Review Questions</h2>
+          <ol>
+            <li>Why does a successful ping not prove the application is working?</li>
+            <li>When would you choose divide-and-conquer over bottom-up?</li>
+            <li>Which layer do you investigate if a TCP connection hangs with no SYN-ACK?</li>
+            <li>What does an ARP entry prove, and what does a missing one suggest?</li>
+            <li>Which tool gives ground truth for every layer at once?</li>
+            <li>Why can a firewall drop return traffic that appears to be permitted?</li>
+            <li>What is the fastest way to distinguish a DNS failure from a connectivity failure?</li>
+            <li>Which two tests would you hand to the next engineer when escalating?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="mapping-protocols-and-devices-to-layers.html">Mapping Protocols and Devices to Layers: A Practical Reference</a></li>
+            <li><a href="encapsulation-and-decapsulation.html">Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped</a></li>
+            <li><a href="osi-seven-layers.html">The 7 Layers of OSI: Models, Functions, Protocols, and Devices</a></li>
+            <li><a href="segmentation-and-reassembly.html">Segmentation and Reassembly: TCP MSS, IP Fragmentation, and MTU</a></li>
+            <li><a href="../../pages/29-troubleshooting.html">Level 29 - Troubleshooting</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
