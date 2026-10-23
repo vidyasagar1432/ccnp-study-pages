@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collision Domains and CSMA/CD: The Rules That Shaped Ethernet — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>13 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Collision Domains and CSMA/CD: The Rules That Shaped Ethernet</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Carrier sense, jam signals, and a 64-byte minimum: the timing rules that still explain cable lengths, duplex faults, and why switches ended the shared wire.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">CSMA/CD</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Collision Domains</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Duplex</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Ethernet</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Why Collisions Exist</h2>
+          <p>Early Ethernet was a bus: every station attached to one coaxial cable, and every station heard every transmission. That is efficient until two stations decide to talk at the same time. Their electrical signals overlap, the receiver cannot separate them, and both frames are destroyed.</p>
+          <p>The shared cable is a <strong>collision domain</strong> — one medium, one conversation at a time. CSMA/CD, defined in IEEE 802.3, is the etiquette that lets stations share it without a central scheduler:</p>
+          <ul>
+            <li><strong>Carrier sense</strong> — listen before transmitting.</li>
+            <li><strong>Multiple access</strong> — every station has equal right to the medium.</li>
+            <li><strong>Collision detection</strong> — keep listening while transmitting and stop if what you hear is not what you sent.</li>
+          </ul>
+          <p>The first two letters are easy. The last one is where the timing constraints come from, and those constraints still explain why a 64-byte minimum frame exists and why a late collision is a symptom rather than a cause.</p>
+
+          <h2>2. The Algorithm, Step by Step</h2>
+          <ol>
+            <li><strong>Sense the carrier.</strong> If the medium is busy, wait. If it stays busy, keep waiting; a station that has waited is <em>deferred</em>.</li>
+            <li><strong>Wait for the interframe gap.</strong> After the medium goes idle, wait 96 bit times so the previous frame can clear the wire and the receivers can recover.</li>
+            <li><strong>Start transmitting.</strong> If two stations start within the same window, their signals collide.</li>
+            <li><strong>Keep listening.</strong> A transceiver compares the transmitted signal with the received signal. A difference means a collision.</li>
+            <li><strong>Send a jam signal.</strong> Both stations transmit a 32-bit jam pattern so every other station on the segment notices the collision and does not start a new frame.</li>
+            <li><strong>Back off.</strong> Stop transmitting, wait a random number of slot times, then try again.</li>
+          </ol>
+          <p>A collision is not an error in the protocol. It is the protocol working. The problem starts when collisions are frequent, when they happen too late to be detected, or when they appear on a link that should never have them.</p>
+
+          <h2>3. One Medium or One Port: Collision Domains in Practice</h2>
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 260" class="mx-auto w-full max-w-4xl" role="img" aria-label="A hub with four PCs sharing one collision domain compared with a switch where each port is its own collision domain">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="30" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">HUB / REPEATER</text>
+                <text x="40" y="44" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one collision domain for every station</text>
+                <ellipse cx="225" cy="140" rx="185" ry="80" fill="#F59E0B" fill-opacity="0.04" stroke="#F59E0B" stroke-dasharray="5 3" />
+
+                <line x1="130" y1="84" x2="185" y2="126" stroke="rgb(148,163,184)" />
+                <line x1="320" y1="84" x2="265" y2="126" stroke="rgb(148,163,184)" />
+                <line x1="130" y1="200" x2="185" y2="154" stroke="rgb(148,163,184)" />
+                <line x1="320" y1="200" x2="265" y2="154" stroke="rgb(148,163,184)" />
+
+                <rect x="185" y="110" width="80" height="56" rx="8" fill="#F59E0B" fill-opacity="0.12" stroke="#F59E0B" />
+                <text x="225" y="142" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">hub</text>
+
+                <rect x="70" y="66" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="100" y="88" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="320" y="66" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="350" y="88" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="70" y="182" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="100" y="204" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="320" y="182" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="350" y="204" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+
+                <text x="480" y="30" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">SWITCH / BRIDGE</text>
+                <text x="480" y="44" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one collision domain per port</text>
+
+                <rect x="500" y="58" width="145" height="48" rx="14" fill="#10B981" fill-opacity="0.05" stroke="#10B981" stroke-dasharray="4 3" />
+                <rect x="735" y="58" width="120" height="48" rx="14" fill="#10B981" fill-opacity="0.05" stroke="#10B981" stroke-dasharray="4 3" />
+                <rect x="500" y="174" width="145" height="48" rx="14" fill="#10B981" fill-opacity="0.05" stroke="#10B981" stroke-dasharray="4 3" />
+                <rect x="735" y="174" width="120" height="48" rx="14" fill="#10B981" fill-opacity="0.05" stroke="#10B981" stroke-dasharray="4 3" />
+
+                <line x1="575" y1="84" x2="640" y2="126" stroke="rgb(148,163,184)" />
+                <line x1="790" y1="84" x2="730" y2="126" stroke="rgb(148,163,184)" />
+                <line x1="575" y1="200" x2="640" y2="152" stroke="rgb(148,163,184)" />
+                <line x1="790" y1="200" x2="730" y2="152" stroke="rgb(148,163,184)" />
+
+                <rect x="640" y="110" width="90" height="56" rx="8" fill="#10B981" fill-opacity="0.12" stroke="#10B981" />
+                <text x="685" y="142" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">switch</text>
+
+                <rect x="515" y="66" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="545" y="88" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="790" y="66" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="820" y="88" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="515" y="182" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="545" y="204" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+                <rect x="790" y="182" width="60" height="36" rx="6" fill="rgb(148,163,184)" fill-opacity="0.1" stroke="rgb(148,163,184)" />
+                <text x="820" y="204" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">PC</text>
+
+                <text x="40" y="248" font-size="8.5" fill="rgb(100,116,139)" stroke="none">A hub repeats every bit into one domain; a switch ends the domain at each port.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">The dashed boundary on the left contains every station. On the right, each capsule is a separate domain.</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Collision domains</th>
+                <th>Duplex</th>
+                <th>Behaviour</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Hub / repeater</td><td>One for all ports</td><td>Half</td><td>Repeats bits to every port, including collisions</td></tr>
+              <tr><td>Bridge / switch</td><td>One per port</td><td>Full (normally)</td><td>Buffers frames, forwards by MAC, no shared medium</td></tr>
+              <tr><td>Router</td><td>One per interface</td><td>Full</td><td>Terminates both the collision and broadcast domain</td></tr>
+              <tr><td>Wireless access point</td><td>One per BSS/channel</td><td>Half (shared radio)</td><td>Uses CSMA/CA, not CSMA/CD</td></tr>
+            </tbody>
+          </table>
+          <p>Attaching a hub to a switch port makes that hub and everything behind it share the port's collision domain. The switch does not magically give the hub's users independent domains.</p>
+
+          <h2>4. The Timing That Sets the Minimum Frame</h2>
+          <p>Collision detection only works if the sender is still transmitting when the collision signal comes back. In the worst case, the other station is at the far end of the network:</p>
+          <ul>
+            <li>The frame's leading edge takes one propagation delay <em>τ</em> to reach the far end.</li>
+            <li>The far station may begin transmitting just before that edge arrives.</li>
+            <li>Its signal, and the collision, take another <em>τ</em> to return.</li>
+          </ul>
+          <p>So the sender must remain on the wire for at least <strong>2τ</strong> — the worst-case round-trip time. Ethernet defines this as the <strong>slot time</strong>: 512 bit times, which is 64 bytes. If a frame were shorter than 64 bytes, the sender could finish and stop listening before the collision returned, assume success, and never retransmit.</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 330" class="mx-auto w-full max-w-4xl" role="img" aria-label="Space-time diagram showing a frame still in progress when the collision signal returns after two propagation delays">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="28" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">WHY THE MINIMUM FRAME IS 64 BYTES</text>
+                <text x="40" y="44" font-size="7.5" fill="rgb(100,116,139)" stroke="none">The sender must still be transmitting when the collision signal returns.</text>
+
+                <line x1="80" y1="58" x2="80" y2="300" stroke="rgb(148,163,184)" stroke-dasharray="3 3" />
+                <line x1="820" y1="58" x2="820" y2="300" stroke="rgb(148,163,184)" stroke-dasharray="3 3" />
+                <text x="80" y="54" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">A</text>
+                <text x="820" y="54" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">far end</text>
+                <text x="26" y="70" font-size="7" fill="rgb(100,116,139)" stroke="none">time</text>
+
+                <rect x="68" y="70" width="24" height="210" rx="3" fill="#10B981" fill-opacity="0.22" stroke="#10B981" />
+                <rect x="68" y="230" width="24" height="50" rx="3" fill="#F43F5E" fill-opacity="0.35" stroke="#F43F5E" />
+
+                <line x1="80" y1="70" x2="820" y2="150" stroke="#10B981" stroke-width="1.5" />
+                <line x1="820" y1="150" x2="80" y2="230" stroke="#F43F5E" stroke-width="1.5" />
+
+                <line x1="810" y1="140" x2="830" y2="160" stroke="#F43F5E" stroke-width="2" />
+                <line x1="810" y1="160" x2="830" y2="140" stroke="#F43F5E" stroke-width="2" />
+
+                <text x="100" y="66" font-size="7.5" fill="rgb(100,116,139)" stroke="none">t = 0, A starts</text>
+                <text x="500" y="100" text-anchor="middle" font-size="7.5" fill="#10B981" stroke="none">signal out</text>
+                <text x="500" y="208" text-anchor="middle" font-size="7.5" fill="#F43F5E" stroke="none">collision signal returns</text>
+                <text x="800" y="136" text-anchor="end" font-size="7.5" fill="#F43F5E" stroke="none">collision at far end</text>
+
+                <text x="40" y="74" font-size="7.5" fill="rgb(100,116,139)" stroke="none">t=0</text>
+                <text x="40" y="234" font-size="7.5" fill="rgb(100,116,139)" stroke="none">2τ</text>
+
+                <text x="110" y="244" font-size="8" fill="#F43F5E" stroke="none">collision heard</text>
+                <text x="110" y="258" font-size="7.5" fill="rgb(100,116,139)" stroke="none">A is still transmitting, so it detects the collision</text>
+
+                <text x="40" y="314" font-size="8.5" fill="rgb(100,116,139)" stroke="none">64 bytes = 512 bit times = 51.2 µs at 10 Mb/s. A shorter frame would end before 2τ, and the sender would never know.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">The worst case is not the cable length itself but the round-trip time across the whole collision domain.</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Speed</th>
+                <th>Bit time</th>
+                <th>Slot time</th>
+                <th>Minimum frame</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>10 Mb/s</td><td>100 ns</td><td>51.2 µs (512 bits)</td><td>64 bytes</td></tr>
+              <tr><td>100 Mb/s</td><td>10 ns</td><td>5.12 µs (512 bits)</td><td>64 bytes</td></tr>
+              <tr><td>1 Gb/s, half duplex</td><td>1 ns</td><td>4.096 µs (4096 bits)</td><td>64 bytes, padded by carrier extension</td></tr>
+              <tr><td>1 Gb/s, full duplex</td><td>1 ns</td><td>Not applicable</td><td>64 bytes</td></tr>
+              <tr><td>10 Gb/s and above</td><td>0.1 ns at 10G</td><td>Not applicable</td><td>64 bytes</td></tr>
+            </tbody>
+          </table>
+
+          <p>The slot time is fixed in <em>bits</em>, not metres. As the bit rate rises, the same 512-bit slot occupies less time, so the permitted round-trip distance shrinks unless the frame is padded. That is why gigabit half duplex needed carrier extension: it appends non-data bits so the slot is 4096 bit times, and frame bursting lets a station send several frames inside one extended burst. In practice, gigabit and faster Ethernet is full duplex, and the question is historical.</p>
+
+          <p>For 10 Mb/s shared Ethernet, the timing produced the <strong>5-4-3 rule</strong>: at most five segments, four repeaters, and three segments with hosts. 10BASE5 allowed 500 m per segment and about 2,500 m end to end; 10BASE2 allowed 185 m per segment. These are collision-domain limits, not cable-quality limits.</p>
+
+          <h2>5. Backoff and Retries</h2>
+          <p>After the <em>n</em>th consecutive collision, a station picks a random integer <em>k</em> from 0 to 2<sup>min(n,10)</sup> − 1 and waits <em>k</em> slot times before trying again. This is <strong>truncated binary exponential backoff</strong>: the range doubles with each collision up to ten, then stops growing. After 16 attempts the frame is dropped and the interface counts an excessive-collision error.</p>
+          <p>Randomness is not fairness. A station that draws a short backoff can win the medium repeatedly while others keep deferring — the <strong>capture effect</strong>. On a busy shared segment, one aggressive sender can dominate, which is one more reason switches replaced shared media.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>What happens</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>First collision</td><td>Wait 0 or 1 slot times</td></tr>
+              <tr><td>Second collision</td><td>Wait 0–3 slot times</td></tr>
+              <tr><td>Tenth and later</td><td>Wait 0–1023 slot times</td></tr>
+              <tr><td>Sixteenth failure</td><td>Drop the frame, report excessive collisions</td></tr>
+            </tbody>
+          </table>
+
+          <h2>6. Late Collisions and Duplex Mismatch</h2>
+          <p>A <strong>late collision</strong> happens after the first 512 bit times of the frame — outside the window in which CSMA/CD can recover. The MAC does not retransmit, because it has already sent more than a slot time and cannot know whether the frame arrived. The upper layer has to recover, usually by retransmitting the whole segment after a timeout.</p>
+          <p>Two causes dominate:</p>
+          <ul>
+            <li><strong>Duplex mismatch.</strong> One side is full duplex and never senses the carrier; the other is half duplex and transmits whenever it thinks the medium is idle. The full-duplex side sends into a half-duplex receiver that is also sending. Collisions and late collisions appear on the half-duplex side.</li>
+            <li><strong>Collision domain too large.</strong> Too much cable, too many repeaters, or a link stretched beyond its standard. The round trip exceeds the slot time, so collisions arrive too late to detect.</li>
+          </ul>
+          <p>Autonegotiation normally prevents a mismatch: if both sides support it, they agree on the highest common speed and duplex. Problems appear when one side is hard-coded — a media converter, an old ISP handoff, or a server NIC — and the other side is left on auto. The auto side cannot detect duplex, so it falls back to half duplex while the fixed side runs full.</p>
+
+          <h2>7. Full Duplex: The End of the Shared Medium</h2>
+          <p>A switch port connected to a single station has separate transmit and receive paths. The station can send and receive at the same time, so there is no shared medium and no collision to detect. CSMA/CD is disabled, the interframe gap still applies, and the collision domain shrinks to the single link.</p>
+          <p>This is why a modern access port should show zero collisions. A rising collision counter on a full-duplex link is not congestion and not normal; it points to a duplex mismatch, a faulty NIC, a bad cable, or a hub hiding somewhere in the path.</p>
+          <blockquote>Collisions are a half-duplex phenomenon. Congestion is a queueing phenomenon. Counting collisions to diagnose a congested uplink is looking at the wrong counter.</blockquote>
+
+          <h2>8. What the Counters Actually Mean</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Counter</th>
+                <th>Meaning</th>
+                <th>On full duplex</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Collisions</td><td>Collisions detected during transmission</td><td>Should be zero; otherwise a fault</td></tr>
+              <tr><td>Late collisions</td><td>Collision after the slot-time window</td><td>Always a fault</td></tr>
+              <tr><td>Deferred</td><td>Waited because the medium was busy</td><td>Should be zero</td></tr>
+              <tr><td>Runts</td><td>Frames shorter than 64 bytes</td><td>Often collision fragments; may be a fault</td></tr>
+              <tr><td>FCS / CRC errors</td><td>Frame arrived corrupted</td><td>Physical or duplex problem</td></tr>
+              <tr><td>Excessive collisions</td><td>16 attempts exhausted</td><td>Half-duplex overload</td></tr>
+            </tbody>
+          </table>
+          <pre>show interfaces GigabitEthernet0/1
+show interfaces GigabitEthernet0/1 counters errors
+
+# Linux
+ip -s link show eth0
+ethtool -S eth0 | grep -i -E 'collision|error|drop'</pre>
+
+          <h2>9. Wireless Uses CSMA/CA, Not CSMA/CD</h2>
+          <p>A radio cannot listen while it transmits, so it cannot detect a collision the way a wire transceiver can. 802.11 uses <strong>Carrier Sense Multiple Access with Collision Avoidance</strong>:</p>
+          <ul>
+            <li>Listen, wait a random backoff, then transmit.</li>
+            <li>The receiver sends an explicit acknowledgement; no ACK means assume loss and retry.</li>
+            <li>Optional RTS/CTS reserves the medium around a hidden node.</li>
+            <li>Collisions still happen — from hidden nodes, interference, and simultaneous backoff — but they are inferred from missing ACKs rather than detected during transmission.</li>
+          </ul>
+          <p>The collision domain is the set of stations that can interfere on the same channel, which is not necessarily the same as the set that can hear each other. That asymmetry is the hidden-node problem.</p>
+
+          <h2>10. Three Cases</h2>
+          <h3>Case A: the hub that stayed too long</h3>
+          <p>A small office kept a 10/100 hub in a closet because it was convenient. Users complained about slow file copies at peak times.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Collision rate</td><td>12–18% of frames during busy periods</td></tr>
+              <tr><td>Duplex</td><td>Half on every hub port</td></tr>
+              <tr><td>Topology</td><td>Eight stations sharing one domain</td></tr>
+            </tbody>
+          </table>
+          <p>Replacing the hub with a switch gave each station a full-duplex link and reduced collisions to zero. No protocol changed; the medium stopped being shared.</p>
+
+          <h3>Case B: the handoff that negotiated half duplex</h3>
+          <p>A circuit handoff used a media converter fixed at 100 Mb/s full duplex. The attached router port was left on auto.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Late collisions</td><td>Climbing steadily on the router port</td></tr>
+              <tr><td>Duplex</td><td>Router half, converter full</td></tr>
+              <tr><td>Throughput</td><td>Good in one direction, poor in the other, with retransmissions</td></tr>
+            </tbody>
+          </table>
+          <p>Hard-coding both sides to 100/full removed the late collisions. The lesson is not "always hard-code"; it is "never let one side auto-negotiate duplex against a fixed peer."</p>
+
+          <h3>Case C: the link that was 40 metres too long</h3>
+          <p>A 100BASE-TX run was extended with a coupler and an extra patch lead to reach a new desk.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Late collisions</td><td>Present under load, absent when idle</td></tr>
+              <tr><td>Runts and FCS errors</td><td>Both present</td></tr>
+              <tr><td>Link length</td><td>About 140 m, above the 100 m standard</td></tr>
+            </tbody>
+          </table>
+          <p>The round trip exceeded the slot time, so collisions arrived after the sender had stopped listening. Re-terminating within 100 m fixed it. A link can pass a continuity test and still be outside its timing budget.</p>
+
+          <h2>11. Exam Traps</h2>
+          <ul>
+            <li><strong>"A switch port is a broadcast domain."</strong> It is a collision domain; the VLAN is the broadcast domain.</li>
+            <li><strong>"Hubs create separate collision domains."</strong> A hub repeats everything into one domain.</li>
+            <li><strong>"Switches use CSMA/CD."</strong> Full-duplex switch ports do not; CSMA/CD is a half-duplex shared-medium protocol.</li>
+            <li><strong>"Collisions are normal on full duplex."</strong> They are a fault.</li>
+            <li><strong>"Late collisions are just collisions."</strong> They are outside the recovery window and point to a duplex mismatch or an oversized domain.</li>
+            <li><strong>"The minimum frame is 46 bytes."</strong> 46 bytes is the minimum payload; 64 bytes is the minimum frame from destination MAC through FCS.</li>
+            <li><strong>"Slot time is 64 microseconds."</strong> It is 51.2 µs at 10 Mb/s (512 bit times), 5.12 µs at 100 Mb/s.</li>
+            <li><strong>"More repeaters always extend the network."</strong> They extend the collision domain until the round trip exceeds the slot time.</li>
+            <li><strong>"Wireless uses CSMA/CD."</strong> It uses CSMA/CA with acknowledgements.</li>
+            <li><strong>"Collisions mean congestion."</strong> Collisions are medium contention; congestion is queue exhaustion. They have different counters and different fixes.</li>
+          </ul>
+
+          <h2>12. Key Takeaways</h2>
+          <ul>
+            <li>CSMA/CD lets stations share one medium: listen, transmit, detect, jam, back off, retry.</li>
+            <li>A collision domain is the set of stations that can collide; a hub keeps one, a switch creates one per port.</li>
+            <li>The 64-byte minimum frame exists so the sender is still transmitting when a worst-case collision returns.</li>
+            <li>Slot time is 512 bit times at 10 and 100 Mb/s; gigabit half duplex used carrier extension to stretch it.</li>
+            <li>Backoff is random and truncated at ten doublings; sixteen failures drop the frame.</li>
+            <li>Full duplex removes the shared medium, so collisions should be zero; late collisions are always suspicious.</li>
+            <li>Wireless avoids collisions rather than detecting them, and uses ACKs to infer loss.</li>
+          </ul>
+
+          <h2>13. Quick Review Questions</h2>
+          <ol>
+            <li>What are the five steps of CSMA/CD, and which one requires the sender to keep listening?</li>
+            <li>Why does a 64-byte minimum frame make collision detection possible?</li>
+            <li>How many collision domains exist on a 24-port switch with no hubs attached?</li>
+            <li>What happens to the collision domain when a hub is connected to a switch port?</li>
+            <li>Why is a late collision not retransmitted by the MAC?</li>
+            <li>What are the two most common causes of late collisions?</li>
+            <li>Why should a full-duplex interface report zero collisions?</li>
+            <li>How does the backoff range change after each collision, and when does it stop growing?</li>
+            <li>Why can a collision domain pass a cable test and still be too large?</li>
+            <li>How does CSMA/CA differ from CSMA/CD in detecting a failed transmission?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="how-ethernet-works.html">How Ethernet Works: Frames, MAC Addresses, and Switching</a></li>
+            <li><a href="ethernet-frame-anatomy.html">Anatomy of an Ethernet Frame: A Byte-by-Byte Dissection</a></li>
+            <li><a href="common-physical-problems.html">Common Physical Problems: A Field Guide to Layer 1 Faults</a></li>
+            <li><a href="unicast-multicast-broadcast.html">Unicast, Multicast, and Broadcast: Four Delivery Models</a></li>
+            <li><a href="../../pages/04-ethernet-switching.html">Level 4 - Ethernet Switching</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
