@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unicast, Multicast, and Broadcast: Four Delivery Models — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>14 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Unicast, Multicast, and Broadcast: Four Delivery Models</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">One receiver, a group, everyone, or the nearest instance. The differences decide how addresses map, how switches flood, and where a packet stops.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Unicast</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Multicast</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Broadcast</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Anycast</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Four Answers to "Who Gets This?"</h2>
+          <p>Every network conversation begins with a delivery question. Ethernet and IP answer it with four models, and the model changes the address, the forwarding behaviour, and the failure modes:</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 360" class="mx-auto w-full max-w-4xl" role="img" aria-label="Four panels comparing unicast, multicast, broadcast, and anycast delivery from one sender to four receivers">
+              <defs>
+                <marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6" fill="#10B981" stroke="none" />
+                </marker>
+              </defs>
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="10" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">ONE SENDER, FOUR RECEIVERS</text>
+
+                <!-- Unicast -->
+                <rect x="30" y="16" width="190" height="300" rx="10" fill="#38BDF8" fill-opacity="0.04" stroke="#38BDF8" />
+                <text x="125" y="38" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">UNICAST</text>
+                <text x="125" y="52" text-anchor="middle" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one to one</text>
+                <circle cx="125" cy="94" r="15" class="fill-sky-500/20" stroke="#38BDF8" />
+                <text x="125" y="97" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">src</text>
+                <line x1="125" y1="109" x2="75" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <circle cx="75" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="75" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R1</text>
+                <circle cx="175" cy="232" r="13" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="175" y="235" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R2</text>
+                <circle cx="75" cy="282" r="13" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="75" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R3</text>
+                <circle cx="175" cy="282" r="13" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="175" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R4</text>
+
+                <!-- Multicast -->
+                <rect x="250" y="16" width="190" height="300" rx="10" fill="#F59E0B" fill-opacity="0.04" stroke="#F59E0B" />
+                <text x="345" y="38" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">MULTICAST</text>
+                <text x="345" y="52" text-anchor="middle" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one to a group</text>
+                <circle cx="345" cy="94" r="15" class="fill-sky-500/20" stroke="#38BDF8" />
+                <text x="345" y="97" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">src</text>
+                <rect x="274" y="208" width="142" height="48" rx="8" fill="#F59E0B" fill-opacity="0.08" stroke="#F59E0B" stroke-dasharray="4 3" />
+                <line x1="345" y1="109" x2="295" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <line x1="345" y1="109" x2="395" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <circle cx="295" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="295" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R1</text>
+                <circle cx="395" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="395" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R2</text>
+                <circle cx="295" cy="282" r="13" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="295" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R3</text>
+                <circle cx="395" cy="282" r="13" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="395" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R4</text>
+
+                <!-- Broadcast -->
+                <rect x="470" y="16" width="190" height="300" rx="10" fill="#F43F5E" fill-opacity="0.04" stroke="#F43F5E" />
+                <text x="565" y="38" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">BROADCAST</text>
+                <text x="565" y="52" text-anchor="middle" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one to all in the domain</text>
+                <circle cx="565" cy="94" r="15" class="fill-sky-500/20" stroke="#38BDF8" />
+                <text x="565" y="97" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">src</text>
+                <line x1="565" y1="109" x2="515" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <line x1="565" y1="109" x2="615" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <line x1="565" y1="109" x2="515" y2="265" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <line x1="565" y1="109" x2="615" y2="265" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <circle cx="515" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="515" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R1</text>
+                <circle cx="615" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="615" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R2</text>
+                <circle cx="515" cy="282" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="515" y="285" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R3</text>
+                <circle cx="615" cy="282" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="615" y="285" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R4</text>
+
+                <!-- Anycast -->
+                <rect x="690" y="16" width="190" height="300" rx="10" fill="#A78BFA" fill-opacity="0.04" stroke="#A78BFA" />
+                <text x="785" y="38" text-anchor="middle" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">ANYCAST</text>
+                <text x="785" y="52" text-anchor="middle" font-size="7.5" fill="rgb(100,116,139)" stroke="none">one to the nearest</text>
+                <circle cx="785" cy="94" r="15" class="fill-sky-500/20" stroke="#38BDF8" />
+                <text x="785" y="97" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">src</text>
+                <rect x="714" y="208" width="142" height="100" rx="8" fill="#A78BFA" fill-opacity="0.06" stroke="#A78BFA" stroke-dasharray="4 3" />
+                <line x1="785" y1="109" x2="735" y2="215" stroke="#10B981" stroke-width="1.4" marker-end="url(#ah)" />
+                <circle cx="735" cy="232" r="13" class="fill-emerald-500/20" stroke="#10B981" />
+                <text x="735" y="235" text-anchor="middle" font-size="7" fill="currentColor" stroke="none">R1</text>
+                <circle cx="835" cy="232" r="13" fill="#10B981" fill-opacity="0.08" stroke="#10B981" stroke-dasharray="3 2" />
+                <text x="835" y="235" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R2</text>
+                <circle cx="735" cy="282" r="13" fill="#10B981" fill-opacity="0.08" stroke="#10B981" stroke-dasharray="3 2" />
+                <text x="735" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R3</text>
+                <circle cx="835" cy="282" r="13" fill="#10B981" fill-opacity="0.08" stroke="#10B981" stroke-dasharray="3 2" />
+                <text x="835" y="285" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">R4</text>
+
+                <text x="40" y="342" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Unicast: one interface · Multicast: a group that joined · Broadcast: everyone in the domain · Anycast: the nearest of several instances.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">The same four receivers, four different delivery contracts.</p>
+          </div>
+
+          <p>Anycast is often left out of the list, but it is the model behind DNS root servers, CDNs, and public resolvers. It looks like unicast on the wire and is routed like unicast; the difference is that several sites advertise the same address.</p>
+
+          <h2>2. Unicast: One to One</h2>
+          <p>A unicast address identifies a single interface. An Ethernet unicast frame has a specific destination MAC; an IP unicast packet has a specific destination IP. The network forwards it along one path to one host.</p>
+          <ul>
+            <li><strong>Ethernet:</strong> I/G bit = 0, for example <code>00:1A:2B:3C:4D:5E</code>.</li>
+            <li><strong>IPv4:</strong> any host address outside 224.0.0.0/4 — for example 10.0.0.10.</li>
+            <li><strong>IPv6:</strong> any address outside ff00::/8.</li>
+          </ul>
+          <p>Most traffic is unicast, and unicast is the only model where a switch can make a precise forwarding decision from its MAC table. If the destination is not in the table, the frame is flooded as <strong>unknown unicast</strong> — still addressed to one host, but delivered to many ports until the address is learned. Hosts discard frames not addressed to them.</p>
+          <p>Unicast is not the same as reliable. TCP, UDP, ICMP, and QUIC all use unicast addresses; only TCP adds acknowledgements and retransmission. A unicast frame can be lost, duplicated, or delivered out of order.</p>
+
+          <h2>3. Broadcast: One to Everyone in the Domain</h2>
+          <p>A broadcast is addressed to every station in the broadcast domain. On Ethernet the destination is <code>FF:FF:FF:FF:FF:FF</code>; on IPv4 it is either the limited broadcast <code>255.255.255.255</code> or the subnet's directed broadcast (the all-ones host portion, such as 192.168.1.255/24).</p>
+          <p>Broadcasts exist because some problems require asking everyone:</p>
+          <ul>
+            <li><strong>ARP</strong> — "who has 10.0.0.1?" must reach every host in the subnet.</li>
+            <li><strong>DHCP Discover</strong> — a client without an address has no one to ask individually.</li>
+            <li><strong>Legacy name resolution</strong> — NetBIOS and similar protocols.</li>
+          </ul>
+          <p>Broadcasts stop at routers. A router does not forward 255.255.255.255 or a subnet broadcast by default; that boundary is the broadcast domain, and on a switched network it is the VLAN. Directed broadcasts can be routed if a router is explicitly configured to allow them, which is rare because it enables amplification attacks.</p>
+          <p>Too much broadcast is a design smell. A flat VLAN with thousands of hosts spends capacity and CPU on ARP and discovery traffic that every host must inspect. Segmentation, proxy ARP, and storm control are the usual remedies.</p>
+
+          <h2>4. Multicast: One to a Group</h2>
+          <p>Multicast sends one copy to a group of interested receivers. The sender does not know or care who is in the group; hosts join and leave, and the network delivers only to the branches that have members.</p>
+          <ul>
+            <li><strong>IPv4 multicast:</strong> 224.0.0.0/4 (Class D). 224.0.0.0/24 is link-local control traffic with TTL 1; 239.0.0.0/8 is administratively scoped; 232.0.0.0/8 is source-specific multicast.</li>
+            <li><strong>IPv6 multicast:</strong> ff00::/8. ff02::1 is all nodes, ff02::2 all routers.</li>
+            <li><strong>Ethernet multicast:</strong> 01:00:5E plus the low 23 bits of the IPv4 group; 33:33 plus the low 32 bits of the IPv6 group.</li>
+          </ul>
+          <p>Multicast is a <em>membership</em> model, not a broadcast with a filter. Hosts signal interest with IGMP (IPv4) or MLD (IPv6). Routers run a multicast routing protocol — usually PIM — to build a distribution tree, and switches use IGMP/MLD snooping to forward only to ports with members.</p>
+          <p>Common uses include IPTV, market-data feeds, software distribution, and routing protocols themselves: OSPF uses 224.0.0.5 and 224.0.0.6, VRRP uses 224.0.0.18, mDNS uses 224.0.0.251, PIM uses 224.0.0.13. Most multicast applications run over UDP because retransmitting to a group is inefficient; where reliability is required, the application adds forward error correction or a repair channel.</p>
+
+          <h2>5. Anycast: One Address, Many Places</h2>
+          <p>Anycast assigns the same address to several nodes, usually in different locations, and relies on ordinary routing to deliver each packet to the nearest one. There is no group membership and no special address range: an anycast address is a unicast address that happens to be advertised from more than one place.</p>
+          <ul>
+            <li><strong>DNS roots and public resolvers</strong> — the same address served from dozens of sites.</li>
+            <li><strong>CDNs</strong> — users reach a nearby edge without choosing one.</li>
+            <li><strong>IPv6</strong> — anycast uses ordinary unicast addresses; there is no separate anycast prefix.</li>
+          </ul>
+          <p>Anycast is stateless-friendly. If routing changes mid-flow, packets can land on a different instance, which is fine for a DNS query but can break a long-lived TCP session that expected the same state. That is why anycast services either keep flows short or synchronise state between sites.</p>
+
+          <h2>6. From IP Address to Ethernet Address</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>IPv4 destination</th>
+                <th>Ethernet destination</th>
+                <th>How it is resolved</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Unicast</td><td>Host address</td><td>Destination station MAC</td><td>ARP (or the default gateway's MAC)</td></tr>
+              <tr><td>Broadcast</td><td>255.255.255.255 or subnet broadcast</td><td>FF:FF:FF:FF:FF:FF</td><td>Fixed mapping</td></tr>
+              <tr><td>Multicast</td><td>224.0.0.0/4</td><td>01:00:5E + low 23 bits</td><td>Fixed mapping; join via IGMP</td></tr>
+              <tr><td>Anycast</td><td>Unicast address shared by several sites</td><td>Next-hop MAC on the chosen path</td><td>Normal routing and ARP</td></tr>
+            </tbody>
+          </table>
+          <p>The multicast mapping is lossy: five bits of the IPv4 group address are dropped, so 32 groups share one Ethernet address. A NIC therefore filters imperfectly and may pass frames for a group the host did not join; the IP layer discards them.</p>
+
+          <h2>7. The Models Side by Side</h2>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Unicast</th>
+                <th>Broadcast</th>
+                <th>Multicast</th>
+                <th>Anycast</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Recipients</td><td>One</td><td>All in the domain</td><td>Group members</td><td>Nearest instance</td></tr>
+              <tr><td>Membership</td><td>None</td><td>None</td><td>IGMP / MLD</td><td>None</td></tr>
+              <tr><td>Address type</td><td>Unicast</td><td>Broadcast</td><td>Multicast</td><td>Unicast (shared)</td></tr>
+              <tr><td>Scope</td><td>End to end</td><td>One broadcast domain</td><td>Group scope, often routed</td><td>Routing domain</td></tr>
+              <tr><td>Typical transport</td><td>TCP or UDP</td><td>UDP / raw</td><td>UDP</td><td>TCP or UDP</td></tr>
+              <tr><td>Reliability</td><td>Depends on transport</td><td>None</td><td>None by default</td><td>Depends on transport</td></tr>
+            </tbody>
+          </table>
+
+          <h2>8. Broadcast, Collision, and Multicast Domains</h2>
+          <p>Three domains, three boundaries:</p>
+          <ul>
+            <li><strong>Collision domain</strong> — the segment where two transmissions can collide. On a switch, every port is its own collision domain; on a hub, all ports share one.</li>
+            <li><strong>Broadcast domain</strong> — the set of stations that receive a broadcast. A VLAN, or a set of VLANs bridged together. Routers do not forward broadcasts between them.</li>
+            <li><strong>Multicast domain</strong> — the set of receivers and network branches interested in a group. It is defined by membership and distribution state, not by a single box.</li>
+          </ul>
+          <p>It is possible for two hosts to be in the same broadcast domain but different multicast domains, and vice versa once multicast routing crosses a router. Treating the three as one thing leads to wrong conclusions about where traffic stops.</p>
+
+          <h2>9. What Switches Do with Each</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Frame type</th>
+                <th>Switch behaviour</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Known unicast</td><td>Forward out the learned port only</td></tr>
+              <tr><td>Unknown unicast</td><td>Flood every other port in the VLAN until the address is learned</td></tr>
+              <tr><td>Broadcast</td><td>Flood every other port in the VLAN</td></tr>
+              <tr><td>Multicast, no snooping</td><td>Flood every other port in the VLAN</td></tr>
+              <tr><td>Multicast, with snooping</td><td>Forward only to member ports and the multicast router port</td></tr>
+              <tr><td>Frame to the ingress port</td><td>Filter (drop)</td></tr>
+            </tbody>
+          </table>
+          <p>Switches learn source MAC addresses from every frame, including multicast frames — but the source of an IP multicast frame is the sender's normal unicast MAC, not the group address. Multicast destination MACs are never learned as sources; they identify a group, not a station.</p>
+
+          <h2>10. What Routers Do with Each</h2>
+          <ul>
+            <li><strong>Unicast</strong> — route by destination prefix, rewriting the Layer 2 header at each hop.</li>
+            <li><strong>Broadcast</strong> — terminate it. Routers do not forward 255.255.255.255 or subnet broadcasts by default; that is what makes a router the edge of a broadcast domain.</li>
+            <li><strong>Multicast</strong> — only if multicast routing is enabled. PIM builds the tree, RPF checks the incoming interface, and IGMP/MLD tracks members on the last hop.</li>
+            <li><strong>Anycast</strong> — route normally. Several sites advertise the same prefix; the routing table picks the closest according to the protocol's metric.</li>
+          </ul>
+          <p>A router that receives a multicast packet without multicast routing configured will drop it. It does not fall back to flooding, and it does not treat it as broadcast.</p>
+
+          <h2>11. Design and Troubleshooting</h2>
+          <ul>
+            <li><strong>Watch the broadcast rate.</strong> A few percent of link capacity is normal in a healthy access VLAN; a sustained climb suggests a loop, a duplicate address, or a subnet that grew too large.</li>
+            <li><strong>Watch unknown unicast.</strong> Persistent flooding means the MAC table is not learning, is full, or is aging too fast.</li>
+            <li><strong>Enable IGMP snooping where multicast matters.</strong> Without it, every multicast stream is broadcast to the VLAN. Snooping also needs a querier; without one, group state may never form.</li>
+            <li><strong>Scope multicast.</strong> Keep local control traffic at TTL 1, use 239.0.0.0/8 for internal groups, and filter at boundaries.</li>
+            <li><strong>Use storm control as a backstop</strong> for broadcast, multicast, and unknown unicast — not as a substitute for correct design.</li>
+            <li><strong>Document anycast prefixes.</strong> Know which sites advertise them and how withdrawal behaves, because convergence changes which instance serves a flow.</li>
+          </ul>
+          <pre>show mac address-table multicast
+show ip igmp snooping groups
+show ip igmp groups
+show ip mroute
+show ip mroute 239.1.1.1
+
+# Linux
+ip maddr show
+ip neigh
+bridge -s mdb</pre>
+
+          <h2>12. Three Cases</h2>
+          <h3>Case A: the VLAN that grew too large</h3>
+          <p>A campus put 2,000 users on one flat VLAN. Periodic slowdowns affected everyone, not just one application.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Broadcast rate</td><td>8–12% of access-link capacity at peak</td></tr>
+              <tr><td>Top talkers</td><td>ARP and legacy discovery, not user data</td></tr>
+              <tr><td>Subnet</td><td>A single /16 with no segmentation</td></tr>
+            </tbody>
+          </table>
+          <p>Splitting the floor into per-department VLANs cut broadcast traffic by an order of magnitude and made the ARP cache sizes manageable. Broadcast is cheap per frame and expensive per host.</p>
+
+          <h3>Case B: the video stream on every port</h3>
+          <p>A new IPTV feed saturated an access switch. Every port carried the stream, including ports with no viewers.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Multicast group</td><td>4 Mb/s continuous on all 48 ports</td></tr>
+              <tr><td>IGMP snooping</td><td>Disabled on the VLAN</td></tr>
+              <tr><td>Querier</td><td>None configured</td></tr>
+            </tbody>
+          </table>
+          <p>Enabling snooping and a querier reduced the stream to the ports that had joined and the uplink toward the source. The group was working exactly as designed; the switch was treating it as broadcast.</p>
+
+          <h3>Case C: the anycast site that went away</h3>
+          <p>A DNS service advertised the same address from two data centres. During a maintenance window, one site withdrew its route.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Routing</td><td>Prefix reconverged to the surviving site</td></tr>
+              <tr><td>New queries</td><td>Served normally after convergence</td></tr>
+              <tr><td>Long-lived TCP sessions</td><td>A few reset when packets moved to a different instance</td></tr>
+            </tbody>
+          </table>
+          <p>That is the anycast trade-off in one incident: excellent availability for short transactions, no stickiness for long flows. The design answer is stateless service, short flows, or shared state — not a longer TTL.</p>
+
+          <h2>13. Exam Traps</h2>
+          <ul>
+            <li><strong>"Routers forward broadcasts."</strong> They do not, by default; broadcasts stop at the broadcast domain.</li>
+            <li><strong>"Multicast uses TCP."</strong> It is almost always UDP; there is no ACK or retransmission at the multicast layer.</li>
+            <li><strong>"IGMP is a multicast routing protocol."</strong> IGMP manages group membership; PIM and similar protocols route multicast.</li>
+            <li><strong>"Multicast MAC uses all 28 bits of the IPv4 group."</strong> Only the low 23 bits are mapped; 32 groups share one MAC.</li>
+            <li><strong>"Anycast is a separate address type."</strong> It uses ordinary unicast addresses shared by multiple sites.</li>
+            <li><strong>"Unknown unicast is a broadcast."</strong> It is addressed to one host and flooded only because its location is unknown.</li>
+            <li><strong>"Broadcast domain equals collision domain."</strong> A switch port is a collision domain; a VLAN is a broadcast domain.</li>
+            <li><strong>"IPv6 uses broadcast."</strong> IPv6 has no broadcast; it uses multicast, including all-nodes ff02::1.</li>
+            <li><strong>"255.255.255.255 can be routed."</strong> It is link-local by definition; routers do not forward it.</li>
+            <li><strong>"Multicast guarantees delivery to every member."</strong> It is best effort, like all Ethernet and IP delivery.</li>
+          </ul>
+
+          <h2>14. Key Takeaways</h2>
+          <ul>
+            <li>Unicast is one-to-one, broadcast is one-to-all in a domain, multicast is one-to-group, anycast is one-to-nearest.</li>
+            <li>Broadcast stops at the router and at the VLAN boundary; multicast can cross routers only with multicast routing configured.</li>
+            <li>Ethernet maps broadcast to FF:FF:FF:FF:FF:FF and multicast to 01:00:5E / 33:33 prefixes.</li>
+            <li>Multicast is a membership model: IGMP/MLD for hosts, PIM for routers, snooping for switches.</li>
+            <li>Anycast is routing, not addressing: the same unicast prefix advertised from several places.</li>
+            <li>Unknown unicast is flooded, but it is still unicast; the destination host is the only one that should accept it.</li>
+            <li>Broadcast, collision, and multicast domains have different boundaries and different failure modes.</li>
+          </ul>
+
+          <h2>15. Quick Review Questions</h2>
+          <ol>
+            <li>What are the four delivery models, and how many receivers does each target?</li>
+            <li>Why do routers not forward 255.255.255.255?</li>
+            <li>Which protocols use IGMP, and what does it actually do?</li>
+            <li>How is an IPv4 multicast group mapped to an Ethernet MAC, and what is lost?</li>
+            <li>What is the difference between unknown unicast and broadcast?</li>
+            <li>Why is anycast described as unicast with shared routing?</li>
+            <li>What happens to multicast traffic on a switch without IGMP snooping?</li>
+            <li>What is the difference between a broadcast domain and a collision domain?</li>
+            <li>Why can anycast break a long-lived TCP session?</li>
+            <li>Which multicast addresses are link-local, and why does their TTL matter?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="mac-addresses-explained.html">MAC Addresses Explained: Structure, Types, and Where They Stop</a></li>
+            <li><a href="how-ethernet-works.html">How Ethernet Works: Frames, MAC Addresses, and Switching</a></li>
+            <li><a href="ethernet-frame-anatomy.html">Anatomy of an Ethernet Frame: A Byte-by-Byte Dissection</a></li>
+            <li><a href="common-physical-problems.html">Common Physical Problems: A Field Guide to Layer 1 Faults</a></li>
+            <li><a href="../../pages/04-ethernet-switching.html">Level 4 - Ethernet Switching</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
