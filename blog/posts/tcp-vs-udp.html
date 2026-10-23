@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCP vs UDP: Differences, Trade-offs, and When to Use Each — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose h4 { margin-top: 1.75rem; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Hub</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>11 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">TCP vs UDP: Differences, Trade-offs, and When to Use Each</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">TCP and UDP are the two transport-layer protocols that carry almost everything on your network. This article compares their headers, behavior, performance characteristics, and the applications that depend on each.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">TCP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">UDP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Transport</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Networking</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Where TCP and UDP Sit</h2>
+          <p>Both protocols operate at <strong>Layer 4 (Transport)</strong> of the OSI model, or the Transport layer of the TCP/IP model. Their job is to deliver data between the correct processes on two hosts. IP handles addressing and routing between hosts; the transport layer decides which application receives the data — and whether delivery guarantees are needed.</p>
+          <p>TCP and UDP share the same core addressing concept: a <strong>port number</strong> identifies the application, and the tuple of source IP, source port, destination IP, and destination port (plus protocol) identifies a flow.</p>
+
+          <h3>Well-known ports you should recognize</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Port</th>
+                <th>Protocol</th>
+                <th>Service</th>
+                <th>Transport</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>20 / 21</td><td>FTP</td><td>Data / Control</td><td>TCP</td></tr>
+              <tr><td>22</td><td>SSH</td><td>Secure Shell</td><td>TCP</td></tr>
+              <tr><td>23</td><td>Telnet</td><td>Remote login</td><td>TCP</td></tr>
+              <tr><td>25 / 587</td><td>SMTP</td><td>Mail transfer</td><td>TCP</td></tr>
+              <tr><td>53</td><td>DNS</td><td>Name resolution</td><td>UDP (TCP for large/zone transfers)</td></tr>
+              <tr><td>67 / 68</td><td>DHCP</td><td>Address assignment</td><td>UDP</td></tr>
+              <tr><td>69</td><td>TFTP</td><td>Trivial file transfer</td><td>UDP</td></tr>
+              <tr><td>80 / 443</td><td>HTTP / HTTPS</td><td>Web</td><td>TCP (HTTP/3 uses UDP/QUIC)</td></tr>
+              <tr><td>123</td><td>NTP</td><td>Time sync</td><td>UDP</td></tr>
+              <tr><td>161 / 162</td><td>SNMP</td><td>Monitoring / Traps</td><td>UDP</td></tr>
+              <tr><td>514</td><td>Syslog</td><td>Logging</td><td>UDP (TCP/TLS variants exist)</td></tr>
+              <tr><td>3389</td><td>RDP</td><td>Remote desktop</td><td>TCP (UDP for some transports)</td></tr>
+            </tbody>
+          </table>
+
+          <h2>2. TCP: Connection-Oriented and Reliable</h2>
+          <p>TCP establishes a connection with a three-way handshake before any data is sent, then tracks every byte transferred. Reliability is not an add-on — it is built into the protocol.</p>
+
+          <h3>What TCP provides</h3>
+          <ul>
+            <li><strong>Connection establishment</strong> — SYN, SYN-ACK, ACK before data flows.</li>
+            <li><strong>Reliability</strong> — every segment is acknowledged; missing data is retransmitted.</li>
+            <li><strong>Ordering</strong> — sequence numbers let the receiver reassemble the byte stream in order.</li>
+            <li><strong>Flow control</strong> — a sliding window prevents a fast sender from overwhelming a slow receiver.</li>
+            <li><strong>Congestion control</strong> — slow start, congestion avoidance, fast retransmit, and fast recovery adapt to network capacity.</li>
+            <li><strong>Graceful teardown</strong> — FIN/ACK exchange, or RST for an abort.</li>
+          </ul>
+
+          <h3>What it costs</h3>
+          <ul>
+            <li>Extra round trips at the start (handshake) and end (teardown).</li>
+            <li>Head-of-line blocking: a lost segment stalls everything behind it, even if later data arrived.</li>
+            <li>Larger header (20–60 bytes) and more state per connection.</li>
+            <li>Delayed delivery can be worse than no delivery for real-time traffic.</li>
+          </ul>
+
+          <h2>3. UDP: Connectionless and Minimal</h2>
+          <p>UDP is a thin wrapper over IP. It adds port numbers and a checksum, then gets out of the way. There is no handshake, no acknowledgment, no retransmission, and no ordering guarantee.</p>
+
+          <h3>What UDP provides</h3>
+          <ul>
+            <li><strong>Port multiplexing</strong> — delivers datagrams to the right application.</li>
+            <li><strong>Low overhead</strong> — an 8-byte header and no connection state on the sender.</li>
+            <li><strong>No delay from setup</strong> — the first datagram carries data.</li>
+            <li><strong>Preserved message boundaries</strong> — each datagram is delivered as a unit; it is not a byte stream.</li>
+            <li><strong>Freedom to build</strong> — applications can implement their own reliability, ordering, or congestion control where it matters.</li>
+          </ul>
+
+          <h3>What it costs</h3>
+          <ul>
+            <li>Lost datagrams are simply lost unless the application recovers them.</li>
+            <li>Reordering is possible; the application must handle it.</li>
+            <li>No built-in congestion control — a careless UDP application can crowd out other traffic.</li>
+            <li>No delivery confirmation, which also makes some protocols easier to spoof or flood.</li>
+          </ul>
+
+          <h2>4. Header Comparison</h2>
+          <p>The header design explains much of the behavioral difference. Both start with source and destination ports, then diverge.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>TCP</th>
+                <th>UDP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Source port</td><td>16 bits</td><td>16 bits</td></tr>
+              <tr><td>Destination port</td><td>16 bits</td><td>16 bits</td></tr>
+              <tr><td>Sequence number</td><td>32 bits</td><td>—</td></tr>
+              <tr><td>Acknowledgment number</td><td>32 bits</td><td>—</td></tr>
+              <tr><td>Header length / flags</td><td>Data offset, reserved, 9 control flags</td><td>—</td></tr>
+              <tr><td>Window size</td><td>16 bits (scalable)</td><td>—</td></tr>
+              <tr><td>Checksum</td><td>16 bits (mandatory for IPv6)</td><td>16 bits (optional in IPv4, mandatory in IPv6)</td></tr>
+              <tr><td>Urgent pointer / options</td><td>Present (options: MSS, window scale, SACK, timestamps)</td><td>—</td></tr>
+              <tr><td>Length field</td><td>Derived from IP</td><td>16 bits (header + payload)</td></tr>
+              <tr><td>Minimum header size</td><td>20 bytes</td><td>8 bytes</td></tr>
+            </tbody>
+          </table>
+
+          <h2>5. Side-by-Side Comparison</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Characteristic</th>
+                <th>TCP</th>
+                <th>UDP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Connection</td><td>Connection-oriented (3-way handshake)</td><td>Connectionless</td></tr>
+              <tr><td>Reliability</td><td>Guaranteed delivery with retransmission</td><td>Best effort, no retransmission</td></tr>
+              <tr><td>Ordering</td><td>In-order byte stream</td><td>No ordering guarantee</td></tr>
+              <tr><td>Data boundaries</td><td>Byte stream; boundaries not preserved</td><td>Datagram boundaries preserved</td></tr>
+              <tr><td>Flow control</td><td>Sliding window</td><td>None</td></tr>
+              <tr><td>Congestion control</td><td>Built in (slow start, AIMD, etc.)</td><td>None (application responsibility)</td></tr>
+              <tr><td>Header size</td><td>20–60 bytes</td><td>8 bytes</td></tr>
+              <tr><td>Speed / overhead</td><td>Slower to start, more overhead</td><td>Lower latency, less overhead</td></tr>
+              <tr><td>Multicast / broadcast</td><td>Not supported (unicast only)</td><td>Supported</td></tr>
+              <tr><td>State on hosts</td><td>Per-connection state on both ends</td><td>Stateless (or minimal) on sender</td></tr>
+              <tr><td>Typical use</td><td>Web, email, file transfer, SSH, APIs</td><td>DNS, DHCP, VoIP, video, gaming, SNMP, TFTP</td></tr>
+              <tr><td>RFC</td><td>RFC 9293</td><td>RFC 768</td></tr>
+            </tbody>
+          </table>
+
+          <h2>6. Diagram: TCP vs UDP Flow</h2>
+          <p>The diagram contrasts the two behaviors: TCP spends round trips setting up and confirming delivery, while UDP sends each datagram immediately with no confirmation.</p>
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 840 430" class="mx-auto w-full max-w-3xl" role="img" aria-label="Diagram comparing TCP connection-oriented flow with UDP connectionless datagram flow">
+              <defs>
+                <marker id="arrow-tcp" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="rgb(59,130,246)" />
+                </marker>
+                <marker id="arrow-udp" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="rgb(16,185,129)" />
+                </marker>
+              </defs>
+              <g class="text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" stroke-width="2">
+                <!-- TCP panel -->
+                <rect x="20" y="20" width="390" height="390" rx="12" class="fill-slate-50 dark:fill-slate-950" stroke-width="1" />
+                <text x="215" y="48" text-anchor="middle" font-size="15" font-weight="600" fill="rgb(59,130,246)" stroke="none">TCP — connection-oriented</text>
+
+                <line x1="110" y1="80" x2="110" y2="380" />
+                <line x1="320" y1="80" x2="320" y2="380" />
+                <text x="110" y="72" text-anchor="middle" font-size="12" fill="currentColor" stroke="none">Client</text>
+                <text x="320" y="72" text-anchor="middle" font-size="12" fill="currentColor" stroke="none">Server</text>
+
+                <line x1="110" y1="110" x2="312" y2="110" stroke="rgb(59,130,246)" marker-end="url(#arrow-tcp)" />
+                <text x="211" y="102" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">SYN</text>
+
+                <line x1="320" y1="150" x2="118" y2="150" stroke="rgb(16,185,129)" marker-end="url(#arrow-udp)" />
+                <text x="219" y="142" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">SYN-ACK</text>
+
+                <line x1="110" y1="190" x2="312" y2="190" stroke="rgb(59,130,246)" marker-end="url(#arrow-tcp)" />
+                <text x="211" y="182" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">ACK</text>
+
+                <text x="215" y="222" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">— connection established —</text>
+
+                <line x1="110" y1="250" x2="312" y2="250" stroke="rgb(59,130,246)" marker-end="url(#arrow-tcp)" />
+                <text x="211" y="242" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">DATA (SEQ 1001)</text>
+
+                <line x1="320" y1="290" x2="118" y2="290" stroke="rgb(16,185,129)" marker-end="url(#arrow-udp)" />
+                <text x="219" y="282" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">ACK 1101</text>
+
+                <text x="215" y="320" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">lost segment → retransmitted</text>
+                <text x="215" y="350" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">ordered byte stream delivered</text>
+                <text x="215" y="378" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">FIN / ACK teardown</text>
+
+                <!-- UDP panel -->
+                <rect x="430" y="20" width="390" height="390" rx="12" class="fill-slate-50 dark:fill-slate-950" stroke-width="1" />
+                <text x="625" y="48" text-anchor="middle" font-size="15" font-weight="600" fill="rgb(16,185,129)" stroke="none">UDP — connectionless</text>
+
+                <line x1="520" y1="80" x2="520" y2="380" />
+                <line x1="730" y1="80" x2="730" y2="380" />
+                <text x="520" y="72" text-anchor="middle" font-size="12" fill="currentColor" stroke="none">Sender</text>
+                <text x="730" y="72" text-anchor="middle" font-size="12" fill="currentColor" stroke="none">Receiver</text>
+
+                <line x1="520" y1="120" x2="722" y2="120" stroke="rgb(16,185,129)" marker-end="url(#arrow-udp)" />
+                <text x="621" y="112" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">DATAGRAM 1</text>
+
+                <line x1="520" y1="165" x2="722" y2="165" stroke="rgb(16,185,129)" marker-end="url(#arrow-udp)" />
+                <text x="621" y="157" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">DATAGRAM 2 (lost)</text>
+
+                <line x1="520" y1="210" x2="722" y2="210" stroke="rgb(16,185,129)" marker-end="url(#arrow-udp)" />
+                <text x="621" y="202" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">DATAGRAM 3</text>
+
+                <text x="625" y="255" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">no handshake, no ACKs</text>
+                <text x="625" y="285" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">datagram 2 is simply gone</text>
+                <text x="625" y="315" text-anchor="middle" font-size="10" fill="rgb(100,116,139)" stroke="none">datagrams 1 and 3 delivered</text>
+                <text x="625" y="345" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">application decides what to do</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">TCP trades round trips for reliability and ordering; UDP sends immediately and leaves recovery to the application.</p>
+          </div>
+
+          <h2>7. When Reliability Is Worth the Cost</h2>
+          <p>Choose TCP when the data must arrive complete, correct, and in order, and when late data is still useful:</p>
+          <ul>
+            <li><strong>Web and APIs</strong> — HTTP/1.1 and HTTP/2 run over TCP; a missing byte breaks the page or JSON payload.</li>
+            <li><strong>File transfer</strong> — FTP, SFTP, SMB, NFS, and backups must be byte-exact.</li>
+            <li><strong>Email</strong> — SMTP, IMAP, and POP3 need complete messages.</li>
+            <li><strong>Remote administration</strong> — SSH, Telnet, and RDP sessions cannot tolerate silent gaps.</li>
+            <li><strong>Routing and control protocols</strong> — BGP runs over TCP/179 because a lost update is worse than a delayed one.</li>
+            <li><strong>Database and transaction traffic</strong> — correctness beats microseconds.</li>
+          </ul>
+
+          <h2>8. When Speed Beats Guarantees</h2>
+          <p>Choose UDP when the application can tolerate loss, when retransmission would arrive too late to matter, or when you need multicast/broadcast:</p>
+          <ul>
+            <li><strong>DNS</strong> — a single query and response; the resolver simply retries if needed. TCP/53 handles large responses and zone transfers.</li>
+            <li><strong>DHCP</strong> — clients have no address yet, so broadcast is required; UDP fits naturally.</li>
+            <li><strong>VoIP and video conferencing</strong> — a retransmitted voice packet is useless; better to conceal or drop it.</li>
+            <li><strong>Streaming and gaming</strong> — latency matters more than perfect delivery; newer protocols add selective reliability on top of UDP.</li>
+            <li><strong>Monitoring and logging</strong> — SNMP, NetFlow/IPFIX, and syslog favor low overhead and fire-and-forget behavior.</li>
+            <li><strong>TFTP</strong> — simple, small transfers with application-level acknowledgments.</li>
+            <li><strong>QUIC / HTTP/3</strong> — reliability and congestion control rebuilt in user space over UDP, avoiding TCP head-of-line blocking.</li>
+          </ul>
+
+          <h2>9. Common Misconceptions</h2>
+          <ul>
+            <li><strong>"UDP is unreliable, so it is bad."</strong> UDP is not broken; it is deliberately minimal. Reliability is a design choice, and many applications implement exactly the reliability they need.</li>
+            <li><strong>"TCP is always slower."</strong> For bulk transfer on a healthy path, TCP's overhead is small relative to the payload. Its costs show up in setup latency and lossy or long-fat networks.</li>
+            <li><strong>"Port 53 means DNS is UDP."</strong> DNS uses both. UDP for normal queries, TCP for large responses, DNSSEC, and zone transfers.</li>
+            <li><strong>"TCP guarantees delivery."</strong> TCP guarantees delivery <em>or</em> an error. If the connection breaks, the application is told; data is not magically delivered.</li>
+            <li><strong>"UDP has no checksum."</strong> UDP has a checksum. It is optional in IPv4 and mandatory in IPv6.</li>
+            <li><strong>"TCP and UDP can share a port."</strong> They can, because the protocol number is part of the flow identity. A service can listen on TCP/53 and UDP/53 simultaneously.</li>
+          </ul>
+
+          <h2>10. Security and Operational Considerations</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Topic</th>
+                <th>TCP</th>
+                <th>UDP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Firewall behavior</td>
+                <td>Stateful inspection tracks the handshake and connection state</td>
+                <td>Often stateless; return traffic may need explicit rules</td>
+              </tr>
+              <tr>
+                <td>Common attacks</td>
+                <td>SYN flood, session hijacking, RST injection</td>
+                <td>Amplification/reflection (DNS, NTP, SNMP), spoofing</td>
+              </tr>
+              <tr>
+                <td>NAT behavior</td>
+                <td>Straightforward; state is tracked per connection</td>
+                <td>Needs ALGs or careful timer tuning; some protocols embed IPs</td>
+              </tr>
+              <tr>
+                <td>Troubleshooting</td>
+                <td>Look for handshake completion, retransmissions, window size, RSTs</td>
+                <td>Look for one-way flows, MTU/fragmentation, ACL drops, missing return path</td>
+              </tr>
+              <tr>
+                <td>Load balancing</td>
+                <td>Per-connection persistence is natural</td>
+                <td>Flow affinity must be configured explicitly</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Useful verification commands</h3>
+          <pre><code># Socket and connection state
+ss -tan
+ss -uan
+netstat -an
+
+# Reachability of a TCP port vs a UDP port
+nc -vz 10.0.0.5 443
+nc -vzu 10.0.0.5 53
+
+# Capture and inspect transport behavior
+tcpdump -i eth0 -nn 'tcp port 443'
+tcpdump -i eth0 -nn 'udp port 53'
+
+# On Cisco devices
+show ip sockets
+show tcp brief
+show ip nat translations</code></pre>
+
+          <h2>11. Key Takeaways</h2>
+          <ul>
+            <li><strong>TCP</strong> = connection-oriented, reliable, ordered, flow- and congestion-controlled. Costs round trips, state, and header bytes.</li>
+            <li><strong>UDP</strong> = connectionless, best-effort, message-oriented, minimal overhead. Leaves reliability to the application.</li>
+            <li>The choice is about the <strong>application's tolerance for loss and delay</strong>, not about which protocol is "better."</li>
+            <li>Both use ports, and the same port number can be used by both protocols.</li>
+            <li>Modern designs blur the line: QUIC provides reliability over UDP, while TCP options like SACK and window scaling improve performance on long paths.</li>
+            <li>For the exam, remember header fields, common port numbers, and the classic "reliable vs best-effort" distinction.</li>
+          </ul>
+
+          <h2>12. Quick Review Questions</h2>
+          <ol>
+            <li>Which TCP header fields make retransmission and reassembly possible?</li>
+            <li>Why does DNS use UDP for most queries but TCP for zone transfers?</li>
+            <li>What happens in TCP when a segment is lost but later segments arrive?</li>
+            <li>Which protocol supports multicast and broadcast, and why does it matter for DHCP?</li>
+            <li>What problem does QUIC solve by running over UDP?</li>
+            <li>How large is the minimum TCP header, and how large is the UDP header?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="tcp-three-way-handshake.html">TCP Three-Way Handshake: Explained in Depth</a></li>
+            <li><a href="osi-model-vs-tcpip-model.html">OSI Model vs TCP/IP Model</a></li>
+            <li><a href="../../pages/03-osi-tcpip.html">Level 3 - OSI & TCP/IP</a></li>
+            <li><a href="../../pages/05-ipv4.html">Level 5 - IPv4</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
