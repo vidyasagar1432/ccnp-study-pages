@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segmentation and Reassembly: TCP MSS, IP Fragmentation, and MTU — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Hub</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>13 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Segmentation and Reassembly: TCP MSS, IP Fragmentation, and MTU</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Applications think in byte streams; links think in frames of limited size. This article explains who splits the data, where it is put back together, and why MTU problems cause some of the hardest-to-diagnose outages on real networks.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">TCP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">IP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">MTU</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fragmentation</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Two Different Jobs With Similar Names</h2>
+          <p>"Segmentation and reassembly" gets used loosely, but two separate mechanisms are involved, and confusing them is the source of most exam mistakes:</p>
+          <ul>
+            <li><strong>TCP segmentation</strong> happens at Layer 4. The sender divides an application byte stream into TCP segments sized to fit the path MTU, and the receiver reassembles those segments into an ordered byte stream. This is normal, expected, and invisible to the application.</li>
+            <li><strong>IP fragmentation</strong> happens at Layer 3. When a datagram is larger than the next link's MTU, IPv4 can split it into fragments that are reassembled only at the final destination. This is an exception path, and it is usually something you want to avoid.</li>
+          </ul>
+          <p>In short: TCP segmentation is the designed behavior; IP fragmentation is the fallback. A healthy network relies on the first and rarely sees the second.</p>
+
+          <h2>2. Why Size Limits Exist</h2>
+          <p>Every link has a <strong>Maximum Transmission Unit (MTU)</strong> — the largest IP packet (header plus payload) that can be carried in one Layer 2 frame. The classic Ethernet MTU is <strong>1500 bytes</strong>. Frames larger than the link MTU cannot be transmitted as a single unit, so something has to give:</p>
+          <ul>
+            <li>The transport layer can send smaller segments (TCP does this).</li>
+            <li>The network layer can split the packet into fragments (IPv4 can, IPv6 largely cannot).</li>
+            <li>Or the packet can be dropped with an ICMP error that tells the sender to shrink.</li>
+          </ul>
+          <p>The third option is what modern networks prefer, because it lets the sender adapt without creating reassembly work for the receiver.</p>
+
+          <h2>3. TCP Segmentation in Depth</h2>
+          <p>TCP presents a <strong>byte stream</strong> to the application. It has no concept of your application's message boundaries — if you write 10,000 bytes to a socket, TCP decides how many segments that becomes based on the MSS, the congestion window, and the receiver's advertised window.</p>
+
+          <h3>Maximum Segment Size (MSS)</h3>
+          <p>MSS is the largest TCP payload a host is willing to receive in a single segment. It is <em>not</em> negotiated as a minimum; each side advertises its own MSS in the SYN, and each side uses the other's value when sending.</p>
+          <pre><code>MSS = MTU - IP header - TCP header</code></pre>
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Calculation</th>
+                <th>MSS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>IPv4 over Ethernet (MTU 1500)</td><td>1500 − 20 (IPv4) − 20 (TCP)</td><td>1460</td></tr>
+              <tr><td>IPv4 with TCP timestamps/options (TCP header 32)</td><td>1500 − 20 − 32</td><td>1448</td></tr>
+              <tr><td>IPv6 over Ethernet (MTU 1500)</td><td>1500 − 40 (IPv6) − 20 (TCP)</td><td>1440</td></tr>
+              <tr><td>GRE tunnel (24 bytes overhead), MTU 1500</td><td>1500 − 24 − 20 − 20</td><td>1436</td></tr>
+              <tr><td>PPPoE (8 bytes overhead)</td><td>1500 − 8 − 20 − 20</td><td>1452</td></tr>
+              <tr><td>VXLAN (50 bytes overhead), MTU 1500</td><td>1500 − 50 − 20 − 20</td><td>1410</td></tr>
+            </tbody>
+          </table>
+          <p>Note how quickly encapsulation erodes the usable payload. This is why tunnels and overlay networks so often need an explicit MSS adjustment.</p>
+
+          <h3>How the receiver reassembles</h3>
+          <p>TCP reassembly is driven by <strong>sequence numbers</strong>. The receiver tracks the next expected byte, places out-of-order segments into a receive buffer, and delivers contiguous data to the application in order.</p>
+          <ul>
+            <li><strong>In-order segment</strong> — appended to the buffer and immediately available to the application.</li>
+            <li><strong>Out-of-order segment</strong> — held until the gap is filled (a "hole").</li>
+            <li><strong>Missing segment</strong> — detected by duplicate ACKs or a retransmission timeout, then retransmitted.</li>
+            <li><strong>Selective ACK (SACK)</strong> — tells the sender exactly which ranges arrived, so only the hole is retransmitted instead of everything after it.</li>
+          </ul>
+          <p>The cost of this design is <strong>head-of-line blocking</strong>: data that arrived successfully cannot be delivered until the missing bytes arrive. That is the right trade-off for a file transfer and the wrong one for real-time media, which is why protocols like QUIC move reliability above UDP and avoid blocking unrelated streams.</p>
+
+          <h3>Segmentation offload (why captures look weird)</h3>
+          <p>Modern NICs perform <strong>TSO/GSO</strong> (TCP Segmentation Offload / Generic Segmentation Offload) on the sender and <strong>GRO/LRO</strong> on the receiver. The host hands the NIC a large buffer and the hardware splits it into MSS-sized frames. If you capture traffic on the sending host, you may see "segments" far larger than the MSS, or checksums marked as incorrect. Both are artifacts of offload, not faults. Capturing on the wire (a SPAN port or TAP) shows the real frames.</p>
+
+          <h2>4. IP Fragmentation in Depth</h2>
+          <p>IPv4 fragmentation happens when a packet must traverse a link whose MTU is smaller than the packet size, and the packet is allowed to be fragmented (the DF bit is clear). The original packet is split, and the receiver reassembles the pieces using fields in the IPv4 header.</p>
+
+          <h3>The IPv4 fields that make it work</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Size</th>
+                <th>Role in fragmentation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Identification</td><td>16 bits</td><td>Same value on every fragment of one original datagram; used to group them at the receiver.</td></tr>
+              <tr><td>Flags — DF</td><td>1 bit</td><td>Don't Fragment. If set and the packet exceeds the MTU, the packet is dropped and an ICMP error is returned instead of fragmenting.</td></tr>
+              <tr><td>Flags — MF</td><td>1 bit</td><td>More Fragments. Set on every fragment except the last one.</td></tr>
+              <tr><td>Fragment Offset</td><td>13 bits</td><td>Position of this fragment's payload in the original datagram, measured in <strong>8-byte units</strong>.</td></tr>
+              <tr><td>Total Length</td><td>16 bits</td><td>Length of <em>this fragment</em>, not the original datagram.</td></tr>
+            </tbody>
+          </table>
+          <p>Two rules follow from the offset encoding: every non-final fragment's payload must be a multiple of 8 bytes, and the maximum offset (8191 × 8) caps the original datagram at 65,535 bytes, consistent with the 16-bit Total Length field.</p>
+
+          <h3>Worked example</h3>
+          <p>Take an IPv4 datagram of <strong>4000 bytes total</strong> (20-byte header + 3980 bytes of data) crossing a link with MTU 1500.</p>
+          <ul>
+            <li>Payload per fragment = 1500 − 20 = 1480 bytes (already a multiple of 8).</li>
+            <li>3980 ÷ 1480 = 2 full fragments plus 1020 bytes remaining.</li>
+            <li>Fragment 1: offset 0, MF=1, total length 1500.</li>
+            <li>Fragment 2: offset 185 (1480 ÷ 8), MF=1, total length 1500.</li>
+            <li>Fragment 3: offset 370 (2960 ÷ 8), MF=0, total length 1040.</li>
+          </ul>
+          <p>Each fragment carries a copy of the original IP header (with adjusted Total Length, Flags, and Offset), so the overhead is 20 bytes per fragment. All three must arrive for the datagram to be reassembled; if any is lost, the entire original datagram is discarded and TCP (or the application) must retransmit.</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 840 360" class="mx-auto w-full max-w-3xl" role="img" aria-label="Diagram of a 4000 byte IPv4 datagram fragmented into three pieces across a 1500 byte MTU link and reassembled at the destination">
+              <defs>
+                <marker id="frag-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                  <polygon points="0 0, 10 3.5, 0 7" fill="rgb(100,116,139)" />
+                </marker>
+              </defs>
+              <g class="text-slate-900 dark:text-slate-100" fill="none" stroke="currentColor" stroke-width="2">
+                <text x="20" y="30" font-size="13" font-weight="600" fill="currentColor" stroke="none">Original datagram — 4000 bytes (20 header + 3980 data)</text>
+                <rect x="20" y="42" width="740" height="42" rx="6" class="fill-sky-500/10" stroke="rgb(14,165,233)" />
+                <rect x="20" y="42" width="90" height="42" rx="6" class="fill-sky-500/25" stroke="rgb(14,165,233)" />
+                <text x="65" y="68" text-anchor="middle" font-size="11" fill="currentColor" stroke="none">IP hdr 20</text>
+                <text x="450" y="68" text-anchor="middle" font-size="11" fill="currentColor" stroke="none">3980 bytes of TCP segment / payload</text>
+
+                <text x="20" y="118" font-size="12" font-weight="600" fill="rgb(100,116,139)" stroke="none">Link MTU = 1500 bytes → max payload per fragment = 1480 bytes</text>
+                <line x1="420" y1="112" x2="420" y2="150" stroke="rgb(100,116,139)" marker-end="url(#frag-arrow)" />
+
+                <rect x="20" y="160" width="180" height="46" rx="6" class="fill-emerald-500/15" stroke="rgb(16,185,129)" />
+                <rect x="20" y="160" width="42" height="46" rx="6" class="fill-emerald-500/30" stroke="rgb(16,185,129)" />
+                <text x="41" y="188" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">hdr</text>
+                <text x="120" y="180" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">1480 bytes</text>
+                <text x="120" y="196" text-anchor="middle" font-size="9" fill="rgb(100,116,139)" stroke="none">offset 0 · MF=1 · len 1500</text>
+
+                <rect x="220" y="160" width="180" height="46" rx="6" class="fill-emerald-500/15" stroke="rgb(16,185,129)" />
+                <rect x="220" y="160" width="42" height="46" rx="6" class="fill-emerald-500/30" stroke="rgb(16,185,129)" />
+                <text x="241" y="188" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">hdr</text>
+                <text x="320" y="180" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">1480 bytes</text>
+                <text x="320" y="196" text-anchor="middle" font-size="9" fill="rgb(100,116,139)" stroke="none">offset 185 · MF=1 · len 1500</text>
+
+                <rect x="420" y="160" width="180" height="46" rx="6" class="fill-emerald-500/15" stroke="rgb(16,185,129)" />
+                <rect x="420" y="160" width="42" height="46" rx="6" class="fill-emerald-500/30" stroke="rgb(16,185,129)" />
+                <text x="441" y="188" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">hdr</text>
+                <text x="520" y="180" text-anchor="middle" font-size="10" fill="currentColor" stroke="none">1020 bytes</text>
+                <text x="520" y="196" text-anchor="middle" font-size="9" fill="rgb(100,116,139)" stroke="none">offset 370 · MF=0 · len 1040</text>
+
+                <text x="20" y="242" font-size="12" font-weight="600" fill="rgb(100,116,139)" stroke="none">Reassembly happens only at the final destination</text>
+                <line x1="310" y1="238" x2="310" y2="268" stroke="rgb(100,116,139)" marker-end="url(#frag-arrow)" />
+
+                <rect x="20" y="280" width="740" height="42" rx="6" class="fill-slate-500/10" stroke="rgb(148,163,184)" />
+                <text x="390" y="306" text-anchor="middle" font-size="11" fill="currentColor" stroke="none">Reassembled 4000-byte datagram (identified by the same Identification value)</text>
+
+                <text x="700" y="188" font-size="9" fill="rgb(100,116,139)" stroke="none">Losing any</text>
+                <text x="700" y="200" font-size="9" fill="rgb(100,116,139)" stroke="none">fragment drops</text>
+                <text x="700" y="212" font-size="9" fill="rgb(100,116,139)" stroke="none">the whole thing</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">IPv4 fragmentation: offsets count 8-byte units, MF marks all but the last fragment, and reassembly is the destination's job.</p>
+          </div>
+
+          <h2>5. IPv6 Changed the Rules</h2>
+          <p>IPv6 removes fragmentation from the forwarding path. Routers do not fragment packets; only the source host may do so, and it must use a <strong>Fragment extension header</strong> containing an identification value, a fragment offset, and an M (more fragments) flag.</p>
+          <ul>
+            <li>Every IPv6 link is required to support at least 1280 bytes, so the source can always send 1280 bytes without fragmenting.</li>
+            <li>Hosts are expected to perform <strong>Path MTU Discovery</strong> and send packets that fit.</li>
+            <li>A router that cannot forward an oversized packet returns <strong>ICMPv6 Packet Too Big (Type 2)</strong> and drops it.</li>
+            <li>The IPv6 header has no DF bit — the absence of router fragmentation makes DF unnecessary.</li>
+          </ul>
+          <p>This design is cleaner, but it makes correct ICMPv6 filtering even more important: if Packet Too Big messages are blocked, IPv6 hosts cannot discover the real path MTU and will keep retrying packets that never fit.</p>
+
+          <h2>6. Path MTU Discovery (PMTUD)</h2>
+          <p>PMTUD is how a sender learns the smallest MTU along a path without guessing.</p>
+          <ol>
+            <li>The sender sets <strong>DF=1</strong> (IPv4) and sends packets at the local MTU.</li>
+            <li>A router on a smaller-MTU link cannot forward the packet, so it drops it and returns <strong>ICMP Type 3 Code 4</strong> — "fragmentation needed and DF set" — including the next-hop MTU in newer implementations.</li>
+            <li>The sender lowers its path MTU estimate and retransmits. The process converges quickly and is cached per destination.</li>
+            <li>IPv6 works the same way with ICMPv6 Packet Too Big.</li>
+          </ol>
+
+          <h3>The black hole problem</h3>
+          <p>If a firewall blocks those ICMP errors, the sender never learns and keeps sending full-size packets. Small packets (pings, DNS, TCP handshakes) succeed, but large ones vanish silently. The classic symptoms:</p>
+          <ul>
+            <li>SSH connects and lets you log in, then hangs the moment you run a command with a large output.</li>
+            <li>A website's homepage loads but large images stall.</li>
+            <li>Ping with small payload works; ping with a large payload fails.</li>
+            <li>TLS handshakes complete, then the first large application response never arrives.</li>
+          </ul>
+          <p>This is a <strong>PMTUD black hole</strong>, and it is one of the most common "it works, but only sometimes" tickets in enterprise networks.</p>
+
+          <h2>7. MTU, MSS, and Encapsulation Overhead</h2>
+          <p>Tunnels add headers, which reduces the payload a given physical MTU can carry. You either raise the underlying MTU, lower the tunnel MTU, or clamp MSS. The table below shows typical overheads:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Encapsulation</th>
+                <th>Typical added bytes</th>
+                <th>Effective MTU on 1500</th>
+                <th>Suggested TCP MSS (IPv4)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>802.1Q VLAN tag</td><td>4</td><td>1500 (frame becomes 1522)</td><td>1460</td></tr>
+              <tr><td>GRE (no options)</td><td>24 (20 outer IP + 4 GRE)</td><td>1476</td><td>1436</td></tr>
+              <tr><td>GRE with key</td><td>28</td><td>1472</td><td>1432</td></tr>
+              <tr><td>IPsec ESP tunnel (AES-GCM)</td><td>~50–73</td><td>~1400 typical design</td><td>1360</td></tr>
+              <tr><td>VXLAN</td><td>50 (14 Eth + 20 IP + 8 UDP + 8 VXLAN)</td><td>1450</td><td>1410</td></tr>
+              <tr><td>PPPoE</td><td>8</td><td>1492</td><td>1452</td></tr>
+              <tr><td>MPLS label stack (2 labels)</td><td>8</td><td>1492</td><td>1452</td></tr>
+            </tbody>
+          </table>
+          <p>Two design choices are common: set the tunnel interface MTU to <code>1500 − overhead</code> and let PMTUD handle the rest, or keep the tunnel MTU at 1500 and <strong>clamp MSS</strong> on tunnel traffic so TCP never emits a segment that will not fit after encapsulation. Clamping is the pragmatic fix when ICMP is filtered somewhere in the path.</p>
+          <p><strong>Jumbo frames</strong> (MTU 9000) reduce per-packet overhead in data centers, but only work if every device in the path — including switches, storage, and virtual switches — agrees. A single 1500-byte device in a jumbo path produces exactly the black-hole behavior described above.</p>
+
+          <h2>8. Diagnosing MTU and Fragmentation Problems</h2>
+
+          <h3>Step 1: Find the path MTU</h3>
+          <pre><code># Linux: discover path MTU by probing sizes with DF set
+ping -M do -s 1472 10.0.0.5        # 1472 + 28 = 1500 byte packet
+ping -M do -s 1400 10.0.0.5
+
+# Linux: report the MTU along the path
+tracepath 10.0.0.5
+
+# Windows
+ping -f -l 1472 10.0.0.5
+
+# macOS
+ping -D -s 1472 10.0.0.5</code></pre>
+          <p>Note the arithmetic: the <code>-s</code>/<code>-l</code> value is the ICMP payload, so for IPv4 add 8 (ICMP header) + 20 (IP header) = 28. A 1472-byte payload gives exactly 1500 bytes on the wire.</p>
+
+          <h3>Step 2: Check interface MTU and counters</h3>
+          <pre><code># Cisco IOS / IOS XE
+show interfaces GigabitEthernet0/1
+show ip interface GigabitEthernet0/1
+show ip traffic | include fragment
+show interfaces Tunnel0
+
+# Linux
+ip link show
+ip -s link show eth0
+
+# Windows
+netsh interface ipv4 show subinterfaces</code></pre>
+
+          <h3>Step 3: Fix it at the right place</h3>
+          <pre><code># Cisco: clamp TCP MSS on a tunnel or interface (IPv4)
+interface Tunnel0
+ ip tcp adjust-mss 1400
+
+# Cisco: lower the interface MTU instead
+interface Tunnel0
+ ip mtu 1400
+
+# Linux: lower the MTU
+ip link set dev eth0 mtu 1400
+
+# Linux: enable PMTUD probing as a fallback
+sysctl -w net.ipv4.tcp_mtu_probing=1</code></pre>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Symptom</th>
+                <th>Likely cause</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Small pings succeed, large pings fail</td>
+                <td>MTU too small somewhere, DF prevents fragmentation</td>
+                <td>Lower MTU or clamp MSS; verify ICMP is allowed</td>
+              </tr>
+              <tr>
+                <td>TCP connects, then stalls on bulk transfer</td>
+                <td>PMTUD black hole (ICMP Type 3 Code 4 filtered)</td>
+                <td>Permit ICMP unreachable; enable MSS clamping</td>
+              </tr>
+              <tr>
+                <td>Works locally, fails over VPN/tunnel</td>
+                <td>Encapsulation overhead exceeds path MTU</td>
+                <td>Adjust tunnel MTU or MSS; test with DF</td>
+              </tr>
+              <tr>
+                <td>High fragment counters, poor throughput</td>
+                <td>MSS larger than path MTU; fragmentation in the path</td>
+                <td>Fix MSS on endpoints; avoid relying on fragmentation</td>
+              </tr>
+              <tr>
+                <td>Intermittent failures to one subnet</td>
+                <td>One link with a lower MTU in the path</td>
+                <td>Find the hop with tracepath/traceroute and align MTU</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>9. Security and Operational Notes</h2>
+          <ul>
+            <li><strong>Fragment attacks</strong> — overlapping fragments (teardrop-style) and tiny fragments have historically confused reassembly. Modern stacks handle overlaps conservatively, and firewalls commonly drop non-first fragments or normalize them.</li>
+            <li><strong>Reassembly resource use</strong> — a host must buffer fragments until the datagram completes or a timer expires (commonly 30–60 seconds in IPv4). Floods of partial datagrams can exhaust those buffers, which is why many networks rate-limit or block fragments at the edge.</li>
+            <li><strong>Firewall policy</strong> — blocking all ICMP breaks PMTUD. Permit at minimum ICMP Type 3 Code 4 (IPv4) and ICMPv6 Type 2, ideally rate-limited.</li>
+            <li><strong>Load balancing</strong> — non-first fragments lack Layer 4 headers, so some load balancers and ACLs treat them differently. Another reason to keep packets unfragmented.</li>
+            <li><strong>Captures</strong> — offload can make a host capture disagree with the wire. Always confirm where the capture was taken before concluding a segmentation bug exists.</li>
+          </ul>
+
+          <h2>10. Key Takeaways</h2>
+          <ul>
+            <li><strong>TCP segments; IP fragments.</strong> Segmentation is routine, fragmentation is a fallback.</li>
+            <li><strong>MSS = MTU − IP header − TCP header.</strong> 1460 for IPv4/Ethernet, 1440 for IPv6/Ethernet.</li>
+            <li><strong>Reassembly by sequence number</strong> lets TCP rebuild the byte stream, at the cost of head-of-line blocking.</li>
+            <li><strong>IPv4 reassembly happens only at the destination</strong>, uses Identification/DF/MF/Offset, and loses the whole datagram if one fragment is lost.</li>
+            <li><strong>IPv6 forbids router fragmentation</strong> and depends on PMTUD and ICMPv6 Packet Too Big.</li>
+            <li><strong>Tunnels shrink the usable MTU.</strong> Account for GRE, IPsec, VXLAN, PPPoE, and MPLS overhead — then clamp MSS or lower the MTU deliberately.</li>
+            <li><strong>"Works small, fails large" is the signature of an MTU problem.</strong> Test with DF set and verify ICMP is not being dropped.</li>
+          </ul>
+
+          <h2>11. Quick Review Questions</h2>
+          <ol>
+            <li>What is the MSS for IPv6 over a 1500-byte Ethernet link?</li>
+            <li>Why must every non-final IPv4 fragment carry a payload that is a multiple of 8 bytes?</li>
+            <li>A 4000-byte IPv4 datagram crosses an MTU-1500 link. What are the fragment offsets?</li>
+            <li>Where does IPv4 reassembly occur, and what happens if one fragment is lost?</li>
+            <li>Why does IPv6 not have a DF bit?</li>
+            <li>What ICMP message drives PMTUD in IPv4, and what breaks if it is filtered?</li>
+            <li>Why can a TCP connection succeed and then stall during a large transfer?</li>
+            <li>What is the difference between TCP segmentation offload and IP fragmentation?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="tcp-vs-udp.html">TCP vs UDP: Differences, Trade-offs, and When to Use Each</a></li>
+            <li><a href="tcp-three-way-handshake.html">TCP Three-Way Handshake: Explained in Depth</a></li>
+            <li><a href="osi-model-vs-tcpip-model.html">OSI Model vs TCP/IP Model</a></li>
+            <li><a href="../../pages/03-osi-tcpip.html">Level 3 - OSI & TCP/IP</a></li>
+            <li><a href="../../pages/05-ipv4.html">Level 5 - IPv4</a></li>
+            <li><a href="../../pages/06-ipv6.html">Level 6 - IPv6</a></li>
+            <li><a href="../../pages/18-vpn-technologies.html">Level 18 - VPN Technologies</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
