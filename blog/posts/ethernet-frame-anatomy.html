@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anatomy of an Ethernet Frame: A Byte-by-Byte Dissection — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>16 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Anatomy of an Ethernet Frame: A Byte-by-Byte Dissection</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Fourteen bytes of header, a payload, some padding, and a CRC. Here is every octet of a real 64-byte ARP request, and the rules that decide how it is built.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Ethernet</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Frames</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Layer 2</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">FCS</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Frame, Packet, Segment</h2>
+          <p>The words are not interchangeable. A <strong>segment</strong> is TCP's unit of data. A <strong>packet</strong> is IP's unit. A <strong>frame</strong> is Ethernet's unit — the envelope that carries the IP packet across one link. When the packet crosses a router, the frame is discarded and a new one is built for the next hop; the IP packet inside is unchanged (apart from its TTL).</p>
+          <p>Ethernet's frame is deliberately simple. It has no version field, no options, no fragmentation support, and no length field in its modern form. Everything that needs those features lives in the payload.</p>
+
+          <h2>2. The Fields at a Glance</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Size</th>
+                <th>Offset (untagged)</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Preamble</td><td>7 bytes</td><td>Wire only</td><td>Clock synchronisation; 0xAA repeated</td></tr>
+              <tr><td>SFD</td><td>1 byte</td><td>Wire only</td><td>Start frame delimiter; 0xAB</td></tr>
+              <tr><td>Destination MAC</td><td>6 bytes</td><td>0x00–0x05</td><td>Who should receive the frame</td></tr>
+              <tr><td>Source MAC</td><td>6 bytes</td><td>0x06–0x0B</td><td>Who sent it; what switches learn</td></tr>
+              <tr><td>Type / Length</td><td>2 bytes</td><td>0x0C–0x0D</td><td>Protocol inside, or payload length in 802.3</td></tr>
+              <tr><td>Payload</td><td>46–1500 bytes</td><td>0x0E onward</td><td>The IP packet, ARP message, or other L3 PDU</td></tr>
+              <tr><td>FCS</td><td>4 bytes</td><td>Last 4 bytes</td><td>CRC-32 over the frame</td></tr>
+              <tr><td>Interframe gap</td><td>12 bytes</td><td>After FCS</td><td>Mandatory silence before the next frame</td></tr>
+            </tbody>
+          </table>
+          <p>Offsets shift by 4 bytes once an 802.1Q tag is inserted, and by 8 with two tags. That is the only place the header grows.</p>
+
+          <h2>3. The Preamble and SFD: Eight Bytes You Never Capture</h2>
+          <p>Before the destination address, the transmitter sends seven bytes of <code>10101010</code> (0xAA) and one byte of <code>10101011</code> (0xAB). The alternating pattern lets the receiver's clock recover the transmitter's timing; the final two consecutive 1 bits mark the boundary where the frame begins.</p>
+          <p>These eight bytes exist only on the wire. Network cards strip them before handing the frame to the operating system, which is why a packet capture starts at the destination MAC. They are also excluded from the 64-byte minimum frame size — a point exam questions like to test.</p>
+
+          <h2>4. Destination and Source MAC</h2>
+          <p>Six bytes each, destination first. The order matters at the hardware level: a switch can start its table lookup as the first bytes arrive, without waiting for the source address.</p>
+          <p>In the example below, the destination is <code>FF:FF:FF:FF:FF:FF</code> — broadcast — and the source is <code>00:1A:2B:3C:4D:5E</code>. The first octet of the source contains the I/G and U/L bits; the upper 24 bits are the vendor's OUI.</p>
+          <p>Switches learn from the source and forward on the destination. They do not care what the addresses mean, only where they have been seen. That is why a duplicated or spoofed MAC can confuse a whole VLAN.</p>
+
+          <h2>5. Type or Length: The Two-Dialect Header</h2>
+          <p>The two bytes after the source address are read one of two ways:</p>
+          <ul>
+            <li><strong>Ethernet II:</strong> a value of 0x0600 (1536) or greater is an <strong>EtherType</strong>, naming the protocol in the payload. 0x0800 is IPv4, 0x0806 is ARP, 0x86DD is IPv6.</li>
+            <li><strong>IEEE 802.3:</strong> a value of 1500 or less is a <strong>length</strong>, and the payload begins with an LLC header. Values 1501–1535 are undefined.</li>
+          </ul>
+          <p>Both dialects share the same wire format up to this point, which is why they can coexist. In practice, Ethernet II won: it names the upper protocol directly, without the extra LLC/SNAP layer.</p>
+
+          <h2>6. Payload, MTU, and Padding</h2>
+          <p>The payload is the IP packet or ARP message. Its maximum is the <strong>MTU</strong>, 1500 bytes by default. Its minimum is 46 bytes. If the upper layer supplies less, Ethernet pads the frame to reach the 64-byte minimum, and the pad is not distinguished from data on the wire.</p>
+          <p>How does the receiver know where the real payload ends? The upper protocol tells it. IPv4 has a total-length field; ARP has fixed hardware and protocol address lengths. Ethernet itself does not carry a length in Ethernet II, so the pad is simply ignored by the layer above.</p>
+          <p>Our example ARP message is 28 bytes, so 18 bytes of padding are added. That is the entire reason the frame below is 64 bytes long.</p>
+
+          <h2>7. The FCS: Four Bytes That Decide Fate</h2>
+          <p>The frame check sequence is a 32-bit CRC computed over the destination MAC through the end of the payload and padding. It does not cover the preamble, the SFD, or the interframe gap. The polynomial is the standard CRC-32 (0x04C11DB7, reflected 0xEDB88320), with an all-ones initial value and a final complement.</p>
+          <p>The transmitter appends the result least-significant byte first. The receiver recomputes the CRC over the received bytes; if the result does not match, the frame is dropped and a CRC/FCS error counter increments. There is no negative acknowledgement and no retransmission. Reliability, if it is needed, comes from TCP or the application.</p>
+          <p>You can verify the FCS of any frame yourself:</p>
+          <pre>import zlib, struct
+
+frame = bytes.fromhex("...")   # DA through padding, no FCS
+crc = zlib.crc32(frame) &amp; 0xffffffff
+print(hex(crc))                # 0xa81f0314
+print(struct.pack("&lt;I", crc).hex())  # 14031fa8, on the wire</pre>
+          <p>Most NICs strip the FCS before delivery, so Wireshark usually does not show it. If a capture includes it, the four bytes appear after the payload, and a bad FCS is reported as a malformed frame.</p>
+
+          <h2>8. The Interframe Gap</h2>
+          <p>After the FCS, the link goes quiet for at least 96 bit times — 12 byte times. At 10 Mb/s that is 9.6 µs; at 100 Mb/s, 0.96 µs; at 1 Gb/s, 96 ns; at 10 Gb/s, 9.6 ns. The gap gives the receiver time to prepare for the next preamble and prevents one frame from running into the next.</p>
+          <p>Like the preamble, the IFG is not part of the frame and does not appear in captures. It still consumes wire time: a minimum 64-byte frame actually occupies 8 + 64 + 12 = 84 byte times on the link.</p>
+
+          <h2>9. A Real Frame, Byte by Byte</h2>
+          <p>Here is a complete 64-byte ARP request from 10.0.0.10 for 10.0.0.1. Every byte is shown, grouped by the field it belongs to:</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 390" class="mx-auto w-full max-w-4xl" role="img" aria-label="Hex dump of a 64-byte ARP request frame, with each byte colour-coded by field and offsets in hexadecimal">
+  <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+    <text x="40" y="28" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">A REAL 64-BYTE ARP REQUEST</text>
+    <text x="40" y="44" font-size="8" fill="rgb(100,116,139)" stroke="none">8 bytes per row · offsets in hex · one cell = one octet</text>
+    <text x="40" y="94" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x00</text>
+    <rect x="80" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="95" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="113" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="128" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="146" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="161" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="179" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="194" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="212" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="227" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="245" y="78" width="30" height="24" rx="3" fill="#38BDF8" fill-opacity="0.18" stroke="#38BDF8" />
+    <text x="260" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">FF</text>
+    <rect x="278" y="78" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="293" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="78" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="326" y="94" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">1A</text>
+    <text x="40" y="124" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x08</text>
+    <rect x="80" y="108" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="95" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">2B</text>
+    <rect x="113" y="108" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="128" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">3C</text>
+    <rect x="146" y="108" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="161" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">4D</text>
+    <rect x="179" y="108" width="30" height="24" rx="3" fill="#14B8A6" fill-opacity="0.18" stroke="#14B8A6" />
+    <text x="194" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">5E</text>
+    <rect x="212" y="108" width="30" height="24" rx="3" fill="#F59E0B" fill-opacity="0.2" stroke="#F59E0B" />
+    <text x="227" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">08</text>
+    <rect x="245" y="108" width="30" height="24" rx="3" fill="#F59E0B" fill-opacity="0.2" stroke="#F59E0B" />
+    <text x="260" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">06</text>
+    <rect x="278" y="108" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="293" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="108" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="326" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">01</text>
+    <text x="40" y="154" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x10</text>
+    <rect x="80" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="95" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">08</text>
+    <rect x="113" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="128" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="146" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="161" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">06</text>
+    <rect x="179" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="194" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">04</text>
+    <rect x="212" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="227" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="245" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="260" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">01</text>
+    <rect x="278" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="293" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="138" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="326" y="154" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">1A</text>
+    <text x="40" y="184" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x18</text>
+    <rect x="80" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="95" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">2B</text>
+    <rect x="113" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="128" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">3C</text>
+    <rect x="146" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="161" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">4D</text>
+    <rect x="179" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="194" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">5E</text>
+    <rect x="212" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="227" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">0A</text>
+    <rect x="245" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="260" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="278" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="293" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="168" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="326" y="184" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">0A</text>
+    <text x="40" y="214" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x20</text>
+    <rect x="80" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="95" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="113" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="128" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="146" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="161" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="179" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="194" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="212" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="227" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="245" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="260" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="278" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="293" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">0A</text>
+    <rect x="311" y="198" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="326" y="214" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <text x="40" y="244" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x28</text>
+    <rect x="80" y="228" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="95" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="113" y="228" width="30" height="24" rx="3" fill="#10B981" fill-opacity="0.16" stroke="#10B981" />
+    <text x="128" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">01</text>
+    <rect x="146" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="161" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="179" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="194" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="212" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="227" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="245" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="260" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="278" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="293" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="228" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="326" y="244" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <text x="40" y="274" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x30</text>
+    <rect x="80" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="95" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="113" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="128" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="146" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="161" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="179" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="194" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="212" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="227" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="245" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="260" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="278" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="293" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="311" y="258" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="326" y="274" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <text x="40" y="304" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" fill="rgb(100,116,139)" stroke="none">0x38</text>
+    <rect x="80" y="288" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="95" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="113" y="288" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="128" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="146" y="288" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="161" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="179" y="288" width="30" height="24" rx="3" fill="#94A3B8" fill-opacity="0.1" stroke="#94A3B8" />
+    <text x="194" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">00</text>
+    <rect x="212" y="288" width="30" height="24" rx="3" fill="#F43F5E" fill-opacity="0.2" stroke="#F43F5E" />
+    <text x="227" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">14</text>
+    <rect x="245" y="288" width="30" height="24" rx="3" fill="#F43F5E" fill-opacity="0.2" stroke="#F43F5E" />
+    <text x="260" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">03</text>
+    <rect x="278" y="288" width="30" height="24" rx="3" fill="#F43F5E" fill-opacity="0.2" stroke="#F43F5E" />
+    <text x="293" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">1F</text>
+    <rect x="311" y="288" width="30" height="24" rx="3" fill="#F43F5E" fill-opacity="0.2" stroke="#F43F5E" />
+    <text x="326" y="304" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8.5" fill="currentColor" stroke="none">A8</text>
+    <text x="380" y="70" font-size="9.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">FIELD MAP</text>
+    <rect x="380" y="80" width="14" height="14" rx="3" fill="#38BDF8" fill-opacity="0.30" stroke="#38BDF8" />
+    <text x="404" y="90" font-size="9" font-weight="600" fill="currentColor" stroke="none">DA — destination MAC</text>
+    <text x="404" y="104" font-size="8" fill="rgb(100,116,139)" stroke="none">0x00-0x05 · 6 B</text>
+    <rect x="380" y="112" width="14" height="14" rx="3" fill="#14B8A6" fill-opacity="0.30" stroke="#14B8A6" />
+    <text x="404" y="122" font-size="9" font-weight="600" fill="currentColor" stroke="none">SA — source MAC</text>
+    <text x="404" y="136" font-size="8" fill="rgb(100,116,139)" stroke="none">0x06-0x0B · 6 B</text>
+    <rect x="380" y="144" width="14" height="14" rx="3" fill="#F59E0B" fill-opacity="0.30" stroke="#F59E0B" />
+    <text x="404" y="154" font-size="9" font-weight="600" fill="currentColor" stroke="none">Type — 0x0806 = ARP</text>
+    <text x="404" y="168" font-size="8" fill="rgb(100,116,139)" stroke="none">0x0C-0x0D · 2 B</text>
+    <rect x="380" y="176" width="14" height="14" rx="3" fill="#10B981" fill-opacity="0.30" stroke="#10B981" />
+    <text x="404" y="186" font-size="9" font-weight="600" fill="currentColor" stroke="none">Payload — ARP request</text>
+    <text x="404" y="200" font-size="8" fill="rgb(100,116,139)" stroke="none">0x0E-0x29 · 28 B</text>
+    <rect x="380" y="208" width="14" height="14" rx="3" fill="#94A3B8" fill-opacity="0.30" stroke="#94A3B8" />
+    <text x="404" y="218" font-size="9" font-weight="600" fill="currentColor" stroke="none">Padding — zeros to 46 B</text>
+    <text x="404" y="232" font-size="8" fill="rgb(100,116,139)" stroke="none">0x2A-0x3B · 18 B</text>
+    <rect x="380" y="240" width="14" height="14" rx="3" fill="#F43F5E" fill-opacity="0.30" stroke="#F43F5E" />
+    <text x="404" y="250" font-size="9" font-weight="600" fill="currentColor" stroke="none">FCS — CRC-32</text>
+    <text x="404" y="264" font-size="8" fill="rgb(100,116,139)" stroke="none">0x3C-0x3F · 4 B</text>
+    <text x="40" y="340" font-size="9" fill="rgb(100,116,139)" stroke="none">14 B header + 28 B ARP + 18 B padding + 4 B FCS = 64 B.</text>
+    <text x="40" y="356" font-size="9" fill="rgb(100,116,139)" stroke="none">Padding reaches the 46-byte payload minimum; ARP ignores it using its own length fields.</text>
+    <text x="40" y="372" font-size="9" fill="rgb(100,116,139)" stroke="none">FCS is sent least-significant byte first: CRC 0xA81F0314 appears on the wire as 14 03 1F A8.</text>
+  </g>
+</svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">One 64-byte frame: 14-byte header, 28-byte ARP request, 18 bytes of padding, 4-byte FCS.</p>
+          </div>
+
+          <p>The rows read left to right, eight bytes at a time. Offsets are hexadecimal, so row 0x08 starts at byte 8 and row 0x38 at byte 56. The colors mark field boundaries; several rows contain the end of one field and the start of another.</p>
+          <p>Walking through it:</p>
+          <ul>
+            <li><code>FF FF FF FF FF FF</code> — broadcast destination. Every station in the VLAN should receive this.</li>
+            <li><code>00 1A 2B 3C 4D 5E</code> — source MAC. Switches learn this address against the ingress port.</li>
+            <li><code>08 06</code> — EtherType 0x0806, ARP.</li>
+            <li><code>00 01 08 00 06 04 00 01</code> — ARP header: Ethernet, IPv4, 6-byte hardware addresses, 4-byte protocol addresses, request.</li>
+            <li><code>00 1A 2B 3C 4D 5E</code>, <code>0A 00 00 0A</code> — sender MAC and sender IP 10.0.0.10.</li>
+            <li><code>00 00 00 00 00 00</code>, <code>0A 00 00 01</code> — target MAC unknown (all zeros), target IP 10.0.0.1.</li>
+            <li><code>00</code> ×18 — padding to reach the 46-byte payload minimum.</li>
+            <li><code>14 03 1F A8</code> — FCS, little-endian for 0xA81F0314.</li>
+          </ul>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Offset</th>
+                <th>Bytes</th>
+                <th>Field</th>
+                <th>Value / meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0x00–0x05</td><td>6</td><td>Destination MAC</td><td>FF:FF:FF:FF:FF:FF (broadcast)</td></tr>
+              <tr><td>0x06–0x0B</td><td>6</td><td>Source MAC</td><td>00:1A:2B:3C:4D:5E</td></tr>
+              <tr><td>0x0C–0x0D</td><td>2</td><td>EtherType</td><td>0x0806 (ARP)</td></tr>
+              <tr><td>0x0E–0x0F</td><td>2</td><td>ARP hardware type</td><td>0x0001 (Ethernet)</td></tr>
+              <tr><td>0x10–0x11</td><td>2</td><td>ARP protocol type</td><td>0x0800 (IPv4)</td></tr>
+              <tr><td>0x12</td><td>1</td><td>Hardware length</td><td>6</td></tr>
+              <tr><td>0x13</td><td>1</td><td>Protocol length</td><td>4</td></tr>
+              <tr><td>0x14–0x15</td><td>2</td><td>Operation</td><td>0x0001 (request)</td></tr>
+              <tr><td>0x16–0x1B</td><td>6</td><td>Sender MAC</td><td>00:1A:2B:3C:4D:5E</td></tr>
+              <tr><td>0x1C–0x1F</td><td>4</td><td>Sender IP</td><td>10.0.0.10</td></tr>
+              <tr><td>0x20–0x25</td><td>6</td><td>Target MAC</td><td>00:00:00:00:00:00 (unknown)</td></tr>
+              <tr><td>0x26–0x29</td><td>4</td><td>Target IP</td><td>10.0.0.1</td></tr>
+              <tr><td>0x2A–0x3B</td><td>18</td><td>Padding</td><td>Zeros, ignored by ARP</td></tr>
+              <tr><td>0x3C–0x3F</td><td>4</td><td>FCS</td><td>14 03 1F A8 (CRC 0xA81F0314)</td></tr>
+            </tbody>
+          </table>
+
+          <h2>10. Ethernet II vs IEEE 802.3</h2>
+          <p>The Type/Length fork creates two frame dialects that share the same header layout:</p>
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Ethernet II (DIX)</th>
+                <th>IEEE 802.3</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Bytes 12–13</td><td>EtherType (≥ 0x0600)</td><td>Length (≤ 1500)</td></tr>
+              <tr><td>Payload starts with</td><td>The network protocol directly</td><td>LLC header: DSAP, SSAP, control</td></tr>
+              <tr><td>To carry IP</td><td>EtherType 0x0800</td><td>LLC/SNAP: AA AA 03 00 00 00 08 00</td></tr>
+              <tr><td>Typical use today</td><td>Essentially all traffic</td><td>Legacy, some industrial and control protocols</td></tr>
+            </tbody>
+          </table>
+          <p>LLC/SNAP adds eight bytes before the IP header, which is eight fewer bytes of payload — and one more header to parse. Ethernet II avoided both, which is most of the reason it became the default. A switch forwards either without caring; a protocol analyser has to look at the value to know which one it is seeing.</p>
+
+          <h2>11. VLAN Tags and QinQ</h2>
+          <p>An 802.1Q tag is inserted immediately after the source MAC, shifting everything else by four bytes:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Part</th>
+                <th>Size</th>
+                <th>Contents</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>TPID</td><td>2 bytes</td><td>0x8100 for 802.1Q; 0x88A8 for QinQ outer tag</td></tr>
+              <tr><td>PCP</td><td>3 bits</td><td>Priority 0–7 for QoS</td></tr>
+              <tr><td>DEI</td><td>1 bit</td><td>Drop eligible indicator</td></tr>
+              <tr><td>VID</td><td>12 bits</td><td>VLAN ID 1–4094 (0 = priority tag, 4095 reserved)</td></tr>
+            </tbody>
+          </table>
+          <p>A tagged frame's EtherType now sits at offset 0x10 instead of 0x0C. Maximum frame size grows to 1522 bytes for one tag and 1526 for two. The payload MTU does not change: 1500 bytes is still 1500 bytes of IP.</p>
+          <p>QinQ (802.1ad) stacks a second tag for service-provider transport, usually with an outer TPID of 0x88A8. A switch that does not understand the outer tag may treat the frame as a giant or drop it, which is why MTU and tag awareness must match end to end.</p>
+
+          <h2>12. Frame Size Limits</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Frame</th>
+                <th>Payload</th>
+                <th>Size</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Minimum</td><td>0–46 bytes</td><td>64 bytes</td><td>Padding fills the payload to 46</td></tr>
+              <tr><td>Standard</td><td>1500 bytes</td><td>1518 bytes</td><td>The default Ethernet MTU</td></tr>
+              <tr><td>Tagged</td><td>1500 bytes</td><td>1522 bytes</td><td>One 802.1Q tag</td></tr>
+              <tr><td>QinQ</td><td>1500 bytes</td><td>1526 bytes</td><td>Two tags</td></tr>
+              <tr><td>Jumbo</td><td>9000 bytes</td><td>9018 bytes</td><td>Vendor-defined, not an IEEE standard</td></tr>
+            </tbody>
+          </table>
+          <p>Names for the out-of-range cases are worth knowing because they appear in interface counters:</p>
+          <ul>
+            <li><strong>Runt</strong> — shorter than 64 bytes; often a collision fragment or a truncated frame.</li>
+            <li><strong>Giant</strong> — longer than the allowed maximum; often an MTU or jumbo mismatch.</li>
+            <li><strong>Jabber</strong> — oversized with a bad FCS; usually a failing NIC or transceiver.</li>
+            <li><strong>Alignment error</strong> — the frame ends on a non-octet boundary; a physical-layer or duplex problem.</li>
+          </ul>
+          <p>Jumbo frames are a convention, not a standard. If every device in the path supports 9000-byte MTUs, they reduce per-packet overhead; if one device does not, the result is silent black-holing of large packets. Test the whole path before enabling them.</p>
+
+          <h2>13. EtherType Quick Reference</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>EtherType</th>
+                <th>Protocol</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0x0800</td><td>IPv4</td></tr>
+              <tr><td>0x0806</td><td>ARP</td></tr>
+              <tr><td>0x8100</td><td>802.1Q VLAN tag</td></tr>
+              <tr><td>0x86DD</td><td>IPv6</td></tr>
+              <tr><td>0x8808</td><td>Ethernet flow control (PAUSE)</td></tr>
+              <tr><td>0x8847</td><td>MPLS unicast</td></tr>
+              <tr><td>0x8863 / 0x8864</td><td>PPPoE discovery / session</td></tr>
+              <tr><td>0x888E</td><td>802.1X EAP over LAN</td></tr>
+              <tr><td>0x88A8</td><td>802.1ad QinQ service tag</td></tr>
+              <tr><td>0x88CC</td><td>LLDP</td></tr>
+              <tr><td>0x8906</td><td>FCoE</td></tr>
+            </tbody>
+          </table>
+          <p>An unknown EtherType is not an error. A switch forwards the frame normally; only the receiving host decides whether it has a protocol handler.</p>
+
+          <h2>14. Reading Frames in a Capture</h2>
+          <p>Packet captures are where frame anatomy becomes practical, provided you know what the capture point did to the frame:</p>
+          <ul>
+            <li><strong>The FCS is usually absent.</strong> The NIC verifies and strips it. Wireshark's "Frame check sequence" field appears only when the capture includes it.</li>
+            <li><strong>The preamble is always absent.</strong> Captures begin at the destination MAC.</li>
+            <li><strong>Tags depend on the capture point.</strong> Capturing on a switch port may show untagged frames on an access port and tagged frames on a trunk.</li>
+            <li><strong>Offloads distort the picture.</strong> Large send offload can show 64 KB "frames" that never existed on the wire; checksum offload can mark outbound packets as having bad checksums.</li>
+            <li><strong>Truncated captures lie.</strong> A snaplen shorter than the frame shows a runt that the wire never carried.</li>
+          </ul>
+          <pre># Capture with link-layer headers and full frames
+tcpdump -i eth0 -e -XX -s 0
+
+# Show only Ethernet headers
+tcpdump -i eth0 -e -c 10
+
+# Disable offloads before capturing on the sending host
+sudo ethtool -K eth0 tso off gso off gro off
+
+# Wireshark display filters
+eth.type == 0x0806
+vlan.id == 100
+eth.dst == ff:ff:ff:ff:ff:ff
+frame.len &lt; 64</pre>
+          <p>One practical habit: when a capture looks impossible — a 9000-byte frame on a 1500-byte path, or a checksum error on every outbound packet — suspect the capture point or an offload before suspecting the network.</p>
+
+          <h2>15. Exam Traps</h2>
+          <ul>
+            <li><strong>"The preamble is part of the 64-byte frame."</strong> It is not; the 64 bytes run from destination MAC to FCS.</li>
+            <li><strong>"The FCS covers the preamble."</strong> It covers destination MAC through payload and padding only.</li>
+            <li><strong>"The Type field is always an EtherType."</strong> In 802.3 it is a length; values 1501–1535 are undefined.</li>
+            <li><strong>"A 1500-byte payload makes a 1500-byte frame."</strong> It makes 1518 bytes; add 4 per tag.</li>
+            <li><strong>"VLAN tagging increases the MTU."</strong> The payload MTU stays 1500; the frame grows to 1522.</li>
+            <li><strong>"A switch always checks the FCS before forwarding."</strong> Store-and-forward does; cut-through may not.</li>
+            <li><strong>"A bad FCS triggers a retransmission."</strong> The frame is dropped silently; upper layers decide.</li>
+            <li><strong>"46 bytes is the minimum frame size."</strong> 46 is the minimum payload; the frame minimum is 64.</li>
+            <li><strong>"Jumbo frames are defined by IEEE 802.3."</strong> They are not; 9000-byte MTUs are a vendor convention.</li>
+            <li><strong>"QinQ always uses 0x8100 twice."</strong> The outer tag is commonly 0x88A8.</li>
+          </ul>
+
+          <h2>16. Key Takeaways</h2>
+          <ul>
+            <li>A frame is a 14-byte header, a 46–1500-byte payload, and a 4-byte FCS, plus padding when needed.</li>
+            <li>The preamble and SFD add 8 bytes on the wire; the interframe gap adds 12 byte times of silence.</li>
+            <li>Destination comes first so switches can look up before the frame finishes arriving.</li>
+            <li>Type versus length is the fork between Ethernet II and IEEE 802.3; Ethernet II is the modern default.</li>
+            <li>Padding exists for collision detection, not for the upper protocol; the receiver ignores it using the payload's own length.</li>
+            <li>The FCS is a CRC-32 over the frame, checked and stripped by the NIC; failure means silent discard.</li>
+            <li>An 802.1Q tag inserts 4 bytes after the source MAC, shifting the EtherType and raising the maximum to 1522.</li>
+            <li>64/1518/1522 are the numbers to know; runt, giant, and jabber are what happens outside them.</li>
+          </ul>
+
+          <h2>17. Quick Review Questions</h2>
+          <ol>
+            <li>What is the offset of the EtherType in an untagged frame, and in a tagged frame?</li>
+            <li>Why is the destination MAC placed before the source MAC?</li>
+            <li>How many bytes of padding does a 28-byte ARP request require?</li>
+            <li>Which bytes does the FCS cover, and which does it not?</li>
+            <li>How does a receiver know where the payload ends when padding is present?</li>
+            <li>What distinguishes an Ethernet II frame from an IEEE 802.3 frame?</li>
+            <li>What does an 802.1Q tag add, and what is the maximum frame size with one tag?</li>
+            <li>Why is a 64-byte frame the minimum?</li>
+            <li>What is the difference between a runt and a giant?</li>
+            <li>Why might a capture show frames larger than the link MTU?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="how-ethernet-works.html">How Ethernet Works: Frames, MAC Addresses, and Switching</a></li>
+            <li><a href="ethernet-standards-and-speeds.html">Ethernet Standards and Speeds: From 10BASE-T to 800G</a></li>
+            <li><a href="encapsulation-and-decapsulation.html">Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped</a></li>
+            <li><a href="common-physical-problems.html">Common Physical Problems: A Field Guide to Layer 1 Faults</a></li>
+            <li><a href="../../pages/04-ethernet-switching.html">Level 4 - Ethernet Switching</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
