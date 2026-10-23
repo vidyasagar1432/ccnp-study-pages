@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TCP Three-Way Handshake: Explained in Depth — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose h4 { margin-top: 1.75rem; margin-bottom: 0.75rem; font-size: 1.15rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Hub</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>10 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">TCP Three-Way Handshake: Explained in Depth</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">A detailed look at TCP connection establishment, SYN/ACK/FIN/RST flags, sequence and acknowledgment numbers, the TCP state machine, and practical troubleshooting tips.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">TCP</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Transport</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Handshake</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Networking</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. What is TCP?</h2>
+          <p>Transmission Control Protocol (TCP) is a connection-oriented, reliable transport layer protocol defined in RFC 793. Unlike UDP, TCP ensures data is delivered in order, without loss, and without duplication. Before any application data is exchanged, TCP must establish a logical connection between the client and server using the <strong>three-way handshake</strong>.</p>
+
+          <h2>2. Why the Three-Way Handshake?</h2>
+          <p>The three-way handshake serves three critical purposes:</p>
+          <ul>
+            <li><strong>Synchronization</strong> - Both ends agree on initial sequence numbers (ISN) to track bytes.</li>
+            <li><strong>Connection establishment</strong> - Confirms both hosts are alive and willing to communicate.</li>
+            <li><strong>Parameter negotiation</strong> - Allows negotiation of TCP options like MSS (Maximum Segment Size), Window Scale, and Selective Acknowledgments.</li>
+          </ul>
+
+          <h2>3. TCP Flags Explained</h2>
+          <p>TCP uses control flags in the header to manage connections. The most important for the handshake are:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Flag</th>
+                <th>Name</th>
+                <th>Purpose</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>SYN</strong></td>
+                <td>Synchronize</td>
+                <td>Used to initiate a connection and synchronize sequence numbers.</td>
+              </tr>
+              <tr>
+                <td><strong>ACK</strong></td>
+                <td>Acknowledgment</td>
+                <td>Indicates the receiver has received data and is acknowledging it.</td>
+              </tr>
+              <tr>
+                <td><strong>FIN</strong></td>
+                <td>Finish</td>
+                <td>Used to gracefully terminate a connection.</td>
+              </tr>
+              <tr>
+                <td><strong>RST</strong></td>
+                <td>Reset</td>
+                <td>Aborts a connection immediately (used when something is wrong).</td>
+              </tr>
+              <tr>
+                <td><strong>PSH</strong></td>
+                <td>Push</td>
+                <td>Requests immediate delivery of data to the application.</td>
+              </tr>
+              <tr>
+                <td><strong>URG</td>
+                <td>Urgent</td>
+                <td>Indicates data should be processed urgently.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>4. The Three-Way Handshake Process</h2>
+          <p>Let's assume a client (e.g., 192.168.1.10) wants to connect to a server (e.g., 10.0.0.5) on TCP port 443 (HTTPS).</p>
+
+          <h3>Step 1: SYN (Client → Server)</h3>
+          <p>The client initiates the connection by sending a TCP segment with the <strong>SYN</strong> flag set.</p>
+          <ul>
+            <li><strong>Source Port:</strong> Ephemeral port (e.g., 49152)</li>
+            <li><strong>Destination Port:</strong> 443</li>
+            <li><strong>Flags:</strong> SYN</li>
+            <li><strong>Sequence Number (SEQ):</strong> Client's Initial Sequence Number (ISN), e.g., 1000</li>
+            <li><strong>Window Size:</strong> Indicates buffer space available</li>
+          </ul>
+          <p>The client transitions to <strong>SYN_SENT</strong> state.</p>
+
+          <h3>Step 2: SYN-ACK (Server → Client)</h3>
+          <p>If the server accepts the connection, it responds with a segment containing both <strong>SYN</strong> and <strong>ACK</strong> flags.</p>
+          <ul>
+            <li><strong>Flags:</strong> SYN + ACK</li>
+            <li><strong>Sequence Number (SEQ):</strong> Server's ISN, e.g., 5000</li>
+            <li><strong>Acknowledgment Number (ACK):</strong> Client ISN + 1 = 1001 (acknowledging the client's SYN)</li>
+          </ul>
+          <p>The server transitions to <strong>SYN_RECEIVED</strong> state.</p>
+
+          <h3>Step 3: ACK (Client → Server)</h3>
+          <p>The client acknowledges the server's SYN by sending an <strong>ACK</strong> segment.</p>
+          <ul>
+            <li><strong>Flags:</strong> ACK (SYN may be cleared)</li>
+            <li><strong>Sequence Number (SEQ):</strong> 1001 (next sequence number)</li>
+            <li><strong>Acknowledgment Number (ACK):</strong> Server ISN + 1 = 5001</li>
+          </ul>
+          <p>The client transitions to <strong>ESTABLISHED</strong>, and upon receiving this ACK, the server also transitions to <strong>ESTABLISHED</strong>. The connection is now fully established and data transfer can begin.</p>
+
+          <h2>4. Visual Summary</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Step</th>
+                <th>Direction</th>
+                <th>Flags</th>
+                <th>SEQ</th>
+                <th>ACK</th>
+                <th>State (Client/Server)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Client → Server</td>
+                <td>SYN</td>
+                <td>1000 (ISN)</td>
+                <td>-</td>
+                <td>CLOSED → SYN_SENT / LISTEN → SYN_SENT context</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Server → Client</td>
+                <td>SYN, ACK</td>
+                <td>5000 (ISN)</td>
+                <td>1001</td>
+                <td>LISTEN → SYN_RECEIVED</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Client → Server</td>
+                <td>ACK</td>
+                <td>1001</td>
+                <td>5001</td>
+                <td>SYN_SENT → ESTABLISHED / SYN_RECEIVED → ESTABLISHED</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>5. TCP Connection Termination (Four-Way Handshake)</h2>
+          <p>While not the main focus, it's important to know how TCP closes gracefully. This uses <strong>FIN</strong> and <strong>ACK</strong> in a four-way exchange:</p>
+          <ol>
+            <li><strong>FIN</strong> - One side sends FIN to indicate no more data to send</li>
+            <li><strong>ACK</strong> - Other side acknowledges the FIN</li>
+            <li><strong>FIN</strong> - Other side sends its own FIN</li>
+            <li><strong>ACK</strong> - First side acknowledges, and both enter TIME_WAIT/CLOSED states</li>
+          </ol>
+          <p>In some cases (abort), a <strong>RST</strong> is sent instead for immediate termination.</p>
+
+          <h2>6. TCP State Machine (Key States)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>State</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CLOSED</strong></td>
+                <td>No connection exists</td>
+              </tr>
+              <tr>
+                <td><strong>LISTEN</strong></td>
+                <td>Server waiting for incoming connection requests</td>
+              </tr>
+              <tr>
+                <td><strong>SYN_SENT</strong></td>
+                <td>Client has sent SYN and is waiting for SYN-ACK</td>
+              </tr>
+              <tr>
+                <td><strong>SYN_RECEIVED</strong></td>
+                <td>Server received SYN, sent SYN-ACK, waiting for ACK</td>
+              </tr>
+              <tr>
+                <td><strong>ESTABLISHED</strong></td>
+                <td>Connection is open, data transfer can occur</td>
+              </tr>
+              <tr>
+                <td><strong>TIME_WAIT</strong></td>
+                <td>Waits to ensure all packets are cleared before closing (typically 2MSL)</td>
+              </tr>
+              <tr>
+                <td><strong>CLOSE_WAIT</strong></td>
+                <td>Received FIN, waiting to close its side</td>
+              </tr>
+              <tr>
+                <td><strong>LAST_ACK</strong></td>
+                <td>Sent FIN, waiting for final ACK</td>
+              </tr>
+              <tr>
+                <td><strong>FIN_WAIT_1/2</strong></td>
+                <td>States during active close process</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>7. Sequence and Acknowledgment Numbers in Depth</h2>
+          <p>TCP is byte-stream oriented, not packet-oriented. Sequence numbers track the first byte in the segment.</p>
+          <ul>
+            <li><strong>Initial Sequence Number (ISN)</strong> - Randomly generated to prevent spoofing and ensure uniqueness across connections.</li>
+            <li><strong>SEQ increment</strong> - After sending N bytes, the next SEQ = current SEQ + N (with SYN/FIN counting as 1 byte each).</li>
+            <li><strong>ACK number</strong> - Tells the sender "I have received up to ACK-1, send me ACK next". This is cumulative acknowledgment.</li>
+          </ul>
+          <p><strong>Example:</strong> Client sends SEQ=1000, 100 bytes of data → Next SEQ will be 1100. Server responds with ACK=1100, meaning it expects byte 1100 next.</p>
+
+          <h2>8. Troubleshooting the TCP Handshake</h2>
+          <p>When a connection fails, understanding the handshake helps pinpoint the issue.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Symptom</th>
+                <th>Likely Cause</th>
+                <th>Investigation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>No response to SYN</td>
+                <td>Server down, IP unreachable, or ACL blocking</td>
+                <td>Check routing with <code>ping</code>/<code>traceroute</code>, verify ACLs</td>
+              </tr>
+              <tr>
+                <td>SYN sent, RST received</td>
+                <td>Port closed, service not listening, or firewall rejecting</td>
+                <td>Verify service is running on server, check firewall rules</td>
+              </tr>
+              <tr>
+                <td>SYN-SYN/ACK works, no ACK from client</td>
+                <td>Asymmetric routing, NAT issues, or client firewall</td>
+                <td>Capture traffic on both sides, check routing tables</td>
+              </tr>
+              <tr>
+                <td>Connection times out</td>
+                <td>Stateful firewall dropping return traffic</td>
+                <td>Check connection tables, ensure return path exists</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Useful Commands</h3>
+          <pre><code># Check TCP connections and states
+netstat -an | grep &lt;port&gt;
+ss -tlnp
+ss -tan
+
+# Test connectivity to a specific TCP port
+telnet &lt;server_ip&gt; &lt;port&gt;
+nc -vz &lt;server_ip&gt; &lt;port&gt;
+
+# Packet capture (Wireshark/tcpdump)
+tcpdump -i eth0 host &lt;server_ip&gt; and port &lt;port&gt; -nn</code></pre>
+
+          <h2>9. Key Takeaways</h2>
+          <ul>
+            <li><strong>Three steps:</strong> SYN → SYN-ACK → ACK establishes the connection.</li>
+            <li><strong>Reliability starts here:</strong> ISNs are synchronized to ensure ordered, reliable delivery.</li>
+            <li><strong>Flags matter:</strong> Only SYN, ACK are used in the pure handshake (RST can abort).</li>
+            <li><strong>Stateful protocol:</strong> Both ends track connection state throughout the session.</li>
+            <li><strong>Half-open connections:</strong> SYN_RECV state can be exploited (SYN floods) - mitigated by SYN cookies.</li>
+            <li><strong>Not needed for UDP:</strong> UDP is connectionless, so no handshake occurs.</li>
+          </ul>
+
+          <h2>10. Quick Review Questions</h2>
+          <ol>
+            <li>What flags are set in each step of the three-way handshake?</li>
+            <li>Why does TCP use sequence numbers?</li>
+            <li>What state is a client in after sending SYN?</li>
+            <li>How many bytes does a SYN or FIN consume in sequence number space?</li>
+            <li>What's the difference between the three-way handshake and four-way termination?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="../../pages/03-osi-tcpip.html">Level 3 - OSI & TCP/IP</a></li>
+            <li><a href="../osi-model-vs-tcpip-model.html">OSI Model vs TCP/IP Model</a></li>
+            <li><a href="../../pages/29-troubleshooting.html">Level 29 - Troubleshooting</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
