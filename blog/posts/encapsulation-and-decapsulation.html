@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>12 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Every message is put inside envelopes, one per layer, and taken out again at the other end. Understanding that wrapping explains headers, MTU failures, NAT, and tunnels.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Encapsulation</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Headers</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">PDU</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">MTU</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fundamentals</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. The Core Idea</h2>
+          <p><strong>Encapsulation</strong> is the process of a layer taking the data handed to it by the layer above, adding its own header (and sometimes a trailer), and passing the result down. <strong>De-encapsulation</strong> is the reverse: each layer strips its own header, verifies it, and hands the payload up.</p>
+          <p>Think of nested envelopes. The application writes a letter. TLS puts it in a sealed envelope. TCP writes delivery details on the outside. IP adds the destination address. Ethernet adds the local courier instructions for this one leg of the trip. At the destination, each envelope is opened by the layer that sealed it.</p>
+          <p>Three consequences follow, and they explain almost everything in this article:</p>
+          <ul>
+            <li><strong>Overhead is unavoidable.</strong> Every layer's header consumes bytes from the link's maximum frame size.</li>
+            <li><strong>Each layer only reads its own header.</strong> A switch never inspects the TCP port; a router never inspects the HTTP request.</li>
+            <li><strong>Headers are per-scope.</strong> The Ethernet header is valid for one link only; the IP header is valid end to end.</li>
+          </ul>
+
+          <h2>2. Wrapping, Layer by Layer</h2>
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 300" class="mx-auto w-full max-w-4xl" role="img" aria-label="Diagram showing headers accumulating from application data through TLS, TCP, IP, and Ethernet, alongside how each hop rewrites the Layer 2 header and decrements TTL">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+
+                <text x="20" y="30" font-size="10" font-weight="600" fill="rgb(100,116,139)" stroke="none">HEADERS ACCUMULATE GOING DOWN</text>
+
+                <!-- Row 1 -->
+                <rect x="20" y="46" width="110" height="28" rx="5" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="75" y="64" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">HTTP data</text>
+                <text x="142" y="64" font-size="8.5" fill="rgb(100,116,139)" stroke="none">L7–5 data</text>
+
+                <!-- Row 2 -->
+                <rect x="20" y="82" width="50" height="28" rx="5" class="fill-violet-500/20" stroke="rgb(139,92,246)" />
+                <text x="45" y="100" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TLS</text>
+                <rect x="70" y="82" width="110" height="28" rx="5" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="125" y="100" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">HTTP data</text>
+                <text x="192" y="100" font-size="8.5" fill="rgb(100,116,139)" stroke="none">L6 TLS record</text>
+
+                <!-- Row 3 -->
+                <rect x="20" y="118" width="80" height="28" rx="5" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="60" y="136" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TCP</text>
+                <rect x="100" y="118" width="50" height="28" rx="5" class="fill-violet-500/20" stroke="rgb(139,92,246)" />
+                <text x="125" y="136" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TLS</text>
+                <rect x="150" y="118" width="110" height="28" rx="5" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="205" y="136" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">HTTP data</text>
+                <text x="272" y="136" font-size="8.5" fill="rgb(100,116,139)" stroke="none">L4 TCP segment</text>
+
+                <!-- Row 4 -->
+                <rect x="20" y="154" width="80" height="28" rx="5" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="60" y="172" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">IP</text>
+                <rect x="100" y="154" width="80" height="28" rx="5" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="140" y="172" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TCP</text>
+                <rect x="180" y="154" width="50" height="28" rx="5" class="fill-violet-500/20" stroke="rgb(139,92,246)" />
+                <text x="205" y="172" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TLS</text>
+                <rect x="230" y="154" width="110" height="28" rx="5" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="285" y="172" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">HTTP data</text>
+                <text x="352" y="172" font-size="8.5" fill="rgb(100,116,139)" stroke="none">L3 IP packet</text>
+
+                <!-- Row 5 -->
+                <rect x="20" y="190" width="40" height="28" rx="5" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="40" y="208" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">Eth</text>
+                <rect x="60" y="190" width="80" height="28" rx="5" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="100" y="208" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">IP</text>
+                <rect x="140" y="190" width="80" height="28" rx="5" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="180" y="208" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TCP</text>
+                <rect x="220" y="190" width="50" height="28" rx="5" class="fill-violet-500/20" stroke="rgb(139,92,246)" />
+                <text x="245" y="208" text-anchor="middle" font-size="8.5" fill="currentColor" stroke="none">TLS</text>
+                <rect x="270" y="190" width="110" height="28" rx="5" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="325" y="208" text-anchor="middle" font-size="9" fill="currentColor" stroke="none">HTTP data</text>
+                <rect x="380" y="190" width="34" height="28" rx="5" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="397" y="208" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">FCS</text>
+                <text x="426" y="208" font-size="8.5" fill="rgb(100,116,139)" stroke="none">L2 Ethernet frame</text>
+
+                <text x="20" y="248" font-size="9" fill="rgb(100,116,139)" stroke="none">Each layer treats everything above it as opaque payload — the sender adds one header, the receiver removes one.</text>
+                <text x="20" y="266" font-size="9" fill="rgb(100,116,139)" stroke="none">Sizes shown are illustrative; Ethernet is 14 B, IPv4 20 B, TCP 20 B, FCS 4 B.</text>
+
+                <!-- Per-hop panel -->
+                <text x="500" y="30" font-size="10" font-weight="600" fill="rgb(100,116,139)" stroke="none">WHAT CHANGES AT EACH HOP</text>
+
+                <text x="500" y="52" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Link 1 — PC to default gateway</text>
+                <rect x="500" y="60" width="54" height="26" rx="4" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="527" y="77" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">L2</text>
+                <rect x="554" y="60" width="54" height="26" rx="4" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="581" y="77" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">IP</text>
+                <rect x="608" y="60" width="54" height="26" rx="4" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="635" y="77" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">TCP</text>
+                <rect x="662" y="60" width="90" height="26" rx="4" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="707" y="77" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">payload</text>
+                <text x="762" y="77" font-size="8.5" fill="rgb(100,116,139)" stroke="none">MAC PC→GW, TTL 64</text>
+
+                <line x1="650" y1="92" x2="650" y2="112" stroke="rgb(100,116,139)" />
+                <polygon points="646,110 650,118 654,110" fill="rgb(100,116,139)" />
+                <text x="662" y="108" font-size="8.5" fill="rgb(100,116,139)" stroke="none">router: strip L2, TTL−1, new L2</text>
+
+                <text x="500" y="132" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Link 2 — gateway to server</text>
+                <rect x="500" y="140" width="54" height="26" rx="4" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="527" y="157" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">L2</text>
+                <rect x="554" y="140" width="54" height="26" rx="4" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="581" y="157" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">IP</text>
+                <rect x="608" y="140" width="54" height="26" rx="4" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="635" y="157" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">TCP</text>
+                <rect x="662" y="140" width="90" height="26" rx="4" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="707" y="157" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">payload</text>
+                <text x="762" y="157" font-size="8.5" fill="rgb(100,116,139)" stroke="none">MAC R1→SRV, TTL 63</text>
+
+                <text x="500" y="196" font-size="9" fill="rgb(100,116,139)" stroke="none">IP addresses, ports, and payload stay the same end to end.</text>
+                <text x="500" y="214" font-size="9" fill="rgb(100,116,139)" stroke="none">Only the Layer 2 header (and TTL) changes per hop — unless</text>
+                <text x="500" y="230" font-size="9" fill="rgb(100,116,139)" stroke="none">NAT or a proxy deliberately rewrites more.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">Left: each layer adds one header to the payload it receives. Right: a router replaces the Layer 2 header and decrements TTL, leaving the end-to-end payload intact.</p>
+          </div>
+
+          <h2>3. What Each Header Is For</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Layer</th>
+                <th>Header (typical size)</th>
+                <th>Key fields</th>
+                <th>Decision it enables</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>L2 — Ethernet</strong></td>
+                <td>14 bytes (+4 FCS trailer, +4 per VLAN tag)</td>
+                <td>Destination MAC, source MAC, EtherType, 802.1Q tag</td>
+                <td>Which local port or station receives this frame</td>
+              </tr>
+              <tr>
+                <td><strong>L3 — IP</strong></td>
+                <td>20 bytes (IPv4), 40 bytes (IPv6)</td>
+                <td>Source/destination IP, TTL/hop limit, protocol, fragmentation fields (IPv4)</td>
+                <td>Which path and which host receives this packet</td>
+              </tr>
+              <tr>
+                <td><strong>L4 — TCP/UDP</strong></td>
+                <td>20 bytes TCP, 8 bytes UDP</td>
+                <td>Source/destination port, sequence and acknowledgment numbers, flags, window, checksum</td>
+                <td>Which process receives the payload, and how reliably</td>
+              </tr>
+              <tr>
+                <td><strong>L6 — TLS</strong></td>
+                <td>5-byte record header, plus authentication tag</td>
+                <td>Content type, version, length, nonce/tag</td>
+                <td>How to decrypt and verify the application data</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Each header exists so that exactly one device or process can make exactly one decision. That is the whole design: local decisions use local information.</p>
+
+          <h2>4. What Changes at Each Hop</h2>
+          <p>Encapsulation is not static. As a packet crosses the network, different parts of it are rewritten:</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Reads up to</th>
+                <th>Rewrites</th>
+                <th>Leaves alone</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Hub / repeater</strong></td>
+                <td>Layer 1</td>
+                <td>Nothing — regenerates signals</td>
+                <td>Everything</td>
+              </tr>
+              <tr>
+                <td><strong>Switch</strong></td>
+                <td>Layer 2</td>
+                <td>Nothing in the frame (it forwards it)</td>
+                <td>MACs, IP, TCP, payload</td>
+              </tr>
+              <tr>
+                <td><strong>Router</strong></td>
+                <td>Layer 3</td>
+                <td>Source and destination MAC, TTL, FCS; checksum updated</td>
+                <td>IP addresses (without NAT), ports, payload</td>
+              </tr>
+              <tr>
+                <td><strong>NAT device</strong></td>
+                <td>Layer 3–4</td>
+                <td>IP addresses, port numbers, IP and TCP/UDP checksums</td>
+                <td>Application payload (unless an ALG rewrites it)</td>
+              </tr>
+              <tr>
+                <td><strong>Firewall</strong></td>
+                <td>Layer 3–7</td>
+                <td>Nothing by default; may rewrite or block</td>
+                <td>Forwarded traffic</td>
+              </tr>
+              <tr>
+                <td><strong>Proxy / load balancer</strong></td>
+                <td>Layer 7</td>
+                <td>Terminates the connection and creates a new one</td>
+                <td>Nothing — it is a new session end to end</td>
+              </tr>
+              <tr>
+                <td><strong>Tunnel endpoint</strong></td>
+                <td>Layer 3+</td>
+                <td>Adds an outer header around the entire original packet</td>
+                <td>The inner packet, encrypted or not</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>This table is why "the router changes the MAC address" is true while "the router changes the IP address" is false by default. It is also why a capture taken on each side of a NAT device shows different addresses for the same conversation.</p>
+
+          <h2>5. De-encapsulation: Who Opens Which Envelope</h2>
+          <p>At the receiver, de-encapsulation is driven by explicit demultiplexing keys:</p>
+          <ol>
+            <li><strong>NIC and Layer 2</strong> — verify the destination MAC and the FCS. If the frame is for this station (or broadcast/multicast), strip the Ethernet header and read the <strong>EtherType</strong>: 0x0800 = IPv4, 0x86DD = IPv6, 0x0806 = ARP.</li>
+            <li><strong>Layer 3</strong> — verify the destination IP, check the header checksum (IPv4), decrement TTL only if forwarding, then read the <strong>protocol number</strong>: 6 = TCP, 17 = UDP, 1 = ICMP, 47 = GRE, 50 = ESP.</li>
+            <li><strong>Layer 4</strong> — look up the destination <strong>port</strong> in the socket table, verify the TCP/UDP checksum, and hand the payload to the owning process.</li>
+            <li><strong>Application</strong> — decrypt TLS if present, then parse HTTP, DNS, or whatever the application expects.</li>
+          </ol>
+          <p>Intermediate routers stop at step 2 or 3. Only the final host goes all the way up. That is why a router can forward traffic it cannot read: it never opens the inner envelopes.</p>
+          <p><strong>Note on checksums:</strong> the FCS protects one link only and is regenerated at every hop. The IP checksum covers only the IP header (IPv4). The TCP/UDP checksum covers the header, the payload, and a pseudo-header containing the IP addresses and protocol — which is exactly why NAT must recalculate it.</p>
+
+          <h2>6. Overhead, MTU, and Why Small Packets Are Expensive</h2>
+          <p>A 1500-byte Ethernet MTU is not 1500 bytes of payload. Ethernet takes 14 bytes plus a 4-byte FCS, IPv4 takes 20, TCP takes 20 — leaving 1460 bytes for data.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Application payload</th>
+                <th>Headers (Eth + IP + TCP)</th>
+                <th>Total on the wire</th>
+                <th>Efficiency</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1460 bytes</td><td>58 bytes</td><td>1518 bytes</td><td>96.2%</td></tr>
+              <tr><td>512 bytes</td><td>58 bytes</td><td>570 bytes</td><td>89.8%</td></tr>
+              <tr><td>100 bytes</td><td>58 bytes</td><td>158 bytes</td><td>63.3%</td></tr>
+              <tr><td>40 bytes (VoIP)</td><td>58 bytes</td><td>98 bytes</td><td>40.8%</td></tr>
+            </tbody>
+          </table>
+          <p>Two extra rules matter in practice:</p>
+          <ul>
+            <li><strong>Minimum frame size.</strong> Ethernet requires 64 bytes including FCS. A small payload is padded to reach it, so very small packets cost more than the table suggests.</li>
+            <li><strong>Fragmentation.</strong> If a packet exceeds the MTU of a link and the DF bit is clear, IPv4 can fragment it. IPv6 routers never fragment; the source must size packets correctly. See <a href="segmentation-and-reassembly.html">Segmentation and Reassembly</a> for the full mechanics.</li>
+          </ul>
+
+          <h2>7. Tunnels: Encapsulation Inside Encapsulation</h2>
+          <p>A tunnel takes a complete packet and puts it inside another packet. The inner headers remain intact; the outer headers belong to the transport network. This is how VPNs, VXLAN, and MPLS-style overlays work.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Encapsulation</th>
+                <th>Typical added bytes</th>
+                <th>Effect on usable MTU</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>802.1Q VLAN tag</td><td>4</td><td>1496</td></tr>
+              <tr><td>PPPoE</td><td>8</td><td>1492</td></tr>
+              <tr><td>GRE (outer IPv4)</td><td>24</td><td>1476</td></tr>
+              <tr><td>IPsec ESP tunnel mode</td><td>50–73</td><td>~1427–1450</td></tr>
+              <tr><td>VXLAN (outer Eth + IP + UDP + VXLAN)</td><td>50</td><td>1450</td></tr>
+              <tr><td>MPLS label stack (2 labels)</td><td>8</td><td>1492</td></tr>
+            </tbody>
+          </table>
+          <p>The failure mode is a classic: pings and small requests work, large transfers stall. The path MTU is smaller than the sender assumes, the DF bit prevents fragmentation, and the ICMP "fragmentation needed" message is filtered out by a firewall — a <strong>PMTUD black hole</strong>. Fixes include clamping TCP MSS on the tunnel interface (<code>ip tcp adjust-mss 1400</code> on Cisco), lowering the interface MTU, or allowing ICMP type 3 code 4 (and ICMPv6 "packet too big") through the policy.</p>
+
+          <h2>8. When Encapsulation Goes Wrong</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Symptom</th>
+                <th>Encapsulation cause</th>
+                <th>Check</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Small pings work, large transfers hang</td><td>MTU/MSS mismatch, PMTUD black hole</td><td><code>ping -M do -s 1472</code>, <code>tracepath</code>, MSS clamping</td></tr>
+              <tr><td>Capture shows duplicate or overlapping fragments</td><td>Fragmentation with inconsistent offsets</td><td>Reassembly policy, firewall fragment handling</td></tr>
+              <tr><td>FTP or SIP breaks through NAT</td><td>Addresses embedded inside the application payload</td><td>ALG behaviour, avoid embedding addresses, use TLS</td></tr>
+              <tr><td>Traffic dropped after a VLAN change</td><td>Wrong or missing 802.1Q tag</td><td>Trunk allowed VLANs, native VLAN mismatch</td></tr>
+              <tr><td>Some sites unreachable only over VPN</td><td>Double encapsulation exceeds path MTU</td><td>Tunnel MTU, MSS clamp, ICMP allowed</td></tr>
+              <tr><td>Checksum errors after a policy change</td><td>NAT or rewriting without checksum recalculation</td><td>Capture both sides, compare checksums</td></tr>
+            </tbody>
+          </table>
+
+          <h2>9. Practical Checks</h2>
+          <pre># Can this path carry a full 1500-byte packet without fragmenting?
+ping -M do -s 1472 203.0.113.10        # 1472 + 8 ICMP + 20 IP = 1500
+
+# Where does the path MTU shrink?
+tracepath 203.0.113.10
+mtr --report-wide 203.0.113.10
+
+# See each layer's headers in a capture
+tcpdump -i eth0 -nn -vv -c 20 'tcp port 443'
+# In Wireshark: Frame -> Ethernet II -> Internet Protocol -> TCP -> TLS
+
+# Cisco: verify and adjust
+show interfaces GigabitEthernet0/1 | include MTU
+show ip interface GigabitEthernet0/1
+interface Tunnel0
+ ip tcp adjust-mss 1400</pre>
+
+          <h2>10. Exam Traps</h2>
+          <ul>
+            <li><strong>"Encapsulation means encryption."</strong> No. Encryption is a payload transformation that may be wrapped by encapsulation (as IPsec does), but the two are independent.</li>
+            <li><strong>"Routers change the source and destination IP addresses."</strong> Only NAT does that. Routers rewrite the Layer 2 header and decrement TTL.</li>
+            <li><strong>"Switches de-encapsulate to Layer 3 to forward."</strong> A Layer 2 switch reads the Ethernet header only. A Layer 3 switch does route, but that is a separate function.</li>
+            <li><strong>"The FCS travels end to end."</strong> It is recalculated on every link and discarded by the receiving NIC.</li>
+            <li><strong>"TCP's checksum covers the IP header."</strong> It covers a pseudo-header derived from IP addresses and protocol, not the whole IP header.</li>
+            <li><strong>"Routers fragment IPv6 packets."</strong> They do not; only the source fragments IPv6.</li>
+            <li><strong>"De-encapsulation happens only at the destination host."</strong> Every device de-encapsulates up to the layer it needs — a switch to Layer 2, a router to Layer 3 — then re-encapsulates.</li>
+          </ul>
+
+          <h2>11. Key Takeaways</h2>
+          <ul>
+            <li>Encapsulation adds a header per layer going down; de-encapsulation removes one per layer going up.</li>
+            <li>Each layer's header enables one decision: local delivery (L2), path selection (L3), process delivery (L4), interpretation (L5–7).</li>
+            <li>Layer 2 headers and FCS are per-hop; IP addresses, ports, and payload are end to end.</li>
+            <li>Routers rewrite Layer 2 and decrement TTL; NAT additionally rewrites addresses and ports and must fix checksums.</li>
+            <li>Overhead is real: 58 bytes per packet on a normal Ethernet/IPv4/TCP path, leaving 1460 of 1500 bytes.</li>
+            <li>Tunnels stack encapsulation and shrink the usable MTU — which is why MSS clamping and PMTUD exist.</li>
+            <li>Most "large transfers fail" tickets are encapsulation problems, not application problems.</li>
+          </ul>
+
+          <h2>12. Quick Review Questions</h2>
+          <ol>
+            <li>Define encapsulation and de-encapsulation in one sentence each.</li>
+            <li>Which fields does a router rewrite when forwarding a packet?</li>
+            <li>What are the three demultiplexing keys used during de-encapsulation?</li>
+            <li>Why must NAT recalculate the TCP checksum?</li>
+            <li>How much payload fits in a 1500-byte Ethernet frame over IPv4 and TCP?</li>
+            <li>What is a PMTUD black hole, and what are two ways to fix it?</li>
+            <li>Why is the Ethernet FCS not preserved end to end?</li>
+            <li>What does a GRE tunnel do to the original packet?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="segmentation-and-reassembly.html">Segmentation and Reassembly: TCP MSS, IP Fragmentation, and MTU</a></li>
+            <li><a href="tcpip-four-layers.html">The 4 Layers of TCP/IP: The Model the Internet Actually Runs On</a></li>
+            <li><a href="osi-seven-layers.html">The 7 Layers of OSI: Models, Functions, Protocols, and Devices</a></li>
+            <li><a href="osi-model-vs-tcpip-model.html">OSI vs TCP/IP Side by Side: Layers, Protocols, and Where They Differ</a></li>
+            <li><a href="network-devices.html">Network Devices: Hub, Switch, Router, Firewall, and Access Point</a></li>
+            <li><a href="../../pages/03-osi-tcpip.html">Level 3 - OSI and TCP/IP Models</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
