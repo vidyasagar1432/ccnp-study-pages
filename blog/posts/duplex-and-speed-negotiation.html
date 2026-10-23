@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Duplex and Speed Negotiation: Why Auto/Auto Matters — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>12 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Duplex and Speed Negotiation: Why Auto/Auto Matters</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">FLP bursts, parallel detection, and the half-duplex assumption that turns a simple mismatch into late collisions and mystery slowdowns.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Autonegotiation</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Duplex</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Speed</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Layer 1</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. Two Settings That Must Agree</h2>
+          <p>Every copper Ethernet link has a speed and a duplex mode. Speed is the signalling rate — 10 Mb/s, 100 Mb/s, 1 Gb/s, 2.5 Gb/s, 5 Gb/s, 10 Gb/s. Duplex is the direction of transmission:</p>
+          <ul>
+            <li><strong>Half duplex</strong> — one direction at a time. The station must sense the carrier and use CSMA/CD, because the medium is shared.</li>
+            <li><strong>Full duplex</strong> — transmit and receive at the same time on separate pairs. No carrier sense, no collisions.</li>
+          </ul>
+          <p>The two settings are negotiated together, but they fail differently. A <strong>speed mismatch</strong> usually means no link at all: the receiver cannot decode a signal at the wrong rate. A <strong>duplex mismatch</strong> links up and passes traffic — badly. That is why duplex problems survive so long in production: the link light is green.</p>
+          <blockquote>A speed mismatch is loud. A duplex mismatch is quiet, intermittent, and usually blamed on the application.</blockquote>
+
+          <h2>2. What Autonegotiation Actually Exchanges</h2>
+          <p>Autonegotiation (IEEE 802.3 Clause 28, introduced with 100BASE-TX in 1995) lets two copper ports agree on the best common mode before passing data. It is not a single "what speed are you?" question. Each end sends a <strong>fast link pulse (FLP)</strong> burst: 33 pulses carrying a 16-bit link code word, repeated roughly every 16 ms.</p>
+          <p>The link code word advertises:</p>
+          <ul>
+            <li><strong>Selector field</strong> — which standard the capabilities belong to (IEEE 802.3).</li>
+            <li><strong>Technology ability</strong> — supported 10/100 modes and full/half variants.</li>
+            <li><strong>Pause capability</strong> — symmetric or asymmetric flow control.</li>
+            <li><strong>Remote fault</strong> — the peer has detected a problem.</li>
+            <li><strong>Next page</strong> — more capability data follows.</li>
+          </ul>
+          <p>Both ends compare bitmaps and select the highest common capability: 1000BASE-T over 100BASE-TX, 100BASE-TX over 10BASE-T, and full duplex over half duplex for the same speed. Pause is resolved at the same time, but it is a separate feature from duplex.</p>
+          <p>Gigabit copper adds a timing problem. 1000BASE-T uses all four pairs simultaneously, so one PHY must be the clock <strong>master</strong> and the other the <strong>slave</strong>. That role is negotiated in next-page exchanges. This is why 1000BASE-T is not a "set it and forget it" mode: the master/slave agreement is part of autonegotiation, not an optional extra.</p>
+          <p>Fiber is different. 1000BASE-X has an optional Clause 37 negotiation that agrees duplex and pause but not speed — the optics fix the rate. 10GBASE-SR/LR links are normally fixed and do not autonegotiate at all. A copper 10GBASE-T port does negotiate, because it can run at multiple rates.</p>
+
+          <h2>3. Parallel Detection: Where Mismatches Are Born</h2>
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 360" class="mx-auto w-full max-w-4xl" role="img" aria-label="Two panels comparing autonegotiation on both ends with one end forced, showing the half-duplex assumption">
+              <defs>
+                <marker id="negm" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                  <path d="M0,0 L6,3 L0,6" fill="#64748B" stroke="none" />
+                </marker>
+              </defs>
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <rect x="30" y="16" width="400" height="292" rx="10" fill="#10B981" fill-opacity="0.03" stroke="#10B981" />
+                <text x="50" y="40" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">BOTH SIDES AUTO</text>
+                <text x="50" y="56" font-size="7.5" fill="rgb(100,116,139)" stroke="none">FLP exchange, highest common capability</text>
+
+                <rect x="70" y="110" width="100" height="64" rx="8" fill="#38BDF8" fill-opacity="0.12" stroke="#38BDF8" />
+                <text x="120" y="146" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">AUTO</text>
+                <rect x="290" y="110" width="100" height="64" rx="8" fill="#38BDF8" fill-opacity="0.12" stroke="#38BDF8" />
+                <text x="340" y="146" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">AUTO</text>
+
+                <line x1="170" y1="128" x2="290" y2="128" stroke="rgb(100,116,139)" marker-end="url(#negm)" />
+                <line x1="290" y1="156" x2="170" y2="156" stroke="rgb(100,116,139)" marker-end="url(#negm)" />
+                <text x="230" y="120" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">FLP</text>
+                <text x="230" y="172" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">FLP</text>
+
+                <rect x="90" y="212" width="280" height="64" rx="8" fill="#10B981" fill-opacity="0.1" stroke="#10B981" />
+                <text x="230" y="236" text-anchor="middle" font-size="8.5" font-weight="600" fill="currentColor" stroke="none">1000BASE-T · full duplex</text>
+                <text x="230" y="252" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">speed, duplex, pause, master/slave agreed</text>
+
+                <rect x="470" y="16" width="400" height="292" rx="10" fill="#F43F5E" fill-opacity="0.03" stroke="#F43F5E" />
+                <text x="490" y="40" font-size="9.5" font-weight="600" fill="currentColor" stroke="none">ONE SIDE FORCED</text>
+                <text x="490" y="56" font-size="7.5" fill="rgb(100,116,139)" stroke="none">no FLP, so parallel detection decides</text>
+
+                <rect x="500" y="110" width="100" height="64" rx="8" fill="#38BDF8" fill-opacity="0.12" stroke="#38BDF8" />
+                <text x="550" y="146" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">AUTO</text>
+                <rect x="730" y="110" width="100" height="64" rx="8" fill="#F59E0B" fill-opacity="0.12" stroke="#F59E0B" />
+                <text x="780" y="142" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">FORCED</text>
+                <text x="780" y="154" text-anchor="middle" font-size="7.5" fill="currentColor" stroke="none">100/full</text>
+
+                <line x1="600" y1="128" x2="730" y2="128" stroke="rgb(100,116,139)" marker-end="url(#negm)" />
+                <line x1="730" y1="156" x2="600" y2="156" stroke="#F43F5E" stroke-dasharray="4 3" />
+                <text x="665" y="120" text-anchor="middle" font-size="7" fill="rgb(100,116,139)" stroke="none">FLP</text>
+                <text x="665" y="172" text-anchor="middle" font-size="7" fill="#F43F5E" stroke="none">no FLP</text>
+
+                <rect x="490" y="212" width="360" height="64" rx="8" fill="#F43F5E" fill-opacity="0.08" stroke="#F43F5E" />
+                <text x="670" y="234" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">A: 100 Mb/s · half duplex (assumed)</text>
+                <text x="670" y="250" text-anchor="middle" font-size="8" fill="currentColor" stroke="none">B: 100 Mb/s · full duplex (forced)</text>
+                <text x="670" y="266" text-anchor="middle" font-size="7" fill="#F43F5E" stroke="none">mismatch: late collisions, FCS errors, retransmissions</text>
+
+                <text x="40" y="338" font-size="8.5" fill="rgb(100,116,139)" stroke="none">Autonegotiation exchanges capabilities. Parallel detection only identifies speed, so the auto end falls back to half duplex.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">Both sides auto: a complete agreement. One side forced: speed is detected, duplex is guessed.</p>
+          </div>
+
+          <p>If both ends are left on auto, they exchange FLPs and agree on speed and duplex together. The trouble starts when one end is hard-coded. A forced port does not send FLP bursts; it simply drives its normal signal — link test pulses at 10 Mb/s, idle at 100 Mb/s, or its gigabit signalling.</p>
+          <p>The auto end falls back to <strong>parallel detection</strong>. It listens to the incoming signal, recognises the speed from the clock and encoding, and brings the link up. But a forced signal carries no capability information, so the auto end cannot know the peer's duplex. The standard says: assume half duplex.</p>
+          <p>That is the entire mechanism behind the classic mismatch:</p>
+          <ul>
+            <li><strong>Forced full + auto</strong> → the auto side comes up half, the forced side stays full. Mismatch.</li>
+            <li><strong>Forced half + auto</strong> → the auto side assumes half, and both are half. The link matches, though it is still not a recommended design.</li>
+          </ul>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Local setting</th>
+                <th>Peer setting</th>
+                <th>Result on copper 10/100</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Auto</td><td>Auto</td><td>Highest common speed, full duplex where available</td></tr>
+              <tr><td>Auto</td><td>Forced full</td><td>Local half, peer full — mismatch</td></tr>
+              <tr><td>Auto</td><td>Forced half</td><td>Both half — link works</td></tr>
+              <tr><td>Forced full</td><td>Forced full</td><td>Both full — link works if speed matches</td></tr>
+              <tr><td>Forced half</td><td>Forced half</td><td>Both half — link works, collisions are normal</td></tr>
+              <tr><td>Forced speed, auto duplex</td><td>Anything</td><td>Platform-dependent and fragile; avoid</td></tr>
+            </tbody>
+          </table>
+
+          <p>1000BASE-T changes the rules. Because master/slave must be negotiated, disabling autonegotiation can prevent the link from coming up at all, or leave it unstable. Hard-coding 1000/full on one side and auto on the other is not a reliable configuration; both ends should negotiate.</p>
+
+          <h2>4. Anatomy of a Duplex Mismatch</h2>
+          <p>Picture a link with one full-duplex end and one half-duplex end. The full side has no carrier sense: it transmits whenever it has a frame, even while the half side is transmitting. The half side still obeys CSMA/CD.</p>
+          <ol>
+            <li>The half side senses idle and starts sending a frame.</li>
+            <li>The full side, unaware, starts sending at the same time.</li>
+            <li>The half side detects a collision, sends a jam, and backs off. Its frame is destroyed.</li>
+            <li>If the collision occurs within the first 512 bit times, the half side retries normally. If it occurs later, it is a <strong>late collision</strong> and the MAC does not retry; the upper layer must recover.</li>
+            <li>The full side's frame is corrupted at the half side, but the full side has no way to know. TCP retransmits later, which looks like application slowness.</li>
+          </ol>
+          <p>The counters are asymmetric, and that is the diagnostic signature:</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Side</th>
+                <th>Typical counters</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Half duplex</td><td>Collisions, late collisions, excessive collisions, deferred</td><td>It transmits into the full side's transmissions</td></tr>
+              <tr><td>Full duplex</td><td>FCS/CRC errors, runts, alignment errors</td><td>It receives fragments and jam from the half side</td></tr>
+              <tr><td>Both</td><td>Retransmissions, low goodput, high latency</td><td>Upper layers recover from the loss</td></tr>
+            </tbody>
+          </table>
+
+          <p>Traffic from the full side to the half side often looks fine as long as the half side stays quiet; traffic from the half side to the full side collides. That one-way asymmetry is why a ping or a small download can succeed while a backup or a file copy crawls. The link is not down, and it is not congested — it is half of a conversation talking over the other half.</p>
+
+          <h2>5. Reading Both Ends</h2>
+          <p>Never diagnose a duplex problem from one side. The mismatch is defined by the pair.</p>
+          <pre>Switch# show interfaces status
+Port      Name               Status       Vlan  Duplex  Speed  Type
+Gi0/1     Uplink to access   connected    10    a-full  a-1000 10/100/1000BaseTX
+Gi0/2     Provider handoff   connected    99    half    100    10/100BaseTX
+
+Switch# show interfaces GigabitEthernet0/2
+GigabitEthernet0/2 is up, line protocol is up
+  Half-duplex, 100Mb/s, media type is 10/100BaseTX
+  ...
+     0 input errors, 0 CRC, 0 frame, 0 overrun, 0 ignored
+     1240 output errors, 1187 collisions, 212 late collisions, 0 interface resets</pre>
+          <p><code>a-full</code> and <code>a-1000</code> mean autonegotiated full duplex and 1 Gb/s. A plain <code>half</code> next to a peer that reports <code>full</code> is the mismatch. Cisco devices also log it when CDP notices:</p>
+          <pre>%CDP-4-DUPLEX_MISMATCH: duplex mismatch discovered on GigabitEthernet0/2
+ (not half duplex), with switch GigabitEthernet0/1 (half duplex).</pre>
+          <p>On Linux, <code>ethtool</code> gives the same picture:</p>
+          <pre>$ ethtool eth0
+Settings for eth0:
+    Supported link modes:   10baseT/Half 10baseT/Full
+                            100baseT/Half 100baseT/Full
+                            1000baseT/Full
+    Speed: 1000Mb/s
+    Duplex: Full
+    Auto-negotiation: on
+    Link detected: yes</pre>
+          <p>If one end says <code>Auto-negotiation: on</code> with full duplex and the other says <code>off</code> with half, the settings are not the only problem — the forced end is not advertising at all.</p>
+
+          <h2>6. Configuration Rules</h2>
+          <p>The rule is simple and boring, which is why it is ignored:</p>
+          <ul>
+            <li><strong>Copper: leave both ends on auto.</strong> That is what autonegotiation is for, and it selects the highest common speed and full duplex.</li>
+            <li><strong>If you must force, force both ends</strong> to the same speed and duplex. Document it, because the next engineer will assume auto.</li>
+            <li><strong>Never mix one auto end with one forced-full end.</strong> This is the classic mismatch.</li>
+            <li><strong>Do not force 1000BASE-T.</strong> Master/slave negotiation is required; leave it auto.</li>
+            <li><strong>Change both parameters together.</strong> Setting speed without duplex, or duplex without speed, invites a half-configured port.</li>
+            <li><strong>Expect a link bounce.</strong> Changing speed or duplex resets the link; verify both ends afterward.</li>
+          </ul>
+          <pre>interface GigabitEthernet0/1
+ description Copper access port - auto/auto
+ speed auto
+ duplex auto
+!
+interface GigabitEthernet0/2
+ description Provider handoff - fixed 100/full
+ speed 100
+ duplex full</pre>
+          <pre># Linux: return to autonegotiation
+sudo ethtool -s eth0 autoneg on
+
+# Linux: force both parameters together
+sudo ethtool -s eth0 speed 100 duplex full autoneg off
+
+# Restart autonegotiation without changing settings
+sudo ethtool -r eth0</pre>
+          <p>Some platforms do not offer <code>duplex auto</code> as an explicit command; clearing the configuration or using the default is equivalent. The principle is the same: both ends must be in the same mode, and a forced end must match its peer exactly.</p>
+
+          <h2>7. Copper, Fiber, and Direct Attach</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Medium</th>
+                <th>Autonegotiation</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>10/100/1000BASE-T copper</td><td>Yes, standard</td><td>1000BASE-T requires it for master/slave</td></tr>
+              <tr><td>1000BASE-X fiber</td><td>Optional (Clause 37)</td><td>Agrees duplex and pause; speed is fixed by the optic</td></tr>
+              <tr><td>10GBASE-SR/LR fiber</td><td>No</td><td>Fixed speed, normally full duplex</td></tr>
+              <tr><td>10GBASE-T copper</td><td>Yes</td><td>Multi-speed, master/slave, cable-dependent</td></tr>
+              <tr><td>DAC / AOC</td><td>Depends on the assembly</td><td>Often fixed; may need <code>speed nonegotiate</code></td></tr>
+              <tr><td>Media converter</td><td>Often fixed</td><td>Check its documentation before trusting auto</td></tr>
+            </tbody>
+          </table>
+          <p>On Cisco platforms, <code>speed nonegotiate</code> disables negotiation on ports that support it, typically for fiber or DAC links where the peer is fixed. Do not apply it to copper access ports as a shortcut; it removes the mechanism that would have selected full duplex.</p>
+          <p>Auto-MDI/MDI-X is a separate convenience: copper ports detect whether the pair wiring is straight-through or crossover and adapt. Gigabit copper requires it, and it is why crossover cables are no longer part of the design. It does not negotiate speed or duplex.</p>
+
+          <h2>8. Multi-Gig and Downshift</h2>
+          <p>2.5GBASE-T and 5GBASE-T (NBASE-T) extend copper Ethernet beyond 1 Gb/s over cabling that cannot support 10GBASE-T. A multi-gig port advertises several speeds and selects the highest the link can sustain. A 10GBASE-T port on Cat5e may therefore come up at 2.5 or 5 Gb/s, or fail to reach 10G entirely; 10GBASE-T itself expects Cat6 for limited distances and Cat6a for full 100 m runs.</p>
+          <p>That is negotiation working, not a fault. Check three things before replacing hardware:</p>
+          <ul>
+            <li>The negotiated speed on both ends (<code>show interfaces</code>, <code>ethtool</code>).</li>
+            <li>The cable category and length, including patch panels and couplers.</li>
+            <li>Whether the port and the NIC both support the higher rate.</li>
+          </ul>
+          <p>Energy-Efficient Ethernet (802.3az) is sometimes mentioned alongside negotiation, but it is a separate low-power feature. It does not decide speed or duplex, and disabling it will not fix a mismatch.</p>
+
+          <h2>9. Flow Control Is Not Duplex</h2>
+          <p>Autonegotiation also advertises 802.3x pause capability, and the two ends can agree on symmetric or asymmetric pause. That agreement is independent of duplex. A link can be full duplex with pause enabled, full duplex with pause disabled, or half duplex where pause is effectively irrelevant.</p>
+          <p>Do not turn off autonegotiation to "fix" flow control, and do not read a pause setting as a duplex setting. On modern networks, pause is often disabled and congestion is handled by queueing and higher-layer protocols; the important part is that both ends agree on what they are doing.</p>
+
+          <h2>10. Troubleshooting Workflow</h2>
+          <ol>
+            <li><strong>Check both ends.</strong> Record speed, duplex, and whether each is auto or forced.</li>
+            <li><strong>Compare the pair.</strong> Half on one side and full on the other is a mismatch; no link at all is usually a speed or signalling problem.</li>
+            <li><strong>Find the fixed end.</strong> Look for media converters, provider handoffs, old NICs, and templates that hard-code speed/duplex.</li>
+            <li><strong>Read the counters.</strong> Late collisions and runts on the half side; CRC/FCS errors on the full side.</li>
+            <li><strong>Check the physical path.</strong> Patch cords, couplers, cable length, and any hub in the run.</li>
+            <li><strong>Return both ends to auto</strong> on copper, bounce the link, and retest with a bulk transfer rather than a ping.</li>
+            <li><strong>If a peer is fixed</strong> and cannot be changed, match it exactly on your side — speed and duplex — and document the exception.</li>
+            <li><strong>Check logs and neighbours.</strong> CDP/LLDP mismatch messages often point directly at the port.</li>
+          </ol>
+
+          <h2>11. Three Cases</h2>
+          <h3>Case A: the provider handoff</h3>
+          <p>A circuit was delivered through a media converter fixed at 100 Mb/s full duplex. The router port was left on auto.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Router port</td><td>100 Mb/s, half duplex</td></tr>
+              <tr><td>Converter</td><td>100 Mb/s, full duplex</td></tr>
+              <tr><td>Counters</td><td>Late collisions climbing under load</td></tr>
+            </tbody>
+          </table>
+          <p>The auto side had parallel-detected 100 Mb/s and assumed half duplex. Setting the router to 100/full matched the converter and cleared the late collisions. The provider could not enable autonegotiation, so a documented fixed setting was the correct exception.</p>
+
+          <h3>Case B: the server that would not link at 1 Gb/s</h3>
+          <p>A server NIC was hard-coded to 1000/full while the switch port remained on auto. The link flapped and sometimes stayed down.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Link state</td><td>Down or unstable</td></tr>
+              <tr><td>NIC setting</td><td>Speed 1000, duplex full, autoneg off</td></tr>
+              <tr><td>Switch setting</td><td>Auto/auto</td></tr>
+            </tbody>
+          </table>
+          <p>1000BASE-T needs autonegotiation to assign the clock master and slave. With one side forced, that exchange never happened. Returning both ends to auto produced a stable 1 Gb/s full-duplex link.</p>
+
+          <h3>Case C: the 10G link that ran at 5G</h3>
+          <p>A new 10GBASE-T switch port connected to a server over an existing Cat5e run. The link came up, but not at the expected rate.</p>
+          <table>
+            <thead>
+              <tr><th>Evidence</th><th>Reading</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Negotiated speed</td><td>5 Gb/s on both ends</td></tr>
+              <tr><td>Cable</td><td>Cat5e, long run with a coupler</td></tr>
+              <tr><td>Errors</td><td>None; stable link</td></tr>
+            </tbody>
+          </table>
+          <p>Nothing was broken. The port and NIC supported multi-gig, the cable could not support 10G, and autonegotiation picked a rate that worked. The fix was a Cat6a run, not a duplex setting.</p>
+
+          <h2>12. Exam Traps</h2>
+          <ul>
+            <li><strong>"Autonegotiation always detects duplex."</strong> Only when both ends send FLPs. Parallel detection identifies speed and assumes half duplex.</li>
+            <li><strong>"Auto/auto is the risky choice."</strong> On copper it is the recommended choice; mixed auto/forced is the risk.</li>
+            <li><strong>"One side auto, one side forced full is fine if the speed matches."</strong> The auto side comes up half; that is a mismatch.</li>
+            <li><strong>"Forced half plus auto is also a mismatch."</strong> The auto side assumes half, so they match — but it is still not best practice.</li>
+            <li><strong>"1000BASE-T can run half duplex."</strong> 1000BASE-T is full duplex only.</li>
+            <li><strong>"Gigabit autonegotiation only agrees speed."</strong> It also assigns master/slave and agrees duplex and pause.</li>
+            <li><strong>"Fiber always autonegotiates."</strong> Many fiber and 10G links are fixed; 1000BASE-X negotiation is optional and does not change speed.</li>
+            <li><strong>"Collisions on full duplex are normal under load."</strong> They indicate a duplex mismatch or faulty hardware.</li>
+            <li><strong>"Late collisions mean congestion."</strong> They mean the collision arrived outside the slot-time window — usually a mismatch or an oversized collision domain.</li>
+            <li><strong>"Speed and duplex are independent settings."</strong> They are negotiated together; configure them together.</li>
+            <li><strong>"A crossover cable is required for gigabit."</strong> Auto-MDI/MDI-X handles it, and gigabit copper requires it.</li>
+            <li><strong>"Flow control is part of duplex."</strong> Pause is advertised during negotiation but is a separate feature.</li>
+          </ul>
+
+          <h2>13. Key Takeaways</h2>
+          <ul>
+            <li>Speed and duplex are negotiated together; both ends must agree.</li>
+            <li>Autonegotiation exchanges FLP bursts carrying capabilities, pause, and next-page data.</li>
+            <li>Parallel detection recognises speed only, so an auto end facing a forced-full peer assumes half duplex.</li>
+            <li>A duplex mismatch links up but produces collisions, late collisions, CRC errors, and retransmissions.</li>
+            <li>Leave copper on auto/auto; if forced, force both ends and both parameters.</li>
+            <li>1000BASE-T depends on autonegotiation for master/slave; do not hard-code it.</li>
+            <li>Fiber and DAC links may be fixed; verify the optic and the port rather than assuming negotiation.</li>
+            <li>Multi-gig downshift is a cable capability result, not a duplex fault.</li>
+          </ul>
+
+          <h2>14. Quick Review Questions</h2>
+          <ol>
+            <li>What does an FLP burst carry, and how often is it sent?</li>
+            <li>Why does parallel detection assume half duplex?</li>
+            <li>What happens when one end is forced to 100/full and the other is left on auto?</li>
+            <li>Why is forced half plus auto not a mismatch, even though it is not recommended?</li>
+            <li>Which counters appear on the half-duplex side of a mismatch, and which on the full-duplex side?</li>
+            <li>Why can a ping succeed while a large file transfer fails on the same link?</li>
+            <li>Why does 1000BASE-T require autonegotiation?</li>
+            <li>Which fiber links autonegotiate, and what do they negotiate?</li>
+            <li>Why might a 10GBASE-T link come up at 5 Gb/s?</li>
+            <li>What is the correct way to force speed and duplex on both ends?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="collision-domains-and-csma-cd.html">Collision Domains and CSMA/CD: The Rules That Shaped Ethernet</a></li>
+            <li><a href="how-ethernet-works.html">How Ethernet Works: Frames, MAC Addresses, and Switching</a></li>
+            <li><a href="common-physical-problems.html">Common Physical Problems: A Field Guide to Layer 1 Faults</a></li>
+            <li><a href="ethernet-frame-anatomy.html">Anatomy of an Ethernet Frame: A Byte-by-Byte Dissection</a></li>
+            <li><a href="../../pages/01-physical-layer.html">Level 1 - Physical Layer</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
