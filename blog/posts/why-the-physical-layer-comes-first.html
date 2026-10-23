@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why the Physical Layer Comes First: Signals, Media, and the Limits Above — CCNP Blog</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'] }, boxShadow: { card: '0 10px 30px -12px rgba(15, 23, 42, 0.45)', cardDark: '0 10px 40px -12px rgba(14, 165, 233, 0.25)' } } } }
+  </script>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica Neue, Arial, sans-serif; }
+    .prose { max-width: 80ch; }
+    .prose p { margin: 1rem 0; line-height: 1.8; }
+    .prose h2 { margin-top: 2.75rem; margin-bottom: 1rem; font-size: 1.75rem; font-weight: 600; }
+    .prose h3 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.35rem; font-weight: 600; }
+    .prose ul { margin: 1rem 0; padding-left: 1.5rem; list-style: disc; }
+    .prose ol { margin: 1rem 0; padding-left: 1.5rem; list-style: decimal; }
+    .prose li { margin: 0.5rem 0; line-height: 1.7; }
+    .prose code { background: rgba(148,163,184,0.2); padding: 0.1rem 0.4rem; border-radius: 0.375rem; font-size: 0.9em; }
+    .prose pre { background: rgba(15,23,42,0.95); color: rgb(226,232,240); padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 1.5rem 0; font-size: 0.875rem; }
+    .prose table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.95rem; }
+    .prose th, .prose td { border: 1px solid rgba(148,163,184,0.4); padding: 0.6rem 0.8rem; text-align: left; vertical-align: top; }
+    .prose th { background: rgba(148,163,184,0.15); font-weight: 600; }
+    .prose strong { font-weight: 600; }
+    .prose a { color: rgb(14 165 233); text-decoration: none; }
+    .dark .prose a { color: rgb(56 189 248); }
+    .prose a:hover { text-decoration: underline; }
+    .prose blockquote { border-left: 3px solid rgb(14,165,233); padding: 0.25rem 0 0.25rem 1rem; margin: 1.5rem 0; color: rgb(71,85,105); }
+    .dark .prose blockquote { color: rgb(148,163,184); }
+    @media (max-width: 640px) { .hide-sm { display: none; } }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+  <div id="app" class="min-h-screen">
+    <header class="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
+      <div class="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="../index.html" class="flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-sky-600 dark:text-slate-300 dark:hover:text-sky-400">
+          <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L7.414 9H15a1 1 0 110 2H7.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/></svg>
+          Back to Blog
+        </a>
+        <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+        <a href="../../index.html" class="text-sm text-slate-500 transition hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400">Home</a>
+        <div class="ml-auto flex items-center gap-2">
+          <button @click="toggleTheme" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition hover:border-sky-400 hover:text-sky-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-sky-400 dark:hover:text-sky-400">
+            <svg v-if="dark" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+            <svg v-else class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
+            <span class="hide-sm">{{ dark ? 'Light' : 'Dark' }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <article>
+        <header class="mb-10">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>October 24, 2025</span>
+            <span>·</span>
+            <span>14 min read</span>
+            <span>·</span>
+            <span>Fundamentals</span>
+          </div>
+          <h1 class="mt-4 text-3xl font-semibold sm:text-4xl lg:text-5xl">Why the Physical Layer Comes First</h1>
+          <p class="mt-4 text-lg text-slate-600 dark:text-slate-400">Every abstraction above Layer 1 is a promise the medium has to keep. When the medium breaks that promise, the complaint arrives at Layer 7.</p>
+          <div class="mt-6 flex flex-wrap gap-2">
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Physical Layer</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Cabling</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Fiber</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">PoE</span>
+            <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">Wireless</span>
+          </div>
+        </header>
+
+        <div class="prose dark:prose-invert">
+          <h2>1. The Layer That Is Not a Metaphor</h2>
+          <p>Layers 2 through 7 are agreements. A VLAN tag is an agreement about four bytes. A routing table is an agreement about prefixes. A TCP window is an agreement about buffers. Layer 1 is not an agreement — it is physics. Voltage on copper, light in glass, radio in air.</p>
+          <p>Every layer above it rests on one assumption: <strong>the receiver can tell a one from a zero.</strong> When that assumption fails, nothing above it can compensate. A queueing policy cannot un-corrupt a frame. A routing protocol cannot route around a dirty connector. TLS cannot encrypt a bit that never arrived.</p>
+          <blockquote>
+            <p><strong>Layer 1 sets the ceiling. Every other layer only decides how close to that ceiling you operate.</strong></p>
+          </blockquote>
+          <p>This is why the physical layer comes first in design, in troubleshooting, and in cost. It is also the only layer you can measure with a meter instead of an opinion.</p>
+
+          <h2>2. Three Jobs, Not One</h2>
+          <p>It is tempting to reduce Layer 1 to "cables." In practice it does three distinct jobs, and each one fails differently.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Job</th>
+                <th>What it means</th>
+                <th>How it fails</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Encoding</strong></td>
+                <td>Turning bits into symbols the medium can carry — NRZ, PAM4, 8b/10b, 64b/66b — with enough transitions for clock recovery and DC balance</td>
+                <td>Garbled symbols, FEC corrections, link that trains slowly or not at all</td>
+              </tr>
+              <tr>
+                <td><strong>Transmission</strong></td>
+                <td>Driving the signal through a specific medium: pair, strand, wavelength, antenna</td>
+                <td>Attenuation, noise, crosstalk, bad connectors, wrong optic</td>
+              </tr>
+              <tr>
+                <td><strong>Synchronization</strong></td>
+                <td>Recovering the clock, negotiating speed and duplex, training the link, aligning lanes</td>
+                <td>Flapping, half-duplex behaviour, lane mismatch, link up with errors</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Two links can both report "up" while one is healthy and the other is corrupting a small fraction of frames. The status light answers the encoding question, not the transmission question. That gap is where most physical-layer mysteries live.</p>
+
+          <h2>3. The Budget: Power In, Power Out, Margin Left</h2>
+          <p>Every physical link is a budget. A transmitter launches a known amount of power; the medium loses some; the receiver needs a minimum to decode correctly. Whatever remains is <strong>margin</strong>.</p>
+          <ul>
+            <li><strong>3 dB is half the power.</strong> 10 dB is one tenth. Loss adds; margin subtracts.</li>
+            <li>Copper budgets are expressed as distance and category. Fiber budgets are expressed in dB, and optics publish transmit power and receive sensitivity.</li>
+            <li>Design for margin, not for the limit. A link that works at exactly 0 dB margin works until the first hot day, the first re-patch, or the first slightly dirty connector.</li>
+          </ul>
+          <p>For fiber, the numbers are explicit. A 10GBASE-SR interface might transmit at −3 dBm and require −9.9 dBm to receive; a 300 m OM3 run plus connectors might lose 2.6 dB. That leaves less margin than the datasheet implies once patch panels and a less-than-perfect cleaning are included. This is why "it's fiber, it's fine" is not an engineering statement.</p>
+
+          <h3>Common Ethernet physical standards</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Standard</th>
+                <th>Medium</th>
+                <th>Reach</th>
+                <th>Practical note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1000BASE-T</td><td>Cat5e or better, 4 pairs</td><td>100 m</td><td>Requires autonegotiation; all four pairs used</td></tr>
+              <tr><td>2.5GBASE-T / 5GBASE-T</td><td>Cat5e / Cat6</td><td>100 m</td><td>Common on Wi-Fi 6 access points</td></tr>
+              <tr><td>10GBASE-T</td><td>Cat6 / Cat6A</td><td>55 m / 100 m</td><td>Cat6 at 55 m only; power and heat are real</td></tr>
+              <tr><td>10GBASE-SR</td><td>OM3 / OM4 multimode</td><td>300 m / 400 m</td><td>850 nm, cheap optics, short building runs</td></tr>
+              <tr><td>10GBASE-LR</td><td>SMF</td><td>10 km</td><td>1310 nm, campus and metro</td></tr>
+              <tr><td>40GBASE-SR4</td><td>OM3 / OM4</td><td>100 m / 150 m</td><td>Four lanes over MPO/MTP</td></tr>
+              <tr><td>100GBASE-SR4</td><td>OM3 / OM4</td><td>70 m / 100 m</td><td>Same fibre count, higher lane rate, tighter margin</td></tr>
+              <tr><td>100GBASE-LR4</td><td>SMF</td><td>10 km</td><td>Four wavelengths multiplexed</td></tr>
+            </tbody>
+          </table>
+          <p>Notice the direction of travel: as speed rises, reach on copper falls and margin on fibre shrinks. Higher speeds do not make the physical layer less important — they make it less forgiving.</p>
+
+          <h2>4. Impairments, Translated</h2>
+          <p>Physical faults have specific signatures. Learn the signature and you stop guessing.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Impairment</th>
+                <th>What happens</th>
+                <th>What you see</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Attenuation</strong></td><td>Signal weakens with distance and frequency</td><td>Link fails at length; marginal optics with low receive power; higher speeds fail first</td></tr>
+              <tr><td><strong>Noise and EMI</strong></td><td>Outside energy adds to the signal</td><td>CRC/FCS errors that rise near motors, power runs, or radio equipment</td></tr>
+              <tr><td><strong>Crosstalk</strong></td><td>Pairs or strands couple into each other</td><td>Errors on bundled cables, especially with untwisted or damaged pairs</td></tr>
+              <tr><td><strong>Impedance mismatch</strong></td><td>Reflections at a bad joint or wrong connector</td><td>Errors at one connector; optical return loss; intermittent link</td></tr>
+              <tr><td><strong>Dispersion</strong></td><td>Pulses spread and overlap over distance</td><td>Multimode runs beyond their reach limit; errors that grow with length and rate</td></tr>
+              <tr><td><strong>Macrobend</strong></td><td>Fibre bent too tightly loses light</td><td>Sudden loss after a re-route or a tight cable tie; worse at long wavelengths</td></tr>
+              <tr><td><strong>Contamination</strong></td><td>Dirt or oil on a connector end-face</td><td>High loss, unstable power readings, the classic "it worked before we touched it"</td></tr>
+              <tr><td><strong>Duplex mismatch</strong></td><td>One side sends while the other expects to receive</td><td>Late collisions, CRC errors, terrible throughput at low load</td></tr>
+            </tbody>
+          </table>
+          <p>One diagnostic habit matters more than any single tool: <strong>read counters twice, a minute apart.</strong> A total that never changes is history. A total that climbs is a live fault. Errors that stopped when someone re-seated a cable are still evidence that the cable is the problem.</p>
+
+          <h2>5. Why It Hides: The Masquerade</h2>
+          <p>A corrupted frame does not announce itself as a cable problem. It is dropped, retransmitted, or corrected, and the cost surfaces somewhere else — as latency, as a timeout, as "the app is slow."</p>
+
+          <div class="my-6 overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-card dark:border-slate-800 dark:bg-slate-900 dark:shadow-cardDark">
+            <svg viewBox="0 0 900 490" class="mx-auto w-full max-w-4xl" role="img" aria-label="Diagram showing one physical layer fault appearing as symptoms at Layer 2, Layer 3, Layer 4, and Layer 7, with the user complaint at the top">
+              <g class="text-slate-900 dark:text-slate-100" stroke="currentColor" stroke-width="1.2">
+                <text x="40" y="30" font-size="10.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">ONE BAD CABLE, FIVE DIFFERENT COMPLAINTS</text>
+
+                <!-- L7 -->
+                <rect x="40" y="64" width="560" height="56" rx="8" class="fill-sky-500/15" stroke="rgb(14,165,233)" />
+                <rect x="52" y="74" width="88" height="36" rx="6" class="fill-sky-500/20" stroke="rgb(14,165,233)" />
+                <text x="96" y="97" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">L7 App</text>
+                <text x="156" y="89" font-size="9.5" fill="currentColor" stroke="none">Request timeouts, retries, 5xx from</text>
+                <text x="156" y="105" font-size="9.5" fill="currentColor" stroke="none">upstream: "the app is slow since Monday"</text>
+
+                <!-- L4 -->
+                <rect x="40" y="140" width="560" height="56" rx="8" class="fill-amber-500/15" stroke="rgb(245,158,11)" />
+                <rect x="52" y="150" width="88" height="36" rx="6" class="fill-amber-500/20" stroke="rgb(245,158,11)" />
+                <text x="96" y="173" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">L4 Transport</text>
+                <text x="156" y="165" font-size="9.5" fill="currentColor" stroke="none">Retransmissions, shrinking window,</text>
+                <text x="156" y="181" font-size="9.5" fill="currentColor" stroke="none">jitter, bulk transfers that stall</text>
+
+                <!-- L3 -->
+                <rect x="40" y="216" width="560" height="56" rx="8" class="fill-rose-500/15" stroke="rgb(244,63,94)" />
+                <rect x="52" y="226" width="88" height="36" rx="6" class="fill-rose-500/20" stroke="rgb(244,63,94)" />
+                <text x="96" y="249" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">L3 Network</text>
+                <text x="156" y="241" font-size="9.5" fill="currentColor" stroke="none">Packet loss, traceroute gaps, route</text>
+                <text x="156" y="257" font-size="9.5" fill="currentColor" stroke="none">flaps, BGP sessions that reset</text>
+
+                <!-- L2 -->
+                <rect x="40" y="292" width="560" height="56" rx="8" class="fill-teal-500/15" stroke="rgb(20,184,166)" />
+                <rect x="52" y="302" width="88" height="36" rx="6" class="fill-teal-500/20" stroke="rgb(20,184,166)" />
+                <text x="96" y="325" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">L2 Data Link</text>
+                <text x="156" y="317" font-size="9.5" fill="currentColor" stroke="none">Frames dropped, MAC moves, STP</text>
+                <text x="156" y="333" font-size="9.5" fill="currentColor" stroke="none">recalculation, trunk instability</text>
+
+                <!-- L1 -->
+                <rect x="40" y="368" width="560" height="56" rx="8" class="fill-red-500/20" stroke="rgb(239,68,68)" />
+                <rect x="52" y="378" width="88" height="36" rx="6" class="fill-red-500/25" stroke="rgb(239,68,68)" />
+                <text x="96" y="401" text-anchor="middle" font-size="10" font-weight="600" fill="currentColor" stroke="none">L1 Physical</text>
+                <text x="156" y="393" font-size="9.5" fill="currentColor" stroke="none">CRC/FCS errors, runts, late collisions,</text>
+                <text x="156" y="409" font-size="9.5" fill="currentColor" stroke="none">flapping link, low optical power</text>
+
+                <!-- arrows up -->
+                <line x1="320" y1="364" x2="320" y2="354" stroke="rgb(148,163,184)" />
+                <polygon points="315,356 325,356 320,348" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="320" y1="288" x2="320" y2="278" stroke="rgb(148,163,184)" />
+                <polygon points="315,280 325,280 320,272" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="320" y1="212" x2="320" y2="202" stroke="rgb(148,163,184)" />
+                <polygon points="315,204 325,204 320,196" fill="rgb(148,163,184)" stroke="none" />
+                <line x1="320" y1="136" x2="320" y2="126" stroke="rgb(148,163,184)" />
+                <polygon points="315,128 325,128 320,120" fill="rgb(148,163,184)" stroke="none" />
+
+                <!-- user report -->
+                <rect x="648" y="64" width="232" height="76" rx="10" class="fill-slate-500/10" stroke="rgb(148,163,184)" stroke-dasharray="5 4" />
+                <text x="664" y="86" font-size="8.5" font-weight="600" fill="rgb(100,116,139)" stroke="none">USER REPORT</text>
+                <text x="664" y="108" font-size="10.5" fill="currentColor" stroke="none">"The app is slow</text>
+                <text x="664" y="124" font-size="10.5" fill="currentColor" stroke="none">since Monday."</text>
+                <line x1="648" y1="102" x2="606" y2="92" stroke="rgb(148,163,184)" stroke-dasharray="4 4" />
+                <circle cx="602" cy="91" r="2.5" fill="rgb(148,163,184)" stroke="none" />
+
+                <!-- start here -->
+                <rect x="648" y="352" width="232" height="76" rx="10" class="fill-sky-500/10" stroke="rgb(14,165,233)" />
+                <text x="664" y="374" font-size="8.5" font-weight="600" fill="rgb(14,165,233)" stroke="none">START HERE</text>
+                <text x="664" y="394" font-size="9.5" fill="currentColor" stroke="none">Link state, speed/duplex,</text>
+                <text x="664" y="410" font-size="9.5" fill="currentColor" stroke="none">CRC counters, optics, PoE</text>
+                <line x1="648" y1="392" x2="610" y2="392" stroke="rgb(14,165,233)" stroke-dasharray="4 4" />
+                <polygon points="614,387 614,397 604,392" fill="rgb(14,165,233)" stroke="none" />
+
+                <!-- vertical note -->
+                <line x1="622" y1="152" x2="622" y2="340" stroke="rgb(148,163,184)" stroke-dasharray="3 5" opacity="0.7" />
+                <text x="614" y="246" font-size="8" fill="rgb(100,116,139)" stroke="none" transform="rotate(-90 614 246)" text-anchor="middle" letter-spacing="1">THE SAME FAULT, REPORTED HIGHER</text>
+
+                <text x="40" y="452" font-size="9.5" fill="rgb(100,116,139)" stroke="none">Fix at the lowest layer where the evidence appears — not where the complaint was filed.</text>
+                <text x="40" y="470" font-size="9.5" fill="rgb(100,116,139)" stroke="none">A link that is "up" can still be corrupting frames: check error counters, not just link state.</text>
+              </g>
+            </svg>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">The fault stays at L1. The symptoms climb.</p>
+          </div>
+
+          <p>Two mechanisms do the hiding:</p>
+          <ul>
+            <li><strong>Retransmission.</strong> TCP resends lost segments, so a small loss rate looks like latency, not failure. At 1% loss, throughput can fall by far more than 1% because congestion control backs off.</li>
+            <li><strong>Forward error correction.</strong> Modern high-speed links correct errors in hardware. That is good — until the corrected count climbs and the uncorrectable count starts. Corrected FEC is an early warning, not a clean bill of health.</li>
+          </ul>
+          <p>This is why "the network is slow" is a Layer 1 question as often as a Layer 7 one. The complaint is filed at the top because that is where humans live; the evidence is at the bottom because that is where physics lives.</p>
+
+          <h2>6. Duplex and Speed: The Classic Layer 1 Trap</h2>
+          <p>Autonegotiation is a Layer 1 procedure: two interfaces exchange capabilities over the same medium before passing frames. When it works, both sides agree on speed and duplex. When it is disabled on one side only, the result is one of the most misleading faults in networking.</p>
+          <ul>
+            <li>One side forced to <strong>100 Mbps full duplex</strong>, the other left on <strong>auto</strong>: the auto side cannot detect duplex, falls back to half duplex, and the link comes up.</li>
+            <li>The full-duplex side transmits whenever it wants. The half-duplex side treats those frames as collisions and reports <strong>late collisions</strong> and CRC errors.</li>
+            <li>Throughput collapses under load while pings still succeed, so it gets escalated as an application problem.</li>
+          </ul>
+          <p>Rules that prevent the whole class of fault:</p>
+          <ol>
+            <li>Leave autonegotiation enabled on both ends. Gigabit Ethernet requires it.</li>
+            <li>If you must hard-code, hard-code <strong>both</strong> ends to the same speed and duplex.</li>
+            <li>Treat late collisions, FCS errors, and runts on a copper port as a physical or duplex problem until proven otherwise.</li>
+          </ol>
+
+          <h2>7. Power over Ethernet Is Also Layer 1</h2>
+          <p>PoE sends DC power over the same copper pairs that carry data. It is negotiated, budgeted, and measured — all at Layer 1. It also fails in ways that look like software.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Concept</th>
+                <th>What to know</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Standard</td><td>802.3af (up to 15.4 W at the source, 12.95 W at the device), 802.3at (30 W / 25.5 W), 802.3bt Type 3 and 4 (60 W / 90 W at the source)</td></tr>
+              <tr><td>Pairs</td><td>af/at use two pairs; bt uses all four for higher power</td></tr>
+              <tr><td>Budget</td><td>Total power per switch, per line card, and per port; a port can negotiate a class and still be denied</td></tr>
+              <tr><td>Loss</td><td>Resistance over long or thin cable wastes power as heat; the device may boot but brown out under load</td></tr>
+              <tr><td>Signature failure</td><td>A camera reboots when its IR LEDs switch on at dusk: steady-state draw fits, peak draw does not</td></tr>
+            </tbody>
+          </table>
+          <p>If a device powers up but reboots under load, check the negotiated class, the available budget, and the cable length before you check the firmware.</p>
+
+          <h2>8. Fibre Has Its Own Physical Discipline</h2>
+          <p>Fibre removes EMI but not physics. It adds a new set of failure modes that are invisible to link lights:</p>
+          <ul>
+            <li><strong>Wrong fibre for the optic.</strong> Multimode optics on single-mode plant (or the reverse) will not work, and some combinations damage nothing but never link.</li>
+            <li><strong>Connector polish mismatch.</strong> UPC (blue) and APC (green, angled) mated together cause high loss and reflections. Match the polish.</li>
+            <li><strong>Dirty end-faces.</strong> A fingerprint or dust particle is enough to scatter light. Inspect and clean every connector before blaming the optic.</li>
+            <li><strong>Bend radius.</strong> Tight ties and sharp cable-management bends leak light, especially at longer wavelengths.</li>
+            <li><strong>Transceiver coding.</strong> Vendors sometimes lock optics to their own parts — a compatibility issue, not a standards issue, but it presents as "the link won't come up."</li>
+            <li><strong>DOM readings.</strong> Digital optical monitoring gives transmit and receive power. Compare against the datasheet and against the same link when it was known good.</li>
+          </ul>
+          <p>Fibre is more reliable than copper in the right environment, but "more reliable" is not "immune." Most fibre faults are connector faults, and most connector faults are contamination.</p>
+
+          <h2>9. Wireless: Radio Is Layer 1</h2>
+          <p>An access point's antenna is a physical-layer interface. Signal-to-noise ratio, noise floor, channel width, and modulation rate are all L1 concepts, even though association and roaming are L2.</p>
+          <ul>
+            <li><strong>Signal strength is not quality.</strong> A strong signal with a high noise floor yields a low SNR and a low modulation rate.</li>
+            <li><strong>Retries are the wireless CRC.</strong> A rising retry rate means frames are being corrupted in the air — interference, distance, or too many clients.</li>
+            <li><strong>Wider channels are not free.</strong> 80 MHz doubles throughput potential and doubles the noise you collect.</li>
+            <li><strong>Non-Wi-Fi interference</strong> (microwaves, radar, bad ballasts) does not appear as a neighbouring SSID but will destroy throughput.</li>
+          </ul>
+          <p>When a wireless client "roams badly," the trigger is usually physical: the signal or SNR crossed a threshold. Fixing it may mean moving an AP, changing power, or changing the channel plan — all Layer 1 decisions.</p>
+
+          <h2>10. Link Up Is Not Link Good</h2>
+          <p>Physical health is a rate, not a state. Read these counters twice, a minute apart, and compare the delta against traffic volume.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Counter</th>
+                <th>Meaning</th>
+                <th>Usual cause</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>CRC / FCS errors</td><td>Frame arrived with a bad checksum</td><td>Cable, connector, EMI, optic, duplex mismatch</td></tr>
+              <tr><td>Input errors</td><td>Aggregate of many receive-side problems</td><td>Read the sub-counters; do not stop here</td></tr>
+              <tr><td>Runts</td><td>Frames shorter than 64 bytes</td><td>Collision or duplex mismatch</td></tr>
+              <tr><td>Giants</td><td>Frames longer than the maximum</td><td>MTU mismatch or bad hardware</td></tr>
+              <tr><td>Late collisions</td><td>Collision detected after the slot time</td><td>Duplex mismatch or excessive cable length</td></tr>
+              <tr><td>FEC corrected / uncorrected</td><td>Errors fixed in hardware, and errors that escaped</td><td>Marginal optics, dirty fibre, too much loss</td></tr>
+              <tr><td>Interface resets / flaps</td><td>The link went down and came back</td><td>Bad cable, PoE overload, optic, power</td></tr>
+            </tbody>
+          </table>
+          <pre># Linux
+ethtool eth0                     # speed, duplex, link, autoneg
+ethtool -S eth0 | grep -Ei 'err|drop|crc|fcs'
+ip -s link show eth0
+
+# Cisco IOS / IOS XE
+show interfaces Gi1/0/1 | include error|CRC|duplex|reset
+show interfaces Gi1/0/1 counters errors
+show interfaces transceiver detail        # optical power, temperature
+show cable-diagnostics tdr interface Gi1/0/1
+show power inline Gi1/0/1</pre>
+
+          <h2>11. A Ten-Minute Physical Triage</h2>
+          <ol>
+            <li><strong>Scope it.</strong> One host, one switch, one floor, or one site? A single-host fault points at the patch cord or NIC; a whole-floor fault points at an uplink or a closet.</li>
+            <li><strong>Look at the link.</strong> Speed, duplex, and whether it has flapped. A link that negotiated 100 Mbps on a gigabit port is telling you something.</li>
+            <li><strong>Read counters twice.</strong> Growing CRC or late collisions means stop and fix the physical path.</li>
+            <li><strong>Swap the cheapest part first.</strong> Patch cords before horizontal cable, optics before transceivers, ports before line cards.</li>
+            <li><strong>Clean and inspect fibre.</strong> Every time. It costs seconds and resolves a surprising share of "bad optic" tickets.</li>
+            <li><strong>Check power.</strong> PoE budget and class for powered devices; UPS and PSU for infrastructure.</li>
+            <li><strong>Only then move up.</strong> If L1 is provably clean, L2 is the next place the evidence can live — not the next place to guess.</li>
+          </ol>
+          <p>The order is not arbitrary. Steps 1–6 are cheap, non-disruptive, and falsifiable. Changing routing or firewall policy before them is how a five-minute cable swap becomes a two-hour change window.</p>
+
+          <h2>12. Two Short Case Studies</h2>
+          <h3>Case A: the uplink that passed every test except the one that mattered</h3>
+          <p>A new 10G fibre uplink between two switches came up cleanly. Pings were perfect, iperf looked reasonable, but a database replication job timed out every night.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Evidence</th>
+                <th>Reading</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Link state</td><td>Up at 10G, no flaps</td></tr>
+              <tr><td>Receive power</td><td>−13.8 dBm against an expected −9.1 dBm</td></tr>
+              <tr><td>FEC counters</td><td>Corrected errors climbing steadily; uncorrected near zero</td></tr>
+              <tr><td>End-face inspection</td><td>Contamination on one LC connector</td></tr>
+            </tbody>
+          </table>
+          <p>The link "worked" because FEC repaired the damage. The application failed because the repair added latency and occasional retransmits under sustained load. Cleaning and re-seating the connector restored the expected power and the job completed. Replacing the optic would also have "fixed" it — and left the real cause undocumented.</p>
+
+          <h3>Case B: the floor that got slow every afternoon</h3>
+          <p>Users on one floor reported slow file transfers between 13:00 and 15:00. Nothing in the monitoring showed CPU or bandwidth saturation.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Evidence</th>
+                <th>Reading</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Port counters</td><td>Late collisions and FCS errors on one access switch uplink</td></tr>
+              <tr><td>Configuration</td><td>Uplink hard-coded to 100/full; switch side left on auto</td></tr>
+              <tr><td>Pattern</td><td>Errors scaled with afternoon traffic, not with time of day</td></tr>
+            </tbody>
+          </table>
+          <p>The "afternoon" pattern was just when traffic peaked. Restoring autonegotiation on both ends removed the mismatch. The lesson: a time-of-day correlation is usually a load correlation.</p>
+
+          <h2>13. Design Rules That Age Well</h2>
+          <ul>
+            <li><strong>Cabling outlives everything else.</strong> A cable plant installed today will see several generations of switches. Certify it, label it, and document it.</li>
+            <li><strong>Design for margin.</strong> Stay inside reach limits, keep fibre budgets above the minimum, and leave spare strands and ports.</li>
+            <li><strong>Separate power and data.</strong> Avoid running copper parallel to mains; cross at right angles when you must.</li>
+            <li><strong>Respect bend radius and cable ties.</strong> Velcro over zip ties on fibre; never kink a patch cord.</li>
+            <li><strong>Keep optics matched and documented.</strong> Record the part, wavelength, and expected receive power per link.</li>
+            <li><strong>Budget PoE with headroom.</strong> Size for peak draw, not idle draw, and account for cable loss.</li>
+            <li><strong>Monitor the physical layer.</strong> Alert on CRC rate, FEC corrections, flaps, and optical power drift — not just on link down.</li>
+          </ul>
+
+          <h2>14. Exam Traps</h2>
+          <ul>
+            <li><strong>"Layer 1 is just cables."</strong> It also covers encoding, connectors, transceivers, signalling, PoE, and RF.</li>
+            <li><strong>"Fiber is immune to interference, so it is immune to faults."</strong> Contamination, bends, polish mismatch, and wrong optics are all physical faults.</li>
+            <li><strong>"The link light is on, so Layer 1 is fine."</strong> Link state proves encoding, not error-free transmission.</li>
+            <li><strong>"CRC errors are normal."</strong> A nonzero, growing CRC count is a fault, not background noise.</li>
+            <li><strong>"Autonegotiation always works."</strong> It fails when one side is forced; that is the setup for a duplex mismatch.</li>
+            <li><strong>"PoE is a Layer 2 feature."</strong> Power delivery is physical; the negotiation rides on the physical link.</li>
+            <li><strong>"Wireless problems are Layer 2."</strong> Association is L2; SNR, interference, and retries begin at L1.</li>
+            <li><strong>"Higher speed means fewer physical concerns."</strong> Higher speeds reduce reach and margin — the opposite.</li>
+          </ul>
+
+          <h2>15. Key Takeaways</h2>
+          <ul>
+            <li>Layer 1 is the only layer grounded in physics; everything above depends on it delivering distinguishable bits.</li>
+            <li>It does three jobs — encoding, transmission, synchronization — and each fails with a different signature.</li>
+            <li>Every link is a power budget; margin, not "it works today," is the design target.</li>
+            <li>Physical faults surface as higher-layer symptoms because TCP retransmits and FEC corrects. Check counters, not complaints.</li>
+            <li>Duplex mismatch, dirty fibre, and PoE brownouts are the classic impostors.</li>
+            <li>Fix at the lowest layer where evidence appears; swap the cheapest component first.</li>
+          </ul>
+
+          <h2>16. Quick Review Questions</h2>
+          <ol>
+            <li>Why can a link report "up" while still corrupting frames?</li>
+            <li>What are the three jobs of the physical layer, and which one does a link light prove?</li>
+            <li>How much power is lost with 3 dB of attenuation?</li>
+            <li>Why does a duplex mismatch produce late collisions rather than early ones?</li>
+            <li>What does a rising FEC-corrected counter tell you that a link light cannot?</li>
+            <li>Why is a dirty fibre connector more likely than a failed optic?</li>
+            <li>Which counter would you check first for a wireless client with a strong signal but poor throughput?</li>
+            <li>Why is time-of-day correlation often a sign of a load-dependent physical fault?</li>
+          </ol>
+
+          <h2>Related Resources</h2>
+          <ul>
+            <li><a href="using-layers-to-troubleshoot.html">Using Layers to Troubleshoot: A Method, Not a Checklist</a></li>
+            <li><a href="mapping-protocols-and-devices-to-layers.html">Mapping Protocols and Devices to Layers: A Practical Reference</a></li>
+            <li><a href="encapsulation-and-decapsulation.html">Encapsulation and De-encapsulation: How Data Gets Wrapped and Unwrapped</a></li>
+            <li><a href="osi-seven-layers.html">The 7 Layers of OSI: Models, Functions, Protocols, and Devices</a></li>
+            <li><a href="../../pages/01-physical-layer.html">Level 1 - Physical Layer</a></li>
+            <li><a href="../index.html">Back to Blog</a></li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="border-t border-slate-200 py-6 text-center text-sm text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6">CCNP Study Pages — Blog</div>
+    </footer>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+    createApp({
+      data() { return { dark: true } },
+      mounted() {
+        try {
+          const stored = localStorage.getItem('ccnp-theme');
+          if (stored) this.dark = stored === 'dark';
+          else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) this.dark = false;
+        } catch(e) {}
+        this.applyTheme();
+      },
+      methods: {
+        applyTheme() { document.documentElement.classList.toggle('dark', this.dark); },
+        toggleTheme() {
+          this.dark = !this.dark;
+          try { localStorage.setItem('ccnp-theme', this.dark ? 'dark' : 'light'); } catch(e) {}
+          this.applyTheme();
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
