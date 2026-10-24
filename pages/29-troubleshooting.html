@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,5447 +600,1864 @@
         const heroIntro = "A **[[Troubleshooting|systematic method]]** starts at the **[[OSI Model]]** and works upward: physical and data-link faults, then addressing and routing with **[[VLAN]]**, **[[STP]]**, **[[EtherChannel]]**, **[[OSPF]]**, **[[EIGRP]]** and **[[BGP]]**. Services add **[[NAT]]**, **[[ACL]]**, **[[DHCP]]**, **[[DNS]]** and **[[VPN]]**, while **[[QoS]]**, wireless, **[[SD-WAN]]** and performance analysis cover the rest.";
 
         const topics = [
- {
-  "num": "01",
-  "id": "t01",
-  "group": "layer",
-  "title": "Layer 1",
-  "blurb": "Layer 1 is the physical layer — cable, connector, power, light.",
-  "overview": "**[[OSI Model|Layer 1]]** is the physical layer — cable, connector, power, light. Every failure above starts here. Troubleshoot with **%%show interfaces status%%**, **link light**, and loopback tests. The exam tests interface states and the physical-to-logical chain.",
-  "keyIdea": "**up/down** = admin up but no physical link.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Interface states",
-    "cols": [
-     "State",
-     "Meaning"
+  {
+    "num": "01",
+    "id": "t01",
+    "group": "layer",
+    "title": "Layer 1",
+    "blurb": "Layer 1 is the physical layer — cable, connector, power, light.",
+    "overview": "**[[OSI Model|Layer 1]]** is the physical layer — cable, connector, power, light. Every failure above starts here. Troubleshoot with **%%show interfaces status%%**, **link light**, and loopback tests. The exam tests interface states and the physical-to-logical chain.",
+    "keyIdea": "**up/down** = admin up but no physical link.",
+    "sections": [
+      {
+        "h": "Troubleshooting",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">TROUBLESHOOTING</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Methodical approach, tools</text></g></svg>",
+        "caption": "Systematic problem solving."
+      },
+      {
+        "kind": "para",
+        "h": "Start with the physical path",
+        "p": "Layer 1 problems show up before routing or policy ever matter. Check power, cabling, optics, speed and duplex, and the interface status. A port can be physically down, administratively shut down, or error-disabled by a protection feature. Do not change routing until the link is stable and the error counters are understood."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Status",
+            "d": "`show interfaces status` shows connected, notconnect, disabled or err-disabled."
+          },
+          {
+            "t": "Counters",
+            "d": "`show interfaces` shows CRC, input, output and late-collision errors; a rising CRC count points to cabling or optics."
+          },
+          {
+            "t": "Neighbor",
+            "d": "`show lldp neighbors` confirms what is on the other end when the link is up."
+          },
+          {
+            "t": "Err-disable",
+            "d": "Find the cause with `show interfaces status err-disabled` and clear it only after fixing the trigger."
+          },
+          {
+            "t": "Trap",
+            "d": "A link can be up/up and still pass no traffic because of a VLAN, duplex or policy problem higher up."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "up/up",
-      "link + line"
-     ],
-     [
-      "up/down",
-      "admin up, no link"
-     ],
-     [
-      "down/down",
-      "shutdown or no link"
-     ],
-     [
-      "administratively down",
-      "%%shutdown%%"
-     ],
-     [
-      "err-disabled",
-      "violation"
-     ],
-     [
-      "SFM",
-      "no media connected"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show interfaces status\nshow interfaces GigabitEthernet0/1\nshow interface transceiver module\nshow ip interface brief\nshow controllers Gi0/1\ntest cable-diagnostics tdr interface Gi0/1"
+      }
+    ],
+    "traps": [
+      "**up/down** = admin up but no physical link.",
+      "First word = **admin**, second = **protocol/physical**.",
+      "Duplex mismatch → **errors, not no-link**.",
+      "%%show interfaces status%% = quick table.",
+      "Always rule out **L1 before routing**."
+    ],
+    "table": {
+      "cols": [
+        "State",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "up/up",
+          "Link and protocol are healthy"
+        ],
+        [
+          "up/down",
+          "Physical link up, protocol down"
+        ],
+        [
+          "down/down",
+          "No physical link"
+        ],
+        [
+          "err-disabled",
+          "Protection feature disabled the port"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Layer 2",
+        "d": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports."
+      },
+      {
+        "t": "03. Layer 3",
+        "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
+      }
+    ],
+    "glossary": [
+      "OSI Model"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Layer 1 checks",
-    "cols": [
-     "Check",
-     "Tool"
-    ],
-    "rows": [
-     [
-      "Cable",
-      "physical"
-     ],
-     [
-      "Light",
-      "optics"
-     ],
-     [
-      "Speed/duplex",
-      "config"
-     ],
-     [
-      "SFP",
-      "%%show interface transceiver%%"
-     ],
-     [
-      "Power",
-      "PSU/PoE"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common causes",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No link",
-      "cable"
-     ],
-     [
-      "up/down",
-      "wrong cable/port"
-     ],
-     [
-      "Errors",
-      "duplex/speed"
-     ],
-     [
-      "Flap",
-      "connector"
-     ],
-     [
-      "Err-disabled",
-      "violation"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Duplex mismatch",
-      "d": "classic error storm."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show interfaces status%%",
-      "summary"
-     ],
-     [
-      "%%show interfaces%%",
-      "counters"
-     ],
-     [
-      "%%show interface transceiver%%",
-      "optics"
-     ],
-     [
-      "%%show ip interface brief%%",
-      "states"
-     ],
-     [
-      "%%ping%%",
-      "L3 after L1"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Loopback test",
-    "cols": [
-     "Test",
-     "Result"
-    ],
-    "rows": [
-     [
-      "%%no shutdown%%",
-      "link up?"
-     ],
-     [
-      "Swap cable",
-      "isolates cable"
-     ],
-     [
-      "Loopback plug",
-      "port test"
-     ],
-     [
-      "%%test cable-diagnostics%%",
-      "wire pairs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Escalation path",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "verify config"
-     ],
-     [
-      "2",
-      "reseat/replace cable"
-     ],
-     [
-      "3",
-      "swap SFP/port"
-     ],
-     [
-      "4",
-      "loopback"
-     ],
-     [
-      "5",
-      "RMA"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "down/down",
-      "shutdown",
-      "no shutdown"
-     ],
-     [
-      "up/down",
-      "cable/SFP",
-      "swap"
-     ],
-     [
-      "Errors",
-      "duplex",
-      "speed"
-     ],
-     [
-      "Flap",
-      "connector",
-      "reseat"
-     ],
-     [
-      "No light",
-      "transceiver",
-      "replace"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show interfaces status\nshow interfaces GigabitEthernet0/1\nshow interface transceiver module\nshow ip interface brief\nshow controllers Gi0/1\ntest cable-diagnostics tdr interface Gi0/1"
-   }
-  ],
-  "traps": [
-   "**up/down** = admin up but no physical link.",
-   "First word = **admin**, second = **protocol/physical**.",
-   "Duplex mismatch → **errors, not no-link**.",
-   "%%show interfaces status%% = quick table.",
-   "Always rule out **L1 before routing**."
-  ],
-  "table": {
-   "cols": [
-    "State",
-    "Meaning"
-   ],
-   "rows": [
-    [
-     "up/up",
-     "good"
-    ],
-    [
-     "up/down",
-     "no link"
-    ],
-    [
-     "down/down",
-     "shutdown"
-    ],
-    [
-     "err-disabled",
-     "violation"
-    ],
-    [
-     "L1 tools",
-     "cable/optics"
-    ],
-    [
-     "Check",
-     "status"
-    ],
-    [
-     "Errors",
-     "duplex"
-    ],
-    [
-     "Next",
-     "L2"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Layer 2",
-    "d": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports."
-   },
-   {
-    "t": "03. Layer 3",
-    "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
-   }
-  ],
-  "glossary": [
-   "OSI Model"
-  ]
- },
- {
-  "num": "02",
-  "id": "t02",
-  "group": "layer",
-  "title": "Layer 2",
-  "blurb": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports.",
-  "overview": "**[[OSI Model|Layer 2]]** covers switching: **[[VLAN]]**s, trunks, MAC learning, STP, and ports. Problems appear as **no MAC learned**, **VLAN missing**, or **STP blocking**. The exam tests the L2 verification chain after link (L1) is up.",
-  "keyIdea": "**MAC table = switch proof** of L2 traffic.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "L2 verify order",
-    "cols": [
-     "Step",
-     "Check"
+  {
+    "num": "02",
+    "id": "t02",
+    "group": "layer",
+    "title": "Layer 2",
+    "blurb": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports.",
+    "overview": "**[[OSI Model|Layer 2]]** covers switching: **[[VLAN]]**s, trunks, MAC learning, STP, and ports. Problems appear as **no MAC learned**, **VLAN missing**, or **STP blocking**. The exam tests the L2 verification chain after link (L1) is up.",
+    "keyIdea": "**MAC table = switch proof** of L2 traffic.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Follow the frame through the switch",
+        "p": "At Layer 2, verify that the access port is in the right VLAN, the trunk allows that VLAN, the MAC address is learned on the expected port and spanning tree is not blocking the path. A working physical link can still fail to deliver a frame because of a VLAN mismatch, a trunk allowed list, a native VLAN mismatch or an STP loop."
+      },
+      {
+        "kind": "list",
+        "h": "Ordered checks",
+        "items": [
+          {
+            "t": "Access VLAN",
+            "d": "`show vlan brief` and `show interfaces switchport` confirm the port's VLAN and mode."
+          },
+          {
+            "t": "Trunk",
+            "d": "`show interfaces trunk` shows the native VLAN and the allowed and active VLAN list."
+          },
+          {
+            "t": "MAC learning",
+            "d": "`show mac address-table` shows whether the source MAC was learned on the expected port."
+          },
+          {
+            "t": "STP",
+            "d": "`show spanning-tree` shows the root, port roles and any blocking or inconsistent state."
+          },
+          {
+            "t": "Loop or storm",
+            "d": "A rapidly changing MAC table and high broadcast traffic suggest a loop."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "1",
-      "link up"
-     ],
-     [
-      "2",
-      "VLAN exists"
-     ],
-     [
-      "3",
-      "port in VLAN"
-     ],
-     [
-      "4",
-      "MAC learned"
-     ],
-     [
-      "5",
-      "trunk carries VLAN"
-     ],
-     [
-      "6",
-      "STP state"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show interfaces status\nshow mac address-table\nshow vlan\nshow interfaces trunk\nshow spanning-tree\nshow vlan brief\nshow interfaces switchport"
+      }
+    ],
+    "traps": [
+      "**MAC table = switch proof** of L2 traffic.",
+      "Trunk must carry the **allowed VLAN**.",
+      "**Native VLAN** must match both ends.",
+      "STP **blocking is normal** — look for loops instead.",
+      "Always confirm **VLAN exists** on the switch."
+    ],
+    "table": {
+      "cols": [
+        "Symptom",
+        "First check"
+      ],
+      "rows": [
+        [
+          "One port fails",
+          "Access VLAN and interface state"
+        ],
+        [
+          "VLAN missing across links",
+          "Trunk allowed list"
+        ],
+        [
+          "MAC moves constantly",
+          "STP loop"
+        ],
+        [
+          "Broadcast storm",
+          "Loop or misconfigured port"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Layer 1",
+        "d": "Layer 1 is the physical layer — cable, connector, power, light."
+      },
+      {
+        "t": "03. Layer 3",
+        "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
+      }
+    ],
+    "glossary": [
+      "OSI Model",
+      "VLAN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Port state checks",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show interfaces status%%",
-      "vlan/type"
-     ],
-     [
-      "%%show mac address-table%%",
-      "learned MACs"
-     ],
-     [
-      "%%show vlan%%",
-      "VLAN list"
-     ],
-     [
-      "%%show interfaces trunk%%",
-      "trunk info"
-     ],
-     [
-      "%%show spanning-tree%%",
-      "STP state"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common issues",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No MAC",
-      "wrong VLAN/port"
-     ],
-     [
-      "Down port",
-      "STP blocking"
-     ],
-     [
-      "Trunk empty",
-      "allowed vlan"
-     ],
-     [
-      "Unknown MAC",
-      "vlan mismatch"
-     ],
-     [
-      "Broadcasts",
-      "loop/dup"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "VLAN mismatch + trunk filtering",
-      "d": "top causes."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Trunk troubleshooting",
-    "cols": [
-     "Check",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Mode",
-      "%%switchport mode trunk%%"
-     ],
-     [
-      "Native",
-      "mismatch"
-     ],
-     [
-      "Allowed",
-      "%%switchport trunk allowed vlan%%"
-     ],
-     [
-      "Encapsulation",
-      "802.1Q"
-     ],
-     [
-      "VTP",
-      "avoid"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "STP interference",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Blocked port",
-      "expected"
-     ],
-     [
-      "Root move",
-      "priority"
-     ],
-     [
-      "Loop",
-      "BPDU guard"
-     ],
-     [
-      "Storm",
-      "broadcast storm"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verification loop",
-    "cols": [
-     "Stage",
-     "Tool"
-    ],
-    "rows": [
-     [
-      "L1",
-      "status"
-     ],
-     [
-      "L2",
-      "MAC table"
-     ],
-     [
-      "VLAN",
-      "show vlan"
-     ],
-     [
-      "Trunk",
-      "show interfaces trunk"
-     ],
-     [
-      "STP",
-      "spanning-tree"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No connectivity",
-      "VLAN",
-      "show vlan"
-     ],
-     [
-      "Trunk drops",
-      "allowed/native",
-      "trunk"
-     ],
-     [
-      "Flap",
-      "STP",
-      "spanning-tree"
-     ],
-     [
-      "Unknown MAC",
-      "port",
-      "mac table"
-     ],
-     [
-      "Broadcast storm",
-      "loop",
-      "port state"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show interfaces status\nshow mac address-table\nshow vlan\nshow interfaces trunk\nshow spanning-tree\nshow vlan brief\nshow interfaces switchport"
-   }
-  ],
-  "traps": [
-   "**MAC table = switch proof** of L2 traffic.",
-   "Trunk must carry the **allowed VLAN**.",
-   "**Native VLAN** must match both ends.",
-   "STP **blocking is normal** — look for loops instead.",
-   "Always confirm **VLAN exists** on the switch."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "L2"
-   ],
-   "rows": [
-    [
-     "Base",
-     "link up"
-    ],
-    [
-     "Data",
-     "MAC table"
-    ],
-    [
-     "Scope",
-     "VLAN"
-    ],
-    [
-     "Trunk",
-     "allowed/native"
-    ],
-    [
-     "Guard",
-     "STP"
-    ],
-    [
-     "Block",
-     "normal"
-    ],
-    [
-     "Storm",
-     "loop"
-    ],
-    [
-     "Tool",
-     "show vlan"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "01. Layer 1",
-    "d": "Layer 1 is the physical layer — cable, connector, power, light."
-   },
-   {
-    "t": "03. Layer 3",
-    "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
-   }
-  ],
-  "glossary": [
-   "OSI Model",
-   "VLAN"
-  ]
- },
- {
-  "num": "03",
-  "id": "t03",
-  "group": "layer",
-  "title": "Layer 3",
-  "blurb": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded.",
-  "overview": "**[[OSI Model|Layer 3]]** is routing: interfaces up, **[[Routing Table|routes]]** present, adjacency healthy, and packets forwarded. Use **ping, traceroute, %%show ip route%%, and %%show ip interface%%** in that order. The exam tests the routing-verification sequence and common L3 failures.",
-  "keyIdea": "**Route exists ≠ reachable** — check ACL/NAT/return path.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "L3 verify order",
-    "cols": [
-     "Step",
-     "Check"
+  {
+    "num": "03",
+    "id": "t03",
+    "group": "layer",
+    "title": "Layer 3",
+    "blurb": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded.",
+    "overview": "**[[OSI Model|Layer 3]]** is routing: interfaces up, **[[Routing Table|routes]]** present, adjacency healthy, and packets forwarded. Use **ping, traceroute, %%show ip route%%, and %%show ip interface%%** in that order. The exam tests the routing-verification sequence and common L3 failures.",
+    "keyIdea": "**Route exists ≠ reachable** — check ACL/NAT/return path.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Check the interface, the adjacency, then the route",
+        "p": "Layer 3 troubleshooting follows the packet: is the interface up and addressed, is there a neighbor or ARP entry, is there a route, and does the return path exist? A ping can fail because of the forward path, the return path, NAT, an ACL or a firewall. Use `traceroute` and the routing table to find where the path stops."
+      },
+      {
+        "kind": "list",
+        "h": "Ordered checks",
+        "items": [
+          {
+            "t": "Interface",
+            "d": "`show ip interface brief` confirms address and status; `show ip interface` shows ACLs and policy."
+          },
+          {
+            "t": "Adjacency",
+            "d": "`show ip arp` and `show ip ospf neighbor` (or the relevant protocol) confirm the next hop is reachable."
+          },
+          {
+            "t": "Route",
+            "d": "`show ip route <prefix>` shows the selected route and next hop; `show ip cef` shows the forwarding entry."
+          },
+          {
+            "t": "Path",
+            "d": "`ping` and `traceroute` show where replies stop; test from both directions."
+          },
+          {
+            "t": "Policy",
+            "d": "Check ACLs, NAT, VRF and policy routing on both the forward and return path."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Common causes",
+        "items": [
+          {
+            "t": "No route",
+            "d": "The destination is missing from the table or points to an unreachable next hop."
+          },
+          {
+            "t": "Return path",
+            "d": "The reply has no route, or asymmetric routing sends it somewhere that drops it."
+          },
+          {
+            "t": "ACL",
+            "d": "An access list is applied in the wrong direction or has an unexpected first match."
+          },
+          {
+            "t": "NAT",
+            "d": "The translation exists but the return translation or route is missing."
+          },
+          {
+            "t": "VRF",
+            "d": "The source and destination are in different routing tables."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "1",
-      "L1/L2 up"
-     ],
-     [
-      "2",
-      "IP on interface"
-     ],
-     [
-      "3",
-      "neighbor/adjacency"
-     ],
-     [
-      "4",
-      "route in table"
-     ],
-     [
-      "5",
-      "path reaches"
-     ],
-     [
-      "6",
-      "policy (ACL/NAT)"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show ip interface brief\nshow ip route\nshow ip route 10.0.0.0/24\nshow ip protocols\nping 10.0.0.1\ntraceroute 10.0.0.1\nshow ip cef 10.0.0.0/24"
+      }
+    ],
+    "traps": [
+      "**Route exists ≠ reachable** — check ACL/NAT/return path.",
+      "%%show ip route%% = control plane; %%show ip cef%% = **hardware**.",
+      "Check **adjacency before route**.",
+      "Always verify **return direction**.",
+      "traceroute pinpoints **the failing hop**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "Interface state",
+          "`show ip interface brief`"
+        ],
+        [
+          "Routing table",
+          "`show ip route`"
+        ],
+        [
+          "Forwarding entry",
+          "`show ip cef`"
+        ],
+        [
+          "Path",
+          "`traceroute`"
+        ],
+        [
+          "Neighbor",
+          "`show ip arp`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Layer 2",
+        "d": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports."
+      },
+      {
+        "t": "04. VLAN",
+        "d": "VLAN troubleshooting covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN m"
+      }
+    ],
+    "glossary": [
+      "OSI Model",
+      "Routing Table"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show ip interface brief%%",
-      "up + IP"
-     ],
-     [
-      "%%show ip route%%",
-      "table"
-     ],
-     [
-      "%%show ip route <net>%%",
-      "specific"
-     ],
-     [
-      "%%show ip protocols%%",
-      "routing running"
-     ],
-     [
-      "%%ping%% / %%traceroute%%",
-      "path"
-     ],
-     [
-      "%%show ip arp%%",
-      "L3→L2"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common issues",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No route",
-      "adjacency/protocol"
-     ],
-     [
-      "Route but no ping",
-      "ACL/NAT"
-     ],
-     [
-      "Partial path",
-      "return path"
-     ],
-     [
-      "Default only",
-      "redistribution"
-     ],
-     [
-      "Asymmetric",
-      "policies"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Check both directions",
-      "d": "return path often breaks."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Adjacency issues",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "OSPF stuck",
-      "hello/mtu"
-     ],
-     [
-      "BGP idle",
-      "reachability"
-     ],
-     [
-      "EIGRP down",
-      "K-values"
-     ],
-     [
-      "Passive",
-      "timers"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Packet flow test",
-    "cols": [
-     "Tool",
-     "Gives"
-    ],
-    "rows": [
-     [
-      "%%ping%%",
-      "end-to-end L3"
-     ],
-     [
-      "%%traceroute%%",
-      "hop-by-hop"
-     ],
-     [
-      "%%show ip cef%%",
-      "hardware forwarding"
-     ],
-     [
-      "%%debug ip packet%%",
-      "control plane"
-     ],
-     [
-      "%%policy-map%% check",
-      "QoS/NAT"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Escalation",
-    "cols": [
-     "Stage",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "verify routes"
-     ],
-     [
-      "2",
-      "ping/tr"
-     ],
-     [
-      "3",
-      "check ACL/NAT"
-     ],
-     [
-      "4",
-      "debug control plane"
-     ],
-     [
-      "5",
-      "traffic capture"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No route",
-      "adjacency",
-      "show ip ospf neigh"
-     ],
-     [
-      "No ping",
-      "ACL",
-      "access-list"
-     ],
-     [
-      "Half path",
-      "NAT",
-      "show ip nat trans"
-     ],
-     [
-      "No CEF",
-      "adj",
-      "show ip cef"
-     ],
-     [
-      "Blackhole",
-      "sum/no default",
-      "route lookup"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show ip interface brief\nshow ip route\nshow ip route 10.0.0.0/24\nshow ip protocols\nping 10.0.0.1\ntraceroute 10.0.0.1\nshow ip cef 10.0.0.0/24"
-   }
-  ],
-  "traps": [
-   "**Route exists ≠ reachable** — check ACL/NAT/return path.",
-   "%%show ip route%% = control plane; %%show ip cef%% = **hardware**.",
-   "Check **adjacency before route**.",
-   "Always verify **return direction**.",
-   "traceroute pinpoints **the failing hop**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "L3"
-   ],
-   "rows": [
-    [
-     "Order",
-     "iface→adj→route"
-    ],
-    [
-     "Table",
-     "show ip route"
-    ],
-    [
-     "Hardware",
-     "show ip cef"
-    ],
-    [
-     "Path",
-     "ping/tr"
-    ],
-    [
-     "Policy",
-     "ACL/NAT"
-    ],
-    [
-     "Adjacency",
-     "protocols"
-    ],
-    [
-     "Return path",
-     "vital"
-    ],
-    [
-     "Tool",
-     "traceroute"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Layer 2",
-    "d": "Layer 2 covers switching: VLANs, trunks, MAC learning, STP, and ports."
-   },
-   {
-    "t": "04. VLAN",
-    "d": "VLAN troubleshooting covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN m"
-   }
-  ],
-  "glossary": [
-   "OSI Model",
-   "Routing Table"
-  ]
- },
- {
-  "num": "04",
-  "id": "t04",
-  "group": "layer",
-  "title": "VLAN",
-  "blurb": "VLAN troubleshooting covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN m",
-  "overview": "**[[VLAN|VLAN troubleshooting]]** covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN mismatch. Symptoms are **no reachability within a subnet** or traffic crossing wrong VLANs. Verify with **%%show vlan%%, %%show interfaces trunk%%, and the MAC table**.",
-  "keyIdea": "**VLAN must exist** before assignment works.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify chain",
-    "cols": [
-     "Step",
-     "Command"
+  {
+    "num": "04",
+    "id": "t04",
+    "group": "layer",
+    "title": "VLAN",
+    "blurb": "VLAN troubleshooting checks port assignment, trunk allowed lists and native VLAN mismatches.",
+    "overview": "**[[VLAN|VLAN troubleshooting]]** covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN mismatch. Symptoms are **no reachability within a subnet** or traffic crossing wrong VLANs. Verify with **%%show vlan%%, %%show interfaces trunk%%, and the MAC table**.",
+    "keyIdea": "**VLAN must exist** before assignment works.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A VLAN is local to the switch",
+        "p": "A VLAN creates a Layer 2 broadcast domain on a switch. An access port carries one VLAN; a trunk carries many VLANs and tags them with 802.1Q. The VLAN must exist on every switch that needs it, and the trunk must allow it. A VLAN mismatch looks like a physical outage to the user even though the link is up."
+      },
+      {
+        "kind": "list",
+        "h": "Verify and traps",
+        "items": [
+          {
+            "t": "VLAN exists",
+            "d": "`show vlan brief` shows the VLAN and its access ports."
+          },
+          {
+            "t": "Port mode",
+            "d": "`show interfaces switchport` shows access or trunk mode, access VLAN and native VLAN."
+          },
+          {
+            "t": "Trunk allowed",
+            "d": "`show interfaces trunk` shows which VLANs are allowed and forwarding."
+          },
+          {
+            "t": "MAC table",
+            "d": "`show mac address-table vlan <id>` confirms the endpoint is learned in the right VLAN."
+          },
+          {
+            "t": "Trap",
+            "d": "Creating a VLAN does not automatically allow it on a trunk."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "1",
-      "%%show vlan%%"
-     ],
-     [
-      "2",
-      "%%show interfaces status%%"
-     ],
-     [
-      "3",
-      "%%show interfaces trunk%%"
-     ],
-     [
-      "4",
-      "%%show mac address-table%%"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show vlan brief\nshow vlan id 10\nshow interfaces trunk\nshow interfaces Gi0/1 switchport\nshow mac address-table vlan 10\nshow ip arp"
+      }
+    ],
+    "traps": [
+      "**VLAN must exist** before assignment works.",
+      "Trunk **allowed list** gates which VLANs cross.",
+      "**Native VLAN mismatch** = silent breakage.",
+      "%%show vlan%% ≠ what a trunk passes.",
+      "MAC table = **ground truth of VLAN membership**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "VLAN list",
+          "`show vlan brief`"
+        ],
+        [
+          "Port VLAN",
+          "`show interfaces switchport`"
+        ],
+        [
+          "Trunk allowed list",
+          "`show interfaces trunk`"
+        ],
+        [
+          "MAC learning",
+          "`show mac address-table`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Layer 3",
+        "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
+      },
+      {
+        "t": "05. STP",
+        "d": "STP troubleshooting finds loops, root placement, and blocked-port issues."
+      }
+    ],
+    "glossary": [
+      "VLAN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "Port missing",
-      "not in VLAN"
-     ],
-     [
-      "Trunk no pass",
-      "allowed vlan"
-     ],
-     [
-      "Wrong broadcast",
-      "native mismatch"
-     ],
-     [
-      "No DHCP",
-      "IP helper missing"
-     ],
-     [
-      "Intermittent",
-      "VTP/dup"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Trunk issues",
-    "cols": [
-     "Check",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Mode",
-      "%%switchport mode trunk%%"
-     ],
-     [
-      "Native",
-      "both ends equal"
-     ],
-     [
-      "Allowed",
-      "%%switchport trunk allowed vlan%%"
-     ],
-     [
-      "Encapsulation",
-      "dot1q"
-     ],
-     [
-      "Pruning",
-      "none"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Port-to-VLAN",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%switchport access vlan 10%%",
-      "assign"
-     ],
-     [
-      "%%switchport mode access%%",
-      "force access"
-     ],
-     [
-      "%%show interfaces Gi0/1 switchport%%",
-      "detail"
-     ],
-     [
-      "%%no switchport%%",
-      "L3 port"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Native VLAN",
-    "cols": [
-     "Issue",
-     "Impact"
-    ],
-    "rows": [
-     [
-      "Mismatch",
-      "control issues"
-     ],
-     [
-      "Untagged",
-      "both must agree"
-     ],
-     [
-      "Trunk",
-      "native 1 default"
-     ],
-     [
-      "Security",
-      "change + prune"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "MAC/VLAN correlation",
-    "cols": [
-     "Check",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "MAC learned",
-      "host seen"
-     ],
-     [
-      "VLAN correct",
-      "shown in table"
-     ],
-     [
-      "Wrong VLAN",
-      "duplicate/port"
-     ],
-     [
-      "Rogue",
-      "unknown MAC"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No VLAN",
-      "create",
-      "show vlan"
-     ],
-     [
-      "Port dead",
-      "access vlan",
-      "switchport"
-     ],
-     [
-      "Trunk drops",
-      "allowed",
-      "trunk"
-     ],
-     [
-      "Cross traffic",
-      "native",
-      "both ends"
-     ],
-     [
-      "DHCP fail",
-      "no helper",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show vlan brief\nshow vlan id 10\nshow interfaces trunk\nshow interfaces Gi0/1 switchport\nshow mac address-table vlan 10\nshow ip arp"
-   }
-  ],
-  "traps": [
-   "**VLAN must exist** before assignment works.",
-   "Trunk **allowed list** gates which VLANs cross.",
-   "**Native VLAN mismatch** = silent breakage.",
-   "%%show vlan%% ≠ what a trunk passes.",
-   "MAC table = **ground truth of VLAN membership**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "VLAN"
-   ],
-   "rows": [
-    [
-     "Exists",
-     "show vlan"
-    ],
-    [
-     "Access",
-     "switchport access"
-    ],
-    [
-     "Trunk",
-     "allowed"
-    ],
-    [
-     "Native",
-     "match"
-    ],
-    [
-     "Proof",
-     "MAC table"
-    ],
-    [
-     "DHCP",
-     "ip helper"
-    ],
-    [
-     "Wrong",
-     "mismatch"
-    ],
-    [
-     "Tool",
-     "switchport"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. Layer 3",
-    "d": "Layer 3 is routing: interfaces up, routes present, adjacency healthy, and packets forwarded."
-   },
-   {
-    "t": "05. STP",
-    "d": "STP troubleshooting finds loops, root placement, and blocked-port issues."
-   }
-  ],
-  "glossary": [
-   "VLAN"
-  ]
- },
- {
-  "num": "05",
-  "id": "t05",
-  "group": "layer",
-  "title": "STP",
-  "blurb": "STP troubleshooting finds loops, root placement, and blocked-port issues.",
-  "overview": "**[[STP|STP troubleshooting]]** finds **loops, root placement, and blocked-port issues**. Key checks: **root, bridge priority, port roles/states, and topology changes**. Symptoms are flapping ports, broadcast storms, or unexpected blocking. Verify with %%show spanning-tree%%.",
-  "keyIdea": "**Blocking is normal**; loops are the failure.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+  {
+    "num": "05",
+    "id": "t05",
+    "group": "layer",
+    "title": "STP",
+    "blurb": "STP troubleshooting finds loops, root placement, and blocked-port issues.",
+    "overview": "**[[STP|STP troubleshooting]]** finds **loops, root placement, and blocked-port issues**. Key checks: **root, bridge priority, port roles/states, and topology changes**. Symptoms are flapping ports, broadcast storms, or unexpected blocking. Verify with %%show spanning-tree%%.",
+    "keyIdea": "**Blocking is normal**; loops are the failure.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "One root, one forwarding path per segment",
+        "p": "Spanning Tree prevents Layer 2 loops by electing a root bridge and blocking redundant ports. The root is the bridge with the lowest bridge ID, which combines priority and MAC address. Non-root switches choose a root port, each segment chooses a designated port, and the remaining ports are alternates that block. A blocked port is normal; an unexpected root or a constantly changing topology is not."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Root",
+            "d": "`show spanning-tree root` shows the root bridge and local root cost."
+          },
+          {
+            "t": "Topology",
+            "d": "`show spanning-tree` shows port roles and states for each VLAN."
+          },
+          {
+            "t": "Inconsistency",
+            "d": "`show spanning-tree inconsistentports` finds ports blocked by a mismatch or guard."
+          },
+          {
+            "t": "Edge ports",
+            "d": "PortFast is for host ports; BPDU Guard protects them from receiving BPDUs."
+          },
+          {
+            "t": "Trap",
+            "d": "A blocked port is not necessarily a fault; a changing root or repeated topology change is the signal to investigate."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%show spanning-tree%%",
-      "root/ports"
-     ],
-     [
-      "%%show spanning-tree vlan 10%%",
-      "per vlan"
-     ],
-     [
-      "%%show spanning-tree root%%",
-      "root roles"
-     ],
-     [
-      "%%show spanning-tree detail%%",
-      "timers"
-     ],
-     [
-      "%%show mac address-table%%",
-      "loop effect"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "spanning-tree vlan 10 root primary\ninterface Gi0/1\n spanning-tree portfast\n spanning-tree bpduguard enable"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show spanning-tree\nshow spanning-tree vlan 10\nshow spanning-tree root\nshow mac address-table count"
+      }
+    ],
+    "traps": [
+      "**Blocking is normal**; loops are the failure.",
+      "Root = **lowest priority**, then lowest MAC.",
+      "**PortFast + BPDU Guard** for access ports.",
+      "Root Guard blocks **wrong root**; Loop Guard blocks silent failure.",
+      "TC storm = **flapping port flushes MACs**."
+    ],
+    "table": {
+      "cols": [
+        "State",
+        "Forwards data?"
+      ],
+      "rows": [
+        [
+          "Blocking",
+          "Does not forward"
+        ],
+        [
+          "Listening",
+          "Does not forward"
+        ],
+        [
+          "Learning",
+          "Does not forward"
+        ],
+        [
+          "Forwarding",
+          "Forwards data"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. VLAN",
+        "d": "VLAN troubleshooting covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN m"
+      },
+      {
+        "t": "06. EtherChannel",
+        "d": "EtherChannel troubleshooting focuses on why members don't bundle."
+      }
+    ],
+    "glossary": [
+      "STP"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Port roles and states",
-    "cols": [
-     "Role",
-     "State",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Root port",
-      "forwarding",
-      "toward root"
-     ],
-     [
-      "Designated",
-      "forwarding",
-      "toward segment"
-     ],
-     [
-      "Alternate",
-      "blocking",
-      "backup root"
-     ],
-     [
-      "Backup",
-      "blocking",
-      "backup desig"
-     ],
-     [
-      "Disabled",
-      "disabled",
-      "off"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common issues",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "Flapping",
-      "dup root/priority"
-     ],
-     [
-      "Storm",
-      "loop unblocked"
-     ],
-     [
-      "Slow convergence",
-      "timers"
-     ],
-     [
-      "Wrong root",
-      "priority"
-     ],
-     [
-      "MAC flip",
-      "loop"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Root election",
-    "cols": [
-     "Factor",
-     "Win"
-    ],
-    "rows": [
-     [
-      "Priority",
-      "lower"
-     ],
-     [
-      "MAC",
-      "lower tiebreak"
-     ],
-     [
-      "Manual",
-      "%%spanning-tree vlan X root primary%%"
-     ],
-     [
-      "Guard",
-      "protect"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Protection features",
-    "cols": [
-     "Feature",
-     "Stops"
-    ],
-    "rows": [
-     [
-      "PortFast",
-      "host ports"
-     ],
-     [
-      "BPDU Guard",
-      "rogue switch"
-     ],
-     [
-      "Root Guard",
-      "wrong root"
-     ],
-     [
-      "Loop Guard",
-      "silent failure"
-     ],
-     [
-      "BPDU Filter",
-      "no BPDUs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Convergence factors",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Timer",
-      "30 s blocking"
-     ],
-     [
-      "PortFast",
-      "skip blocking"
-     ],
-     [
-      "RSTP",
-      "fast roles"
-     ],
-     [
-      "TC",
-      "flush MAC"
-     ],
-     [
-      "TCN storm",
-      "flapping port"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Loop",
-      "blocked missing",
-      "show spanning-tree"
-     ],
-     [
-      "Flap",
-      "dup priority",
-      "root"
-     ],
-     [
-      "30 s wait",
-      "no portfast",
-      "interface"
-     ],
-     [
-      "Storm",
-      "rogue",
-      "bpduguard"
-     ],
-     [
-      "TCN flood",
-      "link flap",
-      "logs"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "spanning-tree vlan 10 root primary\ninterface Gi0/1\n spanning-tree portfast\n spanning-tree bpduguard enable"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show spanning-tree\nshow spanning-tree vlan 10\nshow spanning-tree root\nshow mac address-table count"
-   }
-  ],
-  "traps": [
-   "**Blocking is normal**; loops are the failure.",
-   "Root = **lowest priority**, then lowest MAC.",
-   "**PortFast + BPDU Guard** for access ports.",
-   "Root Guard blocks **wrong root**; Loop Guard blocks silent failure.",
-   "TC storm = **flapping port flushes MACs**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "STP"
-   ],
-   "rows": [
-    [
-     "Root",
-     "lowest prio"
-    ],
-    [
-     "Role",
-     "root/desig"
-    ],
-    [
-     "Block",
-     "normal"
-    ],
-    [
-     "Loop",
-     "critical"
-    ],
-    [
-     "PortFast",
-     "host port"
-    ],
-    [
-     "BPDU Guard",
-     "rogue"
-    ],
-    [
-     "Root Guard",
-     "root"
-    ],
-    [
-     "Loop Guard",
-     "silent"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. VLAN",
-    "d": "VLAN troubleshooting covers missing VLANs, wrong port assignment, trunk filtering, and native VLAN m"
-   },
-   {
-    "t": "06. EtherChannel",
-    "d": "EtherChannel troubleshooting focuses on why members don't bundle."
-   }
-  ],
-  "glossary": [
-   "STP"
-  ]
- },
- {
-  "num": "06",
-  "id": "t06",
-  "group": "layer",
-  "title": "EtherChannel",
-  "blurb": "EtherChannel troubleshooting focuses on why members don't bundle.",
-  "overview": "**[[EtherChannel|EtherChannel troubleshooting]]** focuses on **why members don't bundle**. Causes: protocol/mode mismatch, inconsistent speed/duplex/VLAN config, or STP interference. Verify with **%%show etherchannel summary%%** and check member consistency.",
-  "keyIdea": "**passive/passive and auto/auto won't bundle.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+  {
+    "num": "06",
+    "id": "t06",
+    "group": "layer",
+    "title": "EtherChannel",
+    "blurb": "EtherChannel troubleshooting focuses on why members don't bundle.",
+    "overview": "**[[EtherChannel|EtherChannel troubleshooting]]** focuses on **why members don't bundle**. Causes: protocol/mode mismatch, inconsistent speed/duplex/VLAN config, or STP interference. Verify with **%%show etherchannel summary%%** and check member consistency.",
+    "keyIdea": "**passive/passive and auto/auto won't bundle.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A bundle must agree on both ends",
+        "p": "An EtherChannel treats several physical links as one logical link. The member ports must have compatible speed, duplex, VLAN and trunk settings, and the negotiation modes must be compatible. LACP active or PAgP desirable can initiate; passive or auto waits. If the parameters do not match, the bundle can form partially or leave members suspended."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Summary",
+            "d": "`show etherchannel summary` shows the bundle, protocol and member flags."
+          },
+          {
+            "t": "Membership",
+            "d": "`show etherchannel port-channel` shows the member ports and their state."
+          },
+          {
+            "t": "Mismatch",
+            "d": "A suspended member usually has a speed, duplex, VLAN, trunk or mode mismatch."
+          },
+          {
+            "t": "Passive plus passive",
+            "d": "Two LACP passive ports do not negotiate a bundle; one side must be active."
+          },
+          {
+            "t": "Trap",
+            "d": "A bundle can be up but still distribute unevenly because hashing is per flow."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%show etherchannel summary%%",
-      "bundle state"
-     ],
-     [
-      "%%show etherchannel port-channel%%",
-      "members"
-     ],
-     [
-      "%%show etherchannel load-balance%%",
-      "hash"
-     ],
-     [
-      "%%show interfaces Gi0/1 etherchannel%%",
-      "member"
-     ],
-     [
-      "%%show etherchannel detail%%",
-      "reasons"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "interface GigabitEthernet0/1\n channel-group 1 mode active\ninterface GigabitEthernet0/2\n channel-group 1 mode active\ninterface Port-channel1"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show etherchannel summary\nshow etherchannel port-channel\nshow etherchannel detail\nshow interfaces GigabitEthernet0/1 etherchannel"
+      }
+    ],
+    "traps": [
+      "**passive/passive and auto/auto won't bundle.**",
+      "Members must match **speed, duplex, VLAN**.",
+      "%%show etherchannel summary%% shows **P/I/S/U**.",
+      "Bundle = **one STP port**.",
+      "%%mode on%% = **static, no negotiation**."
+    ],
+    "table": {
+      "cols": [
+        "Flag",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "P",
+          "Bundled"
+        ],
+        [
+          "I",
+          "Standalone"
+        ],
+        [
+          "S",
+          "Suspended"
+        ],
+        [
+          "D",
+          "Down"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. STP",
+        "d": "STP troubleshooting finds loops, root placement, and blocked-port issues."
+      },
+      {
+        "t": "07. OSPF",
+        "d": "OSPF troubleshooting targets adjacencies, areas, networks, and routes."
+      }
+    ],
+    "glossary": [
+      "EtherChannel"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "%%show etherchannel summary%%",
-      "d": "first stop."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Bundle states",
-    "cols": [
-     "State",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "P",
-      "in bundle"
-     ],
-     [
-      "I",
-      "standalone"
-     ],
-     [
-      "D",
-      "down"
-     ],
-     [
-      "S",
-      "suspended"
-     ],
-     [
-      "U",
-      "up in bundle"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Consistency rules",
-    "cols": [
-     "Item",
-     "Must Match"
-    ],
-    "rows": [
-     [
-      "Speed",
-      "all members"
-     ],
-     [
-      "Duplex",
-      "all members"
-     ],
-     [
-      "VLAN config",
-      "access/trunk"
-     ],
-     [
-      "Native/trunk",
-      "trunk ports"
-     ],
-     [
-      "Mode",
-      "both ends"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Mode issues",
-    "cols": [
-     "Side A",
-     "Side B",
-     "Result"
-    ],
-    "rows": [
-     [
-      "active",
-      "active",
-      "bundle (LACP)"
-     ],
-     [
-      "active",
-      "passive",
-      "bundle (LACP)"
-     ],
-     [
-      "passive",
-      "passive",
-      "NO bundle"
-     ],
-     [
-      "desirable",
-      "desirable",
-      "bundle (PAgP)"
-     ],
-     [
-      "on",
-      "on",
-      "bundle (static)"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "STP and other conflicts",
-    "cols": [
-     "Conflict",
-     "Impact"
-    ],
-    "rows": [
-     [
-      "STP per-member",
-      "not a LAG"
-     ],
-     [
-      "Different allowed VLAN",
-      "mismatch"
-     ],
-     [
-      "Misconfigured port",
-      "suspended"
-     ],
-     [
-      "One port error",
-      "member down"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Load balance",
-    "cols": [
-     "Check",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Algorithm",
-      "%%show etherchannel load-balance%%"
-     ],
-     [
-      "Hash",
-      "src/dst MAC/IP"
-     ],
-     [
-      "In-order",
-      "per flow"
-     ],
-     [
-      "Fix",
-      "%%port-channel load-balance ...%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Not bundled",
-      "mode mismatch",
-      "summary"
-     ],
-     [
-      "Suspended",
-      "config mismatch",
-      "detail"
-     ],
-     [
-      "One member down",
-      "cable",
-      "status"
-     ],
-     [
-      "No load share",
-      "hash",
-      "load-balance"
-     ],
-     [
-      "STP block",
-      "not LAG",
-      "spanning-tree"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "interface Port-channel1\n channel-group 1 mode active (per member)"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show etherchannel summary\nshow etherchannel port-channel\nshow etherchannel detail\nshow interfaces GigabitEthernet0/1 etherchannel"
-   }
-  ],
-  "traps": [
-   "**passive/passive and auto/auto won't bundle.**",
-   "Members must match **speed, duplex, VLAN**.",
-   "%%show etherchannel summary%% shows **P/I/S/U**.",
-   "Bundle = **one STP port**.",
-   "%%mode on%% = **static, no negotiation**."
-  ],
-  "table": {
-   "cols": [
-    "State",
-    "Meaning"
-   ],
-   "rows": [
-    [
-     "P",
-     "in bundle"
-    ],
-    [
-     "I",
-     "standalone"
-    ],
-    [
-     "S",
-     "suspended"
-    ],
-    [
-     "U",
-     "up"
-    ],
-    [
-     "Match",
-     "speed/vlan"
-    ],
-    [
-     "Modes",
-     "LACP/PAgP"
-    ],
-    [
-     "No-bundle",
-     "passive+passive"
-    ],
-    [
-     "Check",
-     "summary"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "05. STP",
-    "d": "STP troubleshooting finds loops, root placement, and blocked-port issues."
-   },
-   {
-    "t": "07. OSPF",
-    "d": "OSPF troubleshooting targets adjacencies, areas, networks, and routes."
-   }
-  ],
-  "glossary": [
-   "EtherChannel"
-  ]
- },
- {
-  "num": "07",
-  "id": "t07",
-  "group": "routing",
-  "title": "OSPF",
-  "blurb": "OSPF troubleshooting targets adjacencies, areas, networks, and routes.",
-  "overview": "**[[OSPF|OSPF troubleshooting]]** targets **adjacencies, areas, networks, and routes**. Typical failures: **hello mismatch, MTU, area type, passive interface, network type**. Verify adjacency first, then route propagation. The exam tests %%show ip ospf%% command chains.",
-  "keyIdea": "**MTU mismatch = stuck EXSTART**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Adjacency requirements",
-    "cols": [
-     "Requirement",
-     "Check"
+  {
+    "num": "07",
+    "id": "t07",
+    "group": "routing",
+    "title": "OSPF",
+    "blurb": "OSPF troubleshooting targets adjacencies, areas, networks, and routes.",
+    "overview": "**[[OSPF|OSPF troubleshooting]]** targets **adjacencies, areas, networks, and routes**. Typical failures: **hello mismatch, MTU, area type, passive interface, network type**. Verify adjacency first, then route propagation. The exam tests %%show ip ospf%% command chains.",
+    "keyIdea": "**MTU mismatch = stuck EXSTART**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Neighbors before routes",
+        "p": "OSPF cannot install routes until neighbors reach FULL state. The hello protocol checks the area, network type, timers, authentication and stub flags. Once neighbors form, the database exchange must match, and MTU mismatches commonly stall the adjacency in EXSTART. Always check the neighbor state before blaming the routing table."
+      },
+      {
+        "kind": "table",
+        "h": "OSPF neighbor states",
+        "cols": [
+          "State",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "Down",
+            "No hello received"
+          ],
+          [
+            "Init",
+            "Hello received, but this router is not in the neighbor's hello"
+          ],
+          [
+            "2-Way",
+            "Bidirectional communication; normal between DROTHERs on a broadcast segment"
+          ],
+          [
+            "ExStart",
+            "Master/slave election and initial database description exchange"
+          ],
+          [
+            "Exchange",
+            "Database descriptions are being exchanged"
+          ],
+          [
+            "Loading",
+            "Link-state requests are outstanding"
+          ],
+          [
+            "Full",
+            "Databases are synchronized"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Neighbor",
+            "d": "`show ip ospf neighbor` shows state, dead time and interface."
+          },
+          {
+            "t": "Interface",
+            "d": "`show ip ospf interface` shows area, timers, network type, cost and authentication."
+          },
+          {
+            "t": "Database",
+            "d": "`show ip ospf database` shows whether LSAs are present and recent."
+          },
+          {
+            "t": "MTU",
+            "d": "An MTU mismatch can leave the adjacency stuck in EXSTART or EXCHANGE."
+          },
+          {
+            "t": "Passive",
+            "d": "A passive interface advertises the prefix but does not form adjacencies."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Hello interval",
-      "%%ip ospf hello-interval%%"
-     ],
-     [
-      "Dead interval",
-      "default 4x hello"
-     ],
-     [
-      "Network type",
-      "broadcast/ptp"
-     ],
-     [
-      "Area",
-      "must match"
-     ],
-     [
-      "MTU",
-      "match or negotiation"
-     ],
-     [
-      "Authentication",
-      "must match"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "router ospf 1\n network 10.0.0.0 0.0.0.255 area 0"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip ospf neighbor\nshow ip ospf interface Gi0/1\nshow ip ospf database\nshow ip route ospf\nshow ip ospf"
+      }
+    ],
+    "traps": [
+      "**MTU mismatch = stuck EXSTART**.",
+      "Adjacency needs **matching hello/dead, area, auth, network type**.",
+      "%%show ip ospf neighbor%% = **first check**.",
+      "P2P **has no DR/BDR**.",
+      "Passive interface = **advertise, no adjacency**."
+    ],
+    "table": {
+      "cols": [
+        "State",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Down",
+          "No hello received"
+        ],
+        [
+          "Init",
+          "Hello received only"
+        ],
+        [
+          "2-Way",
+          "Bidirectional communication"
+        ],
+        [
+          "ExStart",
+          "Database exchange is starting"
+        ],
+        [
+          "Full",
+          "Databases synchronized"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. EtherChannel",
+        "d": "EtherChannel troubleshooting focuses on why members don't bundle."
+      },
+      {
+        "t": "08. EIGRP",
+        "d": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues."
+      }
+    ],
+    "glossary": [
+      "OSPF"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show ip ospf neighbor%%",
-      "adjacency"
-     ],
-     [
-      "%%show ip ospf interface%%",
-      "config"
-     ],
-     [
-      "%%show ip ospf database%%",
-      "LSDB"
-     ],
-     [
-      "%%show ip route ospf%%",
-      "OSPF routes"
-     ],
-     [
-      "%%debug ip ospf adj%%",
-      "adjacency events"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Stuck states",
-    "cols": [
-     "State",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "2WAY",
-      "passive/no DR"
-     ],
-     [
-      "EXSTART",
-      "MTU"
-     ],
-     [
-      "EXCHANGE",
-      "MTU/parse"
-     ],
-     [
-      "LOADING",
-      "flooding"
-     ],
-     [
-      "FULL",
-      "complete"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No neighbor",
-      "network type"
-     ],
-     [
-      "No route",
-      "area/mismatch"
-     ],
-     [
-      "DR flapping",
-      "priorities"
-     ],
-     [
-      "Default missing",
-      "redistribution"
-     ],
-     [
-      "Not in LSDB",
-      "filter"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Route issues",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Not advertised",
-      "network statement"
-     ],
-     [
-      "Passive",
-      "enable"
-     ],
-     [
-      "Wrong cost",
-      "bandwidth"
-     ],
-     [
-      "Not redistributed",
-      "metric"
-     ],
-     [
-      "Summarized wrong",
-      "area range"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Network types",
-    "cols": [
-     "Type",
-     "Default",
-     "Notes"
-    ],
-    "rows": [
-     [
-      "Broadcast",
-      "Ethernet",
-      "DR/BDR"
-     ],
-     [
-      "Non-broadcast",
-      "NBMA",
-      "manual neigh"
-     ],
-     [
-      "Point-to-point",
-      "links",
-      "no DR"
-     ],
-     [
-      "Point-to-multipoint",
-      "hub",
-      "no DR"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No full",
-      "MTU/hello",
-      "interface"
-     ],
-     [
-      "No route",
-      "area",
-      "database"
-     ],
-     [
-      "DR fight",
-      "prio",
-      "show ip ospf"
-     ],
-     [
-      "No default",
-      "stub",
-      "config"
-     ],
-     [
-      "Asym cost",
-      "bandwidth",
-      "cost"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "router ospf 1\n network 10.0.0.0 0.0.0.255 area 0"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip ospf neighbor\nshow ip ospf interface Gi0/1\nshow ip ospf database\nshow ip route ospf\nshow ip ospf"
-   }
-  ],
-  "traps": [
-   "**MTU mismatch = stuck EXSTART**.",
-   "Adjacency needs **matching hello/dead, area, auth, network type**.",
-   "%%show ip ospf neighbor%% = **first check**.",
-   "P2P **has no DR/BDR**.",
-   "Passive interface = **advertise, no adjacency**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "OSPF"
-   ],
-   "rows": [
-    [
-     "Neighbor",
-     "FULL"
-    ],
-    [
-     "MTU",
-     "EXSTART"
-    ],
-    [
-     "Hello",
-     "match"
-    ],
-    [
-     "Area",
-     "match"
-    ],
-    [
-     "DR",
-     "broadcast"
-    ],
-    [
-     "Passive",
-     "no adj"
-    ],
-    [
-     "Table",
-     "database"
-    ],
-    [
-     "First",
-     "neighbor"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. EtherChannel",
-    "d": "EtherChannel troubleshooting focuses on why members don't bundle."
-   },
-   {
-    "t": "08. EIGRP",
-    "d": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues."
-   }
-  ],
-  "glossary": [
-   "OSPF"
-  ]
- },
- {
-  "num": "08",
-  "id": "t08",
-  "group": "routing",
-  "title": "EIGRP",
-  "blurb": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues.",
-  "overview": "**[[EIGRP|EIGRP troubleshooting]]** handles **neighbor, K-value, split horizon, and route issues**. Failures show as no neighbors, stuck-in-active (SIA), or missing routes. Verify neighbors first, then topology and routes. The exam tests %%show ip eigrp%% chains.",
-  "keyIdea": "**K-values + AS must match** for neighbors.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Neighbor requirements",
-    "cols": [
-     "Requirement",
-     "Detail"
+  {
+    "num": "08",
+    "id": "t08",
+    "group": "routing",
+    "title": "EIGRP",
+    "blurb": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues.",
+    "overview": "**[[EIGRP|EIGRP troubleshooting]]** handles **neighbor, K-value, split horizon, and route issues**. Failures show as no neighbors, stuck-in-active (SIA), or missing routes. Verify neighbors first, then topology and routes. The exam tests %%show ip eigrp%% chains.",
+    "keyIdea": "**K-values + AS must match** for neighbors.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Check the neighbor, then the topology",
+        "p": "EIGRP forms neighbors with routers that share the same autonomous system, authentication and K-values. Once neighbors are up, the topology table shows feasible successors and the route table shows the best paths. A route can get stuck in active state when a query does not receive a reply, often because of a large query domain or an unreachable neighbor."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Neighbors",
+            "d": "`show ip eigrp neighbors` shows the adjacency, hold time, uptime and retransmissions."
+          },
+          {
+            "t": "Topology",
+            "d": "`show ip eigrp topology` shows successors, feasible successors and active routes."
+          },
+          {
+            "t": "Parameters",
+            "d": "Mismatched AS, authentication or K-values prevent adjacency."
+          },
+          {
+            "t": "Stuck in active",
+            "d": "A route that remains active can indicate a lost query or a large failure domain."
+          },
+          {
+            "t": "Split horizon",
+            "d": "On a hub-and-spoke network, split horizon can prevent a spoke route from being advertised back out the same interface."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "AS number",
-      "must match"
-     ],
-     [
-      "K-values",
-      "must match"
-     ],
-     [
-      "Hello/dead",
-      "match timers"
-     ],
-     [
-      "Network",
-      "in AS"
-     ],
-     [
-      "Auth",
-      "match"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "router eigrp 100\n network 10.0.0.0"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip eigrp neighbors\nshow ip eigrp topology\nshow ip eigrp interfaces\nshow ip eigrp traffic"
+      }
+    ],
+    "traps": [
+      "**K-values + AS must match** for neighbors.",
+      "SIA = **stuck in active** (query timeout).",
+      "Split horizon on **hub links** can drop routes.",
+      "**Stub = no queries** in hub-spoke.",
+      "Neighbor table = **first verification**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "Neighbors",
+          "`show ip eigrp neighbors`"
+        ],
+        [
+          "Topology",
+          "`show ip eigrp topology`"
+        ],
+        [
+          "Parameters",
+          "`show ip protocols`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. OSPF",
+        "d": "OSPF troubleshooting targets adjacencies, areas, networks, and routes."
+      },
+      {
+        "t": "09. BGP",
+        "d": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection."
+      }
+    ],
+    "glossary": [
+      "EIGRP"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show ip eigrp neighbors%%",
-      "adjacencies"
-     ],
-     [
-      "%%show ip eigrp topology%%",
-      "routes/cost"
-     ],
-     [
-      "%%show ip eigrp interfaces%%",
-      "running ifs"
-     ],
-     [
-      "%%show ip eigrp traffic%%",
-      "packets"
-     ],
-     [
-      "%%debug eigrp packets%%",
-      "activity"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Neighbor states",
-    "cols": [
-     "State",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Init",
-      "hello seen"
-     ],
-     [
-      "Pending",
-      "waiting"
-     ],
-     [
-      "Up",
-      "established"
-     ],
-     [
-      "Active",
-      "querying"
-     ],
-     [
-      "Passive",
-      "converged"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No neighbor",
-      "K-value/AS"
-     ],
-     [
-      "SIA",
-      "slow reply"
-     ],
-     [
-      "Missing route",
-      "summary/split-horizon"
-     ],
-     [
-      "Suboptimal",
-      "metric"
-     ],
-     [
-      "Flap",
-      "hello dead"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Route/table issues",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Not advertised",
-      "network/redistribute"
-     ],
-     [
-      "Feasible successor",
-      "variance"
-     ],
-     [
-      "Split horizon",
-      "on hub"
-     ],
-     [
-      "Stub",
-      "no queries"
-     ],
-     [
-      "Summary",
-      "leak-map"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Passive vs active",
-    "cols": [
-     "Term",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Passive route",
-      "stable"
-     ],
-     [
-      "Active route",
-      "computing"
-     ],
-     [
-      "Query",
-      "asks neighbors"
-     ],
-     [
-      "Reply",
-      "answers"
-     ],
-     [
-      "SIA",
-      "no reply"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No neigh",
-      "K-values",
-      "topology"
-     ],
-     [
-      "SIA",
-      "no reply",
-      "active"
-     ],
-     [
-      "No route",
-      "summary",
-      "interfaces"
-     ],
-     [
-      "Suboptimal",
-      "variance",
-      "metric"
-     ],
-     [
-      "Flap",
-      "hello",
-      "traffic"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "router eigrp 100\n network 10.0.0.0"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip eigrp neighbors\nshow ip eigrp topology\nshow ip eigrp interfaces\nshow ip eigrp traffic"
-   }
-  ],
-  "traps": [
-   "**K-values + AS must match** for neighbors.",
-   "SIA = **stuck in active** (query timeout).",
-   "Split horizon on **hub links** can drop routes.",
-   "**Stub = no queries** in hub-spoke.",
-   "Neighbor table = **first verification**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "EIGRP"
-   ],
-   "rows": [
-    [
-     "Neighbor",
-     "Up"
-    ],
-    [
-     "K-values",
-     "match"
-    ],
-    [
-     "AS",
-     "match"
-    ],
-    [
-     "SIA",
-     "stuck active"
-    ],
-    [
-     "Table",
-     "topology"
-    ],
-    [
-     "Hub",
-     "split horizon"
-    ],
-    [
-     "Stub",
-     "no query"
-    ],
-    [
-     "First",
-     "neighbors"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "07. OSPF",
-    "d": "OSPF troubleshooting targets adjacencies, areas, networks, and routes."
-   },
-   {
-    "t": "09. BGP",
-    "d": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection."
-   }
-  ],
-  "glossary": [
-   "EIGRP"
-  ]
- },
- {
-  "num": "09",
-  "id": "t09",
-  "group": "routing",
-  "title": "BGP",
-  "blurb": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection.",
-  "overview": "**[[BGP|BGP troubleshooting]]** covers **session state, eBGP/iBGP rules, NLRI exchange, and path selection**. Failures: neighbors idle, routes not advertised, or suboptimal selection. Verify **%%show ip bgp summary%% → neighbors → table → bestpath** in order.",
-  "keyIdea": "**Established = up; Idle/Active = TCP or config.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Session states",
-    "cols": [
-     "State",
-     "Meaning"
+  {
+    "num": "09",
+    "id": "t09",
+    "group": "routing",
+    "title": "BGP",
+    "blurb": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection.",
+    "overview": "**[[BGP|BGP troubleshooting]]** covers **session state, eBGP/iBGP rules, NLRI exchange, and path selection**. Failures: neighbors idle, routes not advertised, or suboptimal selection. Verify **%%show ip bgp summary%% → neighbors → table → bestpath** in order.",
+    "keyIdea": "**Established = up; Idle/Active = TCP or config.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A TCP session before any prefix",
+        "p": "BGP needs a TCP session on port 179 before it can exchange routes. The session goes through Idle, Connect, Active, OpenSent, OpenConfirm and Established. A session stuck in Active usually means TCP cannot reach the peer, while a session that reaches OpenSent and then resets often has a capability, authentication or router-ID problem."
+      },
+      {
+        "kind": "table",
+        "h": "BGP neighbor states",
+        "cols": [
+          "State",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "Idle",
+            "No session; waiting to start"
+          ],
+          [
+            "Connect",
+            "TCP connection is being established"
+          ],
+          [
+            "Active",
+            "Trying to establish TCP; often a reachability or ACL problem"
+          ],
+          [
+            "OpenSent",
+            "Open message sent, waiting for the peer's Open"
+          ],
+          [
+            "OpenConfirm",
+            "Open messages accepted; waiting for Keepalive"
+          ],
+          [
+            "Established",
+            "Session is up and routes can be exchanged"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Summary",
+            "d": "`show bgp summary` shows the neighbor state, uptime and prefix counts."
+          },
+          {
+            "t": "Neighbor detail",
+            "d": "`show bgp neighbors <ip>` shows timers, capabilities, authentication and the last reset reason."
+          },
+          {
+            "t": "Reachability",
+            "d": "Ping the peer source address; eBGP usually needs directly connected addresses unless multihop is configured."
+          },
+          {
+            "t": "Next hop",
+            "d": "A route can be present but not best if the next hop is unreachable or not advertised by the IGP."
+          },
+          {
+            "t": "Trap",
+            "d": "Established does not mean the prefix is installed; check the BGP table, best path and RIB failure."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Idle",
-      "starting"
-     ],
-     [
-      "Connect",
-      "TCP attempt"
-     ],
-     [
-      "Active",
-      "retrying"
-     ],
-     [
-      "OpenSent",
-      "sent open"
-     ],
-     [
-      "Established",
-      "up"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "router bgp 65000\n neighbor 10.0.0.1 remote-as 65001\n network 10.0.0.0 mask 255.255.255.0"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip bgp summary\nshow ip bgp neighbors 10.0.0.1\nshow ip bgp\nshow ip bgp 10.0.0.0/24\nshow ip bgp rib-failure"
+      }
+    ],
+    "traps": [
+      "**Established = up; Idle/Active = TCP or config.**",
+      "%%network%% must **exist in the table** first.",
+      "iBGP **full mesh** required.",
+      "**RIB-failure** = route not installed (next-hop).",
+      "Best path order: **weight → local pref → AS path → MED**."
+    ],
+    "table": {
+      "cols": [
+        "State",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Idle",
+          "Session not started"
+        ],
+        [
+          "Active",
+          "TCP connection failing"
+        ],
+        [
+          "OpenSent",
+          "Waiting for peer Open"
+        ],
+        [
+          "OpenConfirm",
+          "Waiting for Keepalive"
+        ],
+        [
+          "Established",
+          "Session ready"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. EIGRP",
+        "d": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues."
+      },
+      {
+        "t": "10. NAT",
+        "d": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools."
+      }
+    ],
+    "glossary": [
+      "BGP"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show ip bgp summary%%",
-      "sessions"
-     ],
-     [
-      "%%show ip bgp neighbors%%",
-      "details"
-     ],
-     [
-      "%%show ip bgp%%",
-      "table"
-     ],
-     [
-      "%%show ip bgp <net>%%",
-      "path"
-     ],
-     [
-      "%%show ip route bgp%%",
-      "installed"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "Idle",
-      "no route / ebgp-multihop"
-     ],
-     [
-      "No route adv",
-      "network/next-hop"
-     ],
-     [
-      "iBGP drops",
-      "no full mesh"
-     ],
-     [
-      "Wrong path",
-      "attributes"
-     ],
-     [
-      "No install",
-      "next-hop unreachable"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Advertise issues",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Network cmd",
-      "must match table"
-     ],
-     [
-      "Redistribute",
-      "static/connected"
-     ],
-     [
-      "Next-hop",
-      "self for eBGP"
-     ],
-     [
-      "Filters",
-      "prefix-list"
-     ],
-     [
-      "Sync",
-      "iBGP rules"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "iBGP rules",
-    "cols": [
-     "Rule",
-     "Impact"
-    ],
-    "rows": [
-     [
-      "Full mesh",
-      "sessions needed"
-     ],
-     [
-      "Next-hop self",
-      "set on eBGP"
-     ],
-     [
-      "Synchronization",
-      "(legacy)"
-     ],
-     [
-      "AD",
-      "200"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Best path attributes",
-    "cols": [
-     "Attribute",
-     "Preference"
-    ],
-    "rows": [
-     [
-      "Weight",
-      "highest"
-     ],
-     [
-      "Local pref",
-      "highest"
-     ],
-     [
-      "Originate",
-      "local"
-     ],
-     [
-      "AS path",
-      "shortest"
-     ],
-     [
-      "Origin",
-      "IGP"
-     ],
-     [
-      "MED",
-      "lowest"
-     ],
-     [
-      "eBGP",
-      "over iBGP"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Idle",
-      "route",
-      "summary"
-     ],
-     [
-      "No adv",
-      "network",
-      "table"
-     ],
-     [
-      "Next-hop",
-      "no route",
-      "rib-failure"
-     ],
-     [
-      "Path wrong",
-      "attrs",
-      "show ip bgp"
-     ],
-     [
-      "Flap",
-      "hold timer",
-      "neighbors"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "router bgp 65000\n neighbor 10.0.0.1 remote-as 65001\n network 10.0.0.0 mask 255.255.255.0"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip bgp summary\nshow ip bgp neighbors 10.0.0.1\nshow ip bgp\nshow ip bgp 10.0.0.0/24\nshow ip bgp rib-failure"
-   }
-  ],
-  "traps": [
-   "**Established = up; Idle/Active = TCP or config.**",
-   "%%network%% must **exist in the table** first.",
-   "iBGP **full mesh** required.",
-   "**RIB-failure** = route not installed (next-hop).",
-   "Best path order: **weight → local pref → AS path → MED**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "BGP"
-   ],
-   "rows": [
-    [
-     "Session",
-     "Established"
-    ],
-    [
-     "TCP",
-     "179"
-    ],
-    [
-     "iBGP",
-     "full mesh"
-    ],
-    [
-     "Advertise",
-     "network"
-    ],
-    [
-     "Next-hop",
-     "self"
-    ],
-    [
-     "AD",
-     "200"
-    ],
-    [
-     "Fail",
-     "rib-failure"
-    ],
-    [
-     "Order",
-     "bestpath"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "08. EIGRP",
-    "d": "EIGRP troubleshooting handles neighbor, K-value, split horizon, and route issues."
-   },
-   {
-    "t": "10. NAT",
-    "d": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools."
-   }
-  ],
-  "glossary": [
-   "BGP"
-  ]
- },
- {
-  "num": "10",
-  "id": "t10",
-  "group": "services",
-  "title": "NAT",
-  "blurb": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools.",
-  "overview": "**[[NAT|NAT troubleshooting]]** checks **translations, inside/outside interfaces, ACLs, and pools**. Symptoms: no translation, one-way traffic, or wrong pools. Verify with **%%show ip nat translations%%** and **%%debug ip nat%%**. The exam tests the translation table and config traps.",
-  "keyIdea": "**Inside/outside keywords** determine NAT operation.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+  {
+    "num": "10",
+    "id": "t10",
+    "group": "services",
+    "title": "NAT",
+    "blurb": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools.",
+    "overview": "**[[NAT|NAT troubleshooting]]** checks **translations, inside/outside interfaces, ACLs, and pools**. Symptoms: no translation, one-way traffic, or wrong pools. Verify with **%%show ip nat translations%%** and **%%debug ip nat%%**. The exam tests the translation table and config traps.",
+    "keyIdea": "**Inside/outside keywords** determine NAT operation.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Verify the interface roles and the translation",
+        "p": "NAT depends on the inside and outside interface roles, a matching ACL or policy, and a valid translation. For inside-to-outside traffic, the router translates the source before forwarding. The return packet must match an existing translation or a static entry. A missing route, an ACL that blocks the translated address or the wrong interface role can make NAT appear broken."
+      },
+      {
+        "kind": "list",
+        "h": "Ordered checks",
+        "items": [
+          {
+            "t": "Roles",
+            "d": "Confirm `ip nat inside` and `ip nat outside` on the correct interfaces."
+          },
+          {
+            "t": "Match",
+            "d": "Check the ACL or route map that selects traffic for NAT."
+          },
+          {
+            "t": "Translation",
+            "d": "`show ip nat translations` shows whether the expected entry exists."
+          },
+          {
+            "t": "Statistics",
+            "d": "`show ip nat statistics` shows hits, misses and the interfaces in use."
+          },
+          {
+            "t": "Return path",
+            "d": "The outside network must be able to route the translated or public address back."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%show ip nat translations%%",
-      "table"
-     ],
-     [
-      "%%show ip nat statistics%%",
-      "counters"
-     ],
-     [
-      "%%show ip nat translations verbose%%",
-      "detail"
-     ],
-     [
-      "%%debug ip nat detailed%%",
-      "events"
-     ],
-     [
-      "%%show ip access-lists%%",
-      "match"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "interface Gi0/1\n ip nat inside\ninterface Gi0/2\n ip nat outside\naccess-list 1 permit 10.0.0.0 0.0.0.255\nip nat inside source list 1 interface Gi0/2 overload"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip nat translations\nshow ip nat statistics\ndebug ip nat detailed"
+      }
+    ],
+    "traps": [
+      "**Inside/outside keywords** determine NAT operation.",
+      "**Overload = PAT** (many:1).",
+      "Translation table is **stateful**.",
+      "ACL defines **what gets translated**.",
+      "%%debug ip nat%% reveals **misses**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "Translations",
+          "`show ip nat translations`"
+        ],
+        [
+          "Statistics",
+          "`show ip nat statistics`"
+        ],
+        [
+          "Interface roles",
+          "`show ip interface`"
+        ],
+        [
+          "NAT configuration",
+          "`show running-config | include nat`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. BGP",
+        "d": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection."
+      },
+      {
+        "t": "11. ACL",
+        "d": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement."
+      }
+    ],
+    "glossary": [
+      "NAT"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Config requirements",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Inside interface",
-      "%%ip nat inside%%"
-     ],
-     [
-      "Outside interface",
-      "%%ip nat outside%%"
-     ],
-     [
-      "ACL",
-      "match source"
-     ],
-     [
-      "Pool",
-      "address range"
-     ],
-     [
-      "Overload",
-      "PAT"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No translation",
-      "inside/outside"
-     ],
-     [
-      "ACL no match",
-      "source"
-     ],
-     [
-      "One-way",
-      "return path"
-     ],
-     [
-      "Pool exhausted",
-      "PAT missing"
-     ],
-     [
-      "Wrong IP",
-      "pool/overlap"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Translation types",
-    "cols": [
-     "Type",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Static",
-      "1:1 fixed"
-     ],
-     [
-      "Dynamic",
-      "pool"
-     ],
-     [
-      "Overload",
-      "PAT many:1"
-     ],
-     [
-      "Inside/outside",
-      "direction"
-     ],
-     [
-      "Outside",
-      "destination"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Return path issues",
-    "cols": [
-     "Issue",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No return route",
-      "route to NAT IP"
-     ],
-     [
-      "Asymmetric",
-      "translation table"
-     ],
-     [
-      "PAT port",
-      "full"
-     ],
-     [
-      "Incomplete",
-      "timeouts"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "NAT is stateful",
-      "d": "return must match the table."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Debug traps",
-    "cols": [
-     "Trap",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "ACL miss",
-      "no match"
-     ],
-     [
-      "No available pool",
-      "exhausted"
-     ],
-     [
-      "Interface not inside",
-      "config"
-     ],
-     [
-      "Port conflict",
-      "PAT"
-     ],
-     [
-      "Timeout",
-      "aging"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No trans",
-      "inside/outside",
-      "statistics"
-     ],
-     [
-      "Partial",
-      "ACL",
-      "access-list"
-     ],
-     [
-      "Pool empty",
-      "overload",
-      "statistics"
-     ],
-     [
-      "One-way",
-      "return",
-      "translations"
-     ],
-     [
-      "Timeout",
-      "aging",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "interface Gi0/1\n ip nat inside\ninterface Gi0/2\n ip nat outside\naccess-list 1 permit 10.0.0.0 0.0.0.255\nip nat inside source list 1 interface Gi0/2 overload"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip nat translations\nshow ip nat statistics\ndebug ip nat detailed"
-   }
-  ],
-  "traps": [
-   "**Inside/outside keywords** determine NAT operation.",
-   "**Overload = PAT** (many:1).",
-   "Translation table is **stateful**.",
-   "ACL defines **what gets translated**.",
-   "%%debug ip nat%% reveals **misses**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "NAT"
-   ],
-   "rows": [
-    [
-     "Table",
-     "translations"
-    ],
-    [
-     "Inside",
-     "ip nat inside"
-    ],
-    [
-     "Outside",
-     "ip nat outside"
-    ],
-    [
-     "Match",
-     "ACL"
-    ],
-    [
-     "Pool",
-     "dynamic"
-    ],
-    [
-     "Overload",
-     "PAT"
-    ],
-    [
-     "Fail",
-     "no translation"
-    ],
-    [
-     "Debug",
-     "ip nat"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "09. BGP",
-    "d": "BGP troubleshooting covers session state, eBGP/iBGP rules, NLRI exchange, and path selection."
-   },
-   {
-    "t": "11. ACL",
-    "d": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement."
-   }
-  ],
-  "glossary": [
-   "NAT"
-  ]
- },
- {
-  "num": "11",
-  "id": "t11",
-  "group": "services",
-  "title": "ACL",
-  "blurb": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement.",
-  "overview": "**[[ACL|ACL troubleshooting]]** checks **order, direction, implicit deny, wildcard masks, and placement**. Symptoms: traffic silently dropped or wrong traffic passing. Verify with **%%show access-lists%%** and **%%show ip interface%%** (which ACL is applied).",
-  "keyIdea": "**First match wins; implicit deny at the end.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+  {
+    "num": "11",
+    "id": "t11",
+    "group": "services",
+    "title": "ACL",
+    "blurb": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement.",
+    "overview": "**[[ACL|ACL troubleshooting]]** checks **order, direction, implicit deny, wildcard masks, and placement**. Symptoms: traffic silently dropped or wrong traffic passing. Verify with **%%show access-lists%%** and **%%show ip interface%%** (which ACL is applied).",
+    "keyIdea": "**First match wins; implicit deny at the end.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "First match wins, then implicit deny",
+        "p": "An ACL is evaluated top-down and stops at the first matching entry. If no entry matches, the implicit deny drops the packet. That makes order and direction critical. A wildcard mask is the inverse of a subnet mask, so `0.0.0.255` matches the last octet. Place extended ACLs near the source when possible, and standard ACLs near the destination."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Counters",
+            "d": "`show access-lists` shows match counters per entry; a zero counter suggests the packet never reached that line."
+          },
+          {
+            "t": "Direction",
+            "d": "`show ip interface <int>` shows whether the ACL is applied inbound or outbound."
+          },
+          {
+            "t": "Order",
+            "d": "A broad permit above a specific deny makes the deny unreachable."
+          },
+          {
+            "t": "Implicit deny",
+            "d": "Every ACL ends with a deny; add an explicit permit if the remaining traffic must pass."
+          },
+          {
+            "t": "Trap",
+            "d": "An ACL can be correct but applied to the wrong interface, VRF or direction."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%show access-lists%%",
-      "entries + hits"
-     ],
-     [
-      "%%show access-lists 100%%",
-      "one list"
-     ],
-     [
-      "%%show ip interface Gi0/1%%",
-      "applied ACLs"
-     ],
-     [
-      "%%show running-config%%",
-      "config"
-     ],
-     [
-      "%%debug ip packet%%",
-      "ACL drops"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "access-list 100 permit tcp 10.0.0.0 0.0.0.255 any eq 80\ninterface Gi0/1\n ip access-group 100 in"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show access-lists\nshow ip interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**First match wins; implicit deny at the end.**",
+      "ACL masks are **wildcards**, not subnet masks.",
+      "Direction: **in = as arriving; out = as leaving**.",
+      "%%show access-lists%% **hit counters** prove matches.",
+      "Standard ACLs **near destination**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "ACL entries and hits",
+          "`show access-lists`"
+        ],
+        [
+          "Interface application",
+          "`show ip interface`"
+        ],
+        [
+          "Running configuration",
+          "`show running-config | include access-group`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. NAT",
+        "d": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools."
+      },
+      {
+        "t": "12. DHCP",
+        "d": "DHCP troubleshooting traces the DORA process and common blockers: no relay (helper), pool exhaustion"
+      }
+    ],
+    "glossary": [
+      "ACL"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Key rules",
-    "cols": [
-     "Rule",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Order",
-      "first match wins"
-     ],
-     [
-      "Implicit deny",
-      "at end"
-     ],
-     [
-      "Wildcard",
-      "inverse mask"
-     ],
-     [
-      "Direction",
-      "in/out"
-     ],
-     [
-      "Placement",
-      "near source/dest"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Order matters",
-      "d": "first match wins; implicit deny is last."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "Drop all",
-      "implicit deny"
-     ],
-     [
-      "Wrong filter",
-      "mask"
-     ],
-     [
-      "Not applied",
-      "interface"
-     ],
-     [
-      "No hits",
-      "direction"
-     ],
-     [
-      "Permit too broad",
-      "order"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Wildcard vs subnet mask",
-    "cols": [
-     "Mask",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "0.0.0.255",
-      "match /24"
-     ],
-     [
-      "0.0.0.0",
-      "host"
-     ],
-     [
-      "255.255.255.0",
-      "subnet (WRONG in ACL)"
-     ],
-     [
-      "any",
-      "all"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Direction/placement",
-    "cols": [
-     "Item",
-     "Best"
-    ],
-    "rows": [
-     [
-      "Inbound ACL",
-      "closest to source"
-     ],
-     [
-      "Outbound ACL",
-      "on egress"
-     ],
-     [
-      "Deny",
-      "near attacker"
-     ],
-     [
-      "Permit",
-      "near destination"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Interface application",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip access-group 100 in%%",
-      "inbound"
-     ],
-     [
-      "%%ip access-group 100 out%%",
-      "outbound"
-     ],
-     [
-      "%%show ip interface%%",
-      "verify"
-     ],
-     [
-      "%%no ip access-group%%",
-      "remove"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "All denied",
-      "implicit deny",
-      "add permit"
-     ],
-     [
-      "No effect",
-      "direction",
-      "show ip interface"
-     ],
-     [
-      "Wrong hosts",
-      "mask",
-      "access-lists"
-     ],
-     [
-      "Hits 0",
-      "placement",
-      "counters"
-     ],
-     [
-      "Too broad",
-      "order",
-      "reorder"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "access-list 100 permit tcp 10.0.0.0 0.0.0.255 any eq 80\ninterface Gi0/1\n ip access-group 100 in"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show access-lists\nshow ip interface GigabitEthernet0/1"
-   }
-  ],
-  "traps": [
-   "**First match wins; implicit deny at the end.**",
-   "ACL masks are **wildcards**, not subnet masks.",
-   "Direction: **in = as arriving; out = as leaving**.",
-   "%%show access-lists%% **hit counters** prove matches.",
-   "Standard ACLs **near destination**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "ACL"
-   ],
-   "rows": [
-    [
-     "Order",
-     "first match"
-    ],
-    [
-     "End",
-     "implicit deny"
-    ],
-    [
-     "Mask",
-     "wildcard"
-    ],
-    [
-     "Direction",
-     "in/out"
-    ],
-    [
-     "Verify",
-     "access-lists"
-    ],
-    [
-     "Applied",
-     "interface"
-    ],
-    [
-     "Hits",
-     "counters"
-    ],
-    [
-     "Place",
-     "near source/dest"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "10. NAT",
-    "d": "NAT troubleshooting checks translations, inside/outside interfaces, ACLs, and pools."
-   },
-   {
-    "t": "12. DHCP",
-    "d": "DHCP troubleshooting traces the DORA process and common blockers: no relay (helper), pool exhaustion"
-   }
-  ],
-  "glossary": [
-   "ACL"
-  ]
- },
- {
-  "num": "12",
-  "id": "t12",
-  "group": "services",
-  "title": "DHCP",
-  "blurb": "DHCP troubleshooting traces the DORA process and common blockers: no relay (helper), pool exhaustion",
-  "overview": "**[[DHCP|DHCP troubleshooting]]** traces the **DORA process** and common blockers: no relay (helper), pool exhaustion, or port conflicts. Verify with **%%show ip dhcp binding%%, %%debug ip dhcp server%%, and pool config**. The exam tests the relay and pool checks.",
-  "keyIdea": "**169.254.x.x = APIPA** = no DHCP reached.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "DORA process",
-    "cols": [
-     "Step",
-     "Message",
-     "Direction"
+  {
+    "num": "12",
+    "id": "t12",
+    "group": "services",
+    "title": "DHCP",
+    "blurb": "DHCP troubleshooting follows DORA and checks relay, pools, exclusions and address conflicts.",
+    "overview": "**[[DHCP|DHCP troubleshooting]]** traces the **DORA process** and common blockers: no relay (helper), pool exhaustion, or port conflicts. Verify with **%%show ip dhcp binding%%, %%debug ip dhcp server%%, and pool config**. The exam tests the relay and pool checks.",
+    "keyIdea": "**169.254.x.x = APIPA** = no DHCP reached.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "DORA and the relay path",
+        "p": "DHCP uses four messages: Discover, Offer, Request and Acknowledgment. The client starts with no address and broadcasts; a relay agent forwards the request to a server and inserts the gateway address so the server can choose the right pool. If the client gets a 169.254 address, it did not receive a lease. If it gets a lease but cannot reach anything, the problem may be the gateway, DNS or routing rather than DHCP itself."
+      },
+      {
+        "kind": "table",
+        "h": "DORA messages",
+        "cols": [
+          "Message",
+          "Direction",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Discover",
+            "Client broadcast",
+            "Find a DHCP server"
+          ],
+          [
+            "Offer",
+            "Server to client",
+            "Propose an address and options"
+          ],
+          [
+            "Request",
+            "Client broadcast",
+            "Request the offered lease"
+          ],
+          [
+            "Acknowledgment",
+            "Server to client",
+            "Confirm the lease and options"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Relay",
+            "d": "The client gateway needs `ip helper-address <server>` if the server is on another subnet."
+          },
+          {
+            "t": "Pool",
+            "d": "`show ip dhcp pool` and `show ip dhcp binding` show configured pools and active leases."
+          },
+          {
+            "t": "Server statistics",
+            "d": "`show ip dhcp server statistics` shows discovers, offers and requests received."
+          },
+          {
+            "t": "Snooping",
+            "d": "DHCP snooping can drop server messages on an untrusted port."
+          },
+          {
+            "t": "Trap",
+            "d": "A 169.254 address means no lease, not necessarily a bad cable."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "D",
-      "Discover",
-      "client → server"
-     ],
-     [
-      "O",
-      "Offer",
-      "server → client"
-     ],
-     [
-      "R",
-      "Request",
-      "client → server"
-     ],
-     [
-      "A",
-      "Acknowledge",
-      "server → client"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "interface Vlan10\n ip helper-address 10.0.0.1"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip dhcp binding\nshow ip dhcp pool\nshow ip dhcp conflict\nshow ip dhcp server statistics\ndebug ip dhcp server packet"
+      }
     ],
-    "rows": [
-     [
-      "%%show ip dhcp binding%%",
-      "leases"
-     ],
-     [
-      "%%show ip dhcp pool%%",
-      "ranges"
-     ],
-     [
-      "%%show ip dhcp conflict%%",
-      "conflicts"
-     ],
-     [
-      "%%show ip dhcp server statistics%%",
-      "counts"
-     ],
-     [
-      "%%debug ip dhcp server packets%%",
-      "flow"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
+    "traps": [
+      "**169.254.x.x = APIPA** = no DHCP reached.",
+      "%%ip helper-address%% enables **cross-VLAN DHCP**.",
+      "**UDP 67/68** with relay.",
+      "Pool must **match client subnet**.",
+      "**DHCP snooping** stops rogue servers."
     ],
-    "rows": [
-     [
-      "No IP",
-      "pool empty"
-     ],
-     [
-      "No reply",
-      "relay missing"
-     ],
-     [
-      "APIPA (169.254)",
-      "no server"
-     ],
-     [
-      "Wrong subnet",
-      "pool mismatch"
-     ],
-     [
-      "Duplicate",
-      "conflict"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Relay (helper)",
-    "cols": [
-     "Command",
-     "Meaning"
+    "table": {
+      "cols": [
+        "Message",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Discover",
+          "Client looks for a server"
+        ],
+        [
+          "Offer",
+          "Server proposes a lease"
+        ],
+        [
+          "Request",
+          "Client requests the offer"
+        ],
+        [
+          "Acknowledgment",
+          "Server confirms the lease"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "11. ACL",
+        "d": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement."
+      },
+      {
+        "t": "13. DNS",
+        "d": "DNS troubleshooting resolves name resolution failures: server unreachable, wrong records, TTL/negati"
+      }
     ],
-    "rows": [
-     [
-      "%%ip helper-address 10.0.0.1%%",
-      "forward DHCP"
-     ],
-     [
-      "Interface",
-      "on client VLAN"
-     ],
-     [
-      "UDP 67/68",
-      "broadcast→unicast"
-     ],
-     [
-      "Relay",
-      "sets giaddr"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Pool issues",
-    "cols": [
-     "Check",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Range",
-      "network"
-     ],
-     [
-      "Mask",
-      "subnet"
-     ],
-     [
-      "Default route",
-      "default-router"
-     ],
-     [
-      "Exclusions",
-      "excluded-address"
-     ],
-     [
-      "Leases",
-      "lease"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Security issues",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Rogue server",
-      "DHCP snooping"
-     ],
-     [
-      "Exhaustion",
-      "rate-limit"
-     ],
-     [
-      "Conflicts",
-      "ping/ARP"
-     ],
-     [
-      "Authoritative",
-      "config"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "169.254",
-      "server unreach",
-      "binding"
-     ],
-     [
-      "No reply",
-      "relay",
-      "helper"
-     ],
-     [
-      "Empty pool",
-      "ranges",
-      "pool"
-     ],
-     [
-      "Duplicate",
-      "conflict",
-      "conflicts"
-     ],
-     [
-      "Rogue",
-      "snooping",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "interface Vlan10\n ip helper-address 10.0.0.1"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip dhcp binding\nshow ip dhcp pool\nshow ip dhcp conflict\nshow ip dhcp server statistics\ndebug ip dhcp server packet"
-   }
-  ],
-  "traps": [
-   "**169.254.x.x = APIPA** = no DHCP reached.",
-   "%%ip helper-address%% enables **cross-VLAN DHCP**.",
-   "**UDP 67/68** with relay.",
-   "Pool must **match client subnet**.",
-   "**DHCP snooping** stops rogue servers."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "DHCP"
-   ],
-   "rows": [
-    [
-     "Process",
-     "DORA"
-    ],
-    [
-     "Leases",
-     "binding"
-    ],
-    [
-     "Relay",
-     "helper-address"
-    ],
-    [
-     "Ports",
-     "67/68"
-    ],
-    [
-     "No server",
-     "169.254"
-    ],
-    [
-     "Empty",
-     "pool"
-    ],
-    [
-     "Rogue",
-     "snooping"
-    ],
-    [
-     "Debug",
-     "server packets"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "11. ACL",
-    "d": "ACL troubleshooting checks order, direction, implicit deny, wildcard masks, and placement."
-   },
-   {
-    "t": "13. DNS",
-    "d": "DNS troubleshooting resolves name resolution failures: server unreachable, wrong records, TTL/negati"
-   }
-  ],
-  "glossary": [
-   "DHCP"
-  ]
- },
- {
-  "num": "13",
-  "id": "t13",
-  "group": "services",
-  "title": "DNS",
-  "blurb": "DNS troubleshooting resolves name resolution failures: server unreachable, wrong records, TTL/negati",
-  "overview": "**[[DNS|DNS troubleshooting]]** resolves name resolution failures: server unreachable, wrong records, TTL/negative cache, or search-domain issues. Verify with **%%nslookup%%, %%dig%%, %%ping name%%, and %%show hosts%%**. The exam tests the resolution chain.",
-  "keyIdea": "**UDP 53** for queries; TCP for big answers.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Resolution flow",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "local hosts file"
-     ],
-     [
-      "2",
-      "DNS cache"
-     ],
-     [
-      "3",
-      "query server"
-     ],
-     [
-      "4",
-      "authoritative"
-     ],
-     [
-      "5",
-      "response/cache"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify tools",
-    "cols": [
-     "Tool",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%nslookup name%%",
-      "query"
-     ],
-     [
-      "%%dig name%%",
-      "full detail"
-     ],
-     [
-      "%%ping name%%",
-      "resolution + ICMP"
-     ],
-     [
-      "%%show hosts%%",
-      "cache"
-     ],
-     [
-      "%%show ip dns%%",
-      "IOS resolver"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "NXDOMAIN",
-      "wrong name"
-     ],
-     [
-      "No answer",
-      "server"
-     ],
-     [
-      "Timeout",
-      "firewall/UDP 53"
-     ],
-     [
-      "Old IP",
-      "TTL/cache"
-     ],
-     [
-      "Wrong host",
-      "search domain"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Record types",
-    "cols": [
-     "Record",
-     "Maps"
-    ],
-    "rows": [
-     [
-      "A",
-      "name → IPv4"
-     ],
-     [
-      "AAAA",
-      "name → IPv6"
-     ],
-     [
-      "PTR",
-      "IP → name"
-     ],
-     [
-      "CNAME",
-      "alias"
-     ],
-     [
-      "MX",
-      "mail"
-     ],
-     [
-      "NS",
-      "nameserver"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "IOS resolver",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip name-server 10.0.0.1%%",
-      "server"
-     ],
-     [
-      "%%ip domain-lookup%%",
-      "enable"
-     ],
-     [
-      "%%ip domain-name corp.com%%",
-      "suffix"
-     ],
-     [
-      "%%show hosts%%",
-      "cache"
-     ],
-     [
-      "%%no ip domain-lookup%%",
-      "disable"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Caching/timeouts",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "TTL",
-      "record lifetime"
-     ],
-     [
-      "Negative cache",
-      "NXDOMAIN cached"
-     ],
-     [
-      "Timeout",
-      "5 s default"
-     ],
-     [
-      "Retry",
-      "query resend"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "NXDOMAIN",
-      "typo",
-      "dig"
-     ],
-     [
-      "No answer",
-      "type",
-      "record"
-     ],
-     [
-      "Timeout",
-      "UDP 53",
-      "firewall"
-     ],
-     [
-      "Stale",
-      "TTL",
-      "cache"
-     ],
-     [
-      "Wrong suffix",
-      "domain-name",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "ip name-server 10.0.0.1\nip domain-lookup\nip domain-name corp.com\nnslookup server.corp.com\ndig server.corp.com"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show hosts\ndebug ip domain"
-   }
-  ],
-  "traps": [
-   "**UDP 53** for queries; TCP for big answers.",
-   "%%nslookup%%/%%dig%% separate **DNS from ping**.",
-   "NXDOMAIN ≠ **server down** — check type and name.",
-   "TTL = **why old IP persists**.",
-   "IOS: %%ip name-server%% + %%ip domain-lookup%%."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "DNS"
-   ],
-   "rows": [
-    [
-     "Port",
-     "UDP 53"
-    ],
-    [
-     "A",
-     "IPv4"
-    ],
-    [
-     "PTR",
-     "reverse"
-    ],
-    [
-     "Tool",
-     "nslookup/dig"
-    ],
-    [
-     "Server",
-     "name-server"
-    ],
-    [
-     "Cache",
-     "TTL"
-    ],
-    [
-     "NXDOMAIN",
-     "no record"
-    ],
-    [
-     "Timeout",
-     "server"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "12. DHCP",
-    "d": "DHCP troubleshooting traces the DORA process and common blockers: no relay (helper), pool exhaustion"
-   },
-   {
-    "t": "14. VPN",
-    "d": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic."
-   }
-  ],
-  "glossary": [
-   "DNS"
-  ]
- },
- {
-  "num": "14",
-  "id": "t14",
-  "group": "advanced",
-  "title": "VPN",
-  "blurb": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic.",
-  "overview": "**[[VPN|VPN troubleshooting]]** checks the **tunnel, IKE phases, transforms, and interesting traffic**. Failures show as no tunnel, crypto not established, or no traffic protected. Verify **%%show crypto%%** chain and **%%debug crypto%%**. The exam tests IKEv1/v2 states.",
-  "keyIdea": "**Phase 1 = IKE SA; Phase 2 = IPSec SA.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show crypto isakmp sa%%",
-      "IKE phase 1"
-     ],
-     [
-      "%%show crypto ipsec sa%%",
-      "phase 2 + traffic"
-     ],
-     [
-      "%%show crypto map%%",
-      "config"
-     ],
-     [
-      "%%show crypto session%%",
-      "sessions"
-     ],
-     [
-      "%%show ip interface%%",
-      "crypto applied"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "IKE phases",
-    "cols": [
-     "Phase",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "Phase 1",
-      "ISAKMP (IKE SA)"
-     ],
-     [
-      "Phase 2",
-      "IPSec SA (traffic)"
-     ],
-     [
-      "IKEv1",
-      "main/aggressive"
-     ],
-     [
-      "IKEv2",
-      "single exchange"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No IKE SA",
-      "proposal/auth"
-     ],
-     [
-      "No IPSec SA",
-      "interesting traffic"
-     ],
-     [
-      "SA but no traffic",
-      "ACL/proxy ID"
-     ],
-     [
-      "Flap",
-      "DPD"
-     ],
-     [
-      "One-way",
-      "crypto map"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Parameter matching",
-    "cols": [
-     "Item",
-     "Both Sides"
-    ],
-    "rows": [
-     [
-      "Proposal",
-      "encrypt/hash"
-     ],
-     [
-      "Auth",
-      "PSK/cert"
-     ],
-     [
-      "Lifetime",
-      "seconds"
-     ],
-     [
-      "DH group",
-      "match"
-     ],
-     [
-      "Proxy IDs",
-      "ACL match"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Debug commands",
-    "cols": [
-     "Command",
-     "Use"
-    ],
-    "rows": [
-     [
-      "%%debug crypto isakmp%%",
-      "phase 1"
-     ],
-     [
-      "%%debug crypto ipsec%%",
-      "phase 2"
-     ],
-     [
-      "%%debug crypto ikev2%%",
-      "IKEv2"
-     ],
-     [
-      "%%debug crypto session%%",
-      "general"
-     ],
-     [
-      "%%clear crypto sa%%",
-      "reset"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Tunnel vs traffic",
-    "cols": [
-     "Layer",
-     "Symptom"
-    ],
-    "rows": [
-     [
-      "Tunnel up",
-      "both SAs"
-     ],
-     [
-      "No tunnel",
-      "phase 1"
-     ],
-     [
-      "No data",
-      "proxy/ACL"
-     ],
-     [
-      "Packet drop",
-      "crypto map"
-     ],
-     [
-      "MTU",
-      "fragmentation"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No phase1",
-      "proposal",
-      "isakmp sa"
-     ],
-     [
-      "No phase2",
-      "ACL",
-      "ipsec sa"
-     ],
-     [
-      "Up no data",
-      "proxy",
-      "crypto map"
-     ],
-     [
-      "Flap",
-      "DPD",
-      "config"
-     ],
-     [
-      "MTU",
-      "fragmentation",
-      "packet"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show crypto isakmp sa\nshow crypto ipsec sa\nshow crypto map\nshow crypto session\ndebug crypto isakmp\nclear crypto sa\nshow crypto ikev2 sa"
-   }
-  ],
-  "traps": [
-   "**Phase 1 = IKE SA; Phase 2 = IPSec SA.**",
-   "**Interesting traffic (ACL) must match for Phase 2.**",
-   "Parameters must **match on both ends**.",
-   "Tunnel up ≠ **traffic protected**.",
-   "%%clear crypto sa%% = **reset** tunnels."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "VPN"
-   ],
-   "rows": [
-    [
-     "Phase1",
-     "IKE SA"
-    ],
-    [
-     "Phase2",
-     "IPSec SA"
-    ],
-    [
-     "Gate",
-     "ACL/interesting"
-    ],
-    [
-     "Match",
-     "proposals"
-    ],
-    [
-     "Debug",
-     "crypto"
-    ],
-    [
-     "Flap",
-     "DPD"
-    ],
-    [
-     "Reset",
-     "clear sa"
-    ],
-    [
-     "Data",
-     "proxy"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "13. DNS",
-    "d": "DNS troubleshooting resolves name resolution failures: server unreachable, wrong records, TTL/negati"
-   },
-   {
-    "t": "15. Wireless",
-    "d": "Wireless troubleshooting covers RF issues, client association, authentication, and controller proble"
-   }
-  ],
-  "glossary": [
-   "VPN"
-  ]
- },
- {
-  "num": "15",
-  "id": "t15",
-  "group": "advanced",
-  "title": "Wireless",
-  "blurb": "Wireless troubleshooting covers RF issues, client association, authentication, and controller proble",
-  "overview": "**[[WLAN|Wireless troubleshooting]]** covers RF issues, client association, authentication, and controller problems. Symptoms: weak signal, no association, slow rates, or roaming gaps. The exam tests the RF → association → auth → DHCP chain.",
-  "keyIdea": "Order: **RF → association → auth → IP**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Troubleshoot order",
-    "cols": [
-     "Step",
-     "Check"
-    ],
-    "rows": [
-     [
-      "1",
-      "RF/signal"
-     ],
-     [
-      "2",
-      "association"
-     ],
-     [
-      "3",
-      "authentication"
-     ],
-     [
-      "4",
-      "DHCP/IP"
-     ],
-     [
-      "5",
-      "roaming"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "RF checks",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Signal",
-      "RSSI/SNR"
-     ],
-     [
-      "Interference",
-      "channels"
-     ],
-     [
-      "AP coverage",
-      "floor plan"
-     ],
-     [
-      "Client rate",
-      "lowest"
-     ],
-     [
-      "Retries",
-      "quality"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Interference + weak RSSI",
-      "d": "top RF issues."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Association issues",
-    "cols": [
-     "Issue",
-     "Cause"
-    ],
-    "rows": [
-     [
-      "No associate",
-      "SSID hidden/ACL"
-     ],
-     [
-      "Disconnect",
-      "client support"
-     ],
-     [
-      "Weak",
-      "coverage"
-     ],
-     [
-      "Roam fail",
-      "fast roam"
-     ],
-     [
-      "Auth fail",
-      "PSK/802.1X"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Controller checks",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show ap summary%%",
-      "AP state"
-     ],
-     [
-      "%%show ap dot11 5ghz ...%%",
-      "radio"
-     ],
-     [
-      "%%show client summary%%",
-      "clients"
-     ],
-     [
-      "%%show client detail%%",
-      "state"
-     ],
-     [
-      "%%show wlan summary%%",
-      "WLANs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Client issues",
-    "cols": [
-     "State",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Assoc",
-      "MAC joined"
-     ],
-     [
-      "Auth",
-      "security passed"
-     ],
-     [
-      "IP",
-      "DHCP done"
-     ],
-     [
-      "Run",
-      "working"
-     ],
-     [
-      "Idle",
-      "no traffic"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failure matrix",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No signal",
-      "AP/radio down"
-     ],
-     [
-      "No assoc",
-      "SSID/security"
-     ],
-     [
-      "Slow",
-      "interference/rate"
-     ],
-     [
-      "No IP",
-      "DHCP helper"
-     ],
-     [
-      "Roam drop",
-      "fast roam off"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No SSID",
-      "WLAN",
-      "wlan summary"
-     ],
-     [
-      "AP off",
-      "radio",
-      "ap summary"
-     ],
-     [
-      "No auth",
-      "PSK",
-      "client detail"
-     ],
-     [
-      "No IP",
-      "helper",
+    "glossary": [
       "DHCP"
-     ],
-     [
-      "Weak",
-      "channel",
-      "RF scan"
-     ]
     ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "WLC and client state",
-    "code": "show wireless client summary\nshow wireless client mac-address 0011.2233.4455 detail\nshow ap summary\nshow wlan summary"
-   },
-   {
-    "label": "RF and AP checks",
-    "code": "show ap dot11 5ghz summary\nshow ap dot11 24ghz summary\nshow controllers dot11Radio 1/0/0"
-   },
-   {
-    "label": "Targeted client debug",
-    "code": "debug wireless client mac-address 0011.2233.4455\nundebug all\nshow logging"
-   }
-  ],
-  "traps": [
-   "Order: **RF → association → auth → IP**.",
-   "Client **associated ≠ authenticated**.",
-   "%%show ap summary%% = **AP health**.",
-   "Roaming issues → **fast roam + coverage**.",
-   "5 GHz vs 2.4 GHz — **interference differs**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Wireless"
-   ],
-   "rows": [
-    [
-     "First",
-     "RF"
-    ],
-    [
-     "Assoc",
-     "SSID"
-    ],
-    [
-     "Auth",
-     "security"
-    ],
-    [
-     "IP",
-     "DHCP"
-    ],
-    [
-     "AP",
-     "show ap"
-    ],
-    [
-     "Client",
-     "show client"
-    ],
-    [
-     "Roam",
-     "coverage"
-    ],
-    [
-     "Slow",
-     "interference"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "14. VPN",
-    "d": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic."
-   },
-   {
-    "t": "16. QoS",
-    "d": "QoS troubleshooting checks classification, marking, policy maps, and interface counters."
-   }
-  ],
-  "glossary": [
-   "WLAN"
-  ]
- },
- {
-  "num": "16",
-  "id": "t16",
-  "group": "advanced",
-  "title": "QoS",
-  "blurb": "QoS troubleshooting checks classification, marking, policy maps, and interface counters.",
-  "overview": "**[[QoS|QoS troubleshooting]]** checks **classification, marking, policy maps, and interface counters**. Failures show as no marking, wrong queueing, or drops despite policy. Verify with **%%show policy-map interface%%** and counters. The exam tests policy application and direction.",
-  "keyIdea": "%%show policy-map interface%% = **applied reality**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
+  {
+    "num": "13",
+    "id": "t13",
+    "group": "services",
+    "title": "DNS",
+    "blurb": "DNS troubleshooting checks server reachability, records, negative caching and client settings.",
+    "overview": "**[[DNS|DNS troubleshooting]]** resolves name resolution failures: server unreachable, wrong records, TTL/negative cache, or search-domain issues. Verify with **%%nslookup%%, %%dig%%, %%ping name%%, and %%show hosts%%**. The exam tests the resolution chain.",
+    "keyIdea": "**UDP 53** for queries; TCP for big answers.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Resolution is a separate path",
+        "p": "DNS resolution can fail even when IP connectivity works. The client needs a reachable DNS server, a route to it, and permission on UDP or TCP 53. A name can resolve to the wrong address because of a stale record, split-horizon DNS or a search domain. Test with an IP address first, then test name resolution separately."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Client settings",
+            "d": "`show hosts` and the OS resolver configuration show the configured servers and cached names."
+          },
+          {
+            "t": "Query",
+            "d": "Use `nslookup` or `dig` against the same server the client uses."
+          },
+          {
+            "t": "Reachability",
+            "d": "Ping the server and test UDP/TCP 53; an ACL may permit ICMP but block DNS."
+          },
+          {
+            "t": "Search domain",
+            "d": "A short name may resolve differently depending on the search suffix."
+          },
+          {
+            "t": "Trap",
+            "d": "A successful ping to an IP address does not prove DNS is working."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%show policy-map interface%%",
-      "applied policy"
-     ],
-     [
-      "%%show class-map%%",
-      "match rules"
-     ],
-     [
-      "%%show policy-map%%",
-      "config"
-     ],
-     [
-      "%%show mls qos%%",
-      "trust"
-     ],
-     [
-      "%%show interface counters%%",
-      "drops"
-     ]
+    "commands": [
+      {
+        "label": "Resolver configuration",
+        "code": "ip name-server 10.0.0.1\nip domain-lookup\nip domain-name corp.com"
+      },
+      {
+        "label": "Verification and client checks",
+        "code": "show hosts\nnslookup server.corp.com\ndig server.corp.com\ndebug ip domain"
+      }
+    ],
+    "traps": [
+      "**UDP 53** for queries; TCP for big answers.",
+      "%%nslookup%%/%%dig%% separate **DNS from ping**.",
+      "NXDOMAIN ≠ **server down** — check type and name.",
+      "TTL = **why old IP persists**.",
+      "IOS: %%ip name-server%% + %%ip domain-lookup%%."
+    ],
+    "table": {
+      "cols": [
+        "Result",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "NOERROR",
+          "Query completed"
+        ],
+        [
+          "NXDOMAIN",
+          "Name does not exist"
+        ],
+        [
+          "SERVFAIL",
+          "Server failure"
+        ],
+        [
+          "Timeout",
+          "No response from server"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "12. DHCP",
+        "d": "DHCP troubleshooting traces the DORA process and common blockers: no relay (helper), pool exhaustion"
+      },
+      {
+        "t": "14. VPN",
+        "d": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic."
+      }
+    ],
+    "glossary": [
+      "DNS"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "QoS flow",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "classify"
-     ],
-     [
-      "2",
-      "mark"
-     ],
-     [
-      "3",
-      "police/shape"
-     ],
-     [
-      "4",
-      "queue"
-     ],
-     [
-      "5",
-      "monitor"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No marks",
-      "trust/cos"
-     ],
-     [
-      "Drops",
-      "policer"
-     ],
-     [
-      "Wrong class",
-      "match"
-     ],
-     [
-      "Not applied",
-      "direction"
-     ],
-     [
-      "Shaping lost",
-      "interface"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Policy checks",
-    "cols": [
-     "Check",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Applied",
-      "show policy-map interface"
-     ],
-     [
-      "Matches",
-      "class-map"
-     ],
-     [
-      "Drops",
-      "counters"
-     ],
-     [
-      "Rate",
-      "police"
-     ],
-     [
-      "Bytes",
-      "class stats"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Trust boundaries",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Trust COS",
-      "switch"
-     ],
-     [
-      "Trust DSCP",
-      "router"
-     ],
-     [
-      "Untrusted",
-      "remark"
-     ],
-     [
-      "L3",
-      "DSCP"
-     ],
-     [
-      "L2",
-      "COS"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Queueing issues",
-    "cols": [
-     "Issue",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Overflow",
-      "buffer"
-     ],
-     [
-      "Wrong queue",
-      "map"
-     ],
-     [
-      "Congestion",
-      "shape"
-     ],
-     [
-      "Drops",
-      "WRED"
-     ],
-     [
-      "Bandwidth",
-      "percent"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No match",
-      "class",
-      "policy-map if"
-     ],
-     [
-      "No marks",
-      "trust",
-      "mls qos"
-     ],
-     [
-      "Drops",
-      "policer",
-      "counters"
-     ],
-     [
-      "Not applied",
-      "direction",
-      "policy-map if"
-     ],
-     [
-      "Wrong queue",
-      "map",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "policy-map QOS\n class VOICE\n  priority percent 10\n class EF\n  bandwidth percent 20\ninterface Gi0/1\n service-policy output QOS"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show policy-map interface Gi0/1\nshow policy-map\nshow class-map\nshow mls qos\nshow interface Gi0/1 counters"
-   }
-  ],
-  "traps": [
-   "%%show policy-map interface%% = **applied reality**.",
-   "Direction matters: **service-policy in/out**.",
-   "**Trust boundary** determines marking.",
-   "Zero counters = **class never matched**.",
-   "Queue drops ≠ policy failure — **congestion**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "QoS"
-   ],
-   "rows": [
-    [
-     "Class",
-     "match"
-    ],
-    [
-     "Mark",
-     "DSCP/COS"
-    ],
-    [
-     "Enforce",
-     "police/shape"
-    ],
-    [
-     "Queue",
-     "priority"
-    ],
-    [
-     "Verify",
-     "policy-map if"
-    ],
-    [
-     "Trust",
-     "boundary"
-    ],
-    [
-     "Drops",
-     "congestion"
-    ],
-    [
-     "Direction",
-     "in/out"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "15. Wireless",
-    "d": "Wireless troubleshooting covers RF issues, client association, authentication, and controller proble"
-   },
-   {
-    "t": "17. SD-WAN",
-    "d": "SD-WAN troubleshooting checks the control plane (vManage/vSmart), data plane (transport tunnels), an"
-   }
-  ],
-  "glossary": [
-   "QoS"
-  ]
- },
- {
-  "num": "17",
-  "id": "t17",
-  "group": "advanced",
-  "title": "SD-WAN",
-  "blurb": "SD-WAN troubleshooting checks the control plane (vManage/vSmart), data plane (transport tunnels), an",
-  "overview": "**[[SD-WAN|SD-WAN troubleshooting]]** checks the **control plane (vManage/vSmart), data plane (transport tunnels), and policy**. Failures: control connections down, TLOC issues, or policy dropping traffic. Verify with **%%show sdwan control%%** and **%%show sdwan policy%%**. The exam tests the vEdge/cEdge command set.",
-  "keyIdea": "**Control plane (vSmart/vBond) must be up first.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Architecture check",
-    "cols": [
-     "Component",
-     "Health"
+  {
+    "num": "14",
+    "id": "t14",
+    "group": "advanced",
+    "title": "VPN",
+    "blurb": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic.",
+    "overview": "**[[VPN|VPN troubleshooting]]** checks the **tunnel, IKE phases, transforms, and interesting traffic**. Failures show as no tunnel, crypto not established, or no traffic protected. Verify **%%show crypto%%** chain and **%%debug crypto%%**. The exam tests IKEv1/v2 states.",
+    "keyIdea": "**Phase 1 = IKE SA; Phase 2 = IPSec SA.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Bring up Phase 1, then Phase 2",
+        "p": "An IPsec VPN first negotiates an IKE security association, then negotiates IPsec security associations for the protected traffic. Phase 1 problems usually involve reachability, proposals, authentication or a mismatched pre-shared key. Phase 2 problems usually involve the interesting-traffic ACL, transform sets, proxy identities or routing. Check the SA state before debugging packets."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Phase 1",
+            "d": "`show crypto isakmp sa` shows the IKE SA state; it should be ready or established."
+          },
+          {
+            "t": "Phase 2",
+            "d": "`show crypto ipsec sa` shows inbound and outbound SAs and packet counters."
+          },
+          {
+            "t": "Traffic",
+            "d": "The ACL or crypto map must match the traffic that should be encrypted; a zero counter means no match."
+          },
+          {
+            "t": "Proposals",
+            "d": "Encryption, hash, DH group and lifetime must match on both peers."
+          },
+          {
+            "t": "Trap",
+            "d": "A tunnel can be up while user traffic fails because of routing, NAT or an ACL behind the tunnel."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "vManage",
-      "admin UI"
-     ],
-     [
-      "vSmart",
-      "control policy"
-     ],
-     [
-      "vBond",
-      "orchestration"
-     ],
-     [
-      "vEdge/cEdge",
-      "data plane"
-     ],
-     [
-      "vAnalytics",
-      "reporting"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show crypto isakmp sa\nshow crypto ipsec sa\nshow crypto map\nshow crypto session\ndebug crypto isakmp\nclear crypto sa\nshow crypto ikev2 sa"
+      }
+    ],
+    "traps": [
+      "**Phase 1 = IKE SA; Phase 2 = IPSec SA.**",
+      "**Interesting traffic (ACL) must match for Phase 2.**",
+      "Parameters must **match on both ends**.",
+      "Tunnel up ≠ **traffic protected**.",
+      "%%clear crypto sa%% = **reset** tunnels."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "IKE SA",
+          "`show crypto isakmp sa`"
+        ],
+        [
+          "IPsec SA",
+          "`show crypto ipsec sa`"
+        ],
+        [
+          "Crypto session",
+          "`show crypto session`"
+        ],
+        [
+          "Crypto configuration",
+          "`show running-config | section crypto`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "13. DNS",
+        "d": "DNS troubleshooting resolves name resolution failures: server unreachable, wrong records, TTL/negati"
+      },
+      {
+        "t": "15. Wireless",
+        "d": "Wireless troubleshooting covers RF issues, client association, authentication, and controller proble"
+      }
+    ],
+    "glossary": [
+      "VPN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Verify commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show sdwan control connections%%",
-      "to vSmart/vBond"
-     ],
-     [
-      "%%show sdwan tunnel%%",
-      "data tunnels"
-     ],
-     [
-      "%%show sdwan interface%%",
-      "transport"
-     ],
-     [
-      "%%show sdwan policy%%",
-      "applied"
-     ],
-     [
-      "%%show sdwan running-config%%",
-      "config"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause"
-    ],
-    "rows": [
-     [
-      "No control",
-      "DTLS/route"
-     ],
-     [
-      "Tunnel down",
-      "TLOC"
-     ],
-     [
-      "No policy",
-      "vSmart"
-     ],
-     [
-      "Apps wrong",
-      "match"
-     ],
-     [
-      "BFD down",
-      "transport"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Control plane issues",
-    "cols": [
-     "Issue",
-     "Check"
-    ],
-    "rows": [
-     [
-      "vBond unreachable",
-      "DNS/IP"
-     ],
-     [
-      "DTLS",
-      "port 12346"
-     ],
-     [
-      "vSmart no conn",
-      "certificates"
-     ],
-     [
-      "BFD",
-      "transport"
-     ],
-     [
-      "Oversubscription",
-      "links"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Policy issues",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Applied",
-      "vSmart"
-     ],
-     [
-      "Match",
-      "data-prefix/app"
-     ],
-     [
-      "Action",
-      "drop/permit"
-     ],
-     [
-      "Centralized",
-      "control/data"
-     ],
-     [
-      "Localized",
-      "interface"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Wrong match or action",
-      "d": "traffic dropped."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Data plane",
-    "cols": [
-     "Check",
-     "Command"
-    ],
-    "rows": [
-     [
-      "TLOC",
-      "tunnels"
-     ],
-     [
-      "Transport",
-      "interface"
-     ],
-     [
-      "App awareness",
-      "match"
-     ],
-     [
-      "SLA",
-      "BFD"
-     ],
-     [
-      "Failover",
-      "policy"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No control",
-      "DTLS",
-      "control"
-     ],
-     [
-      "Tunnel down",
-      "TLOC",
-      "tunnel"
-     ],
-     [
-      "No policy",
-      "vSmart",
-      "policy"
-     ],
-     [
-      "Apps wrong",
-      "match",
-      "config"
-     ],
-     [
-      "Failover",
-      "BFD",
-      "sessions"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show sdwan control connections\nshow sdwan control local-properties\nshow sdwan tunnel\nshow sdwan interface\nshow sdwan policy\nshow sdwan running-config\nshow sdwan bfd sessions"
-   }
-  ],
-  "traps": [
-   "**Control plane (vSmart/vBond) must be up first.**",
-   "%%show sdwan control connections%% = **first check**.",
-   "BFD/SLA drives **path selection**.",
-   "Policy mismatch = **silent drops**.",
-   "DTLS **12346** for control."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "SD-WAN"
-   ],
-   "rows": [
-    [
-     "Control",
-     "vSmart/vBond"
-    ],
-    [
-     "Data",
-     "tunnels"
-    ],
-    [
-     "Check",
-     "control connections"
-    ],
-    [
-     "Tunnel",
-     "TLOC"
-    ],
-    [
-     "Policy",
-     "match/action"
-    ],
-    [
-     "SLA",
-     "BFD"
-    ],
-    [
-     "Failover",
-     "policy"
-    ],
-    [
-     "Port",
-     "DTLS 12346"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "16. QoS",
-    "d": "QoS troubleshooting checks classification, marking, policy maps, and interface counters."
-   },
-   {
-    "t": "18. Performance Analysis",
-    "d": "Performance analysis isolates latency, throughput, jitter, and loss and ties them to the network pat"
-   }
-  ],
-  "glossary": [
-   "SD-WAN"
-  ]
- },
- {
-  "num": "18",
-  "id": "t18",
-  "group": "advanced",
-  "title": "Performance Analysis",
-  "blurb": "Performance analysis isolates latency, throughput, jitter, and loss and ties them to the network pat",
-  "overview": "**Performance analysis** isolates **latency, throughput, jitter, and loss** and ties them to the network path. Tools: ping, traceroute, **[[NetFlow]]**, **[[IP SLA]]**, and protocol analyzers. The exam tests interpreting metric patterns and root-causing performance.",
-  "keyIdea": "Latency = **4 components** (serial/prop/process/queue).",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Key metrics",
-    "cols": [
-     "Metric",
-     "Meaning"
+  {
+    "num": "15",
+    "id": "t15",
+    "group": "advanced",
+    "title": "Wireless",
+    "blurb": "Wireless troubleshooting separates RF, association, authentication and addressing problems.",
+    "overview": "**[[WLAN|Wireless troubleshooting]]** covers RF issues, client association, authentication, and controller problems. Symptoms: weak signal, no association, slow rates, or roaming gaps. The exam tests the RF → association → auth → DHCP chain.",
+    "keyIdea": "Order: **RF → association → auth → IP**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "RF, association, authentication, addressing",
+        "p": "A wireless client must first hear an SSID, associate with an access point, complete authentication and key exchange, and obtain an IP address. Failures at each stage look different. Weak signal or interference causes retries and roaming problems; a security mismatch prevents association or authentication; a VLAN or DHCP problem gives a client an address but no connectivity."
+      },
+      {
+        "kind": "list",
+        "h": "Join stages and checks",
+        "items": [
+          {
+            "t": "RF",
+            "d": "Check signal, channel utilization, interference and the AP the client is using."
+          },
+          {
+            "t": "SSID",
+            "d": "Confirm the WLAN is enabled and broadcast if the client needs to discover it."
+          },
+          {
+            "t": "Security",
+            "d": "Match the WLAN security policy, authentication method and client credentials."
+          },
+          {
+            "t": "Addressing",
+            "d": "Confirm the client VLAN, DHCP scope and gateway after association."
+          },
+          {
+            "t": "Roaming",
+            "d": "Check coverage overlap and whether the client roams to a new AP with the same policy."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Latency",
-      "RTT delay"
-     ],
-     [
-      "Throughput",
-      "bits/sec"
-     ],
-     [
-      "Jitter",
-      "delay variation"
-     ],
-     [
-      "Loss",
-      "dropped %"
-     ],
-     [
-      "Utilization",
-      "capacity use"
-     ]
+    "commands": [
+      {
+        "label": "WLC and client state",
+        "code": "show wireless client summary\nshow wireless client mac-address 0011.2233.4455 detail\nshow ap summary\nshow wlan summary"
+      },
+      {
+        "label": "RF and AP checks",
+        "code": "show ap dot11 5ghz summary\nshow ap dot11 24ghz summary\nshow controllers dot11Radio 1/0/0"
+      },
+      {
+        "label": "Targeted client debug",
+        "code": "debug wireless client mac-address 0011.2233.4455\nundebug all\nshow logging"
+      }
+    ],
+    "traps": [
+      "Order: **RF → association → auth → IP**.",
+      "Client **associated ≠ authenticated**.",
+      "%%show ap summary%% = **AP health**.",
+      "Roaming issues → **fast roam + coverage**.",
+      "5 GHz vs 2.4 GHz — **interference differs**."
+    ],
+    "table": {
+      "cols": [
+        "Stage",
+        "Check"
+      ],
+      "rows": [
+        [
+          "RF",
+          "Signal and interference"
+        ],
+        [
+          "Association",
+          "SSID and AP"
+        ],
+        [
+          "Authentication",
+          "Security policy"
+        ],
+        [
+          "Addressing",
+          "DHCP and VLAN"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "14. VPN",
+        "d": "VPN troubleshooting checks the tunnel, IKE phases, transforms, and interesting traffic."
+      },
+      {
+        "t": "16. QoS",
+        "d": "QoS troubleshooting checks classification, marking, policy maps, and interface counters."
+      }
+    ],
+    "glossary": [
+      "WLAN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Latency components",
-    "cols": [
-     "Component",
-     "Where"
+  },
+  {
+    "num": "16",
+    "id": "t16",
+    "group": "advanced",
+    "title": "QoS",
+    "blurb": "QoS troubleshooting checks classification, marking, policy maps, and interface counters.",
+    "overview": "**[[QoS|QoS troubleshooting]]** checks **classification, marking, policy maps, and interface counters**. Failures show as no marking, wrong queueing, or drops despite policy. Verify with **%%show policy-map interface%%** and counters. The exam tests policy application and direction.",
+    "keyIdea": "%%show policy-map interface%% = **applied reality**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Classify, mark, then treat",
+        "p": "QoS starts by classifying traffic and marking it with a DSCP or CoS value. The trust boundary decides whether the network believes the markings. Congestion management queues and schedules packets, while policing and shaping control rates. A QoS policy that is correct on paper can fail because it is applied in the wrong direction or because the device does not trust the incoming marking."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Class map",
+            "d": "`show class-map` confirms what traffic the policy matches."
+          },
+          {
+            "t": "Policy map",
+            "d": "`show policy-map` shows marking, policing and queuing actions."
+          },
+          {
+            "t": "Interface",
+            "d": "`show policy-map interface` shows matches, drops and queue statistics."
+          },
+          {
+            "t": "Trust",
+            "d": "At the trust boundary, set or trust DSCP; otherwise an upstream marking may be ignored."
+          },
+          {
+            "t": "Direction",
+            "d": "Ingress classification and egress queuing are different stages; a policy applied outbound may not see the original marking."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Serialization",
-      "link speed"
-     ],
-     [
-      "Propagation",
-      "distance"
-     ],
-     [
-      "Processing",
-      "router"
-     ],
-     [
-      "Queueing",
-      "congestion"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "policy-map QOS\n class VOICE\n  priority percent 10\n class EF\n  bandwidth percent 20\ninterface Gi0/1\n service-policy output QOS"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show policy-map interface Gi0/1\nshow policy-map\nshow class-map\nshow mls qos\nshow interface Gi0/1 counters"
+      }
+    ],
+    "traps": [
+      "%%show policy-map interface%% = **applied reality**.",
+      "Direction matters: **service-policy in/out**.",
+      "**Trust boundary** determines marking.",
+      "Zero counters = **class never matched**.",
+      "Queue drops ≠ policy failure — **congestion**."
+    ],
+    "table": {
+      "cols": [
+        "Check",
+        "Command"
+      ],
+      "rows": [
+        [
+          "Class match",
+          "`show class-map`"
+        ],
+        [
+          "Policy actions",
+          "`show policy-map`"
+        ],
+        [
+          "Interface statistics",
+          "`show policy-map interface`"
+        ],
+        [
+          "Queueing configuration",
+          "`show running-config | section policy-map`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "15. Wireless",
+        "d": "Wireless troubleshooting covers RF issues, client association, authentication, and controller proble"
+      },
+      {
+        "t": "17. SD-WAN",
+        "d": "SD-WAN troubleshooting checks the control plane (vManage/vSmart), data plane (transport tunnels), an"
+      }
+    ],
+    "glossary": [
+      "QoS"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Tools",
-    "cols": [
-     "Tool",
-     "Measures"
+  },
+  {
+    "num": "17",
+    "id": "t17",
+    "group": "advanced",
+    "title": "SD-WAN",
+    "blurb": "SD-WAN troubleshooting checks controller connections, TLOCs, BFD tunnels and policy.",
+    "overview": "**[[SD-WAN|SD-WAN troubleshooting]]** checks the **control plane (vManage/vSmart), data plane (transport tunnels), and policy**. Failures: control connections down, TLOC issues, or policy dropping traffic. Verify with **%%show sdwan control%%** and **%%show sdwan policy%%**. The exam tests the vEdge/cEdge command set.",
+    "keyIdea": "**Control plane (vSmart/vBond) must be up first.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Control plane first, then tunnels and policy",
+        "p": "Cisco SD-WAN separates the management plane (vManage), the control plane (vSmart) and the orchestration plane (vBond). Edge routers establish control connections, bring up TLOCs and data tunnels, and use BFD to measure path quality. A policy can then steer traffic by application or SLA. If control connections are down, the edge cannot receive policy or establish the expected tunnels."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Control connections",
+            "d": "Confirm the edge has control connections to vSmart and vBond."
+          },
+          {
+            "t": "TLOC",
+            "d": "A TLOC identifies the WAN interface and color; without it, no data tunnel can form."
+          },
+          {
+            "t": "BFD",
+            "d": "BFD measures loss, latency and jitter; a policy SLA depends on those values."
+          },
+          {
+            "t": "Policy",
+            "d": "Check the policy order and direction; a later policy may override an earlier match."
+          },
+          {
+            "t": "Trap",
+            "d": "A tunnel can be up while an application still takes the wrong path because the policy did not match."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "ping",
-      "RTT/loss"
-     ],
-     [
-      "traceroute",
-      "hop latency"
-     ],
-     [
-      "IP SLA",
-      "jitter/loss"
-     ],
-     [
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show sdwan control connections\nshow sdwan control local-properties\nshow sdwan tunnel\nshow sdwan interface\nshow sdwan policy\nshow sdwan running-config\nshow sdwan bfd sessions"
+      }
+    ],
+    "traps": [
+      "**Control plane (vSmart/vBond) must be up first.**",
+      "%%show sdwan control connections%% = **first check**.",
+      "BFD/SLA drives **path selection**.",
+      "Policy mismatch = **silent drops**.",
+      "DTLS **12346** for control."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "vManage",
+          "Management and orchestration"
+        ],
+        [
+          "vSmart",
+          "Control plane and policy"
+        ],
+        [
+          "vBond",
+          "Authentication and onboarding"
+        ],
+        [
+          "Edge",
+          "Data plane and tunnels"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "16. QoS",
+        "d": "QoS troubleshooting checks classification, marking, policy maps, and interface counters."
+      },
+      {
+        "t": "18. Performance Analysis",
+        "d": "Performance analysis isolates latency, throughput, jitter, and loss and ties them to the network pat"
+      }
+    ],
+    "glossary": [
+      "SD-WAN"
+    ]
+  },
+  {
+    "num": "18",
+    "id": "t18",
+    "group": "advanced",
+    "title": "Performance Analysis",
+    "blurb": "Performance analysis measures latency, jitter, loss and throughput along the path.",
+    "overview": "**Performance analysis** isolates **latency, throughput, jitter, and loss** and ties them to the network path. Tools: ping, traceroute, **[[NetFlow]]**, **[[IP SLA]]**, and protocol analyzers. The exam tests interpreting metric patterns and root-causing performance.",
+    "keyIdea": "Latency = **4 components** (serial/prop/process/queue).",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Measure before you change",
+        "p": "Performance problems are rarely solved by guessing. Measure latency, jitter, packet loss, throughput and application response time, then compare them with a baseline. A single ping measures reachability and round-trip time, not the experience of a voice or video flow. Use IP SLA for synthetic probes, flow data for volume, and packet captures for protocol behaviour."
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Baseline",
+            "d": "Know what normal looks like before the incident."
+          },
+          {
+            "t": "Segment",
+            "d": "Measure from the client, access, WAN and application to find the affected segment."
+          },
+          {
+            "t": "Correlate",
+            "d": "Compare performance data with interface errors, QoS drops, routing changes and flow volume."
+          },
+          {
+            "t": "Capture",
+            "d": "Use a targeted capture when the metrics point to a protocol or retransmission problem."
+          },
+          {
+            "t": "Trap",
+            "d": "Bandwidth is not the only cause; latency, loss and application design can dominate."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Measure the path",
+        "code": "ping 10.0.0.1 repeat 100\ntraceroute 10.0.0.1\nshow ip sla statistics\nshow flow monitor statistics"
+      },
+      {
+        "label": "Conditional debug",
+        "code": "access-list 150 permit ip host 10.10.10.10 any\ndebug condition interface GigabitEthernet1/0/1\ndebug ip packet detail acl 150\nshow debug"
+      },
+      {
+        "label": "Stop and verify",
+        "code": "undebug all\nshow logging\nshow processes cpu\nshow interfaces counters errors"
+      }
+    ],
+    "traps": [
+      "Latency = **4 components** (serial/prop/process/queue).",
+      "**Jitter ≠ latency** — variation not level.",
+      "TCP window affects **throughput** independent of bandwidth.",
+      "IP SLA = **active measurement** of SLA metrics.",
+      "Baseline first; **isolate before fixing**."
+    ],
+    "table": {
+      "cols": [
+        "Metric",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Latency",
+          "Delay between endpoints"
+        ],
+        [
+          "Jitter",
+          "Variation in delay"
+        ],
+        [
+          "Loss",
+          "Packets that do not arrive"
+        ],
+        [
+          "Throughput",
+          "Delivered data rate"
+        ],
+        [
+          "MOS",
+          "Voice quality estimate"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "17. SD-WAN",
+        "d": "SD-WAN troubleshooting checks the control plane (vManage/vSmart), data plane (transport tunnels), an"
+      },
+      {
+        "t": "01. Layer 1",
+        "d": "Layer 1 is the physical layer — cable, connector, power, light."
+      }
+    ],
+    "glossary": [
       "NetFlow",
-      "throughput/apps"
-     ],
-     [
-      "Wireshark",
-      "packet timing"
-     ],
-     [
-      "SNMP",
-      "utilization"
-     ]
+      "IP SLA"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Interpreting patterns",
-    "cols": [
-     "Pattern",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Constant high",
-      "serialization/distance"
-     ],
-     [
-      "Spiking",
-      "queueing"
-     ],
-     [
-      "Burst loss",
-      "congestion"
-     ],
-     [
-      "One-way high",
-      "asymmetric"
-     ],
-     [
-      "TTL cut",
-      "loop/hop"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Throughput vs bandwidth",
-    "cols": [
-     "Term",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Bandwidth",
-      "capacity"
-     ],
-     [
-      "Throughput",
-      "delivered"
-     ],
-     [
-      "TCP window",
-      "limits"
-     ],
-     [
-      "Window scaling",
-      "helps"
-     ],
-     [
-      "Drop",
-      "shrinks"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Analysis workflow",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "baseline"
-     ],
-     [
-      "2",
-      "measure latency/loss"
-     ],
-     [
-      "3",
-      "identify segment"
-     ],
-     [
-      "4",
-      "capture"
-     ],
-     [
-      "5",
-      "confirm fix"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "High RTT",
-      "distance/queue",
-      "traceroute"
-     ],
-     [
-      "Jitter",
-      "queue",
-      "ip sla"
-     ],
-     [
-      "Loss",
-      "congestion",
-      "ping"
-     ],
-     [
-      "Low TP",
-      "window",
-      "TCP"
-     ],
-     [
-      "CPU",
-      "process",
-      "show processes"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Debug safety",
-    "cols": [
-     "Risk",
-     "Why it matters",
-     "Control"
-    ],
-    "rows": [
-     [
-      "**CPU load**",
-      "Debug output is generated in the process path",
-      "Use a condition or ACL and keep the window short"
-     ],
-     [
-      "**Log flooding**",
-      "Console or syslog can be overwhelmed",
-      "Send output to a buffer or logging host, not the console"
-     ],
-     [
-      "**Accidental outage**",
-      "A broad debug can stall a busy router",
-      "Never run `debug ip packet` without a filter in production"
-     ],
-     [
-      "**Forgotten debug**",
-      "The command keeps running after the test",
-      "Always finish with `undebug all` and verify"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Conditional debug workflow",
-    "code": "! Limit the debug to one interface and one ACL\naccess-list 150 permit ip host 10.10.10.10 any\ndebug condition interface GigabitEthernet1/0/1\ndebug ip packet detail acl 150\n!\nshow debug\nshow logging\nundebug all"
-   },
-   {
-    "kind": "list",
-    "h": "Evidence before and after the fix",
-    "items": [
-     {
-      "t": "Baseline",
-      "d": "Record latency, loss, jitter and throughput before changing anything."
-     },
-     {
-      "t": "Isolate",
-      "d": "Use traceroute, interface counters and a filtered capture to find the failing segment."
-     },
-     {
-      "t": "Change one variable",
-      "d": "Adjust one policy, route or link parameter, then measure again."
-     },
-     {
-      "t": "Verify",
-      "d": "Confirm the original symptom is gone and no new errors appeared."
-     }
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Measure the path",
-    "code": "ping 10.0.0.1 repeat 100\ntraceroute 10.0.0.1\nshow ip sla statistics\nshow flow monitor statistics"
-   },
-   {
-    "label": "Conditional debug",
-    "code": "access-list 150 permit ip host 10.10.10.10 any\ndebug condition interface GigabitEthernet1/0/1\ndebug ip packet detail acl 150\nshow debug"
-   },
-   {
-    "label": "Stop and verify",
-    "code": "undebug all\nshow logging\nshow processes cpu\nshow interfaces counters errors"
-   }
-  ],
-  "traps": [
-   "Latency = **4 components** (serial/prop/process/queue).",
-   "**Jitter ≠ latency** — variation not level.",
-   "TCP window affects **throughput** independent of bandwidth.",
-   "IP SLA = **active measurement** of SLA metrics.",
-   "Baseline first; **isolate before fixing**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Performance"
-   ],
-   "rows": [
-    [
-     "Latency",
-     "RTT"
-    ],
-    [
-     "Jitter",
-     "variation"
-    ],
-    [
-     "Loss",
-     "%"
-    ],
-    [
-     "Throughput",
-     "delivered"
-    ],
-    [
-     "Tools",
-     "ping/IP SLA"
-    ],
-    [
-     "Capture",
-     "Wireshark"
-    ],
-    [
-     "TCP",
-     "window"
-    ],
-    [
-     "Flow",
-     "analyze then fix"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "17. SD-WAN",
-    "d": "SD-WAN troubleshooting checks the control plane (vManage/vSmart), data plane (transport tunnels), an"
-   },
-   {
-    "t": "01. Layer 1",
-    "d": "Layer 1 is the physical layer — cable, connector, power, light."
-   }
-  ],
-  "glossary": [
-   "NetFlow",
-   "IP SLA"
-  ]
- }
+  }
 ];
 
         const GROUPS = [{"key":"layer","label":"Layer & Switching","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"routing","label":"Routing Protocols","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"},{"key":"services","label":"Services & Connectivity","chip":"bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300","dot":"bg-amber-600","bullet":"text-amber-600 dark:text-amber-400"},{"key":"advanced","label":"Advanced Troubleshooting","chip":"bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300","dot":"bg-violet-600","bullet":"text-violet-600 dark:text-violet-400"}];
@@ -6127,521 +2551,202 @@
 
         const quiz = [
  {
-  "q": "Why should `debug ip packet` be avoided without a filter on a production router?",
+  "q": "An interface shows `up/down`. What does that usually mean?",
   "options": [
-   "It automatically changes the routing table",
-   "It can overwhelm the CPU and logging path",
-   "It disables CEF globally",
-   "It encrypts all packets"
+   "The port is administratively shut down",
+   "The physical link is up but the protocol is down",
+   "The cable is disconnected",
+   "The port is err-disabled"
   ],
   "answer": 1,
-  "why": "Packet debugging runs in the process path and can generate enormous output. Use a condition or ACL and a short capture window."
+  "why": "The first state is the physical link and the second is the protocol. `up/down` means the link is present but the line protocol is not."
  },
  {
-  "q": "Which symptom most directly indicates jitter rather than simply high latency?",
+  "q": "A port is err-disabled. What should you do before re-enabling it?",
   "options": [
-   "Delay variation between packets",
-   "A constant one-way delay",
-   "A lower TCP window size",
-   "A routing loop"
+   "Reload the switch immediately",
+   "Find and fix the triggering condition",
+   "Disable STP globally",
+   "Change the DNS server"
+  ],
+  "answer": 1,
+  "why": "Err-disable is a protection response. Clear it only after addressing the cause, such as a BPDU guard violation or port security."
+ },
+ {
+  "q": "A VLAN works on the local switch but not across a trunk. What should you check first?",
+  "options": [
+   "The trunk allowed VLAN list",
+   "The OSPF router ID",
+   "The HSRP group",
+   "The BGP AS number"
   ],
   "answer": 0,
-  "why": "Jitter is variation in delay. High latency alone is a level, not variation."
+  "why": "A VLAN must exist and be allowed on the trunk. An access port can be correct while the trunk drops the tagged VLAN."
  },
  {
-  "q": "What is the safest final step after a debug session?",
+  "q": "A port is in STP blocking state. Does that always indicate a fault?",
   "options": [
-   "Reload the device immediately",
-   "Save the running config",
-   "Disable syslog",
-   "Run undebug all and verify with show debug"
-  ],
-  "answer": 3,
-  "why": "Debug commands persist until removed. `undebug all` stops them; `show debug` confirms the state."
- },
- {
-  "q": "Two OSPF routers remain in EXSTART. Which problem is most likely?",
-  "options": [
-   "A duplicate router ID",
-   "An ACL blocking TCP 179",
-   "An MTU mismatch on the link",
-   "A missing default route"
-  ],
-  "answer": 2,
-  "why": "EXSTART is the database-description exchange. An MTU mismatch causes the DBD packets to stall even though hellos succeeded."
- },
- {
-  "q": "A BGP neighbor stays in Idle state. What should be checked first?",
-  "options": [
-   "The OSPF cost",
-   "IP reachability and TCP port 179",
-   "The STP root bridge",
-   "The HSRP priority"
+   "Yes, blocking always means a loop",
+   "No, blocking is normal for a redundant alternate path",
+   "Yes, it means the cable is bad",
+   "No, blocking means the port is administratively down"
   ],
   "answer": 1,
-  "why": "Idle means BGP has not established a TCP session. Check reachability, the neighbor address and TCP 179 before attributes."
+  "why": "STP intentionally blocks redundant ports to prevent loops. Investigate an unexpected root, flapping or topology change instead."
  },
  {
-  "q": "An ACL ends with `deny any`. What happens to traffic that matches no earlier line?",
+  "q": "An EtherChannel member shows `S` in the summary. What does it mean?",
   "options": [
-   "It is dropped by the implicit deny",
+   "The port is bundled",
+   "The port is suspended",
+   "The port is down",
+   "The port is the root port"
+  ],
+  "answer": 1,
+  "why": "`S` means suspended, usually because of a speed, duplex, VLAN, trunk or negotiation mismatch."
+ },
+ {
+  "q": "An OSPF neighbour is stuck in ExStart. Which mismatch is a common cause?",
+  "options": [
+   "MTU",
+   "DNS suffix",
+   "NTP server",
+   "SNMP community"
+  ],
+  "answer": 0,
+  "why": "An MTU mismatch can prevent the database description exchange from completing, leaving the adjacency in ExStart or Exchange."
+ },
+ {
+  "q": "Which parameters must match for two EIGRP routers to become neighbours?",
+  "options": [
+   "AS number, authentication and K-values",
+   "STP priority and MAC address",
+   "BGP cluster ID and route target",
+   "NTP stratum and syslog facility"
+  ],
+  "answer": 0,
+  "why": "EIGRP neighbours must agree on the autonomous system, authentication and metric K-values, among other interface settings."
+ },
+ {
+  "q": "A BGP session is stuck in Active. What does that usually indicate?",
+  "options": [
+   "The session is established",
+   "TCP cannot reach the peer or the peer is not responding",
+   "The route table is empty",
+   "The prefix was filtered"
+  ],
+  "answer": 1,
+  "why": "Active means the router is trying to establish TCP. Check reachability, the neighbor address, TCP 179 and any ACL."
+ },
+ {
+  "q": "BGP is Established but a prefix is missing from the routing table. What should you check next?",
+  "options": [
+   "Only the neighbor uptime",
+   "The BGP table, best path and RIB failure",
+   "The STP root",
+   "The DHCP pool"
+  ],
+  "answer": 1,
+  "why": "An established session only means the peers can exchange routes. The prefix still needs a valid best path and must be installed in the RIB."
+ },
+ {
+  "q": "NAT translations exist but return traffic fails. What is a likely cause?",
+  "options": [
+   "The inside interface is correctly configured",
+   "A missing return route or an outside ACL",
+   "The DNS server is down",
+   "STP is blocking the NAT VLAN"
+  ],
+  "answer": 1,
+  "why": "The return packet must reach the translated address and match the translation. Check the outside route and any filtering."
+ },
+ {
+  "q": "What happens to traffic that matches no entry in an ACL?",
+  "options": [
    "It is permitted",
-   "It is NATed",
-   "It is logged and forwarded"
-  ],
-  "answer": 0,
-  "why": "Cisco ACLs have an implicit deny at the end. Any traffic not explicitly permitted is dropped."
- },
- {
-  "q": "A packet matches both a NAT statement and a route. Which order should you verify when troubleshooting?",
-  "options": [
-   "Only the ARP cache",
-   "Only the DNS server",
-   "Only the STP topology",
-   "Routing and NAT order of operations"
-  ],
-  "answer": 3,
-  "why": "NAT and routing interact. Confirm which interface is inside or outside and whether the packet is routed before or after translation."
- },
- {
-  "q": "A DHCP client on a remote VLAN gets no address. What is the most likely missing configuration?",
-  "options": [
-   "A static route on the client",
-   "An HSRP priority",
-   "An ip helper-address on the client VLAN SVI",
-   "A BGP community"
-  ],
-  "answer": 2,
-  "why": "DHCP broadcasts do not cross routers. The SVI needs an ip helper-address pointing to the DHCP server."
- },
- {
-  "q": "Which QoS tool delays packets instead of dropping them?",
-  "options": [
-   "Policer",
-   "Shaper",
-   "WRED",
-   "PFC"
+   "It is dropped by the implicit deny",
+   "It is NAT translated",
+   "It is routed to the default gateway"
   ],
   "answer": 1,
-  "why": "A shaper buffers and delays excess traffic. A policer drops or remarks traffic that exceeds the rate."
+  "why": "Every ACL ends with an implicit deny. Add an explicit permit if the remaining traffic must pass."
  },
  {
-  "q": "What is the first step in a structured Layer 1 troubleshooting process?",
+  "q": "A DHCP client has a 169.254 address. What does that mean?",
   "options": [
-   "Check the physical link, cable and interface status",
-   "Change the OSPF cost",
-   "Reset BGP",
-   "Reload the core switch"
-  ],
-  "answer": 0,
-  "why": "Start at the bottom of the OSI model. A down or erroring interface makes every upper-layer protocol irrelevant."
- },
- {
-  "q": "Which command is most useful for finding a duplex mismatch?",
-  "options": [
-   "show ip bgp summary",
-   "show vlan brief",
-   "show ntp status",
-   "show interfaces"
-  ],
-  "answer": 3,
-  "why": "`show interfaces` reveals late collisions, FCS errors, runts and duplex settings that point to a mismatch."
- },
- {
-  "q": "In Layer 1 — Interface states, which value matches \"up/up\"?",
-  "options": [
-   "admin up, no link",
-   "shutdown or no link",
-   "link + line",
-   "no media connected"
-  ],
-  "answer": 2,
-  "why": "Interface states in Layer 1 pairs \"up/up\" with \"link + line\"."
- },
- {
-  "q": "In Layer 1 — Interface states, which value matches \"up/down\"?",
-  "options": [
-   "link + line",
-   "admin up, no link",
-   "shutdown or no link",
-   "no media connected"
+   "It received a valid lease",
+   "It did not receive a lease",
+   "It is using a static address",
+   "It has a DNS failure only"
   ],
   "answer": 1,
-  "why": "Interface states in Layer 1 pairs \"up/down\" with \"admin up, no link\"."
+  "why": "169.254.0.0/16 is link-local autoconfiguration. It usually means the client could not reach a DHCP server or relay."
  },
  {
-  "q": "In Layer 2, what does the command \"show interfaces status\" show or do?",
+  "q": "A DNS query returns NXDOMAIN. What does that mean?",
   "options": [
-   "vlan/type",
-   "learned MACs",
-   "VLAN list",
-   "trunk info"
-  ],
-  "answer": 0,
-  "why": "Port state checks in Layer 2 pairs \"show interfaces status\" with \"vlan/type\"."
- },
- {
-  "q": "In Layer 2, what does the command \"show mac address-table\" show or do?",
-  "options": [
-   "vlan/type",
-   "VLAN list",
-   "trunk info",
-   "learned MACs"
-  ],
-  "answer": 3,
-  "why": "Port state checks in Layer 2 pairs \"show mac address-table\" with \"learned MACs\"."
- },
- {
-  "q": "In Layer 3, what does the command \"show ip interface brief\" show or do?",
-  "options": [
-   "table",
-   "specific",
-   "up + IP",
-   "routing running"
-  ],
-  "answer": 2,
-  "why": "Commands in Layer 3 pairs \"show ip interface brief\" with \"up + IP\"."
- },
- {
-  "q": "In Layer 3, what does the command \"show ip route\" show or do?",
-  "options": [
-   "up + IP",
-   "table",
-   "specific",
-   "routing running"
+   "The server did not respond",
+   "The name does not exist in the zone",
+   "The client has no IP address",
+   "The query was encrypted"
   ],
   "answer": 1,
-  "why": "Commands in Layer 3 pairs \"show ip route\" with \"table\"."
+  "why": "NXDOMAIN is a definitive answer that the queried name does not exist. A timeout is different: no answer was received."
  },
  {
-  "q": "In VLAN — Common failures, which value matches \"Port missing\"?",
+  "q": "IPsec Phase 1 is up but Phase 2 is not. Which area should you check?",
   "options": [
-   "not in VLAN",
-   "allowed vlan",
-   "native mismatch",
-   "IP helper missing"
+   "Interesting-traffic ACL, transform set and proxy identities",
+   "The OSPF hello timer",
+   "The STP root priority",
+   "The DHCP relay"
   ],
   "answer": 0,
-  "why": "Common failures in VLAN pairs \"Port missing\" with \"not in VLAN\"."
+  "why": "Phase 2 depends on matching traffic selectors and IPsec proposals. Phase 1 being up only proves IKE succeeded."
  },
  {
-  "q": "In VLAN — Common failures, which value matches \"Trunk no pass\"?",
+  "q": "What is the trust boundary in a QoS design?",
   "options": [
-   "not in VLAN",
-   "native mismatch",
-   "IP helper missing",
-   "allowed vlan"
+   "The point where the network starts trusting DSCP or CoS markings",
+   "The STP root bridge",
+   "The BGP route reflector",
+   "The DNS server"
   ],
-  "answer": 3,
-  "why": "Common failures in VLAN pairs \"Trunk no pass\" with \"allowed vlan\"."
+  "answer": 0,
+  "why": "At the trust boundary, the network decides whether to trust, remark or police the markings supplied by the endpoint or upstream device."
  },
  {
-  "q": "In STP, what does the command \"show spanning-tree\" show or do?",
+  "q": "In Cisco SD-WAN, what should be working before you troubleshoot application policy?",
   "options": [
-   "per vlan",
-   "root roles",
-   "root/ports",
-   "timers"
+   "Control connections, TLOCs and BFD",
+   "Only the vManage GUI theme",
+   "Only the DHCP pool",
+   "Only STP"
   ],
-  "answer": 2,
-  "why": "Verify commands in STP pairs \"show spanning-tree\" with \"root/ports\"."
+  "answer": 0,
+  "why": "Policy depends on a working control plane and data tunnels. Verify control connections, TLOC state and BFD before blaming the policy."
  },
  {
-  "q": "In STP, what does the command \"show spanning-tree vlan 10\" show or do?",
+  "q": "Which wireless failure prevents a client from even seeing the SSID?",
   "options": [
-   "root/ports",
-   "per vlan",
-   "root roles",
-   "timers"
+   "A DHCP scope problem",
+   "RF coverage or a disabled or hidden WLAN",
+   "An IPsec phase 2 mismatch",
+   "A BGP route filter"
   ],
   "answer": 1,
-  "why": "Verify commands in STP pairs \"show spanning-tree vlan 10\" with \"per vlan\"."
+  "why": "The client must hear the SSID before association. Check RF coverage, WLAN state and broadcast settings."
  },
  {
-  "q": "In EtherChannel, what does the command \"show etherchannel summary\" show or do?",
+  "q": "Which metric directly measures delay variation?",
   "options": [
-   "bundle state",
-   "members",
-   "hash",
-   "member"
-  ],
-  "answer": 0,
-  "why": "Verify commands in EtherChannel pairs \"show etherchannel summary\" with \"bundle state\"."
- },
- {
-  "q": "In EtherChannel, what does the command \"show etherchannel port-channel\" show or do?",
-  "options": [
-   "bundle state",
-   "hash",
-   "member",
-   "members"
-  ],
-  "answer": 3,
-  "why": "Verify commands in EtherChannel pairs \"show etherchannel port-channel\" with \"members\"."
- },
- {
-  "q": "In OSPF — Adjacency requirements, which value matches \"Hello interval\"?",
-  "options": [
-   "default 4x hello",
-   "broadcast/ptp",
-   "ip ospf hello-interval",
-   "must match"
-  ],
-  "answer": 2,
-  "why": "Adjacency requirements in OSPF pairs \"Hello interval\" with \"ip ospf hello-interval\"."
- },
- {
-  "q": "In OSPF — Adjacency requirements, which value matches \"Dead interval\"?",
-  "options": [
-   "ip ospf hello-interval",
-   "default 4x hello",
-   "broadcast/ptp",
-   "must match"
+   "Latency",
+   "Jitter",
+   "Throughput",
+   "Packet loss"
   ],
   "answer": 1,
-  "why": "Adjacency requirements in OSPF pairs \"Dead interval\" with \"default 4x hello\"."
- },
- {
-  "q": "In EIGRP — Neighbor requirements, which value matches \"AS number\"?",
-  "options": [
-   "must match",
-   "match timers",
-   "in AS",
-   "match"
-  ],
-  "answer": 0,
-  "why": "Neighbor requirements in EIGRP pairs \"AS number\" with \"must match\"."
- },
- {
-  "q": "In EIGRP — Neighbor requirements, which value matches \"K-values\"?",
-  "options": [
-   "match timers",
-   "in AS",
-   "match",
-   "must match"
-  ],
-  "answer": 3,
-  "why": "Neighbor requirements in EIGRP pairs \"K-values\" with \"must match\"."
- },
- {
-  "q": "In BGP — Session states, which value matches \"Idle\"?",
-  "options": [
-   "TCP attempt",
-   "retrying",
-   "starting",
-   "sent open"
-  ],
-  "answer": 2,
-  "why": "Session states in BGP pairs \"Idle\" with \"starting\"."
- },
- {
-  "q": "In BGP — Session states, which value matches \"Connect\"?",
-  "options": [
-   "starting",
-   "TCP attempt",
-   "retrying",
-   "sent open"
-  ],
-  "answer": 1,
-  "why": "Session states in BGP pairs \"Connect\" with \"TCP attempt\"."
- },
- {
-  "q": "In NAT, what does the command \"show ip nat translations\" show or do?",
-  "options": [
-   "table",
-   "counters",
-   "detail",
-   "events"
-  ],
-  "answer": 0,
-  "why": "Verify commands in NAT pairs \"show ip nat translations\" with \"table\"."
- },
- {
-  "q": "In NAT, what does the command \"show ip nat statistics\" show or do?",
-  "options": [
-   "table",
-   "detail",
-   "events",
-   "counters"
-  ],
-  "answer": 3,
-  "why": "Verify commands in NAT pairs \"show ip nat statistics\" with \"counters\"."
- },
- {
-  "q": "In ACL, what does the command \"show access-lists\" show or do?",
-  "options": [
-   "one list",
-   "applied ACLs",
-   "entries + hits",
-   "config"
-  ],
-  "answer": 2,
-  "why": "Verify commands in ACL pairs \"show access-lists\" with \"entries + hits\"."
- },
- {
-  "q": "In ACL, what does the command \"show access-lists 100\" show or do?",
-  "options": [
-   "entries + hits",
-   "one list",
-   "applied ACLs",
-   "config"
-  ],
-  "answer": 1,
-  "why": "Verify commands in ACL pairs \"show access-lists 100\" with \"one list\"."
- },
- {
-  "q": "In DHCP, what does the command \"show ip dhcp binding\" show or do?",
-  "options": [
-   "leases",
-   "ranges",
-   "conflicts",
-   "counts"
-  ],
-  "answer": 0,
-  "why": "Verify commands in DHCP pairs \"show ip dhcp binding\" with \"leases\"."
- },
- {
-  "q": "In DHCP, what does the command \"show ip dhcp pool\" show or do?",
-  "options": [
-   "leases",
-   "conflicts",
-   "counts",
-   "ranges"
-  ],
-  "answer": 3,
-  "why": "Verify commands in DHCP pairs \"show ip dhcp pool\" with \"ranges\"."
- },
- {
-  "q": "In DNS — Verify tools, which value matches \"nslookup name\"?",
-  "options": [
-   "full detail",
-   "resolution + ICMP",
-   "query",
-   "cache"
-  ],
-  "answer": 2,
-  "why": "Verify tools in DNS pairs \"nslookup name\" with \"query\"."
- },
- {
-  "q": "In DNS — Verify tools, which value matches \"dig name\"?",
-  "options": [
-   "query",
-   "full detail",
-   "resolution + ICMP",
-   "cache"
-  ],
-  "answer": 1,
-  "why": "Verify tools in DNS pairs \"dig name\" with \"full detail\"."
- },
- {
-  "q": "In VPN, what does the command \"show crypto isakmp sa\" show or do?",
-  "options": [
-   "IKE phase 1",
-   "phase 2 + traffic",
-   "config",
-   "sessions"
-  ],
-  "answer": 0,
-  "why": "Verify commands in VPN pairs \"show crypto isakmp sa\" with \"IKE phase 1\"."
- },
- {
-  "q": "In VPN, what does the command \"show crypto ipsec sa\" show or do?",
-  "options": [
-   "IKE phase 1",
-   "config",
-   "sessions",
-   "phase 2 + traffic"
-  ],
-  "answer": 3,
-  "why": "Verify commands in VPN pairs \"show crypto ipsec sa\" with \"phase 2 + traffic\"."
- },
- {
-  "q": "In Wireless — RF checks, which value matches \"Signal\"?",
-  "options": [
-   "channels",
-   "floor plan",
-   "RSSI/SNR",
-   "lowest"
-  ],
-  "answer": 2,
-  "why": "RF checks in Wireless pairs \"Signal\" with \"RSSI/SNR\"."
- },
- {
-  "q": "In Wireless — RF checks, which value matches \"Interference\"?",
-  "options": [
-   "RSSI/SNR",
-   "channels",
-   "floor plan",
-   "lowest"
-  ],
-  "answer": 1,
-  "why": "RF checks in Wireless pairs \"Interference\" with \"channels\"."
- },
- {
-  "q": "In QoS, what does the command \"show policy-map interface\" show or do?",
-  "options": [
-   "applied policy",
-   "match rules",
-   "config",
-   "trust"
-  ],
-  "answer": 0,
-  "why": "Verify commands in QoS pairs \"show policy-map interface\" with \"applied policy\"."
- },
- {
-  "q": "In QoS, what does the command \"show class-map\" show or do?",
-  "options": [
-   "applied policy",
-   "config",
-   "trust",
-   "match rules"
-  ],
-  "answer": 3,
-  "why": "Verify commands in QoS pairs \"show class-map\" with \"match rules\"."
- },
- {
-  "q": "In SD-WAN — Architecture check, which value matches \"vManage\"?",
-  "options": [
-   "control policy",
-   "orchestration",
-   "admin UI",
-   "data plane"
-  ],
-  "answer": 2,
-  "why": "Architecture check in SD-WAN pairs \"vManage\" with \"admin UI\"."
- },
- {
-  "q": "In SD-WAN — Architecture check, which value matches \"vSmart\"?",
-  "options": [
-   "admin UI",
-   "control policy",
-   "orchestration",
-   "data plane"
-  ],
-  "answer": 1,
-  "why": "Architecture check in SD-WAN pairs \"vSmart\" with \"control policy\"."
- },
- {
-  "q": "In Performance Analysis — Key metrics, which value matches \"Latency\"?",
-  "options": [
-   "RTT delay",
-   "bits/sec",
-   "delay variation",
-   "dropped %"
-  ],
-  "answer": 0,
-  "why": "Key metrics in Performance Analysis pairs \"Latency\" with \"RTT delay\"."
- },
- {
-  "q": "In Performance Analysis — Key metrics, which value matches \"Throughput\"?",
-  "options": [
-   "RTT delay",
-   "delay variation",
-   "dropped %",
-   "bits/sec"
-  ],
-  "answer": 3,
-  "why": "Key metrics in Performance Analysis pairs \"Throughput\" with \"bits/sec\"."
+  "why": "Jitter is variation in delay. Latency is the delay itself; throughput is delivered rate; loss is missing packets."
  }
 ];
 
@@ -6729,6 +2834,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

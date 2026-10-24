@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,2353 +600,839 @@
         const heroIntro = "**[[SSO]]** and **[[NSF]]** keep control-plane state alive across a supervisor switch, backed by **[[Redundant Supervisors]]** in the chassis. **[[EtherChannel]]** protects links, a **[[First Hop Redundancy Protocol]]** protects the gateway, and **[[ISSU]]** upgrades without a full reload. **[[Virtual Switching System]]** and a layered **[[High Availability]]** design tie it together.";
 
         const topics = [
- {
-  "num": "01",
-  "id": "t01",
-  "group": "software",
-  "title": "SSO",
-  "blurb": "SSO (Stateful Switchover) keeps control-plane state synchronized between active and standby supervis",
-  "overview": "**[[SSO|SSO (Stateful Switchover)]]** keeps **control-plane state** synchronized between active and standby supervisors so a **supervisor switchover causes no forwarding interruption**. Cisco IOS-XE uses %%mode sso%%; the two RPs stay synchronized via **bulk sync** + **incremental SYNC**. **NSF/SSO** is the classic HA pairing.",
-  "keyIdea": "**SSO = control-plane state sync**; forwarding unaffected.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What SSO does",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "01",
+    "id": "t01",
+    "group": "software",
+    "title": "SSO",
+    "blurb": "SSO keeps control-plane state synchronized so a standby supervisor can take over quickly.",
+    "overview": "**[[SSO|SSO (Stateful Switchover)]]** keeps **control-plane state** synchronized between active and standby supervisors so a **supervisor switchover causes no forwarding interruption**. Cisco IOS-XE uses %%mode sso%%; the two RPs stay synchronized via **bulk sync** + **incremental SYNC**. **NSF/SSO** is the classic HA pairing.",
+    "keyIdea": "**SSO = control-plane state sync**; forwarding unaffected.",
+    "sections": [
+      {
+        "h": "High Availability",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">HIGH AVAILABILITY</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Redundancy, Failover, NSF/SSO</text></g></svg>",
+        "caption": "Minimize downtime."
+      },
+      {
+        "kind": "para",
+        "h": "Stateful switchover between supervisors",
+        "p": "Stateful Switchover keeps an active and a standby supervisor synchronized. The standby receives the running configuration and protocol state, so a switchover can continue forwarding with minimal interruption. SSO is the foundation for NSF and ISSU; without it, a supervisor failure usually means a full control-plane restart and a longer outage."
+      },
+      {
+        "kind": "list",
+        "h": "Requirements and verification",
+        "items": [
+          {
+            "t": "Redundant supervisors",
+            "d": "The chassis needs two supervisors with compatible hardware and software."
+          },
+          {
+            "t": "Matching image",
+            "d": "Both supervisors should run the same image and feature set."
+          },
+          {
+            "t": "State sync",
+            "d": "The standby must reach the standby-hot state, not just be present."
+          },
+          {
+            "t": "Verify",
+            "d": "`show redundancy` shows the active and standby roles, state and switchover counters."
+          },
+          {
+            "t": "Test",
+            "d": "Use a controlled `redundancy force-switchover` during a maintenance window."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "State",
-      "control-plane"
-     ],
-     [
-      "Sync",
-      "active → standby"
-     ],
-     [
-      "Switchover",
-      "zero control loss"
-     ],
-     [
-      "Forwarding",
-      "unaffected"
-     ],
-     [
-      "Pairs",
-      "dual supervisors"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "The two supervisors",
-    "cols": [
-     "Role",
-     "Duty"
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "redundancy\n mode sso\n main-cpu\n auto-sync running-config"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show redundancy states\nshow redundancy"
+      }
     ],
-    "rows": [
-     [
-      "Active",
-      "runs tasks"
-     ],
-     [
-      "Standby",
-      "hot synced"
-     ],
-     [
-      "Sync type",
-      "bulk + incremental"
-     ],
-     [
-      "Failover",
-      "promoted"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Sync phases",
-    "cols": [
-     "Phase",
-     "Detail"
+    "traps": [
+      "**SSO = control-plane state sync**; forwarding unaffected.",
+      "Requires **dual supervisors** with %%mode sso%%.",
+      "Two sync types: **bulk + incremental**.",
+      "**NSF + SSO** = zero-loss routing continuity (note 02).",
+      "%%show redundancy states%% = validation command."
     ],
-    "rows": [
-     [
-      "Bulk sync",
-      "full state at start"
-     ],
-     [
-      "Incremental",
-      "ongoing updates"
-     ],
-     [
-      "SYNC",
-      "periodic refresh"
-     ],
-     [
-      "Switchover",
-      "takeover on fault"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration",
-    "cols": [
-     "Command",
-     "Meaning"
+    "table": {
+      "cols": [
+        "Mode",
+        "State synchronization",
+        "Failover behaviour"
+      ],
+      "rows": [
+        [
+          "RPR",
+          "None",
+          "Control plane restarts"
+        ],
+        [
+          "RPR+",
+          "Configuration only",
+          "Protocols restart"
+        ],
+        [
+          "SSO",
+          "Configuration and protocol state",
+          "Minimal interruption with NSF"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. NSF",
+        "d": "NSF (Nonstop Forwarding) lets a router continue forwarding traffic while its control plane recovers"
+      },
+      {
+        "t": "03. Redundant Supervisors",
+        "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
+      }
     ],
-    "rows": [
-     [
-      "%%redundancy%%",
-      "enter redundancy mode"
-     ],
-     [
-      "%%mode sso%%",
-      "enable SSO"
-     ],
-     [
-      "%%main-cpu%%",
-      "processor config"
-     ],
-     [
-      "%%state ... standby%%",
-      "sync commands"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Monitoring",
-    "cols": [
-     "Command",
-     "Use"
-    ],
-    "rows": [
-     [
-      "%%show redundancy states%%",
-      "active/standby"
-     ],
-     [
-      "%%show redundancy sso%%",
-      "SSO mode"
-     ],
-     [
-      "%%show redundancy switchover%%",
-      "history"
-     ],
-     [
-      "%%redundancy force-switchover%%",
-      "manual test"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "SSO vs RPR",
-    "cols": [
-     "Aspect",
-     "RPR",
-     "SSO"
-    ],
-    "rows": [
-     [
-      "Standby initializes",
-      "yes",
-      "no"
-     ],
-     [
-      "Sync state",
-      "no",
-      "yes"
-     ],
-     [
-      "Switchover speed",
-      "slow",
-      "fast"
-     ],
-     [
-      "Forwarding impact",
-      "drop",
-      "none"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Not sso",
-      "config",
-      "show redundancy sso"
-     ],
-     [
-      "No standby",
-      "supervisors",
-      "states"
-     ],
-     [
-      "Sync stalls",
-      "CPU",
-      "incremental"
-     ],
-     [
-      "Unexpected fail",
-      "hardware/state",
-      "logs"
-     ],
-     [
-      "Manual test",
-      "validation",
-      "force-switchover"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "redundancy\n mode sso\n main-cpu\n state processor 1 standby supervisor"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show redundancy states\nshow redundancy sso"
-   }
-  ],
-  "traps": [
-   "**SSO = control-plane state sync**; forwarding unaffected.",
-   "Requires **dual supervisors** with %%mode sso%%.",
-   "Two sync types: **bulk + incremental**.",
-   "**NSF + SSO** = zero-loss routing continuity (note 02).",
-   "%%show redundancy states%% = validation command."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "SSO"
-   ],
-   "rows": [
-    [
-     "State",
-     "control-plane"
-    ],
-    [
-     "Pair",
-     "active/standby"
-    ],
-    [
-     "Sync",
-     "bulk+incremental"
-    ],
-    [
-     "Failover",
-     "seamless"
-    ],
-    [
-     "Mode",
-     "mode sso"
-    ],
-    [
-     "vs RPR",
-     "stateful"
-    ],
-    [
-     "Verify",
-     "show redundancy"
-    ],
-    [
-     "HA pair",
-     "NSF/SSO"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "02. NSF",
-    "d": "NSF (Nonstop Forwarding) lets a router continue forwarding traffic while its control plane recovers"
-   },
-   {
-    "t": "03. Redundant Supervisors",
-    "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
-   }
-  ],
-  "glossary": [
-   "SSO"
-  ]
- },
- {
-  "num": "02",
-  "id": "t02",
-  "group": "software",
-  "title": "NSF",
-  "blurb": "NSF (Nonstop Forwarding) lets a router continue forwarding traffic while its control plane recovers",
-  "overview": "**[[NSF|NSF (Nonstop Forwarding)]]** lets a router continue forwarding traffic while its **control plane recovers** during a supervisor/route-processor switchover. It works with **SSO**, and peers see it via **NSF capabilities** — forwarding continues while routing state is rebuilt. **NSF/SSO** is the unified HA story.",
-  "keyIdea": "**NSF = forwarding continues** during control rebuild.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What NSF does",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Forwarding",
-      "continues"
-     ],
-     [
-      "Control plane",
-      "rebooting/rebuilding"
-     ],
-     [
-      "Peer awareness",
-      "NSF capability"
-     ],
-     [
-      "Partner cooperation",
-      "graceful restart"
-     ],
-     [
-      "Goal",
-      "zero traffic loss"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "NSF + SSO",
-    "cols": [
-     "Component",
-     "Role"
-    ],
-    "rows": [
-     [
-      "SSO",
-      "keeps control state"
-     ],
-     [
-      "NSF",
-      "continues forwarding"
-     ],
-     [
-      "Routing",
-      "rebuilds gracefully"
-     ],
-     [
-      "Result",
-      "seamless failover"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Graceful restart",
-    "cols": [
-     "Step",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Capability",
-      "announcements"
-     ],
-     [
-      "Restart",
-      "peer unaware of drop"
-     ],
-     [
-      "Reconstruct",
-      "re-learn routes"
-     ],
-     [
-      "FIB/CEF",
-      "maintained independent"
-     ],
-     [
-      "Convergence",
-      "no full flap"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "NSF awareness (helping router)",
-    "cols": [
-     "Aspect",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Detects NSF-capable",
-      "hello/graceful"
-     ],
-     [
-      "Continues forwarding",
-      "to disabled peer"
-     ],
-     [
-      "Bridges restart",
-      "avoids flap"
-     ],
-     [
-      "Final convergence",
-      "after rebuild"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%mode sso%%",
-      "prerequisite"
-     ],
-     [
-      "%%router ospf 1%%",
-      "routing instance"
-     ],
-     [
-      "%%nsf%%",
-      "enable OSPF NSF"
-     ],
-     [
-      "%%nsf cisco%%",
-      "Cisco-specific"
-     ],
-     [
-      "%%nsf ietf%%",
-      "IETF standard"
-     ],
-     [
-      "%%router bgp%% → %%bgp graceful-restart%%",
-      "BGP variant"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "NSF vs GR (BGP)",
-    "cols": [
-     "Aspect",
-     "NSF",
-     "BGP GR"
-    ],
-    "rows": [
-     [
-      "Protocol",
-      "OSPF/EIGRP",
-      "BGP"
-     ],
-     [
-      "Curator",
-      "local",
-      "peer"
-     ],
-     [
-      "Standard",
-      "Cisco/IETF",
-      "RFC 4724"
-     ],
-     [
-      "Goal",
-      "same",
-      "same"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Flap during fail",
-      "no NSF",
-      "config"
-     ],
-     [
-      "Peer drops",
-      "no capability",
-      "neighbor"
-     ],
-     [
-      "No forwarding",
-      "CEF",
-      "show cef"
-     ],
-     [
-      "GR fail",
-      "timers",
-      "show bgp"
-     ],
-     [
-      "OSPF restart",
-      "nsf missing",
-      "show ospf nsf"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "NSF and redundancy state",
-    "code": "show ip ospf nsf\nshow redundancy states\nshow ip protocols"
-   },
-   {
-    "label": "Check graceful restart",
-    "code": "show bgp neighbors 10.0.0.2 | include Restart\nshow ip ospf neighbor\nshow ip route"
-   }
-  ],
-  "traps": [
-   "**NSF = forwarding continues** during control rebuild.",
-   "Requires **SSO** as foundation.",
-   "**CEF/FIB independent** of control plane.",
-   "Config: **%%nsf%% under routing** + %%bgp graceful-restart%%.",
-   "Peers must be **NSF-aware** to cooperate."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "NSF"
-   ],
-   "rows": [
-    [
-     "Forwarding",
-     "continues"
-    ],
-    [
-     "Control",
-     "rebuilds"
-    ],
-    [
-     "Base",
-     "SSO"
-    ],
-    [
-     "CEF",
-     "independent"
-    ],
-    [
-     "OSPF",
-     "nsf"
-    ],
-    [
-     "BGP",
-     "graceful-restart"
-    ],
-    [
-     "Peer",
-     "aware"
-    ],
-    [
-     "Goal",
-     "zero loss"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "01. SSO",
-    "d": "SSO (Stateful Switchover) keeps control-plane state synchronized between active and standby supervis"
-   },
-   {
-    "t": "03. Redundant Supervisors",
-    "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
-   }
-  ],
-  "glossary": [
-   "NSF"
-  ]
- },
- {
-  "num": "03",
-  "id": "t03",
-  "group": "hardware",
-  "title": "Redundant Supervisors",
-  "blurb": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second",
-  "overview": "**[[Redundant Supervisors]]** protect a chassis switch by running a **standby supervisor** in the same or second slot. Modes define how much state is kept: **RPR (no state)**, **RPR+ (startup config shared)**, and **SSO (full sync)**. The exam tests redundancy modes and how a switchover behaves.",
-  "keyIdea": "Modes ordered: **RPR < RPR+ < SSO** (capability).",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Why redundant supervisors",
-    "cols": [
-     "Benefit",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Chassis HA",
-      "second supervisor"
-     ],
-     [
-      "Fast failover",
-      "hot standby"
-     ],
-     [
-      "Shared config",
-      "sync configs"
-     ],
-     [
-      "Control continuity",
+    "glossary": [
       "SSO"
-     ]
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Redundancy modes",
-    "cols": [
-     "Mode",
-     "State on standby",
-     "Failover"
-    ],
-    "rows": [
-     [
-      "RPR",
-      "none / cold",
-      "slow, reload"
-     ],
-     [
-      "RPR+",
-      "shared config",
-      "medium"
-     ],
-     [
-      "SSO",
-      "full sync",
-      "fast, zero drop"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "RPR explained",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Standby",
-      "boots for failover"
-     ],
-     [
-      "Config",
-      "reloaded from NVRAM/Flash"
-     ],
-     [
-      "State",
-      "NO sync"
-     ],
-     [
-      "Switchover",
-      "forwarding drop"
-     ],
-     [
-      "Use",
-      "basic HA"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "RPR+ explained",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Config",
-      "shared"
-     ],
-     [
-      "Startup",
-      "same image"
-     ],
-     [
-      "State",
-      "minimal"
-     ],
-     [
-      "Switchover",
-      "faster than RPR"
-     ],
-     [
-      "Use",
-      "mid-tier"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "SSO recap",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "State",
-      "control-plane sync"
-     ],
-     [
-      "Forwarding",
-      "unaffected"
-     ],
-     [
-      "Failover",
-      "seamless"
-     ],
-     [
-      "Mode",
-      "%%mode sso%%"
-     ],
-     [
-      "Use",
-      "enterprise spine"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Choosing the mode",
-    "cols": [
-     "Requirement",
-     "Mode"
-    ],
-    "rows": [
-     [
-      "Minimal HA",
-      "RPR"
-     ],
-     [
-      "Config share",
-      "RPR+"
-     ],
-     [
-      "Zero-loss",
-      "SSO"
-     ],
-     [
-      "Legacy",
-      "RPR"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Wrong mode",
-      "config",
-      "show redundancy"
-     ],
-     [
-      "No standby",
-      "module",
-      "show module"
-     ],
-     [
-      "Slow failover",
-      "RPR",
-      "promote mode"
-     ],
-     [
-      "Sync issues",
-      "SSO",
-      "states"
-     ],
-     [
-      "Forced",
-      "maintenance",
-      "force-switchover"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "redundancy\n mode rpr | rpr-plus | sso\n main-cpu\n state processor 1 supervisor"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show redundancy states\nshow module | include Supervisor"
-   }
-  ],
-  "traps": [
-   "Modes ordered: **RPR < RPR+ < SSO** (capability).",
-   "RPR = **no state + reload**; RPR+ = shared config.",
-   "**SSO = full sync, zero-loss failover**.",
-   "%%mode <name>%% under %%redundancy%%.",
-   "Dual supervisor needed for all."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Mode"
-   ],
-   "rows": [
-    [
-     "RPR",
-     "no state"
-    ],
-    [
-     "RPR+",
-     "shared config"
-    ],
-    [
-     "SSO",
-     "full sync"
-    ],
-    [
-     "Failover",
-     "fast at SSO"
-    ],
-    [
-     "Config",
-     "redundancy mode"
-    ],
-    [
-     "Verify",
-     "show redundancy"
-    ],
-    [
-     "Best",
-     "SSO"
-    ],
-    [
-     "Use",
-     "HA chassis"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. NSF",
-    "d": "NSF (Nonstop Forwarding) lets a router continue forwarding traffic while its control plane recovers"
-   },
-   {
-    "t": "04. Link Redundancy",
-    "d": "Link redundancy protects against link failure using multiple parallel physical links."
-   }
-  ],
-  "glossary": [
-   "Redundant Supervisors"
-  ]
- },
- {
-  "num": "04",
-  "id": "t04",
-  "group": "hardware",
-  "title": "Link Redundancy",
-  "blurb": "Link redundancy protects against link failure using multiple parallel physical links.",
-  "overview": "**[[EtherChannel|Link redundancy]]** protects against **link failure** using multiple parallel physical links. Options: **EtherChannel** (bundle into one logical LAG), **link aggregation**, and **multichassis LAG (M-LAG)**. Bundling kills STP blocking and spreads load. The exam tests LACP vs PAgP and the redundancy goals.",
-  "keyIdea": "**LACP = standard (active/passive); PAgP = Cisco (desirable/auto).**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Why multiple links",
-    "cols": [
-     "Benefit",
-     "Detail"
+  {
+    "num": "02",
+    "id": "t02",
+    "group": "software",
+    "title": "NSF",
+    "blurb": "NSF keeps forwarding traffic while the control plane restarts and reconverges.",
+    "overview": "**[[NSF|NSF (Nonstop Forwarding)]]** lets a router continue forwarding traffic while its **control plane recovers** during a supervisor/route-processor switchover. It works with **SSO**, and peers see it via **NSF capabilities** — forwarding continues while routing state is rebuilt. **NSF/SSO** is the unified HA story.",
+    "keyIdea": "**NSF = forwarding continues** during control rebuild.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Keep forwarding while the control plane recovers",
+        "p": "Non-Stop Forwarding lets a router continue forwarding packets while its control plane restarts or a supervisor switches over. The forwarding table stays in hardware, and routing protocols rebuild their adjacencies without tearing down the data path. NSF depends on SSO, CEF and neighbours that support graceful restart."
+      },
+      {
+        "kind": "list",
+        "h": "Design and traps",
+        "items": [
+          {
+            "t": "SSO first",
+            "d": "NSF relies on SSO to preserve state during a supervisor switchover."
+          },
+          {
+            "t": "CEF",
+            "d": "The forwarding table must remain available while the control plane recovers."
+          },
+          {
+            "t": "Neighbour support",
+            "d": "If the peer does not support graceful restart, the adjacency can still reset."
+          },
+          {
+            "t": "Not zero risk",
+            "d": "NSF reduces interruption; it does not protect against a data-plane failure or a bad forwarding update."
+          },
+          {
+            "t": "Timer design",
+            "d": "Graceful-restart and stale-route timers must be long enough for the restart, but not so long that stale routes persist."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Bandwidth",
-      "scale"
-     ],
-     [
-      "Availability",
-      "no single point"
-     ],
-     [
-      "Load-sharing",
-      "split flows"
-     ],
-     [
-      "Failover",
-      "automatic"
-     ],
-     [
-      "STP",
-      "no blocking on LAG"
-     ]
+    "commands": [
+      {
+        "label": "NSF and redundancy state",
+        "code": "show ip ospf nsf\nshow redundancy states\nshow ip protocols"
+      },
+      {
+        "label": "Check graceful restart",
+        "code": "show bgp neighbors 10.0.0.2 | include Restart\nshow ip ospf neighbor\nshow ip route"
+      }
+    ],
+    "traps": [
+      "**NSF = forwarding continues** during control rebuild.",
+      "Requires **SSO** as foundation.",
+      "**CEF/FIB independent** of control plane.",
+      "Config: **%%nsf%% under routing** + %%bgp graceful-restart%%.",
+      "Peers must be **NSF-aware** to cooperate."
+    ],
+    "table": {
+      "cols": [
+        "Protocol",
+        "Mechanism",
+        "Neighbour requirement"
+      ],
+      "rows": [
+        [
+          "OSPF",
+          "Graceful restart",
+          "Helper mode"
+        ],
+        [
+          "EIGRP",
+          "Graceful restart",
+          "Retains routes during restart"
+        ],
+        [
+          "BGP",
+          "Graceful restart or NSR",
+          "Peer support or NSR"
+        ],
+        [
+          "IS-IS",
+          "Graceful restart",
+          "Helper mode"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. SSO",
+        "d": "SSO (Stateful Switchover) keeps control-plane state synchronized between active and standby supervis"
+      },
+      {
+        "t": "03. Redundant Supervisors",
+        "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
+      }
+    ],
+    "glossary": [
+      "NSF"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "EtherChannel / LAG",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Links",
-      "bundled"
-     ],
-     [
-      "Logical",
-      "one port-channel"
-     ],
-     [
-      "Hash",
-      "picks member"
-     ],
-     [
-      "Protocol",
-      "LACP/PAgP"
-     ],
-     [
-      "Failure",
-      "member redirects"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Negotiation protocols",
-    "cols": [
-     "Protocol",
-     "Vendor",
-     "Mode"
-    ],
-    "rows": [
-     [
-      "LACP",
-      "IEEE 802.3ad/802.1AX",
-      "active/passive"
-     ],
-     [
-      "PAgP",
-      "Cisco",
-      "desirable/auto"
-     ],
-     [
-      "Static",
-      "manual",
-      "on"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Load balancing",
-    "cols": [
-     "Hash input",
-     "Result"
-    ],
-    "rows": [
-     [
-      "src/dst MAC",
-      "L2 hashing"
-     ],
-     [
-      "src/dst IP",
-      "L3 hashing"
-     ],
-     [
-      "src/dst port",
-      "L4 hashing"
-     ],
-     [
-      "Mix",
-      "full flow"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Hash **determines member per flow**",
-      "d": "all flows stay in-order."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "M-LAG / vPC",
-    "cols": [
-     "Term",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "vPC (NX-OS)",
-      "dual uplink across switches"
-     ],
-     [
-      "M-LAG",
-      "generic term"
-     ],
-     [
-      "Active-active",
-      "both bundle"
-     ],
-     [
-      "Access",
-      "double-homed servers"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Thumb rules",
-    "cols": [
-     "Rule",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Consistent",
-      "speed/duplex per member"
-     ],
-     [
-      "STP",
-      "LAG won't block"
-     ],
-     [
-      "Hash",
-      "choose per traffic"
-     ],
-     [
-      "Fail",
-      "remaining carries all"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Not bundled",
-      "mode mismatch",
-      "summary"
-     ],
-     [
-      "Flap",
-      "speed/duplex",
-      "config"
-     ],
-     [
-      "One direction",
-      "protocol",
-      "peers"
-     ],
-     [
-      "Wrong hash",
-      "algorithm",
-      "config"
-     ],
-     [
-      "STP block",
-      "not LAG",
-      "ports"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "interface Port-channel1\n interface GigabitEthernet0/1\n  channel-group 1 mode active\ninterface GigabitEthernet0/2\n  channel-group 1 mode active"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show etherchannel summary\nshow etherchannel load-balance"
-   }
-  ],
-  "traps": [
-   "**LACP = standard (active/passive); PAgP = Cisco (desirable/auto).**",
-   "%%mode on%% = **static**, no negotiation.",
-   "Members need **consistent speed/duplex**.",
-   "Hash keeps **single flow in order** across one member.",
-   "vPC/M-LAG = **active-active across two switches**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Link Redundancy"
-   ],
-   "rows": [
-    [
-     "Bundle",
-     "EtherChannel"
-    ],
-    [
-     "Standard",
-     "LACP"
-    ],
-    [
-     "Cisco",
-     "PAgP"
-    ],
-    [
-     "Static",
-     "mode on"
-    ],
-    [
-     "Logical",
-     "port-channel"
-    ],
-    [
-     "Hash",
-     "flow to member"
-    ],
-    [
-     "M-LAG",
-     "vPC"
-    ],
-    [
-     "Failure",
-     "auto redirect"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. Redundant Supervisors",
-    "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
-   },
-   {
-    "t": "05. Gateway Redundancy",
-    "d": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers."
-   }
-  ],
-  "glossary": [
-   "EtherChannel"
-  ]
- },
- {
-  "num": "05",
-  "id": "t05",
-  "group": "hardware",
-  "title": "Gateway Redundancy",
-  "blurb": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers.",
-  "overview": "**[[First Hop Redundancy Protocol|Gateway redundancy]]** keeps the **default gateway (FHRP)** available by sharing a **virtual IP** among routers. Protocols: **[[HSRP]] (Cisco-proprietary)**, **[[VRRP]] (standard)**, and **GLBP (load-balancing)**. The exam tests protocol differences, preemption, and the virtual MAC.",
-  "keyIdea": "**HSRP/VRRP = active-passive; GLBP = load-sharing.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "The FHRP role",
-    "cols": [
-     "Component",
-     "Role"
+  {
+    "num": "03",
+    "id": "t03",
+    "group": "hardware",
+    "title": "Redundant Supervisors",
+    "blurb": "Redundant supervisors provide a standby control plane inside a chassis switch.",
+    "overview": "**[[Redundant Supervisors]]** protect a chassis switch by running a **standby supervisor** in the same or second slot. Modes define how much state is kept: **RPR (no state)**, **RPR+ (startup config shared)**, and **SSO (full sync)**. The exam tests redundancy modes and how a switchover behaves.",
+    "keyIdea": "Modes ordered: **RPR < RPR+ < SSO** (capability).",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Two control planes, one chassis",
+        "p": "A chassis with redundant supervisors has an active supervisor controlling the system and a standby ready to take over. The redundancy mode determines how much state is synchronized. SSO is preferred for production because it preserves protocol state; RPR and RPR+ are older modes with longer failover."
+      },
+      {
+        "kind": "list",
+        "h": "Deployment checks",
+        "items": [
+          {
+            "t": "Hardware compatibility",
+            "d": "Both supervisors and their uplink modules must be supported in the same chassis."
+          },
+          {
+            "t": "Boot variables",
+            "d": "Both supervisors need a valid boot image and consistent configuration register."
+          },
+          {
+            "t": "Software version",
+            "d": "Mismatched images can prevent SSO or cause an unexpected reload."
+          },
+          {
+            "t": "Verify",
+            "d": "Check `show redundancy`, `show module` and the boot statements before relying on failover."
+          },
+          {
+            "t": "Maintain",
+            "d": "A standby that is not synchronized is not a working redundancy solution."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Virtual IP",
-      "shared gateway"
-     ],
-     [
-      "Active",
-      "forwards"
-     ],
-     [
-      "Standby",
-      "watches"
-     ],
-     [
-      "Virtual MAC",
-      "used by hosts"
-     ],
-     [
-      "Failover",
-      "automatic"
-     ]
+    "commands": [
+      {
+        "label": "Configuration (SSO shown)",
+        "code": "redundancy\n mode sso\n main-cpu\n auto-sync running-config"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show redundancy states\nshow module | include Supervisor"
+      }
+    ],
+    "traps": [
+      "Modes ordered: **RPR < RPR+ < SSO** (capability).",
+      "RPR = **no state + reload**; RPR+ = shared config.",
+      "**SSO = full sync, zero-loss failover**.",
+      "%%mode <name>%% under %%redundancy%%.",
+      "Dual supervisor needed for all."
+    ],
+    "table": {
+      "cols": [
+        "Mode",
+        "State synchronized",
+        "Typical failover"
+      ],
+      "rows": [
+        [
+          "RPR",
+          "None",
+          "Long restart"
+        ],
+        [
+          "RPR+",
+          "Configuration only",
+          "Protocol restart"
+        ],
+        [
+          "SSO",
+          "Configuration and protocol state",
+          "Short interruption"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. NSF",
+        "d": "NSF (Nonstop Forwarding) lets a router continue forwarding traffic while its control plane recovers"
+      },
+      {
+        "t": "04. Link Redundancy",
+        "d": "Link redundancy protects against link failure using multiple parallel physical links."
+      }
+    ],
+    "glossary": [
+      "Redundant Supervisors"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Protocols compared",
-    "cols": [
-     "Protocol",
-     "Vendor",
-     "Default",
-     "Priority"
+  },
+  {
+    "num": "04",
+    "id": "t04",
+    "group": "hardware",
+    "title": "Link Redundancy",
+    "blurb": "Link redundancy protects against link failure using multiple parallel physical links.",
+    "overview": "**[[EtherChannel|Link redundancy]]** protects against **link failure** using multiple parallel physical links. Options: **EtherChannel** (bundle into one logical LAG), **link aggregation**, and **multichassis LAG (M-LAG)**. Bundling kills STP blocking and spreads load. The exam tests LACP vs PAgP and the redundancy goals.",
+    "keyIdea": "**LACP = standard (active/passive); PAgP = Cisco (desirable/auto).**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Bundle links so one failure is invisible",
+        "p": "Link redundancy combines multiple physical links into one logical bundle. EtherChannel is the Cisco term; LACP is the standards-based negotiation protocol. Traffic is hashed across the members, so a single flow usually stays on one link. If a member fails, the bundle keeps forwarding over the remaining links."
+      },
+      {
+        "kind": "list",
+        "h": "Design and traps",
+        "items": [
+          {
+            "t": "Matching members",
+            "d": "Speed, duplex, VLAN allowed list, trunk mode and MTU must be consistent."
+          },
+          {
+            "t": "Passive plus passive",
+            "d": "Two passive LACP ports do not form a bundle; at least one side must be active."
+          },
+          {
+            "t": "Hashing",
+            "d": "The hash is based on a flow, not on every packet, so one elephant flow can still saturate one member."
+          },
+          {
+            "t": "Verify",
+            "d": "`show etherchannel summary` shows bundled, suspended and standalone ports."
+          },
+          {
+            "t": "M-LAG and vPC",
+            "d": "These extend link redundancy across two switches, but they add control-plane and dual-active considerations."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "interface GigabitEthernet0/1\n channel-group 1 mode active\ninterface GigabitEthernet0/2\n channel-group 1 mode active\ninterface Port-channel1"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show etherchannel summary\nshow etherchannel load-balance"
+      }
+    ],
+    "traps": [
+      "**LACP = standard (active/passive); PAgP = Cisco (desirable/auto).**",
+      "%%mode on%% = **static**, no negotiation.",
+      "Members need **consistent speed/duplex**.",
+      "Hash keeps **single flow in order** across one member.",
+      "vPC/M-LAG = **active-active across two switches**."
+    ],
+    "table": {
+      "cols": [
+        "Mode",
+        "Protocol",
+        "Forms a bundle with"
+      ],
+      "rows": [
+        [
+          "active",
+          "LACP",
+          "active or passive"
+        ],
+        [
+          "passive",
+          "LACP",
+          "active"
+        ],
+        [
+          "desirable",
+          "PAgP",
+          "desirable or auto"
+        ],
+        [
+          "auto",
+          "PAgP",
+          "desirable"
+        ],
+        [
+          "on (static)",
+          "None",
+          "on (static)"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Redundant Supervisors",
+        "d": "Redundant Supervisors protect a chassis switch by running a standby supervisor in the same or second"
+      },
+      {
+        "t": "05. Gateway Redundancy",
+        "d": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers."
+      }
+    ],
+    "glossary": [
+      "EtherChannel"
+    ]
+  },
+  {
+    "num": "05",
+    "id": "t05",
+    "group": "hardware",
+    "title": "Gateway Redundancy",
+    "blurb": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers.",
+    "overview": "**[[First Hop Redundancy Protocol|Gateway redundancy]]** keeps the **default gateway (FHRP)** available by sharing a **virtual IP** among routers. Protocols: **[[HSRP]] (Cisco-proprietary)**, **[[VRRP]] (standard)**, and **GLBP (load-balancing)**. The exam tests protocol differences, preemption, and the virtual MAC.",
+    "keyIdea": "**HSRP/VRRP = active-passive; GLBP = load-sharing.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A shared virtual gateway",
+        "p": "First-hop redundancy protocols give hosts a virtual IP address and a virtual MAC address that survive a gateway failure. HSRP and VRRP elect one active forwarder with a standby ready to take over. GLBP can also load-share across multiple forwarders. Hosts configure the virtual address as their default gateway, so they do not need to change when the active router fails."
+      },
+      {
+        "kind": "table",
+        "h": "First-hop redundancy protocols",
+        "cols": [
+          "Protocol",
+          "Standard",
+          "Load sharing",
+          "Transport"
+        ],
+        "rows": [
+          [
+            "HSRP",
+            "Cisco",
+            "With multiple groups",
+            "UDP 1985"
+          ],
+          [
+            "VRRP",
+            "IETF",
+            "With multiple groups",
+            "IP protocol 112"
+          ],
+          [
+            "GLBP",
+            "Cisco",
+            "Yes, multiple forwarders",
+            "UDP 3222"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Operation and traps",
+        "items": [
+          {
+            "t": "Election",
+            "d": "Higher priority wins; an IP address can be used as a tie-breaker in some designs."
+          },
+          {
+            "t": "Preemption",
+            "d": "Without preemption, a recovered router does not automatically take back the active role."
+          },
+          {
+            "t": "Tracking",
+            "d": "Track the uplink or a probe so the gateway gives up the active role when its path fails."
+          },
+          {
+            "t": "Group and VIP",
+            "d": "Both routers must agree on the group number, virtual IP and authentication where supported."
+          },
+          {
+            "t": "STP interaction",
+            "d": "The virtual MAC and the Layer 2 topology must agree; a blocked uplink can still black-hole traffic."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "interface Vlan10\n standby 1 ip 192.168.1.254\n standby 1 priority 110\n standby 1 preempt"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show standby brief\nshow standby\nshow vrrp brief\nshow glbp"
+      }
+    ],
+    "traps": [
+      "**HSRP/VRRP = active-passive; GLBP = load-sharing.**",
+      "States: **HSRP Active/Standby; VRRP Master/Backup.**",
+      "Virtual MAC: **HSRP 0c07.acXX; VRRP 0000.5e0001XX.**",
+      "Prio: **higher wins; tie → higher IP.**",
+      "UDP 1985 (HSRP) vs 112 (VRRP)."
+    ],
+    "table": {
+      "cols": [
+        "Protocol",
+        "Standard",
+        "Transport"
+      ],
+      "rows": [
+        [
+          "HSRP",
+          "Cisco",
+          "UDP 1985"
+        ],
+        [
+          "VRRP",
+          "IETF",
+          "IP protocol 112"
+        ],
+        [
+          "GLBP",
+          "Cisco",
+          "UDP 3222"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Link Redundancy",
+        "d": "Link redundancy protects against link failure using multiple parallel physical links."
+      },
+      {
+        "t": "06. ISSU (In-Service Software Upgrade)",
+        "d": "ISSU (In-Service Software Upgrade) lets you upgrade the IOS XE software on a dual supervisor device"
+      }
+    ],
+    "glossary": [
+      "First Hop Redundancy Protocol",
       "HSRP",
-      "Cisco",
-      "100",
-      "larger"
-     ],
-     [
-      "VRRP",
-      "IETF",
-      "100",
-      "larger"
-     ],
-     [
-      "GLBP",
-      "Cisco",
-      "100",
-      "AVG/AVF"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "HSRP details",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Group",
-      "0–4095"
-     ],
-     [
-      "Virtual MAC",
-      "0000.0c07.acXX"
-     ],
-     [
-      "Hello",
-      "UDP 1985"
-     ],
-     [
-      "Preempt",
-      "%%preempt%%"
-     ],
-     [
-      "Priority",
-      "higher wins"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "VRRP vs HSRP",
-    "cols": [
-     "Aspect",
-     "HSRP",
-     "VRRP"
-    ],
-    "rows": [
-     [
-      "Standard",
-      "Cisco",
-      "IETF"
-     ],
-     [
-      "Group IP",
-      "not required",
-      "own IP"
-     ],
-     [
-      "State names",
-      "Active/Standby",
-      "Master/Backup"
-     ],
-     [
-      "Hello",
-      "UDP 1985",
-      "112"
-     ],
-     [
-      "Virtual MAC",
-      "0c07.acxx",
-      "0000.5e0001XX"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "GLBP",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "AVG",
-      "virtual gateway"
-     ],
-     [
-      "AVF",
-      "virtual forwarders"
-     ],
-     [
-      "Load",
-      "per-host"
-     ],
-     [
-      "MACs",
-      "unique per AVF"
-     ],
-     [
-      "Use",
-      "both members active"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration knob",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%standby <g> ip <VIP>%%",
-      "HSRP VIP"
-     ],
-     [
-      "%%standby <g> priority <n>%%",
-      "election"
-     ],
-     [
-      "%%standby <g> preempt%%",
-      "take over"
-     ],
-     [
-      "%%vrrp <g> ip <VIP>%%",
       "VRRP"
-     ],
-     [
-      "%%glbp <g> ip <VIP>%%",
-      "GLBP"
-     ]
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No VIP",
-      "config",
-      "show standby"
-     ],
-     [
-      "Both active",
-      "timers",
-      "spans"
-     ],
-     [
-      "Wrong active",
-      "priority",
-      "brief"
-     ],
-     [
-      "Duplicate",
-      "groups",
-      "id"
-     ],
-     [
-      "Node fail",
-      "preempt",
-      "config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "interface Vlan10\n standby 1 ip 192.168.1.254\n standby 1 priority 110\n standby 1 preempt"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show standby brief\nshow standby\nshow vrrp brief\nshow glbp"
-   }
-  ],
-  "traps": [
-   "**HSRP/VRRP = active-passive; GLBP = load-sharing.**",
-   "States: **HSRP Active/Standby; VRRP Master/Backup.**",
-   "Virtual MAC: **HSRP 0c07.acXX; VRRP 0000.5e0001XX.**",
-   "Prio: **higher wins; tie → higher IP.**",
-   "UDP 1985 (HSRP) vs 112 (VRRP)."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "FHRP"
-   ],
-   "rows": [
-    [
-     "HSRP",
-     "Cisco"
-    ],
-    [
-     "VRRP",
-     "IETF"
-    ],
-    [
-     "GLBP",
-     "load-share"
-    ],
-    [
-     "Virtual IP",
-     "shared"
-    ],
-    [
-     "Active",
-     "forwards"
-    ],
-    [
-     "Election",
-     "priority"
-    ],
-    [
-     "MAC differ",
-     "yes"
-    ],
-    [
-     "UDP",
-     "1985/112"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. Link Redundancy",
-    "d": "Link redundancy protects against link failure using multiple parallel physical links."
-   },
-   {
-    "t": "06. ISSU (In-Service Software Upgrade)",
-    "d": "ISSU (In-Service Software Upgrade) lets you upgrade the IOS XE software on a dual supervisor device"
-   }
-  ],
-  "glossary": [
-   "First Hop Redundancy Protocol",
-   "HSRP",
-   "VRRP"
-  ]
- },
- {
-  "num": "06",
-  "id": "t06",
-  "group": "hardware",
-  "title": "ISSU (In-Service Software Upgrade)",
-  "blurb": "ISSU (In-Service Software Upgrade) lets you upgrade the IOS XE software on a dual supervisor device",
-  "overview": "**[[ISSU|ISSU (In-Service Software Upgrade)]]** lets you upgrade the IOS XE software on a **dual supervisor** device **without taking the network down**. It uses **[[SSO]]** (stateful switchover, note 01) and an **NSF-aware** routing stack: upgrade the standby, **switch over control** to it, then upgrade the old active — all with minimal or zero traffic loss. The exam tests the ISSU stages and why it needs SSO + NSF.",
-  "keyIdea": "ISSU requires **dual supervisors + SSO**; it is not available on a single-supervisor box.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What ISSU requires",
-    "cols": [
-     "Requirement",
-     "Why"
+  {
+    "num": "06",
+    "id": "t06",
+    "group": "hardware",
+    "title": "ISSU (In-Service Software Upgrade)",
+    "blurb": "ISSU upgrades software on redundant supervisors with minimal forwarding interruption.",
+    "overview": "**[[ISSU|ISSU (In-Service Software Upgrade)]]** lets you upgrade the IOS XE software on a **dual supervisor** device **without taking the network down**. It uses **[[SSO]]** (stateful switchover, note 01) and an **NSF-aware** routing stack: upgrade the standby, **switch over control** to it, then upgrade the old active — all with minimal or zero traffic loss. The exam tests the ISSU stages and why it needs SSO + NSF.",
+    "keyIdea": "ISSU requires **dual supervisors + SSO**; it is not available on a single-supervisor box.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Upgrade without a full outage",
+        "p": "In-Service Software Upgrade loads a new image on one supervisor while the other continues forwarding, then switches over and completes the upgrade. It depends on redundant supervisors, SSO, NSF and compatible images. ISSU reduces downtime, but it is not risk-free and not every platform or feature supports it."
+      },
+      {
+        "kind": "list",
+        "h": "Requirements and checks",
+        "items": [
+          {
+            "t": "Redundant supervisors",
+            "d": "Both supervisors must be healthy and synchronized."
+          },
+          {
+            "t": "NSF and SSO",
+            "d": "The control plane and forwarding path must support graceful switchover."
+          },
+          {
+            "t": "Image compatibility",
+            "d": "Check the release notes for ISSU support from the current image to the target image."
+          },
+          {
+            "t": "Feature support",
+            "d": "Some features or modules may not support ISSU and will still require a reload."
+          },
+          {
+            "t": "Maintenance window",
+            "d": "Plan for the unexpected even when ISSU is supported."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "**Dual supervisors**",
-      "one to upgrade while the other runs"
-     ],
-     [
-      "**SSO**",
-      "stateful control-plane sync between them"
-     ],
-     [
-      "**NSF / graceful restart**",
-      "continue forwarding during switchover"
-     ],
-     [
-      "Compatible images",
-      "ISSU is only for **nondisruptive** upgrades"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "install add file bootflash:image.bin activate commit"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show redundancy states\nshow issu state\nshow install summary\nshow version"
+      }
+    ],
+    "traps": [
+      "ISSU requires **dual supervisors + SSO**; it is not available on a single-supervisor box.",
+      "Stages: **loadnew → runversion → switchover → loadold → commit**.",
+      "Zero/near-zero down time because of **SSO switchover + NSF forwarding**.",
+      "**Major image jumps** may not be ISSU-capable (force a reload).",
+      "Verify with **%%show issu state%%** and %%show redundancy states%%."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "ISSU",
+        "Reload"
+      ],
+      "rows": [
+        [
+          "Forwarding",
+          "Continues through switchover",
+          "Stops"
+        ],
+        [
+          "Supervisors",
+          "Redundant required",
+          "Single is enough"
+        ],
+        [
+          "Image compatibility",
+          "Must be qualified",
+          "Any supported image"
+        ],
+        [
+          "Risk",
+          "Planning still required",
+          "Predictable outage"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Gateway Redundancy",
+        "d": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers."
+      },
+      {
+        "t": "07. StackWise / VSS",
+        "d": "StackWise and VSS (Virtual Switching System) make multiple physical switches behave as one logical s"
+      }
+    ],
+    "glossary": [
+      "ISSU",
+      "SSO"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "The ISSU process stages",
-    "cols": [
-     "Stage",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "**Loadnew** — install new image on standby"
-     ],
-     [
-      "2",
-      "**Runversion** — standby runs new image (SSO maintained)"
-     ],
-     [
-      "3",
-      "**Switchover** — control moves to standby (SSO, no drop)"
-     ],
-     [
-      "4",
-      "**Loadold** — load old image on the now-standby (old active)"
-     ],
-     [
-      "5",
-      "**Commit** — write new image, complete"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "The two phases of ISSU",
-    "cols": [
-     "Phase",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "**Phase 1 (pre-switchover)**",
-      "upgrade the standby"
-     ],
-     [
-      "**Phase 2 (post-switchover)**",
-      "upgrade the old active to match"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "ISSU compatibility",
-    "cols": [
-     "Aspect",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Same train / compatible",
-      "supported"
-     ],
-     [
-      "Major version jump",
-      "may need full reload instead"
-     ],
-     [
-      "SMU/subpackage",
-      "compatible patches supported"
-     ],
-     [
-      "Feature set change",
-      "check compatibility matrix"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Not every upgrade is ISSU-capable",
-      "d": "**major jumps** may force a reboot."
-     }
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Configuration / commands",
-    "code": "! verify SSO is the redundancy mode first\nredundancy\n mode sso\n!\ninstall add file bootflash:new-image.bin activate\nshow install summary\nshow redundancy states\nshow issu state"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%install add ... activate%%",
-      "modern ISSU-like install"
-     ],
-     [
-      "%%show install summary%%",
-      "installed packages"
-     ],
-     [
-      "%%show issu state%%",
-      "ISSU progress"
-     ],
-     [
-      "%%show redundancy states%%",
-      "SSO status"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "ISSU vs rollback",
-    "cols": [
-     "Aspect",
-     "ISSU",
-     "Full reload upgrade"
-    ],
-    "rows": [
-     [
-      "Downtime",
-      "near zero",
-      "outage"
-     ],
-     [
-      "Requires",
-      "SSO/NSF + dual RP",
-      "none"
-     ],
-     [
-      "Use",
-      "enterprise backbone",
-      "simple sites"
-     ],
-     [
-      "Risk",
-      "image compatibility",
-      "simple"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "ISSU blocked",
-      "no SSO",
-      "show redundancy states"
-     ],
-     [
-      "Standalone upgrade",
-      "single supervisor",
-      "show issu state"
-     ],
-     [
-      "Switchover drop",
-      "NSF not enabled",
-      "routing nsf"
-     ],
-     [
-      "Incompatible",
-      "image mismatch",
-      "compatibility"
-     ],
-     [
-      "Commit fail",
-      "flash space",
-      "show install"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "install add file bootflash:image.bin activate"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show redundancy states\nshow issu state\nshow install summary\nshow version"
-   }
-  ],
-  "traps": [
-   "ISSU requires **dual supervisors + SSO**; it is not available on a single-supervisor box.",
-   "Stages: **loadnew → runversion → switchover → loadold → commit**.",
-   "Zero/near-zero down time because of **SSO switchover + NSF forwarding**.",
-   "**Major image jumps** may not be ISSU-capable (force a reload).",
-   "Verify with **%%show issu state%%** and %%show redundancy states%%."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "ISSU"
-   ],
-   "rows": [
-    [
-     "What",
-     "in-service upgrade"
-    ],
-    [
-     "Requires",
-     "dual sup + SSO"
-    ],
-    [
-     "Forwarding",
-     "NSF"
-    ],
-    [
-     "Stage 1",
-     "loadnew"
-    ],
-    [
-     "Stage 2",
-     "runversion"
-    ],
-    [
-     "Stage 3",
-     "switchover"
-    ],
-    [
-     "Finish",
-     "loadold + commit"
-    ],
-    [
-     "Not for",
-     "major jumps"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "05. Gateway Redundancy",
-    "d": "Gateway redundancy keeps the default gateway (FHRP) available by sharing a virtual IP among routers."
-   },
-   {
-    "t": "07. StackWise / VSS",
-    "d": "StackWise and VSS (Virtual Switching System) make multiple physical switches behave as one logical s"
-   }
-  ],
-  "glossary": [
-   "ISSU",
-   "SSO"
-  ]
- },
- {
-  "num": "07",
-  "id": "t07",
-  "group": "hardware",
-  "title": "StackWise / VSS",
-  "blurb": "StackWise and VSS (Virtual Switching System) make multiple physical switches behave as one logical s",
-  "overview": "**[[Virtual Switching System|StackWise]]** and **VSS (Virtual Switching System)** make multiple physical switches behave as **one logical switch**. **StackWise** links stackable Catalyst switches (e.g. 3750/3850) into a single management entity with an **active/standby supervisor**; **VSS** virtualizes two Catalyst 6500/4500 chassis into one logical switch with a **dual-active protection** (VSL). The exam tests the logical-switch concept, the roles, and the distinguishing cable.",
-  "keyIdea": "**StackWise parses %%show switch%%; VSS parses %%show vss%%** — different platforms.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What stacking achieves",
-    "cols": [
-     "Benefit",
-     "Detail"
+  {
+    "num": "07",
+    "id": "t07",
+    "group": "hardware",
+    "title": "StackWise / VSS",
+    "blurb": "StackWise and VSS combine physical switches into one logical device with redundant control.",
+    "overview": "**[[Virtual Switching System|StackWise]]** and **VSS (Virtual Switching System)** make multiple physical switches behave as **one logical switch**. **StackWise** links stackable Catalyst switches (e.g. 3750/3850) into a single management entity with an **active/standby supervisor**; **VSS** virtualizes two Catalyst 6500/4500 chassis into one logical switch with a **dual-active protection** (VSL). The exam tests the logical-switch concept, the roles, and the distinguishing cable.",
+    "keyIdea": "**Verify StackWise with %%show switch%%; verify VSS with %%show switch virtual%%.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Multiple switches acting as one",
+        "p": "StackWise and Virtual Switching System combine switches into one logical device. StackWise uses dedicated stacking ports and cables, while VSS uses Virtual Switch Links between two chassis. The result has one management plane and one control plane, so EtherChannels can span members and the access layer sees a single neighbor. The tradeoff is that a split can create two active control planes, so dual-active detection is critical."
+      },
+      {
+        "kind": "list",
+        "h": "Design and traps",
+        "items": [
+          {
+            "t": "Loop-free access",
+            "d": "Dual-home servers and switches to the logical device, and let EtherChannel handle the redundancy."
+          },
+          {
+            "t": "Split-brain",
+            "d": "If the interconnect fails, both halves may think they are active; use dual-active detection and a recovery plan."
+          },
+          {
+            "t": "Upgrade path",
+            "d": "An upgrade may restart members or cause a switchover; verify the supported procedure."
+          },
+          {
+            "t": "Cabling",
+            "d": "Use the supported stack cables, lengths and ring or chain topology for the platform."
+          },
+          {
+            "t": "Verify",
+            "d": "`show switch` for a stack and `show switch virtual` for VSS show roles and member state."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "One logical switch",
-      "single control plane/management"
-     ],
-     [
-      "Shared config",
-      "one running-config"
-     ],
-     [
-      "Port density",
-      "more ports under one STP domain"
-     ],
-     [
-      "Failover",
-      "member/supervisor redundancy"
-     ],
-     [
-      "EtherChannel",
-      "can span members (no STP block)"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "! StackWise - priority sets the master\nswitch 1 priority 15\nswitch 1 provision ws-c3850-48p\n!\n! VSS setup (chassis 1)\nswitch virtual domain 100\n switch mode virtual\n!"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show switch\nshow switch virtual\nshow switch virtual role\nshow etherchannel summary"
+      }
+    ],
+    "traps": [
+      "**Verify StackWise with %%show switch%%; verify VSS with %%show switch virtual%%.**",
+      "StackWise uses a **StackWise cable**; VSS uses **VSL**.",
+      "Both create **one logical switch** and allow **EtherChannel across members** (no STP block).",
+      "StackWise: **active/standby/member**; VSS: **active/standby virtual switch**.",
+      "VSS requires **dual-active detection**; a split stack can also create two masters."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "StackWise",
+        "VSS"
+      ],
+      "rows": [
+        [
+          "Interconnect",
+          "Stack cables",
+          "Virtual Switch Link"
+        ],
+        [
+          "Logical device",
+          "One stack",
+          "One virtual switch"
+        ],
+        [
+          "Split risk",
+          "Stack split",
+          "Dual-active"
+        ],
+        [
+          "Verification",
+          "`show switch`",
+          "`show switch virtual`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. ISSU (In-Service Software Upgrade)",
+        "d": "ISSU (In-Service Software Upgrade) lets you upgrade the IOS XE software on a dual supervisor device"
+      },
+      {
+        "t": "08. Redundancy Design & Best Practices",
+        "d": "Redundancy design is the disciplined selection of HA mechanisms to match a business availability tar"
+      }
+    ],
+    "glossary": [
+      "Virtual Switching System"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "A stack/VSS is managed as **one device**",
-      "d": "one loop-free L2 domain."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "StackWise",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Members",
-      "stackable switches (3750/3850 series)"
-     ],
-     [
-      "Cable",
-      "**StackWise** proprietary stacking cable"
-     ],
-     [
-      "Roles",
-      "**active** (master), **standby**, member"
-     ],
-     [
-      "Control",
-      "active holds control plane"
-     ],
-     [
-      "Failover",
-      "standby takes over (SSO-style)"
-     ],
-     [
-      "Management",
-      "one IP, one config"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "VSS",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Chassis",
-      "2x Catalyst 6500/4500"
-     ],
-     [
-      "Link",
-      "**VSL (Virtual Switch Link)** — 40/10 G"
-     ],
-     [
-      "Roles",
-      "**active** and **standby** virtual switch"
-     ],
-     [
-      "Logical",
-      "one switch, one management"
-     ],
-     [
-      "VSSP",
-      "treats both as one for STP"
-     ],
-     [
-      "MEC",
-      "multichassis EtherChannel"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Dual-active handling",
-    "cols": [
-     "Mechanism",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Problem",
-      "both halves think they are active"
-     ],
-     [
-      "Detect",
-      "PAgP/VSSP or BFD on links"
-     ],
-     [
-      "Action",
-      "one side shuts down switching"
-     ],
-     [
-      "Result",
-      "avoids split-brain"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "StackWise vs VSS",
-    "cols": [
-     "Aspect",
-     "StackWise",
-     "VSS"
-    ],
-    "rows": [
-     [
-      "Platform",
-      "stackable switches",
-      "6500/4500 chassis"
-     ],
-     [
-      "Link",
-      "StackWise cable",
-      "VSL"
-     ],
-     [
-      "Scale",
-      "up to 8-9 members",
-      "2 chassis"
-     ],
-     [
-      "Roles",
-      "active/standby/member",
-      "active/standby"
-     ],
-     [
-      "Failover",
-      "standby takeover",
-      "SSO switchover"
-     ],
-     [
-      "EtherChannel",
-      "across members",
-      "MEC across chassis"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "show switch\nshow switch stack-ports\nshow switch neighbors\nshow vss\nshow vlans\nshow etherchannel summary"
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Stack split",
-      "cable/provisioning",
-      "show switch stack-ports"
-     ],
-     [
-      "Wrong master",
-      "priority",
-      "show switch"
-     ],
-     [
-      "Dual active",
-      "no detection",
-      "dual-active"
-     ],
-     [
-      "VSS split",
-      "VSL down",
-      "show vss"
-     ],
-     [
-      "Link not channel",
-      "config",
-      "show etherchannel"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "! StackWise - priority sets the master\nswitch 1 priority 15\nswitch 1 provision ws-c3850-48p\n!\n! VSS setup (chassis 1)\nswitch virtual domain 100\n switch mode virtual\n!"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show switch\nshow vss\nshow switch virtual role\nshow etherchannel summary"
-   }
-  ],
-  "traps": [
-   "**StackWise parses %%show switch%%; VSS parses %%show vss%%** — different platforms.",
-   "StackWise uses a **StackWise cable**; VSS uses **VSL**.",
-   "Both create **one logical switch** and allow **EtherChannel across members** (no STP block).",
-   "StackWise: **active/standby/member**; VSS: **active/standby virtual switch**.",
-   "**Dual-active detection** (VSSP/PAgP or BFD) prevents split-brain in VSS."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "StackWise",
-    "VSS"
-   ],
-   "rows": [
-    [
-     "Platform",
-     "3750/3850",
-     "6500/4500"
-    ],
-    [
-     "Link",
-     "StackWise cable",
-     "VSL"
-    ],
-    [
-     "Roles",
-     "active/standby/member",
-     "active/standby"
-    ],
-    [
-     "Model",
-     "one logical switch",
-     "one logical switch"
-    ],
-    [
-     "EtherChannel",
-     "across members",
-     "MEC"
-    ],
-    [
-     "Dual-active",
-     "—",
-     "VSSP/PAgP/BFD"
-    ],
-    [
-     "Verify",
-     "show switch",
-     "show vss"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. ISSU (In-Service Software Upgrade)",
-    "d": "ISSU (In-Service Software Upgrade) lets you upgrade the IOS XE software on a dual supervisor device"
-   },
-   {
-    "t": "08. Redundancy Design & Best Practices",
-    "d": "Redundancy design is the disciplined selection of HA mechanisms to match a business availability tar"
-   }
-  ],
-  "glossary": [
-   "Virtual Switching System"
-  ]
- },
- {
-  "num": "08",
-  "id": "t08",
-  "group": "hardware",
-  "title": "Redundancy Design & Best Practices",
-  "blurb": "Redundancy design is the disciplined selection of HA mechanisms to match a business availability tar",
-  "overview": "**[[High Availability|Redundancy design]]** is the disciplined selection of **[[High Availability|HA]]** mechanisms to match a business availability target. It layers **device, link, gateway, and path** redundancy and follows best practices — one failure domain, no single point of failure, fast convergence, and testing. The exam tests how SSO/NSF, EtherChannel, FHRP, and routing failover fit together into a coherent design.",
-  "keyIdea": "HA is **layered**: device + link + gateway + path — one mechanism rarely covers everything.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Availability tiers / goals",
-    "cols": [
-     "Tier",
-     "Downtime target",
-     "Mechanisms"
+  {
+    "num": "08",
+    "id": "t08",
+    "group": "hardware",
+    "title": "Redundancy Design & Best Practices",
+    "blurb": "Redundancy design matches device, link, gateway and path mechanisms to availability goals.",
+    "overview": "**[[High Availability|Redundancy design]]** is the disciplined selection of **[[High Availability|HA]]** mechanisms to match a business availability target. It layers **device, link, gateway, and path** redundancy and follows best practices — one failure domain, no single point of failure, fast convergence, and testing. The exam tests how SSO/NSF, EtherChannel, FHRP, and routing failover fit together into a coherent design.",
+    "keyIdea": "HA is **layered**: device + link + gateway + path — one mechanism rarely covers everything.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Remove single points of failure, then test them",
+        "p": "Redundancy design starts with a failure analysis. Identify every single point of failure in power, links, devices, paths and services, then decide which ones the business can tolerate. Adding a second component is not enough; the redundant path must be configured, monitored and periodically tested."
+      },
+      {
+        "kind": "list",
+        "h": "Best practices and traps",
+        "items": [
+          {
+            "t": "Avoid shared fate",
+            "d": "Two links in the same conduit or two power supplies on the same circuit are not diverse."
+          },
+          {
+            "t": "Keep it simple",
+            "d": "Complex redundancy that nobody understands often fails in unexpected ways."
+          },
+          {
+            "t": "Tune timers",
+            "d": "Fast failover can cause flapping; slow failover can break real-time applications."
+          },
+          {
+            "t": "Monitor the standby",
+            "d": "A standby that is down or unsynchronized provides no protection."
+          },
+          {
+            "t": "Test failover",
+            "d": "Force a switchover or pull a link in a maintenance window and measure what users experience."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Best effort",
-      "none guaranteed",
-      "basic"
-     ],
-     [
-      "High availability",
-      "~99.99%",
-      "SSO/NSF, dual paths"
-     ],
-     [
-      "Always-on",
-      "minimal",
-      "full stack HA"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show redundancy states\nshow redundancy\nshow standby brief\nshow etherchannel summary\nshow ip ospf nsf\nshow ip pim neighbor"
+      }
+    ],
+    "traps": [
+      "HA is **layered**: device + link + gateway + path — one mechanism rarely covers everything.",
+      "**Redundant ≠ load-shared**; many designs are active/standby with failover.",
+      "**EtherChannel** beats single links — no STP blocking and cheaper than LAG-less dual.",
+      "**SSO + NSF** is the foundation for zero-loss control failover.",
+      "**Test failover** (%%redundancy force-switchover%%) — untested redundancy isn't redundancy."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Example mechanism",
+        "Failure covered"
+      ],
+      "rows": [
+        [
+          "Device",
+          "SSO and NSF",
+          "Supervisor or control-plane failure"
+        ],
+        [
+          "Link",
+          "EtherChannel",
+          "Member link failure"
+        ],
+        [
+          "Gateway",
+          "HSRP or VRRP",
+          "Default gateway failure"
+        ],
+        [
+          "Path",
+          "ECMP or multihoming",
+          "Transit or WAN failure"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. StackWise / VSS",
+        "d": "StackWise and VSS (Virtual Switching System) make multiple physical switches behave as one logical s"
+      },
+      {
+        "t": "01. SSO",
+        "d": "SSO (Stateful Switchover) keeps control-plane state synchronized between active and standby supervis"
+      }
+    ],
+    "glossary": [
+      "High Availability"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Design **to a target**",
-      "d": "not every device needs every mechanism."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "The layered redundancy model",
-    "cols": [
-     "Layer",
-     "Mechanism",
-     "Protects against"
-    ],
-    "rows": [
-     [
-      "Device/software",
-      "SSO, NSF, ISSU (notes 01/02/06)",
-      "supervisor/RP failure"
-     ],
-     [
-      "Chassis",
-      "Redundant supervisors (note 03)",
-      "brain failure"
-     ],
-     [
-      "Link",
-      "EtherChannel/LAG, M-LAG (note 04)",
-      "link/port failure"
-     ],
-     [
-      "Gateway",
-      "HSRP/VRRP/GLBP (note 05)",
-      "router/first-hop failure"
-     ],
-     [
-      "Path",
-      "ECMP, routing failover, multihoming",
-      "transit/AS failure"
-     ],
-     [
-      "Power/cooling",
-      "PSU/VRD redundancy",
-      "facility power loss"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "HA is **layered**",
-      "d": "each layer covers a different failure mode."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Best practices",
-    "cols": [
-     "Practice",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "No SPOF",
-      "every critical path has a backup"
-     ],
-     [
-      "One failure domain",
-      "stack/VSS members in same wiring closet"
-     ],
-     [
-      "Fast convergence",
-      "routing/timers tuned (but not too aggressive)"
-     ],
-     [
-      "Test failovers",
-      "scheduled %%redundancy force-switchover%%"
-     ],
-     [
-      "Monitor",
-      "SNMP/syslog + failure history"
-     ],
-     [
-      "Same image",
-      "consistent IOS/software across peers"
-     ],
-     [
-      "Symmetric design",
-      "input/output redundancy on both sides"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Design principles",
-    "cols": [
-     "Principle",
-     "Reason"
-    ],
-    "rows": [
-     [
-      "**Redundant ≠ load-shared**",
-      "paired devices are usually active/standby"
-     ],
-     [
-      "**Bundled links** over single channels",
-      "EtherChannel avoids STP blocking"
-     ],
-     [
-      "**Dual-homed** over single-homed",
-      "no uplink SPOF"
-     ],
-     [
-      "**FHRP + routing** together",
-      "first-hop + path both covered"
-     ],
-     [
-      "**Keep states in sync**",
-      "via SSO for fast failover"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common design patterns",
-    "cols": [
-     "Pattern",
-     "Use"
-    ],
-    "rows": [
-     [
-      "Access: dual-uplink + LAG",
-      "server/switch resilience"
-     ],
-     [
-      "Distribution: VSS/stack + SSO",
-      "fast L2 failover"
-     ],
-     [
-      "Core: ECMP + NSF",
-      "routing continuity"
-     ],
-     [
-      "Edge: FHRP + BGP multihoming",
-      "gateway + transit"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification / review",
-    "code": "show redundancy states\nshow standby brief\nshow etherchannel summary\nshow ip route\nshow switch\nshow vss"
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Failover drops",
-      "no SSO/NSF",
-      "show redundancy"
-     ],
-     [
-      "Uplink block",
-      "no LAG",
-      "show etherchannel"
-     ],
-     [
-      "Gateway flap",
-      "FHRP config",
-      "show standby brief"
-     ],
-     [
-      "Split-brain",
-      "no dual-active detection",
-      "VSS/stack"
-     ],
-     [
-      "Slow convergence",
-      "timers",
-      "routing"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show redundancy states\nshow redundancy sso\nshow standby brief\nshow etherchannel summary\nshow ip ospf nsf\nshow ip pim neighbor"
-   }
-  ],
-  "traps": [
-   "HA is **layered**: device + link + gateway + path — one mechanism rarely covers everything.",
-   "**Redundant ≠ load-shared**; many designs are active/standby with failover.",
-   "**EtherChannel** beats single links — no STP blocking and cheaper than LAG-less dual.",
-   "**SSO + NSF** is the foundation for zero-loss control failover.",
-   "**Test failover** (%%redundancy force-switchover%%) — untested redundancy isn't redundancy."
-  ],
-  "table": {
-   "cols": [
-    "Layer",
-    "Mechanism"
-   ],
-   "rows": [
-    [
-     "Device",
-     "SSO, NSF, ISSU"
-    ],
-    [
-     "Chassis",
-     "Redundant supervisors"
-    ],
-    [
-     "Link",
-     "EtherChannel / M-LAG"
-    ],
-    [
-     "Gateway",
-     "HSRP / VRRP / GLBP"
-    ],
-    [
-     "Path",
-     "ECMP, routing, multihoming"
-    ],
-    [
-     "Power",
-     "redundant PSU"
-    ],
-    [
-     "Principle",
-     "no SPOF"
-    ],
-    [
-     "Test",
-     "force-switchover"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "07. StackWise / VSS",
-    "d": "StackWise and VSS (Virtual Switching System) make multiple physical switches behave as one logical s"
-   },
-   {
-    "t": "01. SSO",
-    "d": "SSO (Stateful Switchover) keeps control-plane state synchronized between active and standby supervis"
-   }
-  ],
-  "glossary": [
-   "High Availability"
-  ]
- }
+  }
 ];
 
         const GROUPS = [{"key":"software","label":"Software Resiliency","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"hardware","label":"Hardware & Path Redundancy","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
@@ -2993,268 +1486,136 @@
 
         const quiz = [
  {
-  "q": "What does SSO provide between redundant supervisors?",
+  "q": "What does Stateful Switchover provide between redundant supervisors?",
   "options": [
    "Two independent active control planes",
-   "One control plane with a synchronized standby state",
-   "A Layer 2 loop-prevention domain",
-   "Automatic IP address assignment"
+   "A synchronized standby state for faster failover",
+   "A Layer 2 loop-free topology",
+   "Automatic IP addressing"
   ],
   "answer": 1,
-  "why": "Stateful Switchover keeps the standby supervisor synchronized so failover preserves control-plane state. NSF helps routing protocols ride through the switch."
+  "why": "SSO keeps the standby synchronized with configuration and protocol state so a switchover has minimal impact."
  },
  {
-  "q": "Which protocol uses an Active Virtual Gateway and Active Virtual Forwarders?",
+  "q": "How does NSF relate to SSO?",
   "options": [
-   "GLBP",
-   "HSRP",
-   "VRRP",
-   "SSO"
+   "NSF replaces SSO",
+   "NSF uses SSO to keep forwarding while the control plane recovers",
+   "They are the same feature",
+   "NSF only works with STP"
   ],
-  "answer": 0,
-  "why": "GLBP load-balances gateways with an AVG and multiple AVFs. HSRP and VRRP elect one active gateway at a time."
+  "answer": 1,
+  "why": "SSO preserves state during a supervisor switchover. NSF keeps the forwarding path alive while routing protocols rebuild."
  },
  {
-  "q": "In HSRP, what does preemption allow?",
+  "q": "What is required from a neighbour for OSPF graceful restart to work?",
   "options": [
-   "A router to forward multiple virtual MAC addresses",
-   "A switch to become the STP root",
-   "A route to be redistributed",
-   "A higher-priority router to take over the active role"
+   "It must run RIP",
+   "It must support helper mode",
+   "It must be the DR",
+   "It must use a higher priority"
   ],
-  "answer": 3,
-  "why": "Without preemption, a higher-priority router that comes up later remains standby. Preemption lets it reclaim the active role."
+  "answer": 1,
+  "why": "The neighbour must support graceful-restart helper mode so it retains routes while the restarting router recovers."
  },
  {
   "q": "Which LACP mode actively sends LACPDUs and can form a bundle with an active or passive peer?",
   "options": [
    "Passive",
-   "On",
    "Active",
+   "On",
    "Auto"
   ],
-  "answer": 2,
-  "why": "LACP active initiates negotiation. Passive waits for the peer. On and auto are PAgP or static EtherChannel concepts."
+  "answer": 1,
+  "why": "LACP active initiates negotiation. Passive waits for the peer; two passive ports do not form a bundle."
  },
  {
-  "q": "What is the purpose of NSF during a supervisor switchover?",
+  "q": "An EtherChannel member is suspended. What should you check first?",
   "options": [
-   "Encrypt the redundancy link",
-   "Keep routing adjacencies alive while the control plane recovers",
-   "Load-balance traffic across supervisors",
-   "Replace ISSU"
+   "The STP root priority",
+   "Speed, duplex, VLAN and trunk consistency",
+   "The DNS server",
+   "The BGP router ID"
   ],
   "answer": 1,
-  "why": "Nonstop Forwarding lets neighbors continue forwarding while the new supervisor rebuilds routing state. It is not encryption or load balancing."
+  "why": "Suspended members usually have mismatched speed, duplex, VLAN, trunk or negotiation settings."
  },
  {
-  "q": "Which technology pools multiple physical switches into one logical switch but does not use a separate VSS domain?",
+  "q": "Which protocol uses an Active Virtual Gateway and multiple Active Virtual Forwarders?",
   "options": [
-   "StackWise",
-   "VSS",
    "HSRP",
-   "GLBP"
-  ],
-  "answer": 0,
-  "why": "StackWise uses a stacking cable and a single logical switch. VSS also creates one logical switch but uses a virtual switch domain and dedicated links."
- },
- {
-  "q": "A tracked object loses reachability and HSRP is configured with a decrement. What happens?",
-  "options": [
-   "The virtual IP address changes",
-   "The router reloads",
-   "The HSRP group is deleted",
-   "The router's HSRP priority drops and the peer can become active"
-  ],
-  "answer": 3,
-  "why": "Object tracking reduces priority so a better-connected peer can take over. The virtual IP does not change."
- },
- {
-  "q": "Which statement about ISSU is correct?",
-  "options": [
-   "It replaces SSO with two active supervisors",
-   "It is a Layer 2 loop-prevention feature",
-   "It upgrades software while minimizing forwarding disruption",
-   "It only works on stack members"
-  ],
-  "answer": 2,
-  "why": "In-Service Software Upgrade uses redundancy and staged upgrades to reduce downtime. It still requires a supported platform and upgrade path."
- },
- {
-  "q": "In SSO — What SSO does, which value matches \"Sync\"?",
-  "options": [
-   "control-plane",
-   "active → standby",
-   "zero control loss",
-   "unaffected"
-  ],
-  "answer": 1,
-  "why": "What SSO does in SSO pairs \"Sync\" with \"active → standby\"."
- },
- {
-  "q": "In SSO — What SSO does, which value matches \"Switchover\"?",
-  "options": [
-   "zero control loss",
-   "control-plane",
-   "active → standby",
-   "unaffected"
-  ],
-  "answer": 0,
-  "why": "What SSO does in SSO pairs \"Switchover\" with \"zero control loss\"."
- },
- {
-  "q": "In NSF — What NSF does, which value matches \"Forwarding\"?",
-  "options": [
-   "rebooting/rebuilding",
-   "NSF capability",
-   "graceful restart",
-   "continues"
-  ],
-  "answer": 3,
-  "why": "What NSF does in NSF pairs \"Forwarding\" with \"continues\"."
- },
- {
-  "q": "In NSF — What NSF does, which value matches \"Control plane\"?",
-  "options": [
-   "continues",
-   "NSF capability",
-   "rebooting/rebuilding",
-   "graceful restart"
-  ],
-  "answer": 2,
-  "why": "What NSF does in NSF pairs \"Control plane\" with \"rebooting/rebuilding\"."
- },
- {
-  "q": "In Redundant Supervisors — Why redundant supervisors, which value matches \"Chassis HA\"?",
-  "options": [
-   "hot standby",
-   "second supervisor",
-   "sync configs",
+   "VRRP",
+   "GLBP",
    "SSO"
   ],
-  "answer": 1,
-  "why": "Why redundant supervisors in Redundant Supervisors pairs \"Chassis HA\" with \"second supervisor\"."
+  "answer": 2,
+  "why": "GLBP load-balances across multiple forwarders. HSRP and VRRP normally elect one active gateway."
  },
  {
-  "q": "In Redundant Supervisors — Why redundant supervisors, which value matches \"Fast failover\"?",
+  "q": "In HSRP, what does preemption allow?",
   "options": [
-   "hot standby",
-   "second supervisor",
-   "sync configs",
-   "SSO"
+   "A higher-priority router to reclaim the active role",
+   "A router to bypass STP",
+   "A switch to become a route reflector",
+   "A route to be redistributed"
   ],
   "answer": 0,
-  "why": "Why redundant supervisors in Redundant Supervisors pairs \"Fast failover\" with \"hot standby\"."
+  "why": "Without preemption, a recovered higher-priority router stays standby. Preemption lets it take back the active role."
  },
  {
-  "q": "In Link Redundancy — Why multiple links, which value matches \"Bandwidth\"?",
+  "q": "Which condition is required for ISSU?",
   "options": [
-   "no single point",
-   "split flows",
-   "automatic",
-   "scale"
-  ],
-  "answer": 3,
-  "why": "Why multiple links in Link Redundancy pairs \"Bandwidth\" with \"scale\"."
- },
- {
-  "q": "In Link Redundancy — Why multiple links, which value matches \"Availability\"?",
-  "options": [
-   "scale",
-   "split flows",
-   "no single point",
-   "automatic"
-  ],
-  "answer": 2,
-  "why": "Why multiple links in Link Redundancy pairs \"Availability\" with \"no single point\"."
- },
- {
-  "q": "In Gateway Redundancy — The FHRP role, which value matches \"Virtual IP\"?",
-  "options": [
-   "forwards",
-   "shared gateway",
-   "watches",
-   "used by hosts"
+   "A single supervisor with a USB drive",
+   "Redundant supervisors with SSO and NSF support",
+   "A Layer 2 only topology",
+   "No routing protocols"
   ],
   "answer": 1,
-  "why": "The FHRP role in Gateway Redundancy pairs \"Virtual IP\" with \"shared gateway\"."
+  "why": "ISSU uses redundant supervisors, synchronized state and non-stop forwarding, plus a qualified image path."
  },
  {
-  "q": "In Gateway Redundancy — The FHRP role, which value matches \"Active\"?",
+  "q": "Which statement about StackWise and VSS is correct?",
   "options": [
-   "forwards",
-   "shared gateway",
-   "watches",
-   "used by hosts"
-  ],
-  "answer": 0,
-  "why": "The FHRP role in Gateway Redundancy pairs \"Active\" with \"forwards\"."
- },
- {
-  "q": "In ISSU (In-Service Software Upgrade) — What ISSU requires, which value matches \"Dual supervisors\"?",
-  "options": [
-   "stateful control-plane sync between them",
-   "continue forwarding during switchover",
-   "ISSU is only for nondisruptive upgrades",
-   "one to upgrade while the other runs"
-  ],
-  "answer": 3,
-  "why": "What ISSU requires in ISSU (In-Service Software Upgrade) pairs \"Dual supervisors\" with \"one to upgrade while the other runs\"."
- },
- {
-  "q": "In ISSU (In-Service Software Upgrade) — What ISSU requires, which value matches \"SSO\"?",
-  "options": [
-   "one to upgrade while the other runs",
-   "continue forwarding during switchover",
-   "stateful control-plane sync between them",
-   "ISSU is only for nondisruptive upgrades"
-  ],
-  "answer": 2,
-  "why": "What ISSU requires in ISSU (In-Service Software Upgrade) pairs \"SSO\" with \"stateful control-plane sync between them\"."
- },
- {
-  "q": "In StackWise / VSS — What stacking achieves, which value matches \"One logical switch\"?",
-  "options": [
-   "one running-config",
-   "single control plane/management",
-   "more ports under one STP domain",
-   "member/supervisor redundancy"
+   "StackWise uses a Virtual Switch Link; VSS uses stacking cables",
+   "Both combine switches into one logical device",
+   "Neither supports EtherChannel",
+   "Both eliminate the need for dual-active detection"
   ],
   "answer": 1,
-  "why": "What stacking achieves in StackWise / VSS pairs \"One logical switch\" with \"single control plane/management\"."
+  "why": "Both create one logical switch. StackWise uses stacking cables; VSS uses a Virtual Switch Link and requires dual-active handling."
  },
  {
-  "q": "In StackWise / VSS — What stacking achieves, which value matches \"Shared config\"?",
+  "q": "Why is dual-active detection important in a VSS?",
   "options": [
-   "one running-config",
-   "single control plane/management",
-   "more ports under one STP domain",
-   "member/supervisor redundancy"
+   "It prevents both chassis from becoming active after the VSL fails",
+   "It assigns IP addresses",
+   "It replaces HSRP",
+   "It encrypts the VSL"
   ],
   "answer": 0,
-  "why": "What stacking achieves in StackWise / VSS pairs \"Shared config\" with \"one running-config\"."
+  "why": "If the VSL fails, both chassis may believe they are active. Dual-active detection identifies and resolves the split."
  },
  {
-  "q": "In Redundancy Design & Best Practices — The layered redundancy model, which value matches \"Device/software\"?",
+  "q": "Which is a shared-fate mistake in a redundancy design?",
   "options": [
-   "Redundant supervisors (note 03)",
-   "EtherChannel/LAG, M-LAG (note 04)",
-   "HSRP/VRRP/GLBP (note 05)",
-   "SSO, NSF, ISSU (notes 01/02/06)"
+   "Two diverse fiber paths",
+   "Two power supplies on the same circuit",
+   "Two supervisors running SSO",
+   "Two HSRP groups on different subnets"
   ],
-  "answer": 3,
-  "why": "The layered redundancy model in Redundancy Design & Best Practices pairs \"Device/software\" with \"SSO, NSF, ISSU (notes 01/02/06)\"."
+  "answer": 1,
+  "why": "Redundant power supplies on the same circuit still fail together. True redundancy needs independent power and paths."
  },
  {
-  "q": "In Redundancy Design & Best Practices — The layered redundancy model, which value matches \"Chassis\"?",
+  "q": "What is the best way to validate a redundancy design?",
   "options": [
-   "SSO, NSF, ISSU (notes 01/02/06)",
-   "EtherChannel/LAG, M-LAG (note 04)",
-   "Redundant supervisors (note 03)",
-   "HSRP/VRRP/GLBP (note 05)"
+   "Assume it works because it is configured",
+   "Force a failover and measure the user impact",
+   "Disable all monitoring",
+   "Remove the standby component"
   ],
-  "answer": 2,
-  "why": "The layered redundancy model in Redundancy Design & Best Practices pairs \"Chassis\" with \"Redundant supervisors (note 03)\"."
+  "answer": 1,
+  "why": "A controlled failover test proves that the standby works, that convergence is acceptable and that monitoring sees the event."
  }
 ];
 
@@ -3342,6 +1703,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

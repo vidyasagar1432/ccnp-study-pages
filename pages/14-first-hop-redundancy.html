@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,380 +600,906 @@
         const heroIntro = `**[[First Hop Redundancy Protocol|First Hop Redundancy Protocols (FHRPs)]]** provide a redundant default gateway for hosts using a shared **virtual IP** and **virtual MAC**. This level covers **[[HSRP]]**, the **IETF-standard [[VRRP]]** and Cisco’s **[[GLBP]]** with load balancing, plus **[[Object Tracking]]** to fail over when upstream paths go down.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'proto', title: 'HSRP',
-            blurb: 'Cisco FHRP, Active/Standby, UDP 1985, and election by priority/IP',
-            overview: '**[[HSRP]] (Hot Standby Router Protocol)** is a Cisco-developed **[[First Hop Redundancy Protocol|FHRP]]**. Routers in a group share a **virtual IP** and a **virtual MAC**. One becomes **Active** (forwards), another becomes **Standby** (monitors). If the Active fails, the Standby takes over with no host reconfiguration.',
-            keyIdea: 'HSRP uses Active/Standby, UDP 1985, and preempt is not required for failover but needed for priority-based recovery.',
-            sections: [
-              { kind: 'table', h: 'HSRP key values', cols: ['Item', 'HSRPv1', 'HSRPv2'], rows: [
-                ['Transport', 'UDP', 'UDP'],
-                ['Port', '1985', '1985'],
-                ['Multicast', '**224.0.0.2**', '**224.0.0.102**'],
-                ['Virtual MAC', '**0000.0c07.acXX**', '**0000.0c9f.fXXX**'],
-                ['Groups', '0-255', '0-4095'],
-                ['IPv6', 'Not native', 'HSRP for IPv6 uses different addressing']
-              ]},
-              { kind: 'code', h: 'How it works', code:
-`  Hosts use Virtual IP as default gateway
-              |
-           +--v--+
-           | VIP |
-         +-------+
-         | R1    | Active
-         | R2    | Standby
-         +-------+
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "proto",
+    "title": "HSRP",
+    "blurb": "Cisco FHRP, Active/Standby, UDP 1985, and election by priority/IP",
+    "overview": "**[[HSRP]] (Hot Standby Router Protocol)** is a Cisco-developed **[[First Hop Redundancy Protocol|FHRP]]**. Routers in a group share a **virtual IP** and a **virtual MAC**. One becomes **Active** (forwards), another becomes **Standby** (monitors). If the Active fails, the Standby takes over with no host reconfiguration.",
+    "keyIdea": "HSRP uses Active/Standby, UDP 1985, and preempt is not required for failover but needed for priority-based recovery.",
+    "sections": [
+      {
+        "h": "FHRP",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">FIRST HOP REDUNDANCY</text><rect x=\"200\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"540\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"370\" y=\"180\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><text x=\"280\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Router 1 (Active)</text><text x=\"620\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Router 2 (Standby)</text><text x=\"450\" y=\"205\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Virtual IP/MAC</text></g></svg>",
+        "caption": "HSRP/VRRP/GLBP provide gateway redundancy."
+      },
+      {
+        "kind": "table",
+        "h": "HSRP key values",
+        "cols": [
+          "Item",
+          "HSRPv1",
+          "HSRPv2"
+        ],
+        "rows": [
+          [
+            "Transport",
+            "UDP",
+            "UDP"
+          ],
+          [
+            "Port",
+            "1985",
+            "1985"
+          ],
+          [
+            "Multicast",
+            "**224.0.0.2**",
+            "**224.0.0.102**"
+          ],
+          [
+            "Virtual MAC",
+            "**0000.0c07.acXX**",
+            "**0000.0c9f.fXXX**"
+          ],
+          [
+            "Groups",
+            "0-255",
+            "0-4095"
+          ],
+          [
+            "IPv6",
+            "Not native",
+            "HSRP for IPv6 uses different addressing"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "How it works",
+        "code": "  Hosts use Virtual IP as default gateway\n              |\n           +--v--+\n           | VIP |\n         +-------+\n         | R1    | Active\n         | R2    | Standby\n         +-------+\n\n  Only Active forwards for the VIP."
+      },
+      {
+        "kind": "table",
+        "h": "Election",
+        "cols": [
+          "Rule",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "Default priority",
+            "**100**"
+          ],
+          [
+            "Winner",
+            "**Highest priority**"
+          ],
+          [
+            "Tie-break",
+            "**Highest IP address**"
+          ],
+          [
+            "Preempt",
+            "Not required for failover; needed for automatic role recovery"
+          ],
+          [
+            "Priority 0",
+            "Indicates relinquishing the role"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Timers",
+        "code": "  Default hello = 3 seconds\n  Default hold  = 10 seconds\n  Hold should be >= 3x hello"
+      },
+      {
+        "kind": "code",
+        "h": "Basic configuration",
+        "code": "  interface GigabitEthernet0/1\n   ip address 10.1.1.2 255.255.255.0\n   standby 1 ip 10.1.1.1\n   standby 1 priority 110\n   standby 1 preempt"
+      },
+      {
+        "kind": "para",
+        "h": "Load sharing",
+        "p": "Use **multiple HSRP groups** on the same interface or different VLANs to share traffic between routers."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show standby\n  show standby brief\n  show standby neighbors"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure HSRP",
+        "code": "interface GigabitEthernet0/1\n ip address 10.1.1.2 255.255.255.0\n standby 1 ip 10.1.1.1\n standby 1 priority 110\n standby 1 preempt"
+      },
+      {
+        "label": "Verify",
+        "code": "show standby brief"
+      }
+    ],
+    "traps": [
+      "HSRP is **Cisco proprietary**.",
+      "Uses **UDP 1985**; v1 multicast **224.0.0.2**, v2 **224.0.0.102**.",
+      "v1 groups **0-255**, v2 groups **0-4095**.",
+      "**Higher priority wins; tie → higher IP.**",
+      "**Preempt not required for failover, required for role recovery.**",
+      "Only **Active** forwards traffic.",
+      "Tracking can **decrement priority** on failure."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "Cisco FHRP"
+        ],
+        [
+          "Roles",
+          "Active / Standby"
+        ],
+        [
+          "Virtual IP/MAC",
+          "Shared"
+        ],
+        [
+          "Transport",
+          "UDP 1985"
+        ],
+        [
+          "v1/v2 multicast",
+          "224.0.0.2 / 224.0.0.102"
+        ],
+        [
+          "Default priority",
+          "100"
+        ],
+        [
+          "Failover",
+          "Standby becomes Active"
+        ],
+        [
+          "Preempt",
+          "Optional for failover"
+        ],
+        [
+          "Tracking",
+          "Influences priority"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. VRRP",
+        "d": "The IETF equivalent"
+      },
+      {
+        "t": "04. Object Tracking",
+        "d": "Driving priority changes"
+      },
+      {
+        "t": "05. Gateway Redundancy",
+        "d": "Comparing the three"
+      }
+    ],
+    "glossary": [
+      "HSRP",
+      "First Hop Redundancy Protocol",
+      "Default Route",
+      "Multicast",
+      "Object Tracking"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "proto",
+    "title": "VRRP",
+    "blurb": "IETF standard, Master/Backup, IP protocol 112, preempt by default",
+    "overview": "**[[VRRP]] (Virtual Router Redundancy Protocol)** is an IETF-standard **[[First Hop Redundancy Protocol|FHRP]]**. One router is **Master**, others are **Backup**. It uses **IP protocol 112** (not UDP), multicast **224.0.0.18**, and virtual MAC **0000.5e00.01XX**. Priority **255** means the **IP Address Owner**.",
+    "keyIdea": "Master/Backup, protocol 112, preempt is enabled by default, and owner wins by priority 255.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "VRRP key values",
+        "cols": [
+          "Item",
+          "VRRPv2",
+          "VRRPv3"
+        ],
+        "rows": [
+          [
+            "Standard",
+            "RFC 3768",
+            "RFC 5798"
+          ],
+          [
+            "IP Protocol",
+            "**112**",
+            "**112**"
+          ],
+          [
+            "Transport",
+            "IP (no UDP)",
+            "IP"
+          ],
+          [
+            "Multicast",
+            "**224.0.0.18**",
+            "**224.0.0.18**"
+          ],
+          [
+            "Virtual MAC",
+            "**0000.5e00.01XX**",
+            "**0000.5e00.01XX**"
+          ],
+          [
+            "IPv4/IPv6",
+            "IPv4 only",
+            "**IPv4 and IPv6**"
+          ],
+          [
+            "Authentication",
+            "Present in v2",
+            "Removed in v3"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Election",
+        "cols": [
+          "Rule",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "Default priority",
+            "**100**"
+          ],
+          [
+            "Priority 255",
+            "**IP Address Owner** — always Master if up"
+          ],
+          [
+            "Winner",
+            "**Highest priority**"
+          ],
+          [
+            "Tie-break",
+            "**Highest primary IP address**"
+          ],
+          [
+            "Preempt",
+            "**Enabled by default**"
+          ],
+          [
+            "Priority 0",
+            "Master relinquishing role"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Timers",
+        "code": "  Default advertisement = 1 second\n  Master Down Interval = 3 × advertisement interval + Skew Time\n  Skew Time = (256 - Priority) / 256"
+      },
+      {
+        "kind": "code",
+        "h": "Basic configuration",
+        "code": "  interface GigabitEthernet0/1\n   ip address 10.1.1.2 255.255.255.0\n   vrrp 1 ip 10.1.1.1\n   vrrp 1 priority 110"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show vrrp\n  show vrrp brief"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure VRRP",
+        "code": "interface GigabitEthernet0/1\n ip address 10.1.1.2 255.255.255.0\n vrrp 1 ip 10.1.1.1\n vrrp 1 priority 110"
+      },
+      {
+        "label": "Verify",
+        "code": "show vrrp brief"
+      }
+    ],
+    "traps": [
+      "VRRP is **IETF standard** (RFC 3768 v2, RFC 5798 v3).",
+      "Uses **IP protocol 112**, **no UDP**.",
+      "Multicast **224.0.0.18**, virtual MAC **0000.5e00.01XX**.",
+      "Roles **Master/Backup**.",
+      "**Priority 255 = IP Address Owner.**",
+      "**Preempt is enabled by default.**",
+      "Equal priority → **higher primary IP wins**.",
+      "VRRPv3 adds **IPv6** support."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "IETF standard FHRP"
+        ],
+        [
+          "Roles",
+          "Master / Backup"
+        ],
+        [
+          "Transport",
+          "IP protocol 112"
+        ],
+        [
+          "Multicast",
+          "224.0.0.18"
+        ],
+        [
+          "Virtual MAC",
+          "0000.5e00.01XX"
+        ],
+        [
+          "Default priority",
+          "100"
+        ],
+        [
+          "Owner priority",
+          "255"
+        ],
+        [
+          "Preempt",
+          "Enabled by default"
+        ],
+        [
+          "v3",
+          "Supports IPv6"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. HSRP",
+        "d": "Cisco equivalent"
+      },
+      {
+        "t": "03. GLBP",
+        "d": "Adds load balancing"
+      },
+      {
+        "t": "04. Object Tracking",
+        "d": "Affects effective priority"
+      }
+    ],
+    "glossary": [
+      "VRRP",
+      "First Hop Redundancy Protocol",
+      "Default Route",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "proto",
+    "title": "GLBP",
+    "blurb": "Cisco FHRP with load balancing, AVG and AVFs, UDP 3222",
+    "overview": "**[[GLBP]] (Gateway Load Balancing Protocol)** is Cisco-proprietary and provides **redundancy plus load balancing**. One router is the **AVG (Active Virtual Gateway)**, up to **four AVFs (Active Virtual Forwarders)** actively forward traffic. Hosts receive different **virtual MAC addresses** via ARP, spreading traffic across forwarders.",
+    "keyIdea": "AVG manages, AVFs forward. Priority drives AVG election; weighting drives AVF activity.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "GLBP key values",
+        "cols": [
+          "Item",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Type",
+            "Cisco proprietary"
+          ],
+          [
+            "Transport",
+            "UDP"
+          ],
+          [
+            "Port",
+            "**3222**"
+          ],
+          [
+            "Multicast",
+            "**224.0.0.102**"
+          ],
+          [
+            "Virtual MAC prefix",
+            "**0007.b400**"
+          ],
+          [
+            "Max active forwarders",
+            "**Up to 4**"
+          ],
+          [
+            "Roles",
+            "AVG / Standby AVG / AVF"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Roles",
+        "cols": [
+          "Role",
+          "Function"
+        ],
+        "rows": [
+          [
+            "**AVG**",
+            "Active Virtual Gateway — owns the virtual IP, answers ARP, assigns virtual MACs to AVFs"
+          ],
+          [
+            "**Standby AVG**",
+            "Takes over if AVG fails"
+          ],
+          [
+            "**AVF**",
+            "Active Virtual Forwarder — actually forwards traffic for its assigned virtual MAC"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Load balancing methods",
+        "cols": [
+          "Method",
+          "Description"
+        ],
+        "rows": [
+          [
+            "**Round-robin** (default)",
+            "Distributes virtual MACs in order"
+          ],
+          [
+            "**Host-dependent**",
+            "Same host always gets same virtual MAC"
+          ],
+          [
+            "**Weighted**",
+            "Proportionally by forwarder weight"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Election",
+        "cols": [
+          "Rule",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "AVG priority",
+            "Higher wins (default 100)"
+          ],
+          [
+            "Tie-break",
+            "Higher IP address"
+          ],
+          [
+            "AVF eligibility",
+            "Controlled by **weighting** and **thresholds**"
+          ],
+          [
+            "Weight 0 / below lower threshold",
+            "AVF becomes inactive"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Basic configuration",
+        "code": "  interface GigabitEthernet0/1\n   ip address 10.1.1.2 255.255.255.0\n   glbp 1 ip 10.1.1.1\n   glbp 1 priority 110\n   glbp 1 preempt"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show glbp\n  show glbp brief"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure GLBP",
+        "code": "interface GigabitEthernet0/1\n ip address 10.1.1.2 255.255.255.0\n glbp 1 ip 10.1.1.1\n glbp 1 priority 110\n glbp 1 preempt"
+      },
+      {
+        "label": "Verify",
+        "code": "show glbp brief"
+      }
+    ],
+    "traps": [
+      "GLBP provides **redundancy + load balancing**.",
+      "Only **AVG answers ARP**; **AVFs forward traffic**.",
+      "**Up to 4 active AVFs** can forward simultaneously.",
+      "Uses **UDP 3222**, multicast **224.0.0.102**.",
+      "**Priority** → AVG election; **weighting** → AVF eligibility.",
+      "**Round-robin is default**; host-dependent and weighted available.",
+      "Weight below lower threshold makes an AVF inactive."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "Cisco proprietary"
+        ],
+        [
+          "Roles",
+          "AVG / Standby AVG / AVF"
+        ],
+        [
+          "Forwarding",
+          "Multiple AVFs can forward"
+        ],
+        [
+          "ARP",
+          "AVG gives out different virtual MACs"
+        ],
+        [
+          "Transport",
+          "UDP 3222"
+        ],
+        [
+          "Multicast",
+          "224.0.0.102"
+        ],
+        [
+          "Max AVFs",
+          "4"
+        ],
+        [
+          "AVG election",
+          "Priority (then IP)"
+        ],
+        [
+          "AVF control",
+          "Weight and thresholds"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. HSRP",
+        "d": "Single forwarder"
+      },
+      {
+        "t": "02. VRRP",
+        "d": "Single forwarder"
+      },
+      {
+        "t": "04. Object Tracking",
+        "d": "Affects weighting/priority"
+      }
+    ],
+    "glossary": [
+      "GLBP",
+      "First Hop Redundancy Protocol",
+      "Multicast",
+      "UDP",
+      "Default Route",
+      "Load Balancing"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "fail",
+    "title": "Object Tracking",
+    "blurb": "React to interface/route/IP SLA failures by changing FHRP priority/weight",
+    "overview": "**[[Object Tracking]]** monitors objects like interface line-protocol, IP routes, or **IP SLA** operations and lets FHRPs react when state changes. It prevents black-holing when the upstream path fails even if the LAN interface stays up.",
+    "keyIdea": "Creating a track object does nothing until you reference it with standby/vrrp/glbp track.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Trackable objects",
+        "cols": [
+          "Object",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Interface line-protocol**",
+            "Detect link failure"
+          ],
+          [
+            "**IP route**",
+            "Detect route disappearance"
+          ],
+          [
+            "**IP SLA**",
+            "Detect end-to-end reachability"
+          ],
+          [
+            "**Track list**",
+            "Combine multiple objects"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Track an interface",
+        "code": "  track 1 interface GigabitEthernet0/0 line-protocol"
+      },
+      {
+        "kind": "code",
+        "h": "Track with HSRP (decrement priority)",
+        "code": "  interface GigabitEthernet0/1\n   standby 1 ip 10.1.1.1\n   standby 1 priority 110\n   standby 1 preempt\n   standby 1 track 1 decrement 20"
+      },
+      {
+        "kind": "para",
+        "h": "Effect on protocols",
+        "p": "**HSRP/VRRP**: tracking typically changes **priority**. **GLBP**: tracking affects **weighting**, not AVG election priority."
+      },
+      {
+        "kind": "code",
+        "h": "Track IP SLA",
+        "code": "  ip sla 1\n   icmp-echo 8.8.8.8 source-interface GigabitEthernet0/0\n   timeout 1000\n   frequency 3\n  ip sla schedule 1 start-time now\n  track 2 ip sla 1 reachability"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show track\n  show track brief\n  show standby\n  show glbp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Create a track",
+        "code": "track 1 interface GigabitEthernet0/0 line-protocol"
+      },
+      {
+        "label": "Tie to HSRP",
+        "code": "interface GigabitEthernet0/1\n standby 1 track 1 decrement 20"
+      },
+      {
+        "label": "Verify",
+        "code": "show track"
+      }
+    ],
+    "traps": [
+      "**Track objects must be referenced** to affect FHRPs.",
+      "HSRP/VRRP track affects **priority**.",
+      "GLBP track affects **weighting**.",
+      "IP SLA can track **end-to-end reachability**.",
+      "Without tracking, a failed upstream path can cause black-holing."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Fail over on upstream/path failure"
+        ],
+        [
+          "Objects",
+          "Interface, route, IP SLA, lists"
+        ],
+        [
+          "HSRP/VRRP",
+          "Decrements/influences priority"
+        ],
+        [
+          "GLBP",
+          "Affects weighting"
+        ],
+        [
+          "Reference required",
+          "Must be tied to the FHRP"
+        ],
+        [
+          "IP SLA",
+          "Great for reachability"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. HSRP",
+        "d": "Primary use case"
+      },
+      {
+        "t": "02. VRRP",
+        "d": "Works similarly"
+      },
+      {
+        "t": "03. GLBP",
+        "d": "Affects weighting instead"
+      }
+    ],
+    "glossary": [
+      "Object Tracking",
+      "HSRP",
+      "VRRP",
+      "GLBP",
+      "IP SLA"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "design",
+    "title": "Gateway Redundancy",
+    "blurb": "Compare HSRP, VRRP, GLBP and when to use each",
+    "overview": "FHRPs solve the same problem — a redundant default gateway — but differ in ownership, load balancing, and standards. **HSRP** and **GLBP** are Cisco-proprietary; **VRRP** is IETF-standard. **GLBP** is the only one with built-in active load balancing.",
+    "keyIdea": "Know the roles, multicast/protocol, and that only GLBP forwards from multiple routers at the same time.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "FHRP comparison",
+        "cols": [
+          "Feature",
+          "HSRP",
+          "VRRP",
+          "GLBP"
+        ],
+        "rows": [
+          [
+            "Standard",
+            "Cisco proprietary",
+            "**IETF (RFC 3768/5798)**",
+            "Cisco proprietary"
+          ],
+          [
+            "Roles",
+            "Active / Standby",
+            "Master / Backup",
+            "AVG / Standby AVG / AVF"
+          ],
+          [
+            "Forwarding",
+            "**Single active**",
+            "**Single master**",
+            "**Multiple AVFs active**"
+          ],
+          [
+            "Load balancing",
+            "Via multiple groups",
+            "Via multiple groups",
+            "**Built-in**"
+          ],
+          [
+            "Transport",
+            "UDP 1985",
+            "**IP protocol 112**",
+            "UDP 3222"
+          ],
+          [
+            "IPv4 Multicast",
+            "224.0.0.2 (v1) / 224.0.0.102 (v2)",
+            "**224.0.0.18**",
+            "**224.0.0.102**"
+          ],
+          [
+            "Virtual MAC",
+            "0000.0c07.acXX / 0000.0c9f.fXXX",
+            "**0000.5e00.01XX**",
+            "**0007.b400.XXXX**"
+          ],
+          [
+            "Preempt",
+            "Not required for failover",
+            "**Default enabled**",
+            "Configurable"
+          ],
+          [
+            "Default priority",
+            "100",
+            "100",
+            "100"
+          ],
+          [
+            "IPv6 support",
+            "HSRPv2/IPv6 variants",
+            "**VRRPv3**",
+            "Limited"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "When to use what",
+        "code": "  Need standard/multi-vendor   -> VRRP\n  Cisco only, simple redundancy -> HSRP\n  Cisco only, load balancing   -> GLBP"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show standby brief\n  show vrrp brief\n  show glbp brief"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Quick verification",
+        "code": "show standby brief\nshow vrrp brief\nshow glbp brief"
+      }
+    ],
+    "traps": [
+      "**GLBP is the only one with multiple active forwarders.**",
+      "**VRRP uses IP protocol 112 (no UDP).**",
+      "**HSRP v1 uses 224.0.0.2; v2/GLBP use 224.0.0.102.**",
+      "HSRP/GLBP are Cisco proprietary; VRRP is IETF standard.",
+      "VRRP preempt is **enabled by default**.",
+      "Object tracking affects HSRP/VRRP priority, GLBP weighting."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Redundancy",
+          "All three provide it"
+        ],
+        [
+          "Load balancing",
+          "Only GLBP natively"
+        ],
+        [
+          "Standard",
+          "VRRP only"
+        ],
+        [
+          "Active forwarders",
+          "HSRP/VRRP: 1, GLBP: up to 4"
+        ],
+        [
+          "Election",
+          "Priority based"
+        ],
+        [
+          "Failover",
+          "Uses timers + preempt/tracking"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. HSRP",
+        "d": "Details"
+      },
+      {
+        "t": "02. VRRP",
+        "d": "Details"
+      },
+      {
+        "t": "03. GLBP",
+        "d": "Details"
+      }
+    ],
+    "glossary": [
+      "First Hop Redundancy Protocol",
+      "HSRP",
+      "VRRP",
+      "GLBP",
+      "Default Route",
+      "Object Tracking"
+    ]
+  }
+];
 
-  Only Active forwards for the VIP.` },
-              { kind: 'table', h: 'Election', cols: ['Rule', 'Notes'], rows: [
-                ['Default priority', '**100**'],
-                ['Winner', '**Highest priority**'],
-                ['Tie-break', '**Highest IP address**'],
-                ['Preempt', 'Not required for failover; needed for automatic role recovery'],
-                ['Priority 0', 'Indicates relinquishing the role']
-              ]},
-              { kind: 'code', h: 'Timers', code:
-`  Default hello = 3 seconds
-  Default hold  = 10 seconds
-  Hold should be >= 3x hello` },
-              { kind: 'code', h: 'Basic configuration', code:
-`  interface GigabitEthernet0/1
-   ip address 10.1.1.2 255.255.255.0
-   standby 1 ip 10.1.1.1
-   standby 1 priority 110
-   standby 1 preempt` },
-              { kind: 'para', h: 'Load sharing', p: 'Use **multiple HSRP groups** on the same interface or different VLANs to share traffic between routers.' },
-              { kind: 'code', h: 'Verification', code:
-`  show standby
-  show standby brief
-  show standby neighbors` }
-            ],
-            commands: [
-              { label: 'Configure HSRP', code:
-`interface GigabitEthernet0/1
- ip address 10.1.1.2 255.255.255.0
- standby 1 ip 10.1.1.1
- standby 1 priority 110
- standby 1 preempt` },
-              { label: 'Verify', code:
-`show standby brief` }
-            ],
-            traps: [
-              'HSRP is **Cisco proprietary**.',
-              'Uses **UDP 1985**; v1 multicast **224.0.0.2**, v2 **224.0.0.102**.',
-              'v1 groups **0-255**, v2 groups **0-4095**.',
-              '**Higher priority wins; tie → higher IP.**',
-              '**Preempt not required for failover, required for role recovery.**',
-              'Only **Active** forwards traffic.',
-              'Tracking can **decrement priority** on failure.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'Cisco FHRP'],
-                ['Roles', 'Active / Standby'],
-                ['Virtual IP/MAC', 'Shared'],
-                ['Transport', 'UDP 1985'],
-                ['v1/v2 multicast', '224.0.0.2 / 224.0.0.102'],
-                ['Default priority', '100'],
-                ['Failover', 'Standby becomes Active'],
-                ['Preempt', 'Optional for failover'],
-                ['Tracking', 'Influences priority']
-              ]
-            },
-            related: [
-              { t: '02. VRRP', d: 'The IETF equivalent' },
-              { t: '04. Object Tracking', d: 'Driving priority changes' },
-              { t: '05. Gateway Redundancy', d: 'Comparing the three' }
-            ],
-            glossary: ['HSRP', 'First Hop Redundancy Protocol', 'Default Route', 'Multicast', 'Object Tracking']
-          },
-          {
-            id: 't02', num: '02', group: 'proto', title: 'VRRP',
-            blurb: 'IETF standard, Master/Backup, IP protocol 112, preempt by default',
-            overview: '**[[VRRP]] (Virtual Router Redundancy Protocol)** is an IETF-standard **[[First Hop Redundancy Protocol|FHRP]]**. One router is **Master**, others are **Backup**. It uses **IP protocol 112** (not UDP), multicast **224.0.0.18**, and virtual MAC **0000.5e00.01XX**. Priority **255** means the **IP Address Owner**.',
-            keyIdea: 'Master/Backup, protocol 112, preempt is enabled by default, and owner wins by priority 255.',
-            sections: [
-              { kind: 'table', h: 'VRRP key values', cols: ['Item', 'VRRPv2', 'VRRPv3'], rows: [
-                ['Standard', 'RFC 3768', 'RFC 5798'],
-                ['IP Protocol', '**112**', '**112**'],
-                ['Transport', 'IP (no UDP)', 'IP'],
-                ['Multicast', '**224.0.0.18**', '**224.0.0.18**'],
-                ['Virtual MAC', '**0000.5e00.01XX**', '**0000.5e00.01XX**'],
-                ['IPv4/IPv6', 'IPv4 only', '**IPv4 and IPv6**'],
-                ['Authentication', 'Present in v2', 'Removed in v3']
-              ]},
-              { kind: 'table', h: 'Election', cols: ['Rule', 'Notes'], rows: [
-                ['Default priority', '**100**'],
-                ['Priority 255', '**IP Address Owner** — always Master if up'],
-                ['Winner', '**Highest priority**'],
-                ['Tie-break', '**Highest primary IP address**'],
-                ['Preempt', '**Enabled by default**'],
-                ['Priority 0', 'Master relinquishing role']
-              ]},
-              { kind: 'code', h: 'Timers', code:
-`  Default advertisement = 1 second
-  Master Down Interval = 3 × advertisement interval + Skew Time
-  Skew Time = (256 - Priority) / 256` },
-              { kind: 'code', h: 'Basic configuration', code:
-`  interface GigabitEthernet0/1
-   ip address 10.1.1.2 255.255.255.0
-   vrrp 1 ip 10.1.1.1
-   vrrp 1 priority 110` },
-              { kind: 'code', h: 'Verification', code:
-`  show vrrp
-  show vrrp brief` }
-            ],
-            commands: [
-              { label: 'Configure VRRP', code:
-`interface GigabitEthernet0/1
- ip address 10.1.1.2 255.255.255.0
- vrrp 1 ip 10.1.1.1
- vrrp 1 priority 110` },
-              { label: 'Verify', code:
-`show vrrp brief` }
-            ],
-            traps: [
-              'VRRP is **IETF standard** (RFC 3768 v2, RFC 5798 v3).',
-              'Uses **IP protocol 112**, **no UDP**.',
-              'Multicast **224.0.0.18**, virtual MAC **0000.5e00.01XX**.',
-              'Roles **Master/Backup**.',
-              '**Priority 255 = IP Address Owner.**',
-              '**Preempt is enabled by default.**',
-              'Equal priority → **higher primary IP wins**.',
-              'VRRPv3 adds **IPv6** support.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'IETF standard FHRP'],
-                ['Roles', 'Master / Backup'],
-                ['Transport', 'IP protocol 112'],
-                ['Multicast', '224.0.0.18'],
-                ['Virtual MAC', '0000.5e00.01XX'],
-                ['Default priority', '100'],
-                ['Owner priority', '255'],
-                ['Preempt', 'Enabled by default'],
-                ['v3', 'Supports IPv6']
-              ]
-            },
-            related: [
-              { t: '01. HSRP', d: 'Cisco equivalent' },
-              { t: '03. GLBP', d: 'Adds load balancing' },
-              { t: '04. Object Tracking', d: 'Affects effective priority' }
-            ],
-            glossary: ['VRRP', 'First Hop Redundancy Protocol', 'Default Route', 'Multicast']
-          },
-          {
-            id: 't03', num: '03', group: 'proto', title: 'GLBP',
-            blurb: 'Cisco FHRP with load balancing, AVG and AVFs, UDP 3222',
-            overview: '**[[GLBP]] (Gateway Load Balancing Protocol)** is Cisco-proprietary and provides **redundancy plus load balancing**. One router is the **AVG (Active Virtual Gateway)**, up to **four AVFs (Active Virtual Forwarders)** actively forward traffic. Hosts receive different **virtual MAC addresses** via ARP, spreading traffic across forwarders.',
-            keyIdea: 'AVG manages, AVFs forward. Priority drives AVG election; weighting drives AVF activity.',
-            sections: [
-              { kind: 'table', h: 'GLBP key values', cols: ['Item', 'Value'], rows: [
-                ['Type', 'Cisco proprietary'],
-                ['Transport', 'UDP'],
-                ['Port', '**3222**'],
-                ['Multicast', '**224.0.0.102**'],
-                ['Virtual MAC prefix', '**0007.b400**'],
-                ['Max active forwarders', '**Up to 4**'],
-                ['Roles', 'AVG / Standby AVG / AVF']
-              ]},
-              { kind: 'table', h: 'Roles', cols: ['Role', 'Function'], rows: [
-                ['**AVG**', 'Active Virtual Gateway — owns the virtual IP, answers ARP, assigns virtual MACs to AVFs'],
-                ['**Standby AVG**', 'Takes over if AVG fails'],
-                ['**AVF**', 'Active Virtual Forwarder — actually forwards traffic for its assigned virtual MAC']
-              ]},
-              { kind: 'table', h: 'Load balancing methods', cols: ['Method', 'Description'], rows: [
-                ['**Round-robin** (default)', 'Distributes virtual MACs in order'],
-                ['**Host-dependent**', 'Same host always gets same virtual MAC'],
-                ['**Weighted**', 'Proportionally by forwarder weight']
-              ]},
-              { kind: 'table', h: 'Election', cols: ['Rule', 'Notes'], rows: [
-                ['AVG priority', 'Higher wins (default 100)'],
-                ['Tie-break', 'Higher IP address'],
-                ['AVF eligibility', 'Controlled by **weighting** and **thresholds**'],
-                ['Weight 0 / below lower threshold', 'AVF becomes inactive']
-              ]},
-              { kind: 'code', h: 'Basic configuration', code:
-`  interface GigabitEthernet0/1
-   ip address 10.1.1.2 255.255.255.0
-   glbp 1 ip 10.1.1.1
-   glbp 1 priority 110
-   glbp 1 preempt` },
-              { kind: 'code', h: 'Verification', code:
-`  show glbp
-  show glbp brief` }
-            ],
-            commands: [
-              { label: 'Configure GLBP', code:
-`interface GigabitEthernet0/1
- ip address 10.1.1.2 255.255.255.0
- glbp 1 ip 10.1.1.1
- glbp 1 priority 110
- glbp 1 preempt` },
-              { label: 'Verify', code:
-`show glbp brief` }
-            ],
-            traps: [
-              'GLBP provides **redundancy + load balancing**.',
-              'Only **AVG answers ARP**; **AVFs forward traffic**.',
-              '**Up to 4 active AVFs** can forward simultaneously.',
-              'Uses **UDP 3222**, multicast **224.0.0.102**.',
-              '**Priority** → AVG election; **weighting** → AVF eligibility.',
-              '**Round-robin is default**; host-dependent and weighted available.',
-              'Weight below lower threshold makes an AVF inactive.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'Cisco proprietary'],
-                ['Roles', 'AVG / Standby AVG / AVF'],
-                ['Forwarding', 'Multiple AVFs can forward'],
-                ['ARP', 'AVG gives out different virtual MACs'],
-                ['Transport', 'UDP 3222'],
-                ['Multicast', '224.0.0.102'],
-                ['Max AVFs', '4'],
-                ['AVG election', 'Priority (then IP)'],
-                ['AVF control', 'Weight and thresholds']
-              ]
-            },
-            related: [
-              { t: '01. HSRP', d: 'Single forwarder' },
-              { t: '02. VRRP', d: 'Single forwarder' },
-              { t: '04. Object Tracking', d: 'Affects weighting/priority' }
-            ],
-            glossary: ['GLBP', 'First Hop Redundancy Protocol', 'Multicast', 'UDP', 'Default Route', 'Load Balancing']
-          },
-          {
-            id: 't04', num: '04', group: 'fail', title: 'Object Tracking',
-            blurb: 'React to interface/route/IP SLA failures by changing FHRP priority/weight',
-            overview: '**[[Object Tracking]]** monitors objects like interface line-protocol, IP routes, or **IP SLA** operations and lets FHRPs react when state changes. It prevents black-holing when the upstream path fails even if the LAN interface stays up.',
-            keyIdea: 'Creating a track object does nothing until you reference it with standby/vrrp/glbp track.',
-            sections: [
-              { kind: 'table', h: 'Trackable objects', cols: ['Object', 'Use'], rows: [
-                ['**Interface line-protocol**', 'Detect link failure'],
-                ['**IP route**', 'Detect route disappearance'],
-                ['**IP SLA**', 'Detect end-to-end reachability'],
-                ['**Track list**', 'Combine multiple objects']
-              ]},
-              { kind: 'code', h: 'Track an interface', code:
-`  track 1 interface GigabitEthernet0/0 line-protocol` },
-              { kind: 'code', h: 'Track with HSRP (decrement priority)', code:
-`  interface GigabitEthernet0/1
-   standby 1 ip 10.1.1.1
-   standby 1 priority 110
-   standby 1 preempt
-   standby 1 track 1 decrement 20` },
-              { kind: 'para', h: 'Effect on protocols', p: '**HSRP/VRRP**: tracking typically changes **priority**. **GLBP**: tracking affects **weighting**, not AVG election priority.' },
-              { kind: 'code', h: 'Track IP SLA', code:
-`  ip sla 1
-   icmp-echo 8.8.8.8 source-interface GigabitEthernet0/0
-   timeout 1000
-   frequency 3
-  ip sla schedule 1 start-time now
-  track 2 ip sla 1 reachability` },
-              { kind: 'code', h: 'Verification', code:
-`  show track
-  show track brief
-  show standby
-  show glbp` }
-            ],
-            commands: [
-              { label: 'Create a track', code:
-`track 1 interface GigabitEthernet0/0 line-protocol` },
-              { label: 'Tie to HSRP', code:
-`interface GigabitEthernet0/1
- standby 1 track 1 decrement 20` },
-              { label: 'Verify', code:
-`show track` }
-            ],
-            traps: [
-              '**Track objects must be referenced** to affect FHRPs.',
-              'HSRP/VRRP track affects **priority**.',
-              'GLBP track affects **weighting**.',
-              'IP SLA can track **end-to-end reachability**.',
-              'Without tracking, a failed upstream path can cause black-holing.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Fail over on upstream/path failure'],
-                ['Objects', 'Interface, route, IP SLA, lists'],
-                ['HSRP/VRRP', 'Decrements/influences priority'],
-                ['GLBP', 'Affects weighting'],
-                ['Reference required', 'Must be tied to the FHRP'],
-                ['IP SLA', 'Great for reachability']
-              ]
-            },
-            related: [
-              { t: '01. HSRP', d: 'Primary use case' },
-              { t: '02. VRRP', d: 'Works similarly' },
-              { t: '03. GLBP', d: 'Affects weighting instead' }
-            ],
-            glossary: ['Object Tracking', 'HSRP', 'VRRP', 'GLBP', 'IP SLA']
-          },
-          {
-            id: 't05', num: '05', group: 'design', title: 'Gateway Redundancy',
-            blurb: 'Compare HSRP, VRRP, GLBP and when to use each',
-            overview: 'FHRPs solve the same problem — a redundant default gateway — but differ in ownership, load balancing, and standards. **HSRP** and **GLBP** are Cisco-proprietary; **VRRP** is IETF-standard. **GLBP** is the only one with built-in active load balancing.',
-            keyIdea: 'Know the roles, multicast/protocol, and that only GLBP forwards from multiple routers at the same time.',
-            sections: [
-              { kind: 'table', h: 'FHRP comparison', cols: ['Feature', 'HSRP', 'VRRP', 'GLBP'], rows: [
-                ['Standard', 'Cisco proprietary', '**IETF (RFC 3768/5798)**', 'Cisco proprietary'],
-                ['Roles', 'Active / Standby', 'Master / Backup', 'AVG / Standby AVG / AVF'],
-                ['Forwarding', '**Single active**', '**Single master**', '**Multiple AVFs active**'],
-                ['Load balancing', 'Via multiple groups', 'Via multiple groups', '**Built-in**'],
-                ['Transport', 'UDP 1985', '**IP protocol 112**', 'UDP 3222'],
-                ['IPv4 Multicast', '224.0.0.2 (v1) / 224.0.0.102 (v2)', '**224.0.0.18**', '**224.0.0.102**'],
-                ['Virtual MAC', '0000.0c07.acXX / 0000.0c9f.fXXX', '**0000.5e00.01XX**', '**0007.b400.XXXX**'],
-                ['Preempt', 'Not required for failover', '**Default enabled**', 'Configurable'],
-                ['Default priority', '100', '100', '100'],
-                ['IPv6 support', 'HSRPv2/IPv6 variants', '**VRRPv3**', 'Limited']
-              ]},
-              { kind: 'code', h: 'When to use what', code:
-`  Need standard/multi-vendor   -> VRRP
-  Cisco only, simple redundancy -> HSRP
-  Cisco only, load balancing   -> GLBP` },
-              { kind: 'code', h: 'Verification', code:
-`  show standby brief
-  show vrrp brief
-  show glbp brief` }
-            ],
-            commands: [
-              { label: 'Quick verification', code:
-`show standby brief
-show vrrp brief
-show glbp brief` }
-            ],
-            traps: [
-              '**GLBP is the only one with multiple active forwarders.**',
-              '**VRRP uses IP protocol 112 (no UDP).**',
-              '**HSRP v1 uses 224.0.0.2; v2/GLBP use 224.0.0.102.**',
-              'HSRP/GLBP are Cisco proprietary; VRRP is IETF standard.',
-              'VRRP preempt is **enabled by default**.',
-              'Object tracking affects HSRP/VRRP priority, GLBP weighting.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Redundancy', 'All three provide it'],
-                ['Load balancing', 'Only GLBP natively'],
-                ['Standard', 'VRRP only'],
-                ['Active forwarders', 'HSRP/VRRP: 1, GLBP: up to 4'],
-                ['Election', 'Priority based'],
-                ['Failover', 'Uses timers + preempt/tracking']
-              ]
-            },
-            related: [
-              { t: '01. HSRP', d: 'Details' },
-              { t: '02. VRRP', d: 'Details' },
-              { t: '03. GLBP', d: 'Details' }
-            ],
-            glossary: ['First Hop Redundancy Protocol', 'HSRP', 'VRRP', 'GLBP', 'Default Route', 'Object Tracking']
-          }
-        ];
-        
         const GROUPS = [
           { key: 'proto', label: 'Redundancy Protocols', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
           { key: 'fail', label: 'Failover & Design', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300', dot: 'bg-emerald-600', bullet: 'text-emerald-600 dark:text-emerald-400' },
@@ -1095,6 +1628,7 @@ show glbp brief` }
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

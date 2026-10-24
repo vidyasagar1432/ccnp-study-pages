@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,1175 +600,1181 @@
         const heroIntro = "**[[Route Redistribution]]** moves routes between different routing domains. The exam expects you to know **where metrics come from** (the **[[Seed Metric|seed metric]]**), **who wins when prefixes collide** (**[[Administrative Distance]]**), and **how to stop traffic looping** between domains using **[[Route Tag|tags]]**, **[[Route Filtering|filters]]** and careful design.";
 
         const topics = [
- {
-  "id": "t01",
-  "num": "01",
-  "group": "scen",
-  "title": "OSPF to EIGRP",
-  "blurb": "EIGRP needs a seed metric; OSPF cost does not convert automatically",
-  "overview": "**Redistributing [[OSPF]] into [[EIGRP]]** takes OSPF-learned and OSPF-connected routes into the EIGRP domain. The critical rule: **EIGRP requires a seed metric**. Without one, redistributed routes are **not advertised**. The OSPF COST does not map to EIGRP’s composite metric, so you must supply bandwidth/delay/reliability/load/MTU.",
-  "keyIdea": "No seed metric = no routes. Use default-metric or a route-map on the redistribute command.",
-  "sections": [
-   {
-    "kind": "code",
-    "h": "The problem",
-    "code": "  OSPF uses COST\n  EIGRP uses composite metric (BW, delay, rel, load, MTU)\n\n  There is NO automatic conversion.\n  You MUST supply a seed metric."
-   },
-   {
-    "kind": "table",
-    "h": "What you must supply",
-    "cols": [
-     "Method",
-     "Notes"
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "scen",
+    "title": "OSPF to EIGRP",
+    "blurb": "EIGRP needs a seed metric; OSPF cost does not convert automatically",
+    "overview": "**Redistributing [[OSPF]] into [[EIGRP]]** takes OSPF-learned and OSPF-connected routes into the EIGRP domain. The critical rule: **EIGRP requires a seed metric**. Without one, redistributed routes are **not advertised**. The OSPF COST does not map to EIGRP’s composite metric, so you must supply bandwidth/delay/reliability/load/MTU.",
+    "keyIdea": "No seed metric = no routes. Use default-metric or a route-map on the redistribute command.",
+    "sections": [
+      {
+        "h": "Redistribution",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">ROUTE REDISTRIBUTION</text><rect x=\"60\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"350\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"640\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><text x=\"160\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">OSPF</text><text x=\"450\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Redistribute</text><text x=\"740\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">EIGRP/BGP</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">Need metric and filtering</text></g></svg>",
+        "caption": "Share routes between protocols."
+      },
+      {
+        "kind": "code",
+        "h": "The problem",
+        "code": "  OSPF uses COST\n  EIGRP uses composite metric (BW, delay, rel, load, MTU)\n\n  There is NO automatic conversion.\n  You MUST supply a seed metric."
+      },
+      {
+        "kind": "table",
+        "h": "What you must supply",
+        "cols": [
+          "Method",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "%%default-metric%%",
+            "Simple global default for this redistribution"
+          ],
+          [
+            "%%redistribute ... route-map%% with %%set metric%%",
+            "Per-prefix control, preferred"
+          ],
+          [
+            "Both",
+            "Route-map wins if both used"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Basic configuration",
+        "code": "  router eigrp 100\n   redistribute ospf 1 metric 10000 100 255 1 1500\n   !                    BW    DLY REL   LOAD MTU\n   default-metric 10000 100 255 1 1500\n   network 10.0.0.0"
+      },
+      {
+        "kind": "code",
+        "h": "With a route-map for control",
+        "code": "  route-map OSPF-TO-EIGRP permit 10\n   match ip address prefix-list OSPF-ONLY\n   set metric 1544 100 255 1 1500\n   set tag 100\n\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP"
+      },
+      {
+        "kind": "para",
+        "h": "OSPF specifics",
+        "p": "Use the **%%subnets%%** keyword in the redistribute command if you want to include **all** subnets. Without it, only **classful** networks are redistributed."
+      },
+      {
+        "kind": "code",
+        "h": "The subnets keyword",
+        "code": "  router eigrp 100\n   redistribute ospf 1 metric 10000 100 255 1 1500 subnets"
+      },
+      {
+        "kind": "para",
+        "h": "Where it shows up",
+        "p": "Redistributed routes appear as **external** in EIGRP. AD for external EIGRP is **170** (internal is **90**), which matters when comparing against another protocol."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route eigrp\n  show ip eigrp topology\n  show running-config | section router"
+      }
     ],
-    "rows": [
-     [
-      "%%default-metric%%",
-      "Simple global default for this redistribution"
-     ],
-     [
-      "%%redistribute ... route-map%% with %%set metric%%",
-      "Per-prefix control, preferred"
-     ],
-     [
-      "Both",
-      "Route-map wins if both used"
-     ]
+    "commands": [
+      {
+        "label": "Redistribute OSPF into EIGRP",
+        "code": "router eigrp 100\n redistribute ospf 1 metric 10000 100 255 1 1500 subnets"
+      },
+      {
+        "label": "Filter with a route-map",
+        "code": "route-map OSPF-TO-EIGRP permit 10\n match ip address prefix-list ALLOWED\n set metric 10000 100 255 1 1500\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip route eigrp\nshow ip eigrp topology"
+      }
+    ],
+    "traps": [
+      "**EIGRP refuses redistributed routes with no seed metric.**",
+      "OSPF COST does **not** convert to the EIGRP composite metric.",
+      "Use **%%subnets%%** to redistribute all subnets, not just classful.",
+      "EIGRP metric order is **bandwidth, delay, reliability, load, MTU**.",
+      "Redistributed routes are **external** to EIGRP (AD 170)."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Direction",
+          "OSPF -> EIGRP"
+        ],
+        [
+          "Seed metric required",
+          "Yes"
+        ],
+        [
+          "Automatic conversion",
+          "No"
+        ],
+        [
+          "Ways to provide",
+          "default-metric or set metric in a route-map"
+        ],
+        [
+          "Include subnets",
+          "Use the subnets keyword"
+        ],
+        [
+          "EIGRP external AD",
+          "170"
+        ],
+        [
+          "Metric tuple",
+          "BW, delay, reliability, load, MTU"
+        ],
+        [
+          "Redistributed type",
+          "External EIGRP"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Seed Metrics",
+        "d": "the details of what to supply"
+      },
+      {
+        "t": "08. Loop Prevention",
+        "d": "why tagging matters here"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "how to keep it safe"
+      }
+    ],
+    "glossary": [
+      "Route Redistribution",
+      "OSPF",
+      "EIGRP",
+      "Seed Metric",
+      "EIGRP Metric",
+      "Administrative Distance"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "Basic configuration",
-    "code": "  router eigrp 100\n   redistribute ospf 1 metric 10000 100 255 1 1500\n   !                    BW    DLY REL   LOAD MTU\n   default-metric 10000 100 255 1 1500\n   network 10.0.0.0"
-   },
-   {
-    "kind": "code",
-    "h": "With a route-map for control",
-    "code": "  route-map OSPF-TO-EIGRP permit 10\n   match ip address prefix-list OSPF-ONLY\n   set metric 1544 100 255 1 1500\n   set tag 100\n\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP"
-   },
-   {
-    "kind": "para",
-    "h": "OSPF specifics",
-    "p": "Use the **%%subnets%%** keyword in the redistribute command if you want to include **all** subnets. Without it, only **classful** networks are redistributed."
-   },
-   {
-    "kind": "code",
-    "h": "The subnets keyword",
-    "code": "  router eigrp 100\n   redistribute ospf 1 metric 10000 100 255 1 1500 subnets"
-   },
-   {
-    "kind": "para",
-    "h": "Where it shows up",
-    "p": "Redistributed routes appear as **external** in EIGRP. AD for external EIGRP is **170** (internal is **90**), which matters when comparing against another protocol."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route eigrp\n  show ip eigrp topology\n  show running-config | section router"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Redistribute OSPF into EIGRP",
-    "code": "router eigrp 100\n redistribute ospf 1 metric 10000 100 255 1 1500 subnets"
-   },
-   {
-    "label": "Filter with a route-map",
-    "code": "route-map OSPF-TO-EIGRP permit 10\n match ip address prefix-list ALLOWED\n set metric 10000 100 255 1 1500\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip route eigrp\nshow ip eigrp topology"
-   }
-  ],
-  "traps": [
-   "**EIGRP refuses redistributed routes with no seed metric.**",
-   "OSPF COST does **not** convert to the EIGRP composite metric.",
-   "Use **%%subnets%%** to redistribute all subnets, not just classful.",
-   "EIGRP metric order is **bandwidth, delay, reliability, load, MTU**.",
-   "Redistributed routes are **external** to EIGRP (AD 170)."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Direction",
-     "OSPF -> EIGRP"
-    ],
-    [
-     "Seed metric required",
-     "Yes"
-    ],
-    [
-     "Automatic conversion",
-     "No"
-    ],
-    [
-     "Ways to provide",
-     "default-metric or set metric in a route-map"
-    ],
-    [
-     "Include subnets",
-     "Use the subnets keyword"
-    ],
-    [
-     "EIGRP external AD",
-     "170"
-    ],
-    [
-     "Metric tuple",
-     "BW, delay, reliability, load, MTU"
-    ],
-    [
-     "Redistributed type",
-     "External EIGRP"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. Seed Metrics",
-    "d": "the details of what to supply"
-   },
-   {
-    "t": "08. Loop Prevention",
-    "d": "why tagging matters here"
-   },
-   {
-    "t": "07. Filtering",
-    "d": "how to keep it safe"
-   }
-  ],
-  "glossary": [
-   "Route Redistribution",
-   "OSPF",
-   "EIGRP",
-   "Seed Metric",
-   "EIGRP Metric",
-   "Administrative Distance"
-  ]
- },
- {
-  "id": "t02",
-  "num": "02",
-  "group": "scen",
-  "title": "OSPF to BGP",
-  "blurb": "Network statements vs redistribute; origin becomes ?; MED can inherit",
-  "overview": "Injecting **OSPF** routes into **[[BGP]]** advertises internal networks to providers. Two approaches exist: **%%network%%** statements (clean, only prefixes already in the BGP table) and **%%redistribute ospf%%** (bulk). When using **redistribute**, BGP sets the **origin** to **?** (incomplete). If **MED** is not set explicitly, it can inherit the **OSPF metric**.",
-  "keyIdea": "network gives origin i and is precise; redistribute gives origin ? and is bulk — and filter external OSPF routes.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "network vs redistribute",
-    "cols": [
-     "",
-     "network",
-     "redistribute"
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "scen",
+    "title": "OSPF to BGP",
+    "blurb": "Network statements vs redistribute; origin becomes ?; MED can inherit",
+    "overview": "Injecting **OSPF** routes into **[[BGP]]** advertises internal networks to providers. Two approaches exist: **%%network%%** statements (clean, only prefixes already in the BGP table) and **%%redistribute ospf%%** (bulk). When using **redistribute**, BGP sets the **origin** to **?** (incomplete). If **MED** is not set explicitly, it can inherit the **OSPF metric**.",
+    "keyIdea": "network gives origin i and is precise; redistribute gives origin ? and is bulk — and filter external OSPF routes.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "network vs redistribute",
+        "cols": [
+          "",
+          "network",
+          "redistribute"
+        ],
+        "rows": [
+          [
+            "Prefix must exist",
+            "Yes, in the routing table / eligible",
+            "Any matched by the process"
+          ],
+          [
+            "Origin",
+            "**i** (IGP)",
+            "**?** (incomplete)"
+          ],
+          [
+            "MED",
+            "Not automatic from OSPF",
+            "Can inherit the OSPF metric"
+          ],
+          [
+            "Control",
+            "Very precise",
+            "Needs route-maps/prefix-lists"
+          ],
+          [
+            "Typical use",
+            "Advertise specific prefixes",
+            "Bulk redistribution"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Using network",
+        "code": "  router bgp 65000\n   network 10.1.0.0 mask 255.255.255.0\n\n  ! Only works if the route exists in the RIB."
+      },
+      {
+        "kind": "code",
+        "h": "Using redistribute",
+        "code": "  router bgp 65000\n   redistribute ospf 1 route-map OSPF-TO-BGP\n\n  route-map OSPF-TO-BGP permit 10\n   match route-type internal\n   set metric 100"
+      },
+      {
+        "kind": "para",
+        "h": "Origin matters",
+        "p": "BGP path selection considers **origin** at a later step, but the exam loves this difference: **%%redistribute%% produces origin ?**, **%%network%% produces origin i**."
+      },
+      {
+        "kind": "code",
+        "h": "External OSPF routes",
+        "code": "  Be careful redistributing EXTERNAL OSPF routes\n  into BGP. They are often filtered with a route-map\n  matching route-type internal, or by prefix."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp <prefix>"
+      }
     ],
-    "rows": [
-     [
-      "Prefix must exist",
-      "Yes, in the routing table / eligible",
-      "Any matched by the process"
-     ],
-     [
-      "Origin",
-      "**i** (IGP)",
-      "**?** (incomplete)"
-     ],
-     [
+    "commands": [
+      {
+        "label": "Precise advertisement",
+        "code": "router bgp 65000\n network 10.1.0.0 mask 255.255.255.0"
+      },
+      {
+        "label": "Redistribute with control",
+        "code": "route-map OSPF-TO-BGP permit 10\n match route-type internal\nrouter bgp 65000\n redistribute ospf 1 route-map OSPF-TO-BGP"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp"
+      }
+    ],
+    "traps": [
+      "**redistribute → origin ?; network → origin i.**",
+      "MED can inherit the **OSPF metric** when redistributing.",
+      "Filter **external** OSPF routes unless you explicitly want them.",
+      "**network requires the route to already exist** in the routing table.",
+      "Use route-maps/prefix-lists to avoid redistributing everything."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Direction",
+          "OSPF -> BGP"
+        ],
+        [
+          "Preferred",
+          "network (precise) or controlled redistribute"
+        ],
+        [
+          "redistribute origin",
+          "? (incomplete)"
+        ],
+        [
+          "network origin",
+          "i (IGP)"
+        ],
+        [
+          "MED",
+          "Can inherit OSPF cost"
+        ],
+        [
+          "Watch out for",
+          "Redistributing OSPF external routes"
+        ],
+        [
+          "Route must exist",
+          "Yes for network"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. EIGRP to BGP",
+        "d": "the sister case"
+      },
+      {
+        "t": "06. Route Tags",
+        "d": "to avoid leaking back"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "the safe way"
+      }
+    ],
+    "glossary": [
+      "Route Redistribution",
+      "OSPF",
+      "BGP",
       "MED",
-      "Not automatic from OSPF",
-      "Can inherit the OSPF metric"
-     ],
-     [
-      "Control",
-      "Very precise",
-      "Needs route-maps/prefix-lists"
-     ],
-     [
-      "Typical use",
-      "Advertise specific prefixes",
-      "Bulk redistribution"
-     ]
+      "Route Filtering"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "Using network",
-    "code": "  router bgp 65000\n   network 10.1.0.0 mask 255.255.255.0\n\n  ! Only works if the route exists in the RIB."
-   },
-   {
-    "kind": "code",
-    "h": "Using redistribute",
-    "code": "  router bgp 65000\n   redistribute ospf 1 route-map OSPF-TO-BGP\n\n  route-map OSPF-TO-BGP permit 10\n   match route-type internal\n   set metric 100"
-   },
-   {
-    "kind": "para",
-    "h": "Origin matters",
-    "p": "BGP path selection considers **origin** at a later step, but the exam loves this difference: **%%redistribute%% produces origin ?**, **%%network%% produces origin i**."
-   },
-   {
-    "kind": "code",
-    "h": "External OSPF routes",
-    "code": "  Be careful redistributing EXTERNAL OSPF routes\n  into BGP. They are often filtered with a route-map\n  matching route-type internal, or by prefix."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip bgp\n  show ip bgp <prefix>"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Precise advertisement",
-    "code": "router bgp 65000\n network 10.1.0.0 mask 255.255.255.0"
-   },
-   {
-    "label": "Redistribute with control",
-    "code": "route-map OSPF-TO-BGP permit 10\n match route-type internal\nrouter bgp 65000\n redistribute ospf 1 route-map OSPF-TO-BGP"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip bgp"
-   }
-  ],
-  "traps": [
-   "**redistribute → origin ?; network → origin i.**",
-   "MED can inherit the **OSPF metric** when redistributing.",
-   "Filter **external** OSPF routes unless you explicitly want them.",
-   "**network requires the route to already exist** in the routing table.",
-   "Use route-maps/prefix-lists to avoid redistributing everything."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Direction",
-     "OSPF -> BGP"
-    ],
-    [
-     "Preferred",
-     "network (precise) or controlled redistribute"
-    ],
-    [
-     "redistribute origin",
-     "? (incomplete)"
-    ],
-    [
-     "network origin",
-     "i (IGP)"
-    ],
-    [
-     "MED",
-     "Can inherit OSPF cost"
-    ],
-    [
-     "Watch out for",
-     "Redistributing OSPF external routes"
-    ],
-    [
-     "Route must exist",
-     "Yes for network"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. EIGRP to BGP",
-    "d": "the sister case"
-   },
-   {
-    "t": "06. Route Tags",
-    "d": "to avoid leaking back"
-   },
-   {
-    "t": "07. Filtering",
-    "d": "the safe way"
-   }
-  ],
-  "glossary": [
-   "Route Redistribution",
-   "OSPF",
-   "BGP",
-   "MED",
-   "Route Filtering"
-  ]
- },
- {
-  "id": "t03",
-  "num": "03",
-  "group": "scen",
-  "title": "EIGRP to BGP",
-  "blurb": "No seed metric required; MED can default to 0; origin depends on method",
-  "overview": "Injecting **EIGRP** routes into **[[BGP]]** advertises internal networks to a provider. Unlike **OSPF→EIGRP**, **BGP has no EIGRP seed-metric requirement** when redistributing. If no **MED** is set, it often defaults to **0**. Again, **%%redistribute eigrp%% gives origin ?**, while **%%network%% gives origin i**.",
-  "keyIdea": "No mandatory EIGRP seed metric into BGP; set MED deliberately if you want it to influence the neighbor.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Comparison with OSPF→EIGRP",
-    "cols": [
-     "",
-     "EIGRP→BGP",
-     "OSPF→EIGRP"
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "scen",
+    "title": "EIGRP to BGP",
+    "blurb": "No seed metric required; MED can default to 0; origin depends on method",
+    "overview": "Injecting **EIGRP** routes into **[[BGP]]** advertises internal networks to a provider. Unlike **OSPF→EIGRP**, **BGP has no EIGRP seed-metric requirement** when redistributing. If no **MED** is set, it often defaults to **0**. Again, **%%redistribute eigrp%% gives origin ?**, while **%%network%% gives origin i**.",
+    "keyIdea": "No mandatory EIGRP seed metric into BGP; set MED deliberately if you want it to influence the neighbor.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Comparison with OSPF→EIGRP",
+        "cols": [
+          "",
+          "EIGRP→BGP",
+          "OSPF→EIGRP"
+        ],
+        "rows": [
+          [
+            "Seed metric required",
+            "**No**",
+            "**Yes**"
+          ],
+          [
+            "Metric into BGP",
+            "MED (often 0 by default)",
+            "Becomes EIGRP composite"
+          ],
+          [
+            "Method",
+            "network or redistribute",
+            "redistribute (with metric)"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Redistribute EIGRP into BGP",
+        "code": "  router bgp 65000\n   redistribute eigrp 100 route-map EIGRP-TO-BGP\n\n  route-map EIGRP-TO-BGP permit 10\n   match ip address prefix-list EIGRP-ROUTES\n   set metric 200"
+      },
+      {
+        "kind": "code",
+        "h": "Network statement",
+        "code": "  router bgp 65000\n   network 10.2.0.0 mask 255.255.255.0"
+      },
+      {
+        "kind": "para",
+        "h": "Filter external EIGRP",
+        "p": "EIGRP-external routes can be redistributed too — filter them if you only want internal routes to go to the provider."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp <prefix>"
+      }
     ],
-    "rows": [
-     [
-      "Seed metric required",
-      "**No**",
-      "**Yes**"
-     ],
-     [
-      "Metric into BGP",
-      "MED (often 0 by default)",
-      "Becomes EIGRP composite"
-     ],
-     [
-      "Method",
-      "network or redistribute",
-      "redistribute (with metric)"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Redistribute EIGRP into BGP",
-    "code": "  router bgp 65000\n   redistribute eigrp 100 route-map EIGRP-TO-BGP\n\n  route-map EIGRP-TO-BGP permit 10\n   match ip address prefix-list EIGRP-ROUTES\n   set metric 200"
-   },
-   {
-    "kind": "code",
-    "h": "Network statement",
-    "code": "  router bgp 65000\n   network 10.2.0.0 mask 255.255.255.0"
-   },
-   {
-    "kind": "para",
-    "h": "Filter external EIGRP",
-    "p": "EIGRP-external routes can be redistributed too — filter them if you only want internal routes to go to the provider."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip bgp\n  show ip bgp <prefix>"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Redistribute controlled",
-    "code": "route-map EIGRP-TO-BGP permit 10\n set metric 150\nrouter bgp 65000\n redistribute eigrp 100 route-map EIGRP-TO-BGP"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip bgp"
-   }
-  ],
-  "traps": [
-   "**No seed metric required** for EIGRP→BGP.",
-   "MED often defaults to **0** if not set explicitly.",
-   "**redistribute → origin ?; network → origin i.**",
-   "Filter **external** EIGRP routes before sending to BGP.",
-   "MED is interpreted by the neighbor AS — set it if you want to influence inbound traffic."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Direction",
-     "EIGRP -> BGP"
+    "commands": [
+      {
+        "label": "Redistribute controlled",
+        "code": "route-map EIGRP-TO-BGP permit 10\n set metric 150\nrouter bgp 65000\n redistribute eigrp 100 route-map EIGRP-TO-BGP"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp"
+      }
     ],
-    [
-     "Seed metric required",
-     "No"
+    "traps": [
+      "**No seed metric required** for EIGRP→BGP.",
+      "MED often defaults to **0** if not set explicitly.",
+      "**redistribute → origin ?; network → origin i.**",
+      "Filter **external** EIGRP routes before sending to BGP.",
+      "MED is interpreted by the neighbor AS — set it if you want to influence inbound traffic."
     ],
-    [
-     "redistribute origin",
-     "? (incomplete)"
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Direction",
+          "EIGRP -> BGP"
+        ],
+        [
+          "Seed metric required",
+          "No"
+        ],
+        [
+          "redistribute origin",
+          "? (incomplete)"
+        ],
+        [
+          "network origin",
+          "i (IGP)"
+        ],
+        [
+          "MED",
+          "Often 0 by default — set if needed"
+        ],
+        [
+          "Filter",
+          "Consider EIGRP external routes"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. OSPF to BGP",
+        "d": "the parallel case"
+      },
+      {
+        "t": "04. Seed Metrics",
+        "d": "what differs"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "safety"
+      }
     ],
-    [
-     "network origin",
-     "i (IGP)"
-    ],
-    [
-     "MED",
-     "Often 0 by default — set if needed"
-    ],
-    [
-     "Filter",
-     "Consider EIGRP external routes"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "02. OSPF to BGP",
-    "d": "the parallel case"
-   },
-   {
-    "t": "04. Seed Metrics",
-    "d": "what differs"
-   },
-   {
-    "t": "07. Filtering",
-    "d": "safety"
-   }
-  ],
-  "glossary": [
-   "Route Redistribution",
-   "EIGRP",
-   "BGP",
-   "MED",
-   "Route Filtering"
-  ]
- },
- {
-  "id": "t04",
-  "num": "04",
-  "group": "mech",
-  "title": "Seed Metrics",
-  "blurb": "What each protocol needs at the boundary to accept redistributed routes",
-  "overview": "A **[[Seed Metric|seed metric]]** is the initial metric assigned to a route when it is redistributed. **EIGRP** has **no default** and will not advertise redistributed routes without one. **OSPF** needs **%%subnets%%** and a metric (often via **%%default-metric%%**). **BGP** uses **MED** rather than a native internal metric when redistributing, and often defaults to **0**.",
-  "keyIdea": "Know the defaults: EIGRP needs one, OSPF needs subnets, BGP looks at MED.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Seed metric requirements",
-    "cols": [
-     "Protocol",
-     "Required?",
-     "Notes"
-    ],
-    "rows": [
-     [
+    "glossary": [
+      "Route Redistribution",
       "EIGRP",
-      "**Yes, must supply**",
-      "No default; use default-metric or set metric in route-map (BW, delay, rel, load, MTU)"
-     ],
-     [
-      "OSPF",
-      "**Usually yes if not defaulted**",
-      "Use subnets to include all; default-metric or metric in redistribute"
-     ],
-     [
       "BGP",
-      "**Not the same**",
-      "Uses MED; often 0 by default"
-     ]
+      "MED",
+      "Route Filtering"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "EIGRP seed",
-    "code": "  router eigrp 100\n   default-metric 10000 100 255 1 1500\n   redistribute ospf 1 subnets"
-   },
-   {
-    "kind": "code",
-    "h": "OSPF seed",
-    "code": "  router ospf 1\n   redistribute eigrp 100 subnets metric 10 metric-type 2\n   ! E2 is default; E1 adds internal cost"
-   },
-   {
-    "kind": "table",
-    "h": "OSPF metric types",
-    "cols": [
-     "Type",
-     "Behaviour"
-    ],
-    "rows": [
-     [
-      "E2 (default)",
-      "Cost is fixed to the seed metric; internal OSPF cost not added"
-     ],
-     [
-      "E1",
-      "Seed metric + internal OSPF path cost added"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "BGP MED",
-    "code": "  router bgp 65000\n   redistribute ospf 1 route-map SET-MED\n  route-map SET-MED permit 10\n   set metric 50  ! sets MED"
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route\n  show ip bgp\n  show ip eigrp topology"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Set EIGRP seed",
-    "code": "router eigrp 100\n default-metric 10000 100 255 1 1500\n redistribute ospf 1 subnets"
-   },
-   {
-    "label": "Set OSPF seed",
-    "code": "router ospf 1\n redistribute eigrp 100 subnets metric 20 metric-type 1"
-   },
-   {
-    "label": "Set BGP MED",
-    "code": "route-map BGP-MET permit 10\n set metric 100\nrouter bgp 65000\n redistribute ospf 1 route-map BGP-MET"
-   }
-  ],
-  "traps": [
-   "**EIGRP has no default seed metric** — routes are not advertised without one.",
-   "OSPF needs **%%subnets%%** to redistribute all prefixes.",
-   "**E2 ignores internal cost; E1 accumulates it.**",
-   "BGP MED default is often **0** — set a value to influence the neighbor.",
-   "The EIGRP seed metric order is **BW, delay, reliability, load, MTU**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Seed metric",
-     "Initial metric for redistributed routes"
-    ],
-    [
-     "EIGRP",
-     "Required, no default (BW/delay/rel/load/MTU)"
-    ],
-    [
-     "OSPF",
-     "Use metric-type (E1/E2) and subnets"
-    ],
-    [
-     "BGP",
-     "Uses MED (default often 0)"
-    ],
-    [
-     "E2 vs E1",
-     "E2 fixed, E1 adds internal cost"
-    ],
-    [
-     "Default-metric",
-     "Convenient global default"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "01. OSPF to EIGRP",
-    "d": "where this bites hardest"
-   },
-   {
-    "t": "02. OSPF to BGP",
-    "d": "MED inheritance"
-   },
-   {
-    "t": "03. EIGRP to BGP",
-    "d": "the exception"
-   }
-  ],
-  "glossary": [
-   "Seed Metric",
-   "EIGRP Metric",
-   "OSPF",
-   "EIGRP",
-   "BGP",
-   "MED"
-  ]
- },
- {
-  "id": "t05",
-  "num": "05",
-  "group": "mech",
-  "title": "Administrative Distance",
-  "blurb": "AD beats metric when the same prefix is learned by different protocols",
-  "overview": "When two routing protocols learn the **same prefix**, the router compares **[[Administrative Distance]]** first. The lower AD wins, **regardless of metric**. Redistribution creates these conflicts constantly: an **EIGRP internal** route (AD 90) will beat an **OSPF external** route (AD 110), and **eBGP** (20) almost always wins. If the wrong source wins, traffic goes the wrong way or loops.",
-  "keyIdea": "AD beats metric. Always. If both protocols know the same prefix, look at AD first.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Key AD values",
-    "cols": [
-     "Source",
-     "AD"
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "mech",
+    "title": "Seed Metrics",
+    "blurb": "What each protocol needs at the boundary to accept redistributed routes",
+    "overview": "A **[[Seed Metric|seed metric]]** is the initial metric assigned to a route when it is redistributed. **EIGRP** has **no default** and will not advertise redistributed routes without one. **OSPF** needs **%%subnets%%** and a metric (often via **%%default-metric%%**). **BGP** uses **MED** rather than a native internal metric when redistributing, and often defaults to **0**.",
+    "keyIdea": "Know the defaults: EIGRP needs one, OSPF needs subnets, BGP looks at MED.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Seed metric requirements",
+        "cols": [
+          "Protocol",
+          "Required?",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "EIGRP",
+            "**Yes, must supply**",
+            "No default; use default-metric or set metric in route-map (BW, delay, rel, load, MTU)"
+          ],
+          [
+            "OSPF",
+            "**Usually yes if not defaulted**",
+            "Use subnets to include all; default-metric or metric in redistribute"
+          ],
+          [
+            "BGP",
+            "**Not the same**",
+            "Uses MED; often 0 by default"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "EIGRP seed",
+        "code": "  router eigrp 100\n   default-metric 10000 100 255 1 1500\n   redistribute ospf 1 subnets"
+      },
+      {
+        "kind": "code",
+        "h": "OSPF seed",
+        "code": "  router ospf 1\n   redistribute eigrp 100 subnets metric 10 metric-type 2\n   ! E2 is default; E1 adds internal cost"
+      },
+      {
+        "kind": "table",
+        "h": "OSPF metric types",
+        "cols": [
+          "Type",
+          "Behaviour"
+        ],
+        "rows": [
+          [
+            "E2 (default)",
+            "Cost is fixed to the seed metric; internal OSPF cost not added"
+          ],
+          [
+            "E1",
+            "Seed metric + internal OSPF path cost added"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "BGP MED",
+        "code": "  router bgp 65000\n   redistribute ospf 1 route-map SET-MED\n  route-map SET-MED permit 10\n   set metric 50  ! sets MED"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route\n  show ip bgp\n  show ip eigrp topology"
+      }
     ],
-    "rows": [
-     [
-      "Connected",
-      "0"
-     ],
-     [
-      "Static",
-      "1"
-     ],
-     [
-      "eBGP",
-      "**20**"
-     ],
-     [
-      "EIGRP internal",
-      "**90**"
-     ],
-     [
+    "commands": [
+      {
+        "label": "Set EIGRP seed",
+        "code": "router eigrp 100\n default-metric 10000 100 255 1 1500\n redistribute ospf 1 subnets"
+      },
+      {
+        "label": "Set OSPF seed",
+        "code": "router ospf 1\n redistribute eigrp 100 subnets metric 20 metric-type 1"
+      },
+      {
+        "label": "Set BGP MED",
+        "code": "route-map BGP-MET permit 10\n set metric 100\nrouter bgp 65000\n redistribute ospf 1 route-map BGP-MET"
+      }
+    ],
+    "traps": [
+      "**EIGRP has no default seed metric** — routes are not advertised without one.",
+      "OSPF needs **%%subnets%%** to redistribute all prefixes.",
+      "**E2 ignores internal cost; E1 accumulates it.**",
+      "BGP MED default is often **0** — set a value to influence the neighbor.",
+      "The EIGRP seed metric order is **BW, delay, reliability, load, MTU**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Seed metric",
+          "Initial metric for redistributed routes"
+        ],
+        [
+          "EIGRP",
+          "Required, no default (BW/delay/rel/load/MTU)"
+        ],
+        [
+          "OSPF",
+          "Use metric-type (E1/E2) and subnets"
+        ],
+        [
+          "BGP",
+          "Uses MED (default often 0)"
+        ],
+        [
+          "E2 vs E1",
+          "E2 fixed, E1 adds internal cost"
+        ],
+        [
+          "Default-metric",
+          "Convenient global default"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. OSPF to EIGRP",
+        "d": "where this bites hardest"
+      },
+      {
+        "t": "02. OSPF to BGP",
+        "d": "MED inheritance"
+      },
+      {
+        "t": "03. EIGRP to BGP",
+        "d": "the exception"
+      }
+    ],
+    "glossary": [
+      "Seed Metric",
+      "EIGRP Metric",
       "OSPF",
-      "**110**"
-     ],
-     [
-      "IS-IS",
-      "115"
-     ],
-     [
-      "RIP",
-      "120"
-     ],
-     [
-      "EIGRP external",
-      "**170**"
-     ],
-     [
-      "iBGP",
-      "**200**"
-     ],
-     [
-      "Unknown",
-      "255 (not installed)"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "AD beats metric",
-    "code": "  Prefix 10.1.1.0/24\n    learned via OSPF, metric 10 (AD 110)\n    learned via EIGRP external, metric 1 (AD 170)\n\n  Winner: OSPF, because 110 < 170\n  Even though the EIGRP metric looks better."
-   },
-   {
-    "kind": "para",
-    "h": "The redistribution trap",
-    "p": "Redistributing OSPF into EIGRP makes those routes **EIGRP external** (AD 170). If the same prefix still exists natively as an OSPF route, **AD 110 beats 170** and OSPF wins — unless you change things."
-   },
-   {
-    "kind": "code",
-    "h": "Changing AD per prefix",
-    "code": "  router eigrp 100\n   distance 200 10.1.0.0 0.0.255.255\n\n  ! Give lower preference to these EIGRP routes\n  ! (or raise it as appropriate)"
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route 10.1.1.0\n  show ip protocols"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Inspect the choice",
-    "code": "show ip route 10.1.1.0/24"
-   },
-   {
-    "label": "Tune AD",
-    "code": "router eigrp 100\n distance 200 10.0.0.0 0.255.255.255"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip protocols"
-   }
-  ],
-  "traps": [
-   "**AD beats metric. Always.**",
-   "**EIGRP internal 90 beats EIGRP external 170.**",
-   "**OSPF 110 beats EIGRP external 170.**",
-   "**eBGP 20** usually beats internal IGP routes.",
-   "**iBGP 200** loses to almost everything.",
-   "Use **%%distance%%** when both protocols know the same prefix."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Rule",
-     "Lower AD wins, regardless of metric"
-    ],
-    [
-     "Connected/Static",
-     "0 / 1"
-    ],
-    [
-     "eBGP",
-     "20"
-    ],
-    [
-     "EIGRP internal",
-     "90"
-    ],
-    [
-     "OSPF",
-     "110"
-    ],
-    [
-     "EIGRP external",
-     "170"
-    ],
-    [
-     "iBGP",
-     "200"
-    ],
-    [
-     "Redistribution issue",
-     "External routes get higher AD"
-    ],
-    [
-     "Fix",
-     "distance command per source/prefix"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "01. OSPF to EIGRP",
-    "d": "external AD matters"
-   },
-   {
-    "t": "08. Loop Prevention",
-    "d": "AD is a loop-prevention tool too"
-   },
-   {
-    "t": "03. EIGRP to BGP",
-    "d": "cross-protocol comparisons"
-   }
-  ],
-  "glossary": [
-   "Administrative Distance",
-   "EIGRP",
-   "OSPF",
-   "BGP",
-   "Route Redistribution"
-  ]
- },
- {
-  "id": "t06",
-  "num": "06",
-  "group": "mech",
-  "title": "Route Tags",
-  "blurb": "Mark routes at the boundary so they can be identified and filtered later",
-  "overview": "**[[Route Tag|Route tags]]** label routes as they cross a redistribution boundary, letting downstream routers identify origin and apply policy consistently. Tags survive redistribution and are the backbone of **[[Routing Loop|loop prevention]]**: tag routes entering a domain, then match that tag to prevent them from being re-advertised back.",
-  "keyIdea": "Tag at entry, match at exit. If a tag is already present, do not send it back.",
-  "sections": [
-   {
-    "kind": "code",
-    "h": "Why tags",
-    "code": "  OSPF --(tag 100)-- EIGRP\n                |\n              router\n                |\n           EIGRP learns\n             tag 100\n\n  Later, prevent routes WITH tag 100\n  from going back to OSPF."
-   },
-   {
-    "kind": "table",
-    "h": "Tags in context",
-    "cols": [
-     "Protocol",
-     "Notes"
-    ],
-    "rows": [
-     [
-      "OSPF",
-      "Tags appear on external routes (E1/E2)"
-     ],
-     [
       "EIGRP",
-      "Carries tags on external routes"
-     ],
-     [
       "BGP",
-      "Tags are analogous to **communities**"
-     ]
+      "MED"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "Tagging on redistribution",
-    "code": "  route-map OSPF-TO-EIGRP permit 10\n   set tag 100\n\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
-   },
-   {
-    "kind": "code",
-    "h": "Matching and denying",
-    "code": "  route-map EIGRP-TO-OSPF deny 10\n   match tag 100\n\n  route-map EIGRP-TO-OSPF permit 20\n\n  router ospf 1\n   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
-   },
-   {
-    "kind": "para",
-    "h": "Tags must be set at the boundary",
-    "p": "A tag has to be applied **as the route enters** a domain. If you never tag it, there is nothing to match when you try to stop it coming back."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route\n  show ip ospf database external\n  show ip eigrp topology"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Tag routes entering EIGRP",
-    "code": "route-map OSPF-TO-EIGRP permit 10\n set tag 100\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
-   },
-   {
-    "label": "Block routes by tag going back",
-    "code": "route-map EIGRP-TO-OSPF deny 10\n match tag 100\nroute-map EIGRP-TO-OSPF permit 20\nrouter ospf 1\n redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip route"
-   }
-  ],
-  "traps": [
-   "**Tag at the boundary, match downstream** to prevent loops.",
-   "OSPF carries tags **only on external routes**.",
-   "Tags are central to **loop prevention** designs.",
-   "**BGP’s tag analog is the community**.",
-   "A missing tag means there is nothing to filter."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Purpose",
-     "Identify route origin across redistribution"
-    ],
-    [
-     "Applied",
-     "At the redistribution boundary"
-    ],
-    [
-     "Used for",
-     "Filtering and loop prevention"
-    ],
-    [
-     "OSPF",
-     "Only on external (E1/E2) routes"
-    ],
-    [
-     "EIGRP",
-     "On external routes"
-    ],
-    [
-     "BGP equivalent",
-     "Community"
-    ],
-    [
-     "Method",
-     "set tag in route-map, match tag to deny"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "08. Loop Prevention",
-    "d": "the canonical use case"
-   },
-   {
-    "t": "07. Filtering",
-    "d": "how tags are enforced"
-   },
-   {
-    "t": "01. OSPF to EIGRP",
-    "d": "where tags get attached"
-   }
-  ],
-  "glossary": [
-   "Route Tag",
-   "Route Redistribution",
-   "Routing Loop",
-   "Route Map",
-   "OSPF",
-   "EIGRP",
-   "BGP"
-  ]
- },
- {
-  "id": "t07",
-  "num": "07",
-  "group": "ctrl",
-  "title": "Filtering",
-  "blurb": "Control which routes cross the boundary; implicit deny and direction matter",
-  "overview": "**[[Route Filtering]]** decides which routes are redistributed between domains. Blind redistribution is the fastest way to create **[[Routing Loop|loops]]** and unwanted prefixes. The standard tool is a **route-map** applied to the **%%redistribute%%** command, used with **prefix-lists** or **ACLs** to match prefixes.",
-  "keyIdea": "Route-maps on redistribute filter + can set. Watch the implicit deny and apply in the right place.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Filtering tools",
-    "cols": [
-     "Tool",
-     "Use"
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "mech",
+    "title": "Administrative Distance",
+    "blurb": "AD beats metric when the same prefix is learned by different protocols",
+    "overview": "When two routing protocols learn the **same prefix**, the router compares **[[Administrative Distance]]** first. The lower AD wins, **regardless of metric**. Redistribution creates these conflicts constantly: an **EIGRP internal** route (AD 90) will beat an **OSPF external** route (AD 110), and **eBGP** (20) almost always wins. If the wrong source wins, traffic goes the wrong way or loops.",
+    "keyIdea": "AD beats metric. Always. If both protocols know the same prefix, look at AD first.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Key AD values",
+        "cols": [
+          "Source",
+          "AD"
+        ],
+        "rows": [
+          [
+            "Connected",
+            "0"
+          ],
+          [
+            "Static",
+            "1"
+          ],
+          [
+            "eBGP",
+            "**20**"
+          ],
+          [
+            "EIGRP internal",
+            "**90**"
+          ],
+          [
+            "OSPF",
+            "**110**"
+          ],
+          [
+            "IS-IS",
+            "115"
+          ],
+          [
+            "RIP",
+            "120"
+          ],
+          [
+            "EIGRP external",
+            "**170**"
+          ],
+          [
+            "iBGP",
+            "**200**"
+          ],
+          [
+            "Unknown",
+            "255 (not installed)"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "AD beats metric",
+        "code": "  Prefix 10.1.1.0/24\n    learned via OSPF, metric 10 (AD 110)\n    learned via EIGRP external, metric 1 (AD 170)\n\n  Winner: OSPF, because 110 < 170\n  Even though the EIGRP metric looks better."
+      },
+      {
+        "kind": "para",
+        "h": "The redistribution trap",
+        "p": "Redistributing OSPF into EIGRP makes those routes **EIGRP external** (AD 170). If the same prefix still exists natively as an OSPF route, **AD 110 beats 170** and OSPF wins — unless you change things."
+      },
+      {
+        "kind": "code",
+        "h": "Changing AD per prefix",
+        "code": "  router eigrp 100\n   distance 200 10.1.0.0 0.0.255.255\n\n  ! Give lower preference to these EIGRP routes\n  ! (or raise it as appropriate)"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route 10.1.1.0\n  show ip protocols"
+      }
     ],
-    "rows": [
-     [
-      "**Route-map**",
-      "Match + filter + set (tags/metrics) — the standard"
-     ],
-     [
-      "**Prefix-list**",
-      "Clean prefix/length matching"
-     ],
-     [
-      "**[[Access Control List|ACL]]**",
-      "Also works, but **[[Prefix List|prefix-lists]]** are preferred"
-     ],
-     [
-      "**Distribute-list**",
-      "Protocol-specific; OSPF distribute-list is **in only**"
-     ]
+    "commands": [
+      {
+        "label": "Inspect the choice",
+        "code": "show ip route 10.1.1.0/24"
+      },
+      {
+        "label": "Tune AD",
+        "code": "router eigrp 100\n distance 200 10.0.0.0 0.255.255.255"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip protocols"
+      }
+    ],
+    "traps": [
+      "**AD beats metric. Always.**",
+      "**EIGRP internal 90 beats EIGRP external 170.**",
+      "**OSPF 110 beats EIGRP external 170.**",
+      "**eBGP 20** usually beats internal IGP routes.",
+      "**iBGP 200** loses to almost everything.",
+      "Use **%%distance%%** when both protocols know the same prefix."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Rule",
+          "Lower AD wins, regardless of metric"
+        ],
+        [
+          "Connected/Static",
+          "0 / 1"
+        ],
+        [
+          "eBGP",
+          "20"
+        ],
+        [
+          "EIGRP internal",
+          "90"
+        ],
+        [
+          "OSPF",
+          "110"
+        ],
+        [
+          "EIGRP external",
+          "170"
+        ],
+        [
+          "iBGP",
+          "200"
+        ],
+        [
+          "Redistribution issue",
+          "External routes get higher AD"
+        ],
+        [
+          "Fix",
+          "distance command per source/prefix"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. OSPF to EIGRP",
+        "d": "external AD matters"
+      },
+      {
+        "t": "08. Loop Prevention",
+        "d": "AD is a loop-prevention tool too"
+      },
+      {
+        "t": "03. EIGRP to BGP",
+        "d": "cross-protocol comparisons"
+      }
+    ],
+    "glossary": [
+      "Administrative Distance",
+      "EIGRP",
+      "OSPF",
+      "BGP",
+      "Route Redistribution"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "Filtering with a route-map",
-    "code": "  ip prefix-list INTERNAL permit 10.0.0.0/8 le 24\n\n  route-map REDIST deny 10\n   match ip address prefix-list BAD\n\n  route-map REDIST permit 20\n   match ip address prefix-list INTERNAL\n\n  router eigrp 100\n   redistribute ospf 1 route-map REDIST subnets"
-   },
-   {
-    "kind": "para",
-    "h": "Implicit deny",
-    "p": "A route-map used for redistribution has an **implicit deny** at the end. Routes that do not match any **permit** are **not redistributed**."
-   },
-   {
-    "kind": "code",
-    "h": "Direction matters",
-    "code": "  Filtering is LOCAL to the boundary router.\n  A deny in OSPF->EIGRP does not affect EIGRP->OSPF\n  unless you configure it there too."
-   },
-   {
-    "kind": "para",
-    "h": "OSPF distribute-list",
-    "p": "For OSPF specifically, **%%distribute-list in%%** can filter incoming routes, but filtering **out** of OSPF during redistribution is done via the **route-map on %%redistribute%%**."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route\n  show running-config | section router"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Permit only internal prefixes",
-    "code": "ip prefix-list INTERNAL permit 10.0.0.0/8 le 24\nroute-map REDIST permit 10\n match ip address prefix-list INTERNAL\nrouter eigrp 100\n redistribute ospf 1 route-map REDIST subnets"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip route eigrp"
-   }
-  ],
-  "traps": [
-   "**Route-maps applied to redistribute** filter and can set tags/metrics.",
-   "**Implicit deny** blocks unmatched routes.",
-   "Filters are **local** — configure symmetrically on both directions if needed.",
-   "OSPF **distribute-list is in only**.",
-   "**Tag-based denies** are a strong loop-prevention pattern."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Goal",
-     "Control which routes cross the boundary"
-    ],
-    [
-     "Tool of choice",
-     "Route-map on the redistribute command"
-    ],
-    [
-     "Implicit deny",
-     "Unmatched routes are not redistributed"
-    ],
-    [
-     "Local",
-     "Each router and direction is independent"
-    ],
-    [
-     "Prefix-list",
-     "Preferred over ACLs for prefix matching"
-    ],
-    [
-     "OSPF note",
-     "distribute-list in only"
-    ],
-    [
-     "With tags",
-     "Can filter by origin to stop loops"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. Route Tags",
-    "d": "filtering by origin"
-   },
-   {
-    "t": "08. Loop Prevention",
-    "d": "why filtering exists"
-   },
-   {
-    "t": "01. OSPF to EIGRP",
-    "d": "applied here"
-   }
-  ],
-  "glossary": [
-   "Route Filtering",
-   "Route Redistribution",
-   "Route Map",
-   "Prefix List",
-   "Routing Loop",
-   "Default Route",
-   "Loopback Address",
-   "Control Plane",
-   "Data Plane",
-   "Routing Table"
-  ]
- },
- {
-  "id": "t08",
-  "num": "08",
-  "group": "ctrl",
-  "title": "Loop Prevention",
-  "blurb": "Stop routes coming back and forth between domains",
-  "overview": "Redistributing in **both directions** between two protocols creates a classic **[[Routing Loop|routing loop]]**. A route leaves domain A into B, is redistributed back as external into A with a worse or even equal metric, and can bounce back and forth — often making routes look like externals with inflated metrics. The exam expects **tags + filters**, **AD tuning**, **one boundary router**, or **careful design**.",
-  "keyIdea": "Tag what you send out, deny it coming back. That is the canonical answer.",
-  "sections": [
-   {
-    "kind": "code",
-    "h": "The loop",
-    "code": "  Domain A (OSPF) --> boundary --> Domain B (EIGRP)\n                        |\n                    redistributes both ways\n                        |\n  Route can return with higher/worse info\n  or ping-pong between protocols"
-   },
-   {
-    "kind": "table",
-    "h": "Prevention techniques",
-    "cols": [
-     "Technique",
-     "Why"
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "mech",
+    "title": "Route Tags",
+    "blurb": "Mark routes at the boundary so they can be identified and filtered later",
+    "overview": "**[[Route Tag|Route tags]]** label routes as they cross a redistribution boundary, letting downstream routers identify origin and apply policy consistently. Tags survive redistribution and are the backbone of **[[Routing Loop|loop prevention]]**: tag routes entering a domain, then match that tag to prevent them from being re-advertised back.",
+    "keyIdea": "Tag at entry, match at exit. If a tag is already present, do not send it back.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "Why tags",
+        "code": "  OSPF --(tag 100)-- EIGRP\n                |\n              router\n                |\n           EIGRP learns\n             tag 100\n\n  Later, prevent routes WITH tag 100\n  from going back to OSPF."
+      },
+      {
+        "kind": "table",
+        "h": "Tags in context",
+        "cols": [
+          "Protocol",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "OSPF",
+            "Tags appear on external routes (E1/E2)"
+          ],
+          [
+            "EIGRP",
+            "Carries tags on external routes"
+          ],
+          [
+            "BGP",
+            "Tags are analogous to **communities**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Tagging on redistribution",
+        "code": "  route-map OSPF-TO-EIGRP permit 10\n   set tag 100\n\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
+      },
+      {
+        "kind": "code",
+        "h": "Matching and denying",
+        "code": "  route-map EIGRP-TO-OSPF deny 10\n   match tag 100\n\n  route-map EIGRP-TO-OSPF permit 20\n\n  router ospf 1\n   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
+      },
+      {
+        "kind": "para",
+        "h": "Tags must be set at the boundary",
+        "p": "A tag has to be applied **as the route enters** a domain. If you never tag it, there is nothing to match when you try to stop it coming back."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route\n  show ip ospf database external\n  show ip eigrp topology"
+      }
     ],
-    "rows": [
-     [
-      "**One boundary router**",
-      "Simplest — no other place to loop through"
-     ],
-     [
-      "**Route tags + filter**",
-      "Tag on entry, deny if tag present on return"
-     ],
-     [
-      "**Route filtering**",
-      "Only allow intended prefixes both ways"
-     ],
-     [
-      "**Administrative Distance tuning**",
-      "Make the \"original\" source preferred"
-     ],
-     [
-      "**Summary / default**",
-      "Limit what can be redistributed"
-     ]
+    "commands": [
+      {
+        "label": "Tag routes entering EIGRP",
+        "code": "route-map OSPF-TO-EIGRP permit 10\n set tag 100\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets"
+      },
+      {
+        "label": "Block routes by tag going back",
+        "code": "route-map EIGRP-TO-OSPF deny 10\n match tag 100\nroute-map EIGRP-TO-OSPF permit 20\nrouter ospf 1\n redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip route"
+      }
+    ],
+    "traps": [
+      "**Tag at the boundary, match downstream** to prevent loops.",
+      "OSPF carries tags **only on external routes**.",
+      "Tags are central to **loop prevention** designs.",
+      "**BGP’s tag analog is the community**.",
+      "A missing tag means there is nothing to filter."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Identify route origin across redistribution"
+        ],
+        [
+          "Applied",
+          "At the redistribution boundary"
+        ],
+        [
+          "Used for",
+          "Filtering and loop prevention"
+        ],
+        [
+          "OSPF",
+          "Only on external (E1/E2) routes"
+        ],
+        [
+          "EIGRP",
+          "On external routes"
+        ],
+        [
+          "BGP equivalent",
+          "Community"
+        ],
+        [
+          "Method",
+          "set tag in route-map, match tag to deny"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Loop Prevention",
+        "d": "the canonical use case"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "how tags are enforced"
+      },
+      {
+        "t": "01. OSPF to EIGRP",
+        "d": "where tags get attached"
+      }
+    ],
+    "glossary": [
+      "Route Tag",
+      "Route Redistribution",
+      "Routing Loop",
+      "Route Map",
+      "OSPF",
+      "EIGRP",
+      "BGP"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "The canonical solution: tags",
-    "code": "  ! OSPF -> EIGRP, tag routes\n  route-map OSPF-TO-EIGRP permit 10\n   set tag 100\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets\n\n  ! EIGRP -> OSPF, deny tagged routes\n  route-map EIGRP-TO-OSPF deny 10\n   match tag 100\n  route-map EIGRP-TO-OSPF permit 20\n  router ospf 1\n   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
-   },
-   {
-    "kind": "para",
-    "h": "AD as a backstop",
-    "p": "**[[Administrative Distance]]** can prefer the original domain’s routes. For example, if an OSPF-internal route becomes EIGRP-external on return, keeping OSPF routes preferred helps prevent the loop."
-   },
-   {
-    "kind": "para",
-    "h": "The result of a loop",
-    "p": "Routes often become **external** in the second protocol, metrics inflate, and the router can flip between them. In severe cases the network flaps or creates suboptimal paths."
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "  show ip route\n  show ip ospf database\n  show ip eigrp topology"
-   }
-  ],
-  "commands": [
-   {
-    "label": "Tag and deny (canonical)",
-    "code": "route-map OSPF-TO-EIGRP permit 10\n set tag 100\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets\n\nroute-map EIGRP-TO-OSPF deny 10\n match tag 100\nroute-map EIGRP-TO-OSPF permit 20\nrouter ospf 1\n redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
-   },
-   {
-    "label": "Verify",
-    "code": "show ip route"
-   }
-  ],
-  "traps": [
-   "**Tags at entry + deny at return** is the canonical loop-prevention answer.",
-   "**Use one boundary router** if possible to avoid multi-point redistribution.",
-   "Filter **both directions** in multi-boundary designs.",
-   "A loop can turn routes into **externals** with inflated metrics.",
-   "**AD beats metric** — use it as a backstop."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Key point"
-   ],
-   "rows": [
-    [
-     "Cause",
-     "Mutual redistribution between two domains"
-    ],
-    [
-     "Best fix",
-     "One redistribution point"
-    ],
-    [
-     "Core mechanism",
-     "Route tags + route-maps on return"
-    ],
-    [
-     "Also useful",
-     "AD tuning, prefix filtering, summarization"
-    ],
-    [
-     "Symptom",
-     "Routes become external, metrics inflating, flapping"
-    ],
-    [
-     "Filter direction",
-     "Must be applied on the return path"
-    ],
-    [
-     "BGP communities",
-     "Analogous to tags for loop control"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. Route Tags",
-    "d": "how to mark routes"
-   },
-   {
-    "t": "07. Filtering",
-    "d": "how to enforce"
-   },
-   {
-    "t": "05. Administrative Distance",
-    "d": "the backstop"
-   }
-  ],
-  "glossary": [
-   "Routing Loop",
-   "Route Redistribution",
-   "Route Tag",
-   "Route Filtering",
-   "Administrative Distance",
-   "Route Map",
-   "OSPF",
-   "EIGRP",
-   "BGP"
-  ]
- }
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "ctrl",
+    "title": "Filtering",
+    "blurb": "Control which routes cross the boundary; implicit deny and direction matter",
+    "overview": "**[[Route Filtering]]** decides which routes are redistributed between domains. Blind redistribution is the fastest way to create **[[Routing Loop|loops]]** and unwanted prefixes. The standard tool is a **route-map** applied to the **%%redistribute%%** command, used with **prefix-lists** or **ACLs** to match prefixes.",
+    "keyIdea": "Route-maps on redistribute filter + can set. Watch the implicit deny and apply in the right place.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Filtering tools",
+        "cols": [
+          "Tool",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Route-map**",
+            "Match + filter + set (tags/metrics) — the standard"
+          ],
+          [
+            "**Prefix-list**",
+            "Clean prefix/length matching"
+          ],
+          [
+            "**[[Access Control List|ACL]]**",
+            "Also works, but **[[Prefix List|prefix-lists]]** are preferred"
+          ],
+          [
+            "**Distribute-list**",
+            "Protocol-specific; OSPF distribute-list is **in only**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Filtering with a route-map",
+        "code": "  ip prefix-list INTERNAL permit 10.0.0.0/8 le 24\n\n  route-map REDIST deny 10\n   match ip address prefix-list BAD\n\n  route-map REDIST permit 20\n   match ip address prefix-list INTERNAL\n\n  router eigrp 100\n   redistribute ospf 1 route-map REDIST subnets"
+      },
+      {
+        "kind": "para",
+        "h": "Implicit deny",
+        "p": "A route-map used for redistribution has an **implicit deny** at the end. Routes that do not match any **permit** are **not redistributed**."
+      },
+      {
+        "kind": "code",
+        "h": "Direction matters",
+        "code": "  Filtering is LOCAL to the boundary router.\n  A deny in OSPF->EIGRP does not affect EIGRP->OSPF\n  unless you configure it there too."
+      },
+      {
+        "kind": "para",
+        "h": "OSPF distribute-list",
+        "p": "For OSPF specifically, **%%distribute-list in%%** can filter incoming routes, but filtering **out** of OSPF during redistribution is done via the **route-map on %%redistribute%%**."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route\n  show running-config | section router"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Permit only internal prefixes",
+        "code": "ip prefix-list INTERNAL permit 10.0.0.0/8 le 24\nroute-map REDIST permit 10\n match ip address prefix-list INTERNAL\nrouter eigrp 100\n redistribute ospf 1 route-map REDIST subnets"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip route eigrp"
+      }
+    ],
+    "traps": [
+      "**Route-maps applied to redistribute** filter and can set tags/metrics.",
+      "**Implicit deny** blocks unmatched routes.",
+      "Filters are **local** — configure symmetrically on both directions if needed.",
+      "OSPF **distribute-list is in only**.",
+      "**Tag-based denies** are a strong loop-prevention pattern."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Goal",
+          "Control which routes cross the boundary"
+        ],
+        [
+          "Tool of choice",
+          "Route-map on the redistribute command"
+        ],
+        [
+          "Implicit deny",
+          "Unmatched routes are not redistributed"
+        ],
+        [
+          "Local",
+          "Each router and direction is independent"
+        ],
+        [
+          "Prefix-list",
+          "Preferred over ACLs for prefix matching"
+        ],
+        [
+          "OSPF note",
+          "distribute-list in only"
+        ],
+        [
+          "With tags",
+          "Can filter by origin to stop loops"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Route Tags",
+        "d": "filtering by origin"
+      },
+      {
+        "t": "08. Loop Prevention",
+        "d": "why filtering exists"
+      },
+      {
+        "t": "01. OSPF to EIGRP",
+        "d": "applied here"
+      }
+    ],
+    "glossary": [
+      "Route Filtering",
+      "Route Redistribution",
+      "Route Map",
+      "Prefix List",
+      "Routing Loop",
+      "Default Route",
+      "Loopback Address",
+      "Control Plane",
+      "Data Plane",
+      "Routing Table"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "ctrl",
+    "title": "Loop Prevention",
+    "blurb": "Stop routes coming back and forth between domains",
+    "overview": "Redistributing in **both directions** between two protocols creates a classic **[[Routing Loop|routing loop]]**. A route leaves domain A into B, is redistributed back as external into A with a worse or even equal metric, and can bounce back and forth — often making routes look like externals with inflated metrics. The exam expects **tags + filters**, **AD tuning**, **one boundary router**, or **careful design**.",
+    "keyIdea": "Tag what you send out, deny it coming back. That is the canonical answer.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The loop",
+        "code": "  Domain A (OSPF) --> boundary --> Domain B (EIGRP)\n                        |\n                    redistributes both ways\n                        |\n  Route can return with higher/worse info\n  or ping-pong between protocols"
+      },
+      {
+        "kind": "table",
+        "h": "Prevention techniques",
+        "cols": [
+          "Technique",
+          "Why"
+        ],
+        "rows": [
+          [
+            "**One boundary router**",
+            "Simplest — no other place to loop through"
+          ],
+          [
+            "**Route tags + filter**",
+            "Tag on entry, deny if tag present on return"
+          ],
+          [
+            "**Route filtering**",
+            "Only allow intended prefixes both ways"
+          ],
+          [
+            "**Administrative Distance tuning**",
+            "Make the \"original\" source preferred"
+          ],
+          [
+            "**Summary / default**",
+            "Limit what can be redistributed"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "The canonical solution: tags",
+        "code": "  ! OSPF -> EIGRP, tag routes\n  route-map OSPF-TO-EIGRP permit 10\n   set tag 100\n  router eigrp 100\n   redistribute ospf 1 route-map OSPF-TO-EIGRP subnets\n\n  ! EIGRP -> OSPF, deny tagged routes\n  route-map EIGRP-TO-OSPF deny 10\n   match tag 100\n  route-map EIGRP-TO-OSPF permit 20\n  router ospf 1\n   redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
+      },
+      {
+        "kind": "para",
+        "h": "AD as a backstop",
+        "p": "**[[Administrative Distance]]** can prefer the original domain’s routes. For example, if an OSPF-internal route becomes EIGRP-external on return, keeping OSPF routes preferred helps prevent the loop."
+      },
+      {
+        "kind": "para",
+        "h": "The result of a loop",
+        "p": "Routes often become **external** in the second protocol, metrics inflate, and the router can flip between them. In severe cases the network flaps or creates suboptimal paths."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip route\n  show ip ospf database\n  show ip eigrp topology"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Tag and deny (canonical)",
+        "code": "route-map OSPF-TO-EIGRP permit 10\n set tag 100\nrouter eigrp 100\n redistribute ospf 1 route-map OSPF-TO-EIGRP subnets\n\nroute-map EIGRP-TO-OSPF deny 10\n match tag 100\nroute-map EIGRP-TO-OSPF permit 20\nrouter ospf 1\n redistribute eigrp 100 route-map EIGRP-TO-OSPF subnets"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip route"
+      }
+    ],
+    "traps": [
+      "**Tags at entry + deny at return** is the canonical loop-prevention answer.",
+      "**Use one boundary router** if possible to avoid multi-point redistribution.",
+      "Filter **both directions** in multi-boundary designs.",
+      "A loop can turn routes into **externals** with inflated metrics.",
+      "**AD beats metric** — use it as a backstop."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Cause",
+          "Mutual redistribution between two domains"
+        ],
+        [
+          "Best fix",
+          "One redistribution point"
+        ],
+        [
+          "Core mechanism",
+          "Route tags + route-maps on return"
+        ],
+        [
+          "Also useful",
+          "AD tuning, prefix filtering, summarization"
+        ],
+        [
+          "Symptom",
+          "Routes become external, metrics inflating, flapping"
+        ],
+        [
+          "Filter direction",
+          "Must be applied on the return path"
+        ],
+        [
+          "BGP communities",
+          "Analogous to tags for loop control"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Route Tags",
+        "d": "how to mark routes"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "how to enforce"
+      },
+      {
+        "t": "05. Administrative Distance",
+        "d": "the backstop"
+      }
+    ],
+    "glossary": [
+      "Routing Loop",
+      "Route Redistribution",
+      "Route Tag",
+      "Route Filtering",
+      "Administrative Distance",
+      "Route Map",
+      "OSPF",
+      "EIGRP",
+      "BGP"
+    ]
+  }
 ];
 
         const GROUPS = [{"key":"scen","label":"Redistribution Scenarios","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"mech","label":"Mechanics","chip":"bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300","dot":"bg-sky-600","bullet":"text-sky-600 dark:text-sky-400"},{"key":"ctrl","label":"Control & Safety","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
@@ -2198,6 +2211,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

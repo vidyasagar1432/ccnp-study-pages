@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,1443 +600,3044 @@
         const heroIntro = `The Layer 2 engine of the campus: how a **[[MAC Address]]** identifies an interface, how an **[[Ethernet Frame]]** carries data, how a switch builds its **[[CAM Table]]** through **[[MAC Learning]]**, and how it then decides between **[[Forwarding]]**, **[[Flooding]]** and **[[Filtering]]**. It closes with the **[[Broadcast Domain]]** and **[[Collision Domain]]** boundaries, the **[[ARP]]** family, and a look at **[[CEF]]** forwarding.`;
 
         const topics = [
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "addr",
+    "title": "MAC Address",
+    "blurb": "Layer 2 addressing, the OUI, and the I/G and U/L bits",
+    "overview": "A **[[MAC Address|MAC (Media Access Control) address]]** is the **Layer 2 identifier** Ethernet interfaces use for local frame delivery. A standard MAC address is **48 bits (6 bytes)** long, and switches use it to build the MAC address table that drives every forwarding decision.",
+    "keyIdea": "**Key idea:** A MAC address is local, not global. It identifies an interface on one Layer 2 segment, and a switch forwards the frame as-is — the MAC addresses do **not** change as the frame crosses switch hops.",
+    "sections": [
+      {
+        "h": "Ethernet frame",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">ETHERNET FRAME</text><rect x=\"60\" y=\"100\" width=\"140\" height=\"40\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"220\" y=\"100\" width=\"140\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"380\" y=\"100\" width=\"120\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"520\" y=\"100\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"700\" y=\"100\" width=\"120\" height=\"40\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"130\" y=\"125\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Dest MAC</text><text x=\"290\" y=\"125\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Src MAC</text><text x=\"440\" y=\"125\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Type/Len</text><text x=\"600\" y=\"125\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Payload</text><text x=\"760\" y=\"125\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">FCS</text><text x=\"60\" y=\"190\" font-size=\"8\" fill=\"currentColor\">Unicast/Multicast/Broadcast</text><text x=\"60\" y=\"210\" font-size=\"8\" fill=\"currentColor\">Switch uses MAC addresses to forward</text></g></svg>",
+        "caption": "Src/Dst MAC, Type/Length, payload, FCS."
+      },
+      {
+        "h": "Format and anatomy",
+        "kind": "para",
+        "p": "A MAC address is written in three common styles: %%AA:BB:CC:DD:EE:FF%%, %%AA-BB-CC-DD-EE-FF%%, and the Cisco notation %%AABB.CCDD.EEFF%%. The first **24 bits (3 bytes)** are the **OUI (Organizationally Unique Identifier)** that identifies the vendor assigned that block of address space; the remaining 24 bits identify the interface within it."
+      },
+      {
+        "h": "The two special bits in the first octet",
+        "kind": "table",
+        "cols": [
+          "Bit",
+          "Name",
+          "0 means",
+          "1 means"
+        ],
+        "rows": [
+          [
+            "Bit 0 (rightmost)",
+            "**I/G**",
+            "Individual — a unicast address",
+            "Group — multicast or broadcast"
+          ],
+          [
+            "Bit 1",
+            "**U/L**",
+            "Universally administered",
+            "Locally administered"
+          ]
+        ]
+      },
+      {
+        "h": "Unicast, multicast and broadcast",
+        "kind": "list",
+        "items": [
           {
-            id: 't01',
-            num: '01',
-            group: 'addr',
-            title: 'MAC Address',
-            blurb: 'Layer 2 addressing, the OUI, and the I/G and U/L bits',
-            overview: `A **[[MAC Address|MAC (Media Access Control) address]]** is the **Layer 2 identifier** Ethernet interfaces use for local frame delivery. A standard MAC address is **48 bits (6 bytes)** long, and switches use it to build the MAC address table that drives every forwarding decision.`,
-            keyIdea: `**Key idea:** A MAC address is local, not global. It identifies an interface on one Layer 2 segment, and a switch forwards the frame as-is — the MAC addresses do **not** change as the frame crosses switch hops.`,
-            sections: [
-              {
-                h: 'Format and anatomy', kind: 'para',
-                p: `A MAC address is written in three common styles: %%AA:BB:CC:DD:EE:FF%%, %%AA-BB-CC-DD-EE-FF%%, and the Cisco notation %%AABB.CCDD.EEFF%%. The first **24 bits (3 bytes)** are the **OUI (Organizationally Unique Identifier)** that identifies the vendor assigned that block of address space; the remaining 24 bits identify the interface within it.`
-              },
-              {
-                h: 'The two special bits in the first octet', kind: 'table',
-                cols: ['Bit', 'Name', '0 means', '1 means'],
-                rows: [
-                  ['Bit 0 (rightmost)', '**I/G**', 'Individual — a unicast address', 'Group — multicast or broadcast'],
-                  ['Bit 1', '**U/L**', 'Universally administered', 'Locally administered']
-                ]
-              },
-              {
-                h: 'Unicast, multicast and broadcast', kind: 'list', items: [
-                  { t: 'Unicast (I/G = 0)', d: 'Identifies one interface. A switch forwards a known unicast toward the learned port.' },
-                  { t: 'Multicast (I/G = 1)', d: 'Represents a group of receivers. IPv4 multicast maps to the range 01:00:5E:xx:xx:xx.' },
-                  { t: 'Broadcast (I/G = 1)', d: 'The address FF:FF:FF:FF:FF:FF. It is a special form of group address and is flooded inside the broadcast domain.' },
-                  { t: 'Locally administered (U/L = 1)', d: 'Assigned by software, a hypervisor or an administrator rather than by the vendor OUI space — virtual machines, virtual NICs and some high-availability virtual MACs.' }
-                ]
-              },
-              {
-                h: 'The virtual MACs used by first-hop redundancy', kind: 'table',
-                cols: ['Protocol', 'Virtual MAC pattern'],
-                rows: [
-                  ['HSRP v1', '0000.0C07.ACxx'],
-                  ['HSRP v2', '0000.0C9F.Fxxx'],
-                  ['VRRP for IPv4', '0000.5E00.01xx'],
-                  ['VRRP for IPv6', '0000.5E00.02xx']
-                ]
-              },
-              {
-                h: 'MAC address versus IP address', kind: 'table',
-                cols: ['Feature', 'MAC address', 'IP address'],
-                rows: [
-                  ['Layer', 'Layer 2', 'Layer 3'],
-                  ['Size', '48 bit', 'IPv4: 32 bit / IPv6: 128 bit'],
-                  ['Scope', 'One Layer 2 segment', 'Across routed networks'],
-                  ['Used by', 'Ethernet switching', 'IP routing'],
-                  ['IPv4 resolution', 'ARP resolves a next-hop IP to a MAC', '—'],
-                  ['IPv6 resolution', 'Neighbor Discovery resolves a neighbor IP to a MAC', '—']
-                ]
-              },
-              {
-                h: 'Where MAC addresses change', kind: 'code',
-                code: `Through switches (MACs unchanged):
-  Host A ---[ Src MAC A / Dst MAC B ]--- Switch 1 --- Switch 2 --- Host B
-
-Through a router (MACs rewritten, IP packet preserved):
-  Host A ---[ Src A / Dst Router-1 ]--- Router ---[ Src Router-2 / Dst Next-Hop ]--- Host B
-
-  Switch = forwards the existing Ethernet frame
-  Router = strips the incoming Layer 2 header and creates a new one`
-              }
-            ],
-            commands: [
-              {
-                label: 'Reading and pinning the MAC address table',
-                code: `# The whole table
-show mac address-table
-
-# One address, one VLAN, one interface
-show mac address-table address 001B.21AA.BBCC
-show mac address-table vlan 10
-show mac address-table interface GigabitEthernet0/10
-
-# Static entries do not age like dynamic ones
-mac address-table static 001B.21AA.BBCC vlan 10 interface GigabitEthernet0/1`
-              }
-            ],
-            traps: [
-              '**A MAC address is 48 bits, not 32** — that is the IPv4 address length and a classic mix-up.',
-              '**The I/G bit is the least significant bit of the first octet** — read it from the right.',
-              '**Broadcast is a group address**, not a unicast one. FF:FF:FF:FF:FF:FF has every bit set.',
-              '**U/L = 1 means locally administered, not "virtual"** — a virtual MAC can still be universally administered, so read the actual bit.',
-              '**Switches do not rewrite MAC addresses** — routers create a new Layer 2 frame for every outgoing segment.'
-            ],
-            table: {
-              cols: ['Fact', 'Detail'],
-              rows: [
-                ['Length', '**48 bits / 6 bytes**'],
-                ['Layer', 'Layer 2'],
-                ['OUI', 'First 24 bits / 3 bytes'],
-                ['I/G bit', '%%0%% individual, %%1%% group'],
-                ['U/L bit', '%%0%% universal, %%1%% local'],
-                ['Broadcast', 'FF:FF:FF:FF:FF:FF'],
-                ['IPv4 resolution', 'ARP'],
-                ['IPv6 resolution', 'Neighbor Discovery'],
-                ['Switch learning', 'Source MAC'],
-                ['Switch forwarding', 'Destination MAC lookup'],
-                ['MAC table', 'MAC plus VLAN to port'],
-                ['Multicast example', '01:00:5E:xx:xx:xx'],
-                ['Across switches', 'MACs normally unchanged'],
-                ['Across routers', 'A new Layer 2 frame is created']
-              ]
-            },
-            related: [
-              { t: '02. Ethernet Frame', d: 'where the MACs live' },
-              { t: '03. CAM Table', d: 'MACs in the switching table' },
-              { t: '10. ARP', d: 'resolves a MAC from an IP' }
-            ],
-            glossary: ['MAC Address', 'Ethernet Frame', 'CAM Table', 'MAC Learning', 'ARP', 'First Hop Redundancy Protocol']
+            "t": "Unicast (I/G = 0)",
+            "d": "Identifies one interface. A switch forwards a known unicast toward the learned port."
           },
           {
-            id: 't02',
-            num: '02',
-            group: 'addr',
-            title: 'Ethernet Frame',
-            blurb: 'The Layer 2 container: headers, EtherTypes, FCS and frame sizes',
-            overview: `An **[[Ethernet Frame]]** is the **Layer 2 data unit** that carries IPv4, IPv6 and ARP across an Ethernet network. A switch reads the destination MAC, the source MAC, the VLAN tag and the EtherType to make its forwarding decision, and uses the FCS to detect corruption.`,
-            keyIdea: `**Key idea:** The MTU is the Layer 3 payload; the frame size is the Layer 2 envelope around it. 1500 bytes of IP becomes a 1518 byte untagged frame, or 1522 bytes once an 802.1Q tag is added.`,
-            sections: [
-              {
-                h: 'The frame layout', kind: 'code',
-                code: `Preamble | SFD | Dest MAC | Src MAC | 802.1Q Tag | Type/Length | Payload | FCS
-   7 B      1 B      6 B       6 B        4 B          2 B      46-1500 B  4 B
-
-Untagged Ethernet II:
-  Dest MAC | Src MAC | EtherType | Payload | FCS
-     6 B       6 B        2 B      46-1500 B  4 B
-
-802.1Q tagged Ethernet:
-  Dest MAC | Src MAC | 802.1Q Tag | EtherType | Payload | FCS
-     6 B       6 B        4 B          2 B      46-1500 B  4 B
-
-Preamble and SFD are transmitted but are not normally counted in the frame size.`
-              },
-              {
-                h: 'The fields one by one', kind: 'table',
-                cols: ['Field', 'Size', 'Purpose'],
-                rows: [
-                  ['Preamble', '7 B', 'Bit synchronisation between the transmitter and the receiver'],
-                  ['SFD', '1 B', 'Start Frame Delimiter — the frame begins here'],
-                  ['Destination MAC', '6 B', 'The **forwarding** lookup key'],
-                  ['Source MAC', '6 B', 'The **learning** key'],
-                  ['802.1Q tag', '4 B', 'Optional VLAN information (TPID plus TCI)'],
-                  ['Type/Length', '2 B', 'EtherType in Ethernet II, Length in IEEE 802.3'],
-                  ['Payload', '46–1500 B', 'The encapsulated packet, padded to the 46 byte minimum'],
-                  ['FCS', '4 B', 'CRC-based **error detection** trailer']
-                ]
-              },
-              {
-                h: 'Ethernet II versus IEEE 802.3', kind: 'list', items: [
-                  { t: 'Ethernet II (the dominant format)', d: 'The 2-byte field is an **EtherType** naming the upper-layer protocol. Values of 0x0600 and above are EtherTypes.' },
-                  { t: 'IEEE 802.3', d: 'The 2-byte field can be a **Length**, with LLC and sometimes SNAP carrying the upper-layer identity. Values up to 1500 decimal are lengths.' },
-                  { t: 'The reserved gap', d: 'Values 1501 to 1535 are reserved, which is what makes the distinction unambiguous.' },
-                  { t: '802.3 is not Token Ring', d: 'IEEE 802.3 Ethernet is a completely different technology from Token Ring — do not let the number confuse you.' }
-                ]
-              },
-              {
-                h: 'The EtherType values you must know', kind: 'table',
-                cols: ['EtherType', 'Protocol'],
-                rows: [
-                  ['0x0800', 'IPv4'],
-                  ['0x0806', 'ARP'],
-                  ['0x86DD', 'IPv6'],
-                  ['0x8100', 'IEEE 802.1Q VLAN tag'],
-                  ['0x88A8', 'IEEE 802.1ad S-Tag / QinQ']
-                ]
-              },
-              {
-                h: 'The 802.1Q tag in detail', kind: 'list', items: [
-                  { t: 'TPID', d: 'The 2-byte Tag Protocol Identifier that marks a tagged frame — 0x8100 for 802.1Q, 0x88A8 for a QinQ service-provider S-Tag.' },
-                  { t: 'TCI', d: 'The 2-byte Tag Control Information field: 3 bits of PCP (802.1p priority), 1 bit of DEI, and 12 bits of VLAN ID.' },
-                  { t: 'VLAN ID range', d: '12 bits gives 0 to 4095, but 0 is reserved for priority tagging and 4095 is reserved — usable IDs are 1 to 4094.' },
-                  { t: 'QinQ', d: 'Stacks an outer provider tag on top of the customer 802.1Q tag, so a provider can carry customer VLANs and add its own.' }
-                ]
-              },
-              {
-                h: 'Frame sizes and the MTU', kind: 'table',
-                cols: ['Frame type', 'Size breakdown', 'Total'],
-                rows: [
-                  ['Minimum frame', '6 + 6 + 2 + 46 + 4', '**64 bytes**'],
-                  ['Maximum untagged', '6 + 6 + 2 + 1500 + 4', '**1518 bytes**'],
-                  ['Maximum 802.1Q tagged', '6 + 6 + 4 + 2 + 1500 + 4', '**1522 bytes**'],
-                  ['Standard IP MTU', 'the Layer 3 payload carried', '**1500 bytes**']
-                ]
-              },
-              {
-                h: 'Runts, giants and baby giants', kind: 'list', items: [
-                  { t: 'Runt', d: 'A frame below the 64 byte minimum — physical problems, legacy collisions, duplex mismatch or faulty hardware.' },
-                  { t: 'Giant', d: 'A frame larger than the maximum the interface or platform supports.' },
-                  { t: 'Baby giant', d: 'A frame slightly over the classic 1518 byte maximum that is still legitimate — an 802.1Q tagged frame at 1522 bytes is the classic example.' },
-                  { t: 'Jumbo frame', d: 'A larger-than-standard frame, commonly around 9000 bytes, but support is platform and vendor specific rather than a fixed standard.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Checking frame errors and interface counters',
-                code: `# Look for CRC, frame, overrun and ignored counters
-show interfaces GigabitEthernet0/1
-
-# The size of the packet this interface can carry
-show interfaces GigabitEthernet0/1 | include MTU
-
-# Neighbour tables while you are there
-show mac address-table
-show arp
-show interfaces trunk`
-              }
-            ],
-            traps: [
-              '**The minimum frame is 64 bytes** and the count starts at the destination MAC and ends at the FCS.',
-              '**Preamble is 7 bytes and SFD is 1 byte**, but neither is normally included in a frame-size calculation.',
-              '**A 1500 byte MTU is not a 1500 byte frame** — add 14 bytes of header and 4 bytes of FCS.',
-              '**FCS detects errors, it does not correct them** — a frame that fails the CRC check is discarded.',
-              '**802.1Q adds exactly 4 bytes**, and 0x8100 is the standard TPID while 0x88A8 is the QinQ outer S-Tag.'
-            ],
-            table: {
-              cols: ['Field / concept', 'Size', 'Purpose'],
-              rows: [
-                ['Preamble', '7 B', 'Synchronisation'],
-                ['SFD', '1 B', 'Start-of-frame indication'],
-                ['Destination MAC', '6 B', 'Forwarding lookup'],
-                ['Source MAC', '6 B', 'MAC learning'],
-                ['802.1Q tag', '4 B', 'VLAN information, optional'],
-                ['Type/Length', '2 B', 'EtherType or 802.3 length'],
-                ['Payload', '46–1500 B', 'Encapsulated data plus padding'],
-                ['FCS', '4 B', 'CRC error detection'],
-                ['Minimum frame', '64 B', 'Standard minimum'],
-                ['Maximum untagged', '1518 B', 'Standard maximum'],
-                ['Maximum 802.1Q tagged', '1522 B', 'Standard tagged maximum'],
-                ['Standard IP MTU', '1500 B', 'Typical Ethernet Layer 3 MTU']
-              ]
-            },
-            related: [
-              { t: '01. MAC Address', d: 'the addresses inside the frame' },
-              { t: '06. Forwarding', d: 'what the switch does with it' },
-              { t: '08. Broadcast Domains', d: 'where a frame can reach' }
-            ],
-            glossary: ['Ethernet Frame', 'MAC Address', 'MTU', 'PDU', 'VLAN', 'Encapsulation', 'IPv4', 'IPv6']
+            "t": "Multicast (I/G = 1)",
+            "d": "Represents a group of receivers. IPv4 multicast maps to the range 01:00:5E:xx:xx:xx."
           },
           {
-            id: 't03',
-            num: '03',
-            group: 'addr',
-            title: 'CAM Table',
-            blurb: 'The hardware forwarding database behind every Layer 2 decision',
-            overview: `The **[[CAM Table]]** — the MAC address table — is the hardware Layer 2 forwarding database of a switch. It maps **MAC address plus VLAN to egress port**, and it is searched by content rather than by address, which is what makes the lookup a single hardware operation.`,
-            keyIdea: `**Key idea:** CAM means Content-Addressable Memory. Traditional memory is searched by address to fetch data; CAM is searched by content to find a matching entry. A CAM lookup therefore takes the **destination MAC plus VLAN** and returns the port.`,
-            sections: [
-              {
-                h: 'What a CAM entry holds', kind: 'table',
-                cols: ['Field', 'Meaning'],
-                rows: [
-                  ['VLAN', 'The VLAN context of the entry — the same MAC can appear in several VLANs'],
-                  ['MAC address', 'The 48-bit address that was learned'],
-                  ['Entry type', '**DYNAMIC** (learned from traffic) or **STATIC** (configured)'],
-                  ['Port', 'The switch port where the address was seen']
-                ]
-              },
-              {
-                h: 'Dynamic versus static entries', kind: 'list', items: [
-                  { t: 'Dynamic', d: 'Learned automatically from the source MAC of incoming frames, and aged out after a timer when the host stops sending.' },
-                  { t: 'Static', d: 'Configured by an administrator with the mac address-table static command. It does not age out like a dynamic entry.' },
-                  { t: 'Why static entries exist', d: 'To pin a critical server to a specific port, to stop a flapping host from moving, or to pre-seed a forwarding decision.' }
-                ]
-              },
-              {
-                h: 'The lookup', kind: 'code',
-                code: `Destination MAC + VLAN
-          |
-          v
-    +---------------------+
-    |  CAM lookup (ASIC)  |
-    +---------------------+
-          |
-          v
-   Egress port (or flood / filter / drop)`
-              },
-              {
-                h: 'CAM entry aging', kind: 'list', items: [
-                  { t: 'The timer', d: 'A commonly encountered Cisco default for dynamic MAC aging is **300 seconds, five minutes**. Defaults vary by platform and software version.' },
-                  { t: 'Why it exists', d: 'Hosts move. Without aging, the table would fill with addresses that no longer exist.' },
-                  { t: 'The consequence', d: 'When an entry ages out the destination becomes unknown again and its traffic is flooded until the address is relearned.' },
-                  { t: 'Too short a timer', d: 'Hosts are relearned constantly, and unknown-unicast flooding rises.' }
-                ]
-              },
-              {
-                h: 'MAC movement and MAC flapping', kind: 'list', items: [
-                  { t: 'What it looks like', d: 'The same MAC address is learned on port Gi0/1, then Gi0/2, then Gi0/1 again. The switch logs a move or flap message.' },
-                  { t: 'Usual causes', d: 'Layer 2 loops, an STP topology change, incorrect cabling, a host that physically moved, virtual machine mobility, hypervisor networking, duplicate MAC addresses, or a virtual MAC behaving oddly.' },
-                  { t: 'What it is not', d: 'MAC flapping does **not** automatically mean a rogue switch is plugged in — a moving VM causes exactly the same symptom.' }
-                ]
-              },
-              {
-                h: 'CAM versus TCAM', kind: 'table',
-                cols: ['Memory type', 'Matching style', 'Typical use'],
-                rows: [
-                  ['**CAM**', 'Exact match on the whole key', 'MAC plus VLAN to port'],
-                  ['**TCAM**', 'Ternary — 0, 1 or do not care', 'Routing lookups, ACLs, QoS classification, policy matching']
-                ]
-              },
-              {
-                h: 'The MAC table is not the ARP table', kind: 'table',
-                cols: ['Table', 'Maps', 'Command'],
-                rows: [
-                  ['CAM / MAC address table', 'MAC plus VLAN to switch port', 'show mac address-table'],
-                  ['ARP table', 'IPv4 address to MAC address', 'show ip arp']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Inspecting and tuning the CAM table',
-                code: `show mac address-table
-show mac address-table dynamic
-show mac address-table static
-show mac address-table vlan 10
-show mac address-table address 001B.21AA.BBCC
-show mac address-table count
-
-# Change the aging timer for dynamic entries
-mac address-table aging-time 300
-
-# Pin an address to a port
-mac address-table static 001B.21AA.BBCC vlan 10 interface GigabitEthernet0/1`
-              }
-            ],
-            traps: [
-              '**CAM and TCAM are not the same thing** — CAM is exact-match Layer 2 forwarding, TCAM is ternary matching for routing, ACLs and QoS.',
-              '**A CAM lookup needs the VLAN context**, not just the MAC address.',
-              '**The common Cisco aging default is 300 seconds**, though it varies by platform.',
-              '**The same MAC can legitimately exist in different VLANs** — that is not a duplicate.',
-              '**ARP maps IPv4 to MAC, the CAM table maps MAC to port** — confusing the two is a classic trap.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Full name', 'Content-Addressable Memory'],
-                ['Primary use', 'Layer 2 exact-match forwarding'],
-                ['Lookup context', 'MAC plus VLAN'],
-                ['Result', 'Switch port and forwarding information'],
-                ['Dynamic entry', 'Learned from the source MAC'],
-                ['Static entry', 'Manually configured'],
-                ['Known unicast', 'Forward to the learned port'],
-                ['Unknown unicast', 'Flood within the VLAN'],
-                ['Common aging default', '300 seconds / 5 minutes'],
-                ['MAC movement', 'Same MAC learned on different ports'],
-                ['ARP', 'IPv4 to MAC'],
-                ['CAM/MAC table', 'MAC plus VLAN to port'],
-                ['TCAM', 'Ternary and pattern matching'],
-                ['TCAM uses', 'Routing, ACLs, QoS, policy matching'],
-                ['Primary command', 'show mac address-table']
-              ]
-            },
-            related: [
-              { t: '04. MAC Learning', d: 'what fills the table' },
-              { t: '06. Forwarding', d: 'what the lookup drives' },
-              { t: '05. Flooding', d: 'when the lookup misses' }
-            ],
-            glossary: ['CAM Table', 'MAC Learning', 'MAC Address', 'Forwarding', 'Flooding', 'Port Security', 'VLAN']
+            "t": "Broadcast (I/G = 1)",
+            "d": "The address FF:FF:FF:FF:FF:FF. It is a special form of group address and is flooded inside the broadcast domain."
           },
           {
-            id: 't04',
-            num: '04',
-            group: 'switch',
-            title: 'MAC Learning',
-            blurb: 'How a switch builds its forwarding table from the source MAC',
-            overview: `**[[MAC Learning]]** is how a switch populates its **[[CAM Table]]**: it inspects the **source MAC** of every received frame and records the VLAN plus the ingress port. No configuration is needed — the switch learns from live traffic.`,
-            keyIdea: `**Key idea:** Learn from the **source**, forward by the **destination**. Learning and forwarding are two different lookups on the two different MAC addresses in the same frame.`,
-            sections: [
-              {
-                h: 'The learning rule', kind: 'code',
-                code: `Frame arrives on Gi0/1
-      |
-      v
-Source MAC = AAAA.AAAA.AAAA
-VLAN       = 10
-Port       = Gi0/1
-      |
-      v
-CAM: AAAA.AAAA.AAAA + VLAN 10  ->  Gi0/1`
-              },
-              {
-                h: 'The three cases', kind: 'list', items: [
-                  { t: 'The source MAC is new', d: 'A new entry is created, pointing at the ingress port in that VLAN.' },
-                  { t: 'The source MAC is already known on the same port', d: 'Nothing changes — the entry is refreshed.' },
-                  { t: 'The source MAC is known on a different port', d: 'The entry moves to the new port. Repeated movement is MAC flapping.' }
-                ]
-              },
-              {
-                h: 'Learning is per VLAN', kind: 'list', items: [
-                  { t: 'The key is MAC plus VLAN', d: 'The same MAC can be learned on Gi0/1 in VLAN 10 and Gi0/5 in VLAN 20 without any conflict.' },
-                  { t: 'Access ports', d: 'Traffic is learned in the VLAN configured on the access port.' },
-                  { t: 'Trunk ports', d: 'Tagged traffic is learned in the VLAN named by its 802.1Q tag; untagged traffic on a trunk is associated with the native VLAN.' },
-                  { t: 'STP non-forwarding ports', d: 'A discarding or blocking port does not normally learn user-data source addresses.' }
-                ]
-              },
-              {
-                h: 'What aging does to a learned entry', kind: 'list', items: [
-                  { t: 'The timer runs', d: 'A dynamic entry expires after the aging time — 300 seconds on a commonly encountered Cisco default.' },
-                  { t: 'The entry disappears', d: 'The switch forgets where the host was, so its traffic becomes unknown unicast and gets flooded.' },
-                  { t: 'It gets relearned', d: 'The next frame from that host re-creates the entry immediately.' },
-                  { t: 'Static entries are different', d: 'A statically configured entry normally does not age out of the table.' }
-                ]
-              },
-              {
-                h: 'Learning versus the ARP table', kind: 'table',
-                cols: ['Table', 'Key', 'Value', 'Command'],
-                rows: [
-                  ['ARP table', 'IPv4 address', 'MAC address', 'show ip arp'],
-                  ['CAM / MAC table', 'MAC plus VLAN', 'Switch port', 'show mac address-table']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Watching the table learn',
-                code: `show mac address-table
-show mac address-table dynamic
-show mac address-table interface GigabitEthernet0/1
-show mac address-table vlan 10
-
-# Look for movement between ports
-show logging | include MAC|flap|move
-
-# Force a relearn by aging
-clear mac address-table dynamic`
-              }
-            ],
-            traps: [
-              '**Learning uses the source MAC** — never the destination.',
-              '**Forwarding uses the destination MAC** — the other half of the same rule.',
-              '**Aged-out entries do not break connectivity** — the traffic is flooded until the host is relearned.',
-              '**A fast aging timer makes flooding worse**, not better.',
-              '**Do not assume MAC flapping means a rogue switch** — virtual machine mobility looks identical.'
-            ],
-            table: {
-              cols: ['Rule', 'Detail'],
-              rows: [
-                ['Learning', 'Source MAC to VLAN plus ingress port'],
-                ['Forwarding', 'Destination MAC to CAM lookup'],
-                ['Known destination', 'Selective forwarding'],
-                ['Unknown destination', 'Unknown-unicast flooding'],
-                ['MAC move', 'Same MAC learned on another port'],
-                ['MAC flapping', 'Repeated MAC movement'],
-                ['Aging', 'Dynamic entries age out'],
-                ['Common Cisco default', '300 seconds'],
-                ['Static MAC', 'Configured; normally does not age'],
-                ['VLAN context', 'Learning is per VLAN'],
-                ['Access port', 'Learned in the access VLAN'],
-                ['Trunk port', 'Learned in the VLAN identified by the tag'],
-                ['Untagged trunk traffic', 'Associated with the native VLAN'],
-                ['CAM capacity', 'Platform dependent']
-              ]
-            },
-            related: [
-              { t: '03. CAM Table', d: 'the table being populated' },
-              { t: '05. Flooding', d: 'what happens when learning misses' },
-              { t: '01. MAC Address', d: 'the address being learned' }
-            ],
-            glossary: ['MAC Learning', 'CAM Table', 'MAC Address', 'Forwarding', 'Flooding', 'VLAN', 'STP']
-          },
-          {
-            id: 't05',
-            num: '05',
-            group: 'switch',
-            title: 'Flooding',
-            blurb: 'Sending a frame out every eligible port in the VLAN',
-            overview: `**[[Flooding]]** is the Layer 2 behaviour of sending a frame out every port in the same VLAN except the ingress port. It happens when the destination MAC is **unknown**, when the frame is a **broadcast**, and sometimes for **multicast** when the switch has no multicast-forwarding state.`,
-            keyIdea: `**Key idea:** Flooding is scoped to the VLAN, and the ingress port is always excluded. Unknown unicast and broadcast look identical on the wire, but they mean very different things — unknown unicast is fixed the moment the switch learns the address.`,
-            sections: [
-              {
-                h: 'When a switch floods', kind: 'list', items: [
-                  { t: 'Unknown unicast', d: 'The destination MAC is not in the CAM table — the host has moved, the entry aged out, or it has never been seen.' },
-                  { t: 'Broadcast', d: 'The destination is FF:FF:FF:FF:FF:FF. Broadcasts are always flooded inside the broadcast domain.' },
-                  { t: 'Multicast', d: 'Multicast may be flooded when the switch has no multicast-forwarding state, or constrained by a multicast-aware feature such as IGMP snooping.' },
-                  { t: 'After MAC aging', d: 'When a learned entry ages out, the traffic to that destination becomes unknown unicast and is flooded again.' },
-                  { t: 'The very first frame', d: 'The first frame to a newly discovered host is always flooded, because the switch does not know the destination yet.' }
-                ]
-              },
-              {
-                h: 'The rules that bound flooding', kind: 'list', items: [
-                  { t: 'Within one VLAN', d: 'Flooding never crosses a VLAN boundary.' },
-                  { t: 'Never back out the ingress port', d: 'The frame is not returned to the port it arrived on.' },
-                  { t: 'Only VLAN members receive it', d: 'A port that is not a member of the VLAN does not get the flooded frame.' },
-                  { t: 'Only forwarding ports are used', d: 'A path blocked by STP is not used for normal data forwarding.' },
-                  { t: 'Trunks carry the flood onward', d: 'A trunk forwards the flooded frame for that VLAN to the next switch, provided the VLAN is allowed and the port is forwarding.' }
-                ]
-              },
-              {
-                h: 'Broadcast versus unknown unicast', kind: 'table',
-                cols: ['Feature', 'Broadcast', 'Unknown unicast'],
-                rows: [
-                  ['Destination', 'FF:FF:FF:FF:FF:FF', 'A specific MAC address'],
-                  ['Needs a CAM entry?', 'No', 'Yes — it must be missing'],
-                  ['Typical examples', 'ARP request, DHCP Discover', 'Traffic to a newly moved or aged-out host'],
-                  ['Stops being broadcast?', 'No — it stays a broadcast', 'Yes — it becomes known unicast once learned'],
-                  ['Main concern', 'Broadcast storms', 'Excessive unknown-unicast traffic']
-                ]
-              },
-              {
-                h: 'Why excessive flooding hurts', kind: 'list', items: [
-                  { t: 'Switch resources', d: 'Every flooded frame consumes forwarding resources on every port in the VLAN.' },
-                  { t: 'Link bandwidth', d: 'The same frame is replicated across many links.' },
-                  { t: 'Host processing', d: 'Every host has to receive and discard frames that are not for it.' },
-                  { t: 'Broadcast storms', d: 'A Layer 2 loop turns flooding into a runaway loop — rising traffic, unstable MAC tables, high switch CPU and network-wide connectivity loss.' }
-                ]
-              },
-              {
-                h: 'How to reduce it', kind: 'list', items: [
-                  { t: 'VLAN segmentation', d: 'Smaller VLANs mean fewer ports receive each broadcast.' },
-                  { t: 'MAC learning', d: 'The best cure for unknown-unicast flooding is simply learning the address.' },
-                  { t: 'IGMP snooping', d: 'Constrains multicast forwarding to the ports that asked for it.' },
-                  { t: 'Unknown-unicast suppression', d: 'Some platforms can drop unknown unicast instead of flooding it.' },
-                  { t: 'Static MAC entries', d: 'Pinning critical addresses avoids repeated relearning.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Finding the source of excess flooding',
-                code: `show mac address-table
-show mac address-table dynamic
-show mac address-table vlan 10
-
-# Which ports are busy, and are there errors?
-show interfaces counters
-show interfaces status
-
-# Pin a frequently-moved host
-mac address-table static 001b.21aa.bbcc vlan 10 interface GigabitEthernet0/1`
-              }
-            ],
-            traps: [
-              '**Flooding is not only broadcast** — unknown unicast floods too.',
-              '**Flooding does not go out every port on the switch** — VLAN membership, the ingress port, STP state and trunk VLAN allowance all constrain it.',
-              '**Flooding never crosses a VLAN boundary.**',
-              '**An aged-out MAC does not break connectivity** — the traffic is flooded until the address is relearned.',
-              '**STP does not block flooded traffic** — it blocks the redundant path that would otherwise loop it.'
-            ],
-            table: {
-              cols: ['Traffic type', 'Destination known?', 'Switch behaviour'],
-              rows: [
-                ['Known unicast', 'Yes', 'Forward toward the destination port'],
-                ['Unknown unicast', 'No', 'Flood within the VLAN'],
-                ['Broadcast', 'Not applicable', 'Flood within the VLAN'],
-                ['Multicast', 'Depends on multicast state', 'May be flooded or constrained'],
-                ['Ingress port', '—', 'Never flooded back out'],
-                ['VLAN boundary', '—', 'Flooding does not cross it'],
-                ['STP blocking', '—', 'Non-forwarding paths are not used'],
-                ['MAC aging', '—', 'Can turn known traffic into unknown unicast'],
-                ['Reduce broadcasts', '—', 'VLAN segmentation'],
-                ['Reduce multicast flooding', '—', 'IGMP snooping']
-              ]
-            },
-            related: [
-              { t: '04. MAC Learning', d: 'the cure for unknown unicast' },
-              { t: '06. Forwarding', d: 'the alternative to flooding' },
-              { t: '08. Broadcast Domains', d: 'the scope of the flood' }
-            ],
-            glossary: ['Flooding', 'CAM Table', 'MAC Learning', 'Forwarding', 'Broadcast Domain', 'VLAN', 'MAC Address']
-          },
-          {
-            id: 't06',
-            num: '06',
-            group: 'switch',
-            title: 'Forwarding',
-            blurb: 'Choosing the egress port for a received frame',
-            overview: `**[[Forwarding]]** at Layer 2 is choosing **which egress port** a received frame leaves by, based on the **destination MAC plus VLAN** lookup in the **[[CAM Table]]**. It is one third of a trio with learning and filtering.`,
-            keyIdea: `**Key idea:** The decision tree is small and absolute — known on another port means forward, known on the ingress port means filter, unknown means flood. Everything else, including multicast, is a variation on those three answers.`,
-            sections: [
-              {
-                h: 'The full decision sequence', kind: 'code',
-                code: `Receive frame on Gi0/1
-        |
-        v
-Learn source MAC  ->  AAAA.AAAA.AAAA + VLAN 10 -> Gi0/1
-        |
-        v
-Look up destination MAC + VLAN in the CAM table
-        |
-        +-- known on another forwarding port ---> FORWARD out that port
-        +-- known on the ingress port -----------> FILTER / drop
-        +-- unknown ----------------------------> FLOOD within the VLAN
-        |
-        v
-Broadcast -> flood.  Multicast -> flood or constrain by multicast state.
-        |
-        v
-Transmit with the appropriate Layer 2 encapsulation`
-              },
-              {
-                h: 'Store-and-forward versus cut-through', kind: 'table',
-                cols: ['Mode', 'Behaviour', 'Advantage', 'Disadvantage'],
-                rows: [
-                  ['**Store-and-forward**', 'Receives the whole frame before forwarding', 'Can validate the FCS and discard a corrupt frame', 'More latency'],
-                  ['**Cut-through**', 'Starts forwarding before the frame is complete', 'Lower latency', 'May forward a frame before its FCS can be checked'],
-                  ['**Fragment-free**', 'Waits for the first part of the frame', 'Less chance of forwarding a collision fragment', 'Older switching method']
-                ]
-              },
-              {
-                h: 'Forwarding is hardware work', kind: 'list', items: [
-                  { t: 'The ASIC does the work', d: 'Normal forwarding is performed in hardware, so the switch CPU is not involved in moving frames.' },
-                  { t: 'What does reach the CPU', d: 'Control-plane protocols, management traffic, exceptional or punted packets, and anything that needs software processing.' },
-                  { t: 'CAM versus TCAM again', d: 'The exact-match MAC lookup lives in CAM; the ternary matching used by ACLs, QoS and policy lives in TCAM.' }
-                ]
-              },
-              {
-                h: 'Layer 2 forwarding versus Layer 3 routing', kind: 'table',
-                cols: ['Feature', 'Layer 2 forwarding', 'Layer 3 routing'],
-                rows: [
-                  ['Primary address', 'Destination MAC', 'Destination IP'],
-                  ['Main table', 'MAC address table', 'Routing table and FIB'],
-                  ['Unit', 'Ethernet frame', 'IP packet'],
-                  ['Typical device', 'Layer 2 switch', 'Router or Layer 3 switch'],
-                  ['Broadcast domain', 'Stays inside the VLAN', 'The routed boundary stops Layer 2 broadcast'],
-                  ['The question answered', 'Which Layer 2 port?', 'Which next hop or interface?']
-                ]
-              },
-              {
-                h: 'Forwarding, flooding and filtering side by side', kind: 'table',
-                cols: ['Behaviour', 'Condition', 'Action'],
-                rows: [
-                  ['**Forward**', 'Destination known on another eligible port', 'Send out that specific port'],
-                  ['**Flood**', 'Destination unknown, or a broadcast', 'Send out every eligible port in the VLAN'],
-                  ['**Filter**', 'Destination known on the ingress port, or policy blocks it', 'Do not send it out that egress']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Verifying the forwarding decision',
-                code: `show mac address-table
-show mac address-table vlan 10
-show mac address-table interface GigabitEthernet0/1
-
-# Is the port even allowed to forward?
-show spanning-tree interface GigabitEthernet0/1
-show interfaces trunk`
-              }
-            ],
-            traps: [
-              '**Forwarding happens after learning, in that order** — the switch learns the source and then looks up the destination.',
-              '**A known destination on the ingress port is filtered, not forwarded.**',
-              '**Store-and-forward and cut-through are switching methods, not routing methods.**',
-              '**An STP-blocked port is not a backup path for busy traffic** — it carries no user data frames.',
-              '**Not every frame is processed by the switch CPU** — normal forwarding is done in hardware.'
-            ],
-            table: {
-              cols: ['Step', 'Action'],
-              rows: [
-                ['1. Receive', 'Frame arrives on the ingress interface'],
-                ['2. Learn', 'Source MAC to ingress port plus VLAN'],
-                ['3. Lookup', 'Search destination MAC plus VLAN'],
-                ['4. Known, other port', 'Forward out that port'],
-                ['5. Known, ingress port', 'Filter or drop'],
-                ['6. Unknown unicast', 'Flood within the VLAN'],
-                ['7. Broadcast', 'Flood within the VLAN'],
-                ['8. Multicast', 'Flood or constrain by multicast state'],
-                ['9. Hardware', 'Normal forwarding is handled by ASICs'],
-                ['10. Egress', 'Transmit with the right Layer 2 encapsulation']
-              ]
-            },
-            related: [
-              { t: '05. Flooding', d: 'the fallback path' },
-              { t: '07. Filtering', d: 'the deliberate non-delivery' },
-              { t: '13. CEF Basics', d: 'the Layer 3 equivalent' }
-            ],
-            glossary: ['Forwarding', 'CAM Table', 'MAC Learning', 'Flooding', 'Filtering', 'CEF', 'VLAN']
-          },
-          {
-            id: 't07',
-            num: '07',
-            group: 'switch',
-            title: 'Filtering',
-            blurb: 'Dropping frames on purpose: same-port, policy and security',
-            overview: `**[[Filtering]]** at Layer 2 means the switch **deliberately does not send a frame out a given port**. The classic case is a frame destined for a MAC that was learned on the **same ingress port** — it is dropped rather than echoed back.`,
-            keyIdea: `**Key idea:** Filtering is much broader than the same-port rule. Port security, ACLs, storm control, trunk VLAN restrictions and protected ports are all filtering mechanisms, and STP blocking is a form of it too.`,
-            sections: [
-              {
-                h: 'The same-port rule', kind: 'list', items: [
-                  { t: 'The situation', d: 'A frame arrives on Gi0/1 and its destination MAC is already learned on Gi0/1.' },
-                  { t: 'The action', d: 'The switch does not send it back out Gi0/1 — it is filtered.' },
-                  { t: 'Why', d: 'There is no valid alternate egress, and echoing it back would waste bandwidth and could cause loops.' }
-                ]
-              },
-              {
-                h: 'Filtering at a VLAN boundary', kind: 'list', items: [
-                  { t: 'VLANs do not talk at Layer 2', d: 'A frame never crosses a VLAN boundary — it must go to a Layer 3 gateway first.' },
-                  { t: 'STP blocking is filtering too', d: 'A port in the blocking or discarding state does not forward user data — that path is filtered, not broken.' },
-                  { t: 'Not a security feature', d: 'STP filtering exists for loop prevention. It is not an access control mechanism.' }
-                ]
-              },
-              {
-                h: 'The explicit filtering mechanisms', kind: 'table',
-                cols: ['Feature', 'What it can restrict', 'Typical configuration'],
-                rows: [
-                  ['**Port security**', 'Unauthorized source MAC addresses', 'switchport port-security'],
-                  ['**Trunk allowed VLANs**', 'Which VLANs may cross a trunk', 'switchport trunk allowed vlan'],
-                  ['**Storm control**', 'Excessive broadcast, multicast or unicast traffic', 'storm-control broadcast level 20'],
-                  ['**MAC ACL**', 'Traffic matched on MAC addresses', 'mac access-group'],
-                  ['**VACL**', 'Traffic inside a VLAN, matched by policy', 'vlan access-map'],
-                  ['**IP ACL**', 'IP traffic on Layer 3 interfaces and SVIs', 'ip access-group'],
-                  ['**Protected port**', 'Layer 2 traffic between protected ports', 'switchport protected']
-                ]
-              },
-              {
-                h: 'Port security and its violation modes', kind: 'table',
-                cols: ['Mode', 'Behaviour'],
-                rows: [
-                  ['**Protect**', 'Drops the violating frames and generates no notification'],
-                  ['**Restrict**', 'Drops the violating frames and records violation counters, which can raise SNMP traps or syslog messages'],
-                  ['**Shutdown**', 'Puts the port into an error-disabled state']
-                ]
-              },
-              {
-                h: 'MAC ACL versus VACL versus IP ACL', kind: 'table',
-                cols: ['Feature', 'Applied to'],
-                rows: [
-                  ['**IP ACL**', 'Layer 3 interfaces, SVIs and routed interfaces'],
-                  ['**MAC ACL**', 'Layer 2 traffic matched on the MAC address'],
-                  ['**VACL**', 'VLAN-wide Layer 2 and Layer 3 filtering policy']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Configuring and verifying Layer 2 filtering',
-                code: `interface GigabitEthernet0/1
- switchport mode access
- switchport port-security
- switchport port-security maximum 2
- switchport port-security violation restrict
- switchport port-security mac-address sticky
-!
-interface GigabitEthernet0/24
- switchport trunk allowed vlan remove 50
-!
-interface GigabitEthernet0/2
- switchport protected
-
-show port-security
-show port-security interface GigabitEthernet0/1
-show interfaces trunk
-show storm-control`
-              }
-            ],
-            traps: [
-              '**Filtering is much more than the same-port rule** — port security, ACLs, storm control, trunk VLAN limits and protected ports all filter.',
-              '**Layer 2 forwarding never crosses a VLAN boundary.**',
-              '**STP blocking is a loop-prevention mechanism, not a security feature.**',
-              '**Storm control does not fix a Layer 2 loop** — it only limits the traffic a loop can amplify.',
-              '**Protect, restrict and shutdown are different** — only restrict logs, only shutdown error-disables the port.'
-            ],
-            table: {
-              cols: ['Filter behaviour', 'Result'],
-              rows: [
-                ['Same-port destination', 'The frame is not sent back out the ingress port'],
-                ['Different VLAN', 'Layer 2 forwarding does not cross the boundary'],
-                ['STP non-forwarding port', 'Not used for normal Layer 2 data forwarding'],
-                ['Port security', 'Can discard unauthorized source MAC traffic'],
-                ['Trunk allowed VLAN', 'Prevents the specified VLAN from crossing the trunk'],
-                ['Storm control', 'Limits excessive supported traffic categories'],
-                ['MAC ACL', 'Filters based on MAC addresses'],
-                ['VACL', 'Applies policy to VLAN traffic'],
-                ['Protected port', 'Isolates protected ports on the same switch']
-              ]
-            },
-            related: [
-              { t: '06. Forwarding', d: 'the other half of the decision' },
-              { t: '05. Flooding', d: 'the third outcome' },
-              { t: '08. Broadcast Domains', d: 'why VLANs bound traffic' }
-            ],
-            glossary: ['Filtering', 'Forwarding', 'Flooding', 'CAM Table', 'MAC Learning', 'Port Security', 'VLAN', 'STP']
-          },
-          {
-            id: 't08',
-            num: '08',
-            group: 'domains',
-            title: 'Broadcast Domains',
-            blurb: 'The Layer 2 boundary that a VLAN creates',
-            overview: `A **[[Broadcast Domain]]** is the set of Layer 2 devices and interfaces that receive a Layer 2 broadcast such as FF:FF:FF:FF:FF:FF. **Routers stop broadcasts; switches forward them inside a VLAN.** One VLAN is essentially one broadcast domain.`,
-            keyIdea: `**Key idea:** A trunk carries many VLANs but does not merge their broadcast domains. Each VLAN keeps its own broadcast domain, and a router or Layer 3 SVI is what puts a boundary between them.`,
-            sections: [
-              {
-                h: 'What bounds a broadcast domain', kind: 'table',
-                cols: ['Device or feature', 'Effect on the broadcast domain'],
-                rows: [
-                  ['**Hub**', 'Does not divide it'],
-                  ['**Layer 2 switch**', 'One broadcast domain per VLAN'],
-                  ['**Router**', 'Separates broadcast domains'],
-                  ['**Layer 3 switch with an SVI**', 'Provides a Layer 3 boundary between VLANs'],
-                  ['**VLAN**', 'Defines a Layer 2 broadcast domain'],
-                  ['**Routed interface**', 'Creates a Layer 3 boundary'],
-                  ['**Trunk**', 'Carries several VLANs without merging their broadcast domains']
-                ]
-              },
-              {
-                h: 'The protocols that need broadcast', kind: 'list', items: [
-                  { t: 'ARP', d: 'The "who has" request is a Layer 2 broadcast; the reply is normally unicast.' },
-                  { t: 'DHCP', d: 'The Discover message is a broadcast, as is the Offer in the classic exchange.' },
-                  { t: 'NetBIOS and service discovery', d: 'Legacy name resolution and service discovery still rely on broadcast.' },
-                  { t: 'Some routing protocol versions', d: 'Certain network-layer protocols or versions still use broadcast for discovery.' }
-                ]
-              },
-              {
-                h: 'Why a large broadcast domain hurts', kind: 'list', items: [
-                  { t: 'Scalability', d: 'Every host in the VLAN receives and processes every broadcast.' },
-                  { t: 'Host resources', d: 'CPU, interrupt processing and network traffic are all spent on frames that are not for them.' },
-                  { t: 'Failure containment', d: 'One Layer 2 loop turns into a broadcast storm that takes the whole VLAN down.' },
-                  { t: 'Security and visibility', d: 'Broadcasts leak ARP information, host details and service announcements to the whole VLAN.' }
-                ]
-              },
-              {
-                h: 'The tools that shrink or protect a broadcast domain', kind: 'list', items: [
-                  { t: 'VLAN segmentation', d: 'The primary method — smaller VLANs mean smaller broadcast domains.' },
-                  { t: 'Inter-VLAN routing', d: 'A Layer 3 gateway between VLANs, with ACLs and inspection between them.' },
-                  { t: 'Routed access', d: 'Putting the Layer 3 function at the access layer instead of the core.' },
-                  { t: 'DHCP snooping, DAI, port security, private VLANs', d: 'Layer 2 security features that limit the damage a broadcast or spoofed frame can do.' },
-                  { t: 'IGMP snooping', d: 'Constrains multicast forwarding — but it does **not** shrink the broadcast domain.' }
-                ]
-              },
-              {
-                h: 'Broadcast domain versus collision domain', kind: 'table',
-                cols: ['Feature', 'Broadcast domain', 'Collision domain'],
-                rows: [
-                  ['Concern', 'Layer 2 broadcast propagation', 'Frame contention and collisions'],
-                  ['Example traffic', 'ARP broadcast', 'Simultaneous transmission'],
-                  ['Primary boundary', 'VLAN or Layer 3 boundary', 'Switch port or bridge segment'],
-                  ['Router', 'Separates broadcast domains', 'Separates Layer 2 segments'],
-                  ['Layer 2 switch', 'One broadcast domain per VLAN', 'Usually one collision domain per port'],
-                  ['Hub', 'Extends one broadcast domain', 'All devices share one collision domain']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Mapping VLANs to their broadcast domains',
-                code: `vlan 10
- name Users
-!
-interface Vlan10
- ip address 10.1.10.1 255.255.255.0
-!
-ip routing
-
-show vlan brief
-show ip interface brief
-show interfaces trunk
-show spanning-tree
-show ip route`
-              }
-            ],
-            traps: [
-              '**A switch is not one broadcast domain** — it is one per VLAN.',
-              '**A trunk does not merge VLANs** — each VLAN keeps its own broadcast domain.',
-              '**A router does not forward broadcasts between VLANs.**',
-              '**An SVI is a Layer 3 boundary** — it gives each VLAN a gateway, it does not create the broadcast domain.',
-              '**IGMP snooping does not reduce the broadcast domain** — it only constrains multicast forwarding.'
-            ],
-            table: {
-              cols: ['Element', 'Effect'],
-              rows: [
-                ['**VLAN**', 'Defines a Layer 2 broadcast domain'],
-                ['**Layer 2 switch**', 'Keeps separate broadcast domains per VLAN'],
-                ['**Trunk**', 'Carries multiple VLANs without merging them'],
-                ['**Router**', 'Separates Layer 2 broadcast domains'],
-                ['**SVI**', 'The Layer 3 gateway interface for a VLAN'],
-                ['**Broadcast**', 'Flooded within the applicable VLAN'],
-                ['**ARP request**', 'A common IPv4 Layer 2 broadcast'],
-                ['**DHCP Discover**', 'A common Layer 2 broadcast'],
-                ['**STP**', 'Prevents Layer 2 loops'],
-                ['**Storm control**', 'Limits excessive supported traffic'],
-                ['**IGMP snooping**', 'Constrains multicast forwarding'],
-                ['**Private VLAN**', 'Layer 2 isolation inside a primary VLAN'],
-                ['**VRF**', 'Separates Layer 3 routing and forwarding tables'],
-                ['**Reduce the domain**', 'VLAN segmentation, routed access, Layer 3 boundaries']
-              ]
-            },
-            related: [
-              { t: '09. Collision Domains', d: 'the contrasting domain' },
-              { t: '05. Flooding', d: 'how broadcasts spread' },
-              { t: '07. Filtering', d: 'VLANs as a filter boundary' }
-            ],
-            glossary: ['Broadcast Domain', 'Collision Domain', 'VLAN', 'Flooding', 'MAC Address', 'STP']
-          },
-          {
-            id: 't09',
-            num: '09',
-            group: 'domains',
-            title: 'Collision Domains',
-            blurb: 'Where frames can collide, and why modern Ethernet never does',
-            overview: `A **[[Collision Domain]]** is a Layer 2 segment whose devices can collide by transmitting simultaneously on a shared half-duplex medium. **Switches split collision domains, one per port; hubs merge them.** On modern full-duplex links there are no collisions at all.`,
-            keyIdea: `**Key idea:** Collision domains and broadcast domains are completely different concepts. A switch creates one collision domain per port but still has one broadcast domain per VLAN — and on a full-duplex link the collision domain becomes a historical concept.`,
-            sections: [
-              {
-                h: 'Where collisions come from', kind: 'list', items: [
-                  { t: 'Shared Ethernet', d: 'Hub or coax segments where several devices transmit on the same medium at once.' },
-                  { t: 'Half-duplex links', d: 'A device can only send or receive, so simultaneous transmission is a collision.' },
-                  { t: 'CSMA/CD', d: 'Carrier Sense Multiple Access with Collision Detection was the original way of handling this.' },
-                  { t: 'Duplex mismatch', d: 'A full-duplex switch port against a half-duplex device produces late collisions and a wall of errors.' }
-                ]
-              },
-              {
-                h: 'CSMA/CD in four steps', kind: 'list', items: [
-                  { t: 'Carrier sense', d: 'Is the medium busy? If so, wait.' },
-                  { t: 'Multiple access', d: 'Every device on the shared segment may transmit, so the medium must be arbitrated.' },
-                  { t: 'Collision detection', d: 'A transmitting device watches the medium; if it sees a collision it stops sending.' },
-                  { t: 'Binary exponential backoff', d: 'After a collision each device waits a random interval, doubling the window with each successive collision.' }
-                ]
-              },
-              {
-                h: 'Hub versus switch', kind: 'table',
-                cols: ['Device', 'Collision domains', 'Broadcast domains'],
-                rows: [
-                  ['**Hub**', 'One shared collision domain', 'Does not divide the broadcast domain'],
-                  ['**Layer 2 switch**', 'One per port', 'One per VLAN']
-                ]
-              },
-              {
-                h: 'Full duplex removes the problem', kind: 'list', items: [
-                  { t: 'Simultaneous send and receive', d: 'A full-duplex link transmits and receives at the same time, so two devices can never collide with each other.' },
-                  { t: 'No CSMA/CD needed', d: 'The mechanism is switched off, and the link becomes collision-free and predictable.' },
-                  { t: 'Broadcasts still exist', d: 'Full duplex changes nothing about the broadcast domain — ARP and DHCP still flood.' },
-                  { t: 'Never configure it by hand', d: 'Modern interfaces auto-negotiate speed and duplex. A mismatch happens when one side cannot negotiate.' }
-                ]
-              },
-              {
-                h: 'Duplex mismatch symptoms', kind: 'list', items: [
-                  { t: 'What you see', d: 'Collisions and late collisions on the half-duplex side, FCS errors, rising input and output errors, retransmissions and poor throughput.' },
-                  { t: 'Why it happens', d: 'One side is full duplex and the other is half duplex, so the full-duplex side transmits freely while the other half-duplex device can still cause a collision.' },
-                  { t: 'How to spot it', d: 'show interfaces shows the negotiated speed and duplex, and the interface counters show the error types.' }
-                ]
-              },
-              {
-                h: 'Counting collision domains', kind: 'para',
-                p: `In classic exam arithmetic, every switch port is its own Layer 2 segment, so a 24-port switch with two uplink ports has 26 collision domains. A hub adds no segment of its own — it merges everything plugged into it into one. Modern full-duplex Ethernet makes the whole count a legacy exercise, but the exam still asks it.`
-              }
-            ],
-            commands: [
-              {
-                label: 'Checking duplex and collision counters',
-                code: `show interfaces GigabitEthernet0/1
-!
-show interfaces status
-
-# Watch for: collisions, late collisions, CRC, frame, input/output errors
-show interfaces counters`
-              }
-            ],
-            traps: [
-              '**A hub creates one collision domain, not several.**',
-              '**A switch creates one collision domain per port** — and one broadcast domain per VLAN.',
-              '**Full duplex does not mean there is no collision domain** — it means collisions cannot occur on that link.',
-              '**CSMA/CD is not required on modern full-duplex Ethernet.**',
-              '**Do not manually configure duplex everywhere** — a mismatch is a common source of late collisions and FCS errors.'
-            ],
-            table: {
-              cols: ['Element', 'Collision-domain behaviour'],
-              rows: [
-                ['**Hub**', 'One shared collision domain'],
-                ['**Layer 2 switch**', 'Separates collision domains by port'],
-                ['**Switch port**', 'One separate Layer 2 segment in classic terminology'],
-                ['**Full duplex**', 'Collisions are impossible'],
-                ['**Half duplex**', 'Collisions can occur'],
-                ['**CSMA/CD**', 'Used with traditional half-duplex Ethernet'],
-                ['**Router interface**', 'A separate Layer 2 segment'],
-                ['**Broadcast domain**', 'An independent concept, normally one per VLAN'],
-                ['**Duplex mismatch**', 'Can cause collisions, errors and performance problems'],
-                ['**Modern Ethernet**', 'Normally full duplex and collision-free']
-              ]
-            },
-            related: [
-              { t: '08. Broadcast Domains', d: 'the contrasting domain' },
-              { t: '01. Physical Layer', d: 'duplex and cabling' },
-              { t: '02. Ethernet Frame', d: 'where FCS errors show up' }
-            ],
-            glossary: ['Collision Domain', 'Broadcast Domain', 'Duplex', 'Ethernet', 'VLAN']
-          },
-          {
-            id: 't10',
-            num: '10',
-            group: 'arp',
-            title: 'ARP',
-            blurb: 'Resolving an IPv4 next-hop address to a MAC address',
-            overview: `**[[ARP]]** maps an **IPv4 address to a MAC address** on the local Layer 2 segment. It is the glue between a Layer 3 destination and Layer 2 delivery — and it always resolves a **next hop**, never a remote host across the internet.`,
-            keyIdea: `**Key idea:** Same subnet means ARP for the destination host. Different subnet means ARP for the **default gateway**. ARP is not encapsulated in IP, it is its own Ethernet protocol with EtherType 0x0806.`,
-            sections: [
-              {
-                h: 'When ARP is used', kind: 'list', items: [
-                  { t: 'Same subnet', d: 'The host ARPs for the **destination host** IPv4 address and sends the frame directly to it.' },
-                  { t: 'Different subnet', d: 'The host ARPs for the **default gateway** IPv4 address. The IP destination stays the remote address, but the frame goes to the gateway MAC.' },
-                  { t: 'Never the remote host', d: 'A source host does not resolve a MAC for a destination that is not on its own subnet.' }
-                ]
-              },
-              {
-                h: 'The message exchange', kind: 'code',
-                code: `ARP Request (broadcast):
-  "Who has 10.1.1.20? Tell 10.1.1.10"
-  Ethernet destination = FF:FF:FF:FF:FF:FF
-
-ARP Reply (normally unicast):
-  "10.1.1.20 is at AA:BB:CC:DD:EE:FF"
-  Ethernet destination = the requester's MAC`
-              },
-              {
-                h: 'The ARP message format', kind: 'table',
-                cols: ['Field', 'Meaning'],
-                rows: [
-                  ['HTYPE', 'Hardware type — Ethernet is 1'],
-                  ['PTYPE', 'Protocol type — IPv4 is 0x0800'],
-                  ['HLEN', 'Hardware address length — an Ethernet MAC is 6'],
-                  ['PLEN', 'Protocol address length — an IPv4 address is 4'],
-                  ['Opcode', '**1** is a request, **2** is a reply'],
-                  ['Sender MAC / IP', 'The sender hardware and protocol addresses'],
-                  ['Target MAC / IP', 'The hardware address being asked for and the protocol address being queried']
-                ]
-              },
-              {
-                h: 'The ARP table', kind: 'list', items: [
-                  { t: 'What it holds', d: 'A mapping of IPv4 address to MAC address, plus the interface it was learned on.' },
-                  { t: 'Aging', d: 'The Cisco IOS default dynamic ARP timeout is **14,400 seconds, four hours**.' },
-                  { t: 'Static entries', d: 'A static ARP entry pins an IPv4 address to a MAC and does not age.' }
-                ]
-              },
-              {
-                h: 'ARP and IPv6', kind: 'table',
-                cols: ['IPv4', 'IPv6'],
-                rows: [
-                  ['ARP', 'Neighbor Discovery'],
-                  ['ARP Request', 'Neighbor Solicitation'],
-                  ['ARP Reply', 'Neighbor Advertisement'],
-                  ['Broadcast ARP request', 'ICMPv6 multicast discovery']
-                ]
-              },
-              {
-                h: 'ARP security', kind: 'list', items: [
-                  { t: 'ARP poisoning', d: 'A forged ARP reply redirects traffic to the attacker, giving man-in-the-middle, interception, redirection and denial of service.' },
-                  { t: 'Dynamic ARP Inspection', d: 'Validates ARP replies against a trusted database and drops the ones that do not match.' },
-                  { t: 'The DAI dependency', d: 'DAI commonly validates against the **DHCP Snooping** binding database, which is what tells it which addresses are legitimate.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Working with the ARP table',
-                code: `show ip arp
-show ip arp | include 10.1.1.
-!
-clear ip arp 10.1.1.2
-
-# Pin a mapping and change the aging time
-arp 10.1.1.2 abcd.1234.5678 arpa
-!
-interface GigabitEthernet0/0
- arp timeout 14400
-!
-debug arp`
-              }
-            ],
-            traps: [
-              '**ARP resolves IPv4 to MAC** — it has nothing to do with IPv6, which uses Neighbor Discovery.',
-              '**An ARP request is normally broadcast; the reply is normally unicast.**',
-              '**For a remote destination the host ARPs for the gateway**, not the remote host.',
-              '**ARP is not encapsulated inside IP** — it is its own Ethernet protocol with EtherType 0x0806.',
-              '**The ARP table and the CAM table are different** — IPv4 to MAC versus MAC to port.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Purpose', 'IPv4 address to MAC address resolution'],
-                ['Protocol', 'ARP'],
-                ['Ethernet EtherType', '0x0806'],
-                ['ARP request', 'Normally broadcast'],
-                ['ARP reply', 'Normally unicast'],
-                ['Same subnet', 'ARP for the destination host'],
-                ['Different subnet', 'ARP for the next hop or default gateway'],
-                ['Scope', 'The local Layer 2 broadcast domain'],
-                ['ARP table', 'IPv4 to MAC'],
-                ['CAM/MAC table', 'MAC to switch port'],
-                ['Cisco default ARP timeout', '14,400 seconds / 4 hours'],
-                ['IPv6 equivalent', 'Neighbor Discovery over ICMPv6'],
-                ['Security threat', 'ARP spoofing and poisoning'],
-                ['Main Cisco mitigation', 'Dynamic ARP Inspection'],
-                ['DAI dependency', 'The DHCP Snooping binding database'],
-                ['Proxy ARP', 'A router answers for a reachable destination']
-              ]
-            },
-            related: [
-              { t: '11. Gratuitous ARP', d: 'the unsolicited variant' },
-              { t: '12. Proxy ARP', d: 'ARP on behalf of someone else' },
-              { t: '01. MAC Address', d: 'the answer ARP produces' }
-            ],
-            glossary: ['ARP', 'Gratuitous ARP', 'Proxy ARP', 'MAC Address', 'IPv4', 'IPv6', 'DHCP Snooping']
-          },
-          {
-            id: 't11',
-            num: '11',
-            group: 'arp',
-            title: 'Gratuitous ARP',
-            blurb: 'Unsolicited ARP that announces "my IP is at my MAC"',
-            overview: `A **[[Gratuitous ARP]]** is **unsolicited ARP traffic** that announces "my IP address is at my MAC address" without anyone asking. It is used for duplicate-address detection, for telling neighbours about a MAC change, and for fast gateway failover.`,
-            keyIdea: `**Key idea:** The common GARP form is an ARP **request** whose sender IP and target IP are the **same** address, sent to the broadcast MAC with a target MAC of all zeros. It updates other hosts ARP caches so traffic keeps flowing after a MAC or gateway change.`,
-            sections: [
-              {
-                h: 'What a GARP looks like', kind: 'code',
-                code: `ARP Opcode       = Request (1)
-Sender IP        = 10.1.1.10
-Sender MAC       = AA:AA:AA:AA:AA:AA
-Target IP        = 10.1.1.10      <- the sender's own address
-Target MAC       = 00:00:00:00:00:00
-
-Ethernet destination = FF:FF:FF:FF:FF:FF`
-              },
-              {
-                h: 'The four uses', kind: 'list', items: [
-                  { t: 'Announcing a MAC change', d: 'After a NIC replacement or a move, the new owner broadcasts the new mapping so neighbours update their caches.' },
-                  { t: 'High-availability failover', d: 'When the active gateway fails over, the new active router announces the virtual IP with the new MAC so hosts update immediately.' },
-                  { t: 'Duplicate address detection', d: 'An ARP probe asks "is anyone using this address?" — it is related to, but not identical with, GARP.' },
-                  { t: 'NIC teaming', d: 'A bonded pair announces the active interface MAC when it fails over.' }
-                ]
-              },
-              {
-                h: 'GARP versus normal ARP', kind: 'table',
-                cols: ['Aspect', 'Normal ARP', 'Gratuitous ARP'],
-                rows: [
-                  ['Trigger', 'A need to resolve an address', 'A proactive announcement'],
-                  ['Purpose', 'Discover a next-hop MAC', 'Announce or update your own mapping'],
-                  ['Common opcode', 'Request and reply', 'Usually a request'],
-                  ['Sender IP', 'The sender own IP', 'Usually the sender own IP'],
-                  ['Target IP', 'Another device IP', 'Usually the sender own IP'],
-                  ['Ethernet destination', 'Broadcast for the request', 'Normally broadcast'],
-                  ['Target MAC field', 'Depends on the message', 'Commonly 00:00:00:00:00:00'],
-                  ['Cache effect', 'Resolves a mapping', 'Refreshes or updates an existing mapping']
-                ]
-              },
-              {
-                h: 'The cache update it triggers', kind: 'code',
-                code: `Host A: 10.1.1.10 -> MAC-A     (old cache entry)
-
-GARP arrives:  10.1.1.10 is at MAC-B
-
-Host A: 10.1.1.10 -> MAC-B     (cache refreshed)
-
-The switch also relearns MAC-B on the port the GARP arrived on.`
-              },
-              {
-                h: 'Security and the IPv6 contrast', kind: 'list', items: [
-                  { t: 'The abuse', d: 'GARP can be spoofed to poison neighbour caches and redirect traffic — the same man-in-the-middle risk as ordinary ARP poisoning.' },
-                  { t: 'The defence', d: 'Dynamic ARP Inspection, backed by DHCP Snooping bindings, is the key Cisco protection.' },
-                  { t: 'IPv6 has no GARP', d: 'IPv6 uses Neighbor Discovery and Duplicate Address Detection instead.' },
-                  { t: 'Do not confuse the two broadcast MACs', d: 'The Ethernet destination is broadcast; the ARP **target MAC field** is separately zero.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Watching for GARP traffic',
-                code: `show ip arp
-show ip arp | include 10.1.1.10
-
-# ARP inspection state and the trusted binding database
-show ip arp inspection
-show ip dhcp snooping binding
-
-# On the wire
-debug arp`
-              }
-            ],
-            traps: [
-              '**GARP is unsolicited ARP** — nobody asked for it.',
-              '**The common GARP is an ARP request for the sender own address** — but GARP is not defined only as a request; implementations differ.',
-              '**Do not confuse the broadcast Ethernet destination with the ARP target MAC field** — the target MAC is commonly all zeros.',
-              '**GARP and ARP probe are related but not identical** — a probe usually uses sender IP 0.0.0.0.',
-              '**IPv6 has no GARP** — it uses ND and Duplicate Address Detection.'
-            ],
-            table: {
-              cols: ['Aspect', 'Gratuitous ARP'],
-              rows: [
-                ['Purpose', 'Proactively announce or update an IPv4-to-MAC mapping'],
-                ['Protocol', 'ARP'],
-                ['Common opcode', 'Request'],
-                ['Common GARP request', 'Sender IP equals target IP'],
-                ['Ethernet destination', 'Broadcast'],
-                ['ARP target MAC', 'Commonly 00:00:00:00:00:00'],
-                ['Scope', 'The local Layer 2 segment'],
-                ['Main use', 'MAC or IP change, and failover'],
-                ['Gateway use', 'HSRP and VRRP failover'],
-                ['Related mechanism', 'ARP probe'],
-                ['Security risk', 'ARP spoofing and poisoning'],
-                ['Main Cisco mitigation', 'Dynamic ARP Inspection'],
-                ['DAI commonly uses', 'DHCP Snooping bindings'],
-                ['IPv6 equivalent', 'None — IPv6 uses ND over ICMPv6'],
-                ['IPv6 duplicate detection', 'DAD']
-              ]
-            },
-            related: [
-              { t: '10. ARP', d: 'the underlying protocol' },
-              { t: '12. Proxy ARP', d: 'the other unusual ARP variant' },
-              { t: '01. MAC Address', d: 'the virtual MACs in failover' }
-            ],
-            glossary: ['Gratuitous ARP', 'ARP', 'First Hop Redundancy Protocol', 'DHCP Snooping', 'MAC Address']
-          },
-          {
-            id: 't12',
-            num: '12',
-            group: 'arp',
-            title: 'Proxy ARP',
-            blurb: 'A router answering ARP on behalf of someone else',
-            overview: `**[[Proxy ARP]]** is a router behaviour where the router **answers an ARP request on behalf of another device** that is reachable through it. That lets a host reach an off-subnet destination **without a default gateway configured**.`,
-            keyIdea: `**Key idea:** Proxy ARP replies with the **router own MAC address**, not the remote host MAC. The host then sends the frame to the router, and the router performs ordinary Layer 3 routing toward the real destination.`,
-            sections: [
-              {
-                h: 'Normal routing without proxy ARP', kind: 'list', items: [
-                  { t: 'The host decision', d: 'The destination is outside my subnet, so I send the frame to my default gateway.' },
-                  { t: 'The ARP', d: 'The host ARPs for 10.1.1.1, the gateway address.' },
-                  { t: 'The frame', d: 'IP destination 10.2.2.2, MAC destination the router MAC.' }
-                ]
-              },
-              {
-                h: 'What changes with proxy ARP', kind: 'code',
-                code: `Host A: 10.1.1.10/24
-        |
-        | ARP request: "Who has 10.2.2.2?"
-        v
-     Router
-        |
-        | ARP reply: "10.2.2.2 is at <the router's own MAC>"
-        v
-Host A believes 10.2.2.2 -> router MAC, and sends the frame there.
-The router then routes the packet normally toward 10.2.2.2.`
-              },
-              {
-                h: 'Proxy ARP versus normal ARP', kind: 'table',
-                cols: ['Aspect', 'Normal ARP', 'Proxy ARP'],
-                rows: [
-                  ['ARP target', 'A local destination or next hop', 'A remote but reachable destination'],
-                  ['Who answers', 'The device that owns the address', 'The router'],
-                  ['MAC returned', 'The target own MAC', 'The router own MAC'],
-                  ['Router involvement', 'Not necessarily', 'Yes — the router routes the packet afterwards'],
-                  ['Main purpose', 'Resolve IPv4 to MAC', 'Make a remote destination look locally reachable'],
-                  ['Typical modern use', 'Everyday operation', 'Specific and legacy scenarios']
-                ]
-              },
-              {
-                h: 'Why proxy ARP exists', kind: 'list', items: [
-                  { t: 'No default gateway', d: 'A host that was never given a gateway can still reach remote networks.' },
-                  { t: 'Wrong subnet mask', d: 'A host with a too-generic mask believes the remote network is local.' },
-                  { t: 'Legacy reachability', d: 'Sites that need to reach across a routed boundary without reconfiguring the host.' }
-                ]
-              },
-              {
-                h: 'Cisco IOS behaviour', kind: 'list', items: [
-                  { t: 'The default', d: 'Traditional Cisco IOS routed interfaces have proxy ARP **enabled by default**.' },
-                  { t: 'Turning it off', d: 'no ip proxy-arp under the interface.' },
-                  { t: 'Why you might turn it off', d: 'It creates unexpected Layer 2 adjacency, complicates troubleshooting, and increases exposure to ARP-based attacks.' },
-                  { t: 'Not a replacement for DAI', d: 'Disabling proxy ARP does not protect you against ARP poisoning — Dynamic ARP Inspection does.' }
-                ]
-              },
-              {
-                h: 'Proxy ARP versus gratuitous ARP', kind: 'table',
-                cols: ['Feature', 'Proxy ARP', 'Gratuitous ARP'],
-                rows: [
-                  ['Typical sender', 'The router', 'A host or device'],
-                  ['IP being announced', 'Another device IP', 'Usually the sender own IP'],
-                  ['MAC returned', 'The router MAC', 'The sender MAC'],
-                  ['Trigger', 'The host ARPs for a remote reachable IP', 'A proactive announcement'],
-                  ['Purpose', 'Make a remote destination look local', 'Update or announce an IP-to-MAC mapping']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Checking and controlling proxy ARP',
-                code: `show running-config interface GigabitEthernet0/1
-!
-interface GigabitEthernet0/1
- no ip proxy-arp
-
-show ip route 10.2.2.2
-show ip arp
-debug arp`
-              }
-            ],
-            traps: [
-              '**Proxy ARP replies with the router MAC, not the remote host MAC.**',
-              '**The router then routes the packet normally** — proxy ARP does not replace Layer 3 routing.',
-              '**Proxy ARP is a router function, not a switch CAM-table function.**',
-              '**It is enabled by default on traditional Cisco IOS routed interfaces** — and can be a security concern.',
-              '**Proxy ARP is not GARP** — GARP announces your own mapping, proxy ARP answers for someone else.'
-            ],
-            table: {
-              cols: ['Item', 'Proxy ARP'],
-              rows: [
-                ['Function', 'The router answers ARP for a reachable remote IPv4 destination'],
-                ['Who answers', 'The router or Layer 3 device'],
-                ['MAC returned', 'The router own MAC'],
-                ['Target IP', 'A remote or non-local IPv4 address'],
-                ['Host behaviour', 'Sends the Ethernet frame to the router'],
-                ['Router behaviour', 'Routes the packet toward the actual destination'],
-                ['Typical default', 'Enabled on traditional routed interfaces'],
-                ['Disable', 'no ip proxy-arp'],
-                ['Main purpose', 'Legacy or specialised remote reachability'],
-                ['Modern requirement', 'Usually unnecessary with correct host gateways'],
-                ['Security', 'Disable where it is unnecessary'],
-                ['Poisoning defence', 'DAI, not simply disabling proxy ARP']
-              ]
-            },
-            related: [
-              { t: '10. ARP', d: 'the underlying protocol' },
-              { t: '11. Gratuitous ARP', d: 'the contrasting variant' },
-              { t: '13. CEF Basics', d: 'where the router resolves the next hop' }
-            ],
-            glossary: ['Proxy ARP', 'ARP', 'Gratuitous ARP', 'MAC Address']
-          },
-          {
-            id: 't13',
-            num: '13',
-            group: 'cef',
-            title: 'CEF Basics',
-            blurb: 'The forwarding architecture behind Cisco Express Forwarding',
-            overview: `**[[CEF|Cisco Express Forwarding]]** is Cisco high-performance IP forwarding architecture. The **[[Control Plane]]** builds two pre-computed structures — the **[[FIB]]** and the adjacency table — and the **[[Data Plane]]** uses them to forward at line rate without touching the CPU.`,
-            keyIdea: `**Key idea:** The RIB is what the router knows; the FIB is what it forwards with. CEF derives the FIB from the RIB, and the adjacency table supplies the Layer 2 rewrite information for the next hop.`,
-            sections: [
-              {
-                h: 'Control plane versus data plane', kind: 'code',
-                code: `CONTROL PLANE                DATA PLANE
-  Routing protocols              FIB + Adjacency
-  Static routes                       |
-  Connected routes                    v
-         |                      Forward in hardware
-         v
-       RIB
-         |
-         v
-    FIB (derived)
-
-Control plane = decides.  Data plane = forwards.`
-              },
-              {
-                h: 'The three data structures', kind: 'table',
-                cols: ['Component', 'Role'],
-                rows: [
-                  ['**RIB**', 'The routing database — everything connected, static and routing-protocol sources know, after AD and metric selection'],
-                  ['**FIB**', 'The optimised forwarding copy derived from the RIB, ready for a longest-prefix lookup'],
-                  ['**Adjacency**', 'The Layer 2 rewrite information for the next hop — outgoing interface, next-hop MAC'],
-                  ['**CEF**', 'The architecture that uses the FIB and adjacency for fast forwarding']
-                ]
-              },
-              {
-                h: 'How CEF forwards a packet', kind: 'code',
-                code: `1. FIB lookup
-   destination 10.10.10.50
-        |
-        v
-   longest prefix match -> 10.10.10.0/24 -> next hop 192.168.1.2
-
-2. Adjacency lookup
-   next hop 192.168.1.2 -> MAC AABB.CCDD.EEFF
-
-3. Rewrite and forward
-   destination MAC = AABB.CCDD.EEFF
-   source MAC      = the outgoing interface MAC
-   IP destination  = 10.10.10.50   (unchanged)`
-              },
-              {
-                h: 'Longest prefix match', kind: 'list', items: [
-                  { t: 'The candidates', d: '10.0.0.0/8, 10.10.0.0/16 and 10.10.10.0/24 all cover 10.10.10.50.' },
-                  { t: 'The winner', d: 'The most specific one — 10.10.10.0/24 — always wins. This is the classic exam question about overlapping routes.' },
-                  { t: 'The same rule everywhere', d: 'Routing tables, the FIB and the Cisco routing table all use longest prefix match.' }
-                ]
-              },
-              {
-                h: 'Load balancing', kind: 'list', items: [
-                  { t: 'ECMP', d: 'When several equal-cost paths exist, CEF balances across them.' },
-                  { t: 'Hashing inputs', d: 'Typically the source and destination IP addresses, and sometimes the Layer 4 ports, depending on the platform and the configured hashing method.' },
-                  { t: 'Per-packet balancing', d: 'Available on some platforms, but it can reorder packets within a flow — flow-based balancing is preferred.' }
-                ]
-              },
-              {
-                h: 'CEF on hardware platforms', kind: 'list', items: [
-                  { t: 'ASICs', d: 'Hardware forwarding engines and hardware forwarding tables do the work.' },
-                  { t: 'TCAM', d: 'A hardware resource used by some platforms for fast matching — but CEF and TCAM are not the same thing.' },
-                  { t: 'What CEF does not remove', d: 'CEF does not eliminate ARP or Neighbor Discovery — the router still needs the next-hop Layer 2 information.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Reading the control plane and the data plane',
-                code: `show ip route
-show ip route 10.10.10.50
-
-show ip cef
-show ip cef 10.10.10.50
-show ip cef 10.10.10.50 detail
-
-show adjacency
-show ip interface GigabitEthernet0/0`
-              }
-            ],
-            traps: [
-              '**RIB is not FIB** — the RIB holds routing knowledge, the FIB holds optimised forwarding information.',
-              '**CEF is a forwarding architecture, not just "hardware acceleration".**',
-              '**Adjacency information provides the Layer 2 rewrite** for the next hop.',
-              '**CEF is not the same as TCAM** — TCAM is the hardware resource some platforms use.',
-              '**Do not reach for clear ip cef as a first-line fix** — check the RIB, the FIB and the adjacency first.'
-            ],
-            table: {
-              cols: ['Component', 'Role'],
-              rows: [
-                ['**RIB**', 'Routing knowledge and selected routes'],
-                ['**FIB**', 'Optimised forwarding information'],
-                ['**Adjacency**', 'Layer 2 rewrite information for the next hop'],
-                ['**CEF**', 'The Cisco forwarding architecture using FIB and adjacency'],
-                ['**TCAM**', 'A hardware resource used for fast matching'],
-                ['**ASIC**', 'The hardware forwarding engine'],
-                ['**LPM**', 'The most specific route wins'],
-                ['**ECMP**', 'Multiple equal-cost forwarding paths'],
-                ['**Load balancing**', 'Typically flow or per-destination hashing'],
-                ['**ARP**', 'IPv4 next-hop MAC resolution'],
-                ['**ND**', 'IPv6 neighbour resolution'],
-                ['show ip route', 'View the RIB'],
-                ['show ip cef', 'View the FIB'],
-                ['show adjacency', 'View adjacency information']
-              ]
-            },
-            related: [
-              { t: '06. Forwarding', d: 'the Layer 2 counterpart' },
-              { t: '10. ARP', d: 'where the adjacency MAC comes from' },
-              { t: '09. Routing Fundamentals', d: 'the routing table behind the RIB' }
-            ],
-            glossary: ['CEF', 'Control Plane', 'Data Plane', 'FIB', 'RIB', 'ARP', 'Forwarding']
+            "t": "Locally administered (U/L = 1)",
+            "d": "Assigned by software, a hypervisor or an administrator rather than by the vendor OUI space — virtual machines, virtual NICs and some high-availability virtual MACs."
           }
-        ];
-
+        ]
+      },
+      {
+        "h": "The virtual MACs used by first-hop redundancy",
+        "kind": "table",
+        "cols": [
+          "Protocol",
+          "Virtual MAC pattern"
+        ],
+        "rows": [
+          [
+            "HSRP v1",
+            "0000.0C07.ACxx"
+          ],
+          [
+            "HSRP v2",
+            "0000.0C9F.Fxxx"
+          ],
+          [
+            "VRRP for IPv4",
+            "0000.5E00.01xx"
+          ],
+          [
+            "VRRP for IPv6",
+            "0000.5E00.02xx"
+          ]
+        ]
+      },
+      {
+        "h": "MAC address versus IP address",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "MAC address",
+          "IP address"
+        ],
+        "rows": [
+          [
+            "Layer",
+            "Layer 2",
+            "Layer 3"
+          ],
+          [
+            "Size",
+            "48 bit",
+            "IPv4: 32 bit / IPv6: 128 bit"
+          ],
+          [
+            "Scope",
+            "One Layer 2 segment",
+            "Across routed networks"
+          ],
+          [
+            "Used by",
+            "Ethernet switching",
+            "IP routing"
+          ],
+          [
+            "IPv4 resolution",
+            "ARP resolves a next-hop IP to a MAC",
+            "—"
+          ],
+          [
+            "IPv6 resolution",
+            "Neighbor Discovery resolves a neighbor IP to a MAC",
+            "—"
+          ]
+        ]
+      },
+      {
+        "h": "Where MAC addresses change",
+        "kind": "code",
+        "code": "Through switches (MACs unchanged):\n  Host A ---[ Src MAC A / Dst MAC B ]--- Switch 1 --- Switch 2 --- Host B\n\nThrough a router (MACs rewritten, IP packet preserved):\n  Host A ---[ Src A / Dst Router-1 ]--- Router ---[ Src Router-2 / Dst Next-Hop ]--- Host B\n\n  Switch = forwards the existing Ethernet frame\n  Router = strips the incoming Layer 2 header and creates a new one"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Reading and pinning the MAC address table",
+        "code": "# The whole table\nshow mac address-table\n\n# One address, one VLAN, one interface\nshow mac address-table address 001B.21AA.BBCC\nshow mac address-table vlan 10\nshow mac address-table interface GigabitEthernet0/10\n\n# Static entries do not age like dynamic ones\nmac address-table static 001B.21AA.BBCC vlan 10 interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**A MAC address is 48 bits, not 32** — that is the IPv4 address length and a classic mix-up.",
+      "**The I/G bit is the least significant bit of the first octet** — read it from the right.",
+      "**Broadcast is a group address**, not a unicast one. FF:FF:FF:FF:FF:FF has every bit set.",
+      "**U/L = 1 means locally administered, not \"virtual\"** — a virtual MAC can still be universally administered, so read the actual bit.",
+      "**Switches do not rewrite MAC addresses** — routers create a new Layer 2 frame for every outgoing segment."
+    ],
+    "table": {
+      "cols": [
+        "Fact",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Length",
+          "**48 bits / 6 bytes**"
+        ],
+        [
+          "Layer",
+          "Layer 2"
+        ],
+        [
+          "OUI",
+          "First 24 bits / 3 bytes"
+        ],
+        [
+          "I/G bit",
+          "%%0%% individual, %%1%% group"
+        ],
+        [
+          "U/L bit",
+          "%%0%% universal, %%1%% local"
+        ],
+        [
+          "Broadcast",
+          "FF:FF:FF:FF:FF:FF"
+        ],
+        [
+          "IPv4 resolution",
+          "ARP"
+        ],
+        [
+          "IPv6 resolution",
+          "Neighbor Discovery"
+        ],
+        [
+          "Switch learning",
+          "Source MAC"
+        ],
+        [
+          "Switch forwarding",
+          "Destination MAC lookup"
+        ],
+        [
+          "MAC table",
+          "MAC plus VLAN to port"
+        ],
+        [
+          "Multicast example",
+          "01:00:5E:xx:xx:xx"
+        ],
+        [
+          "Across switches",
+          "MACs normally unchanged"
+        ],
+        [
+          "Across routers",
+          "A new Layer 2 frame is created"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Ethernet Frame",
+        "d": "where the MACs live"
+      },
+      {
+        "t": "03. CAM Table",
+        "d": "MACs in the switching table"
+      },
+      {
+        "t": "10. ARP",
+        "d": "resolves a MAC from an IP"
+      }
+    ],
+    "glossary": [
+      "MAC Address",
+      "Ethernet Frame",
+      "CAM Table",
+      "MAC Learning",
+      "ARP",
+      "First Hop Redundancy Protocol"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "addr",
+    "title": "Ethernet Frame",
+    "blurb": "The Layer 2 container: headers, EtherTypes, FCS and frame sizes",
+    "overview": "An **[[Ethernet Frame]]** is the **Layer 2 data unit** that carries IPv4, IPv6 and ARP across an Ethernet network. A switch reads the destination MAC, the source MAC, the VLAN tag and the EtherType to make its forwarding decision, and uses the FCS to detect corruption.",
+    "keyIdea": "**Key idea:** The MTU is the Layer 3 payload; the frame size is the Layer 2 envelope around it. 1500 bytes of IP becomes a 1518 byte untagged frame, or 1522 bytes once an 802.1Q tag is added.",
+    "sections": [
+      {
+        "h": "MAC address learning",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">MAC ADDRESS TABLE</text><rect x=\"60\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"320\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"580\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"160\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">MAC Address</text><text x=\"420\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Port</text><text x=\"680\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">VLAN</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">Learn by source MAC on ingress</text><text x=\"60\" y=\"190\" font-size=\"8\" fill=\"currentColor\">Forward by destination MAC</text><text x=\"60\" y=\"210\" font-size=\"8\" fill=\"currentColor\">Flood if unknown unicast</text></g></svg>",
+        "caption": "Source MAC learned on ingress; used for forwarding."
+      },
+      {
+        "h": "The frame layout",
+        "kind": "code",
+        "code": "Preamble | SFD | Dest MAC | Src MAC | 802.1Q Tag | Type/Length | Payload | FCS\n   7 B      1 B      6 B       6 B        4 B          2 B      46-1500 B  4 B\n\nUntagged Ethernet II:\n  Dest MAC | Src MAC | EtherType | Payload | FCS\n     6 B       6 B        2 B      46-1500 B  4 B\n\n802.1Q tagged Ethernet:\n  Dest MAC | Src MAC | 802.1Q Tag | EtherType | Payload | FCS\n     6 B       6 B        4 B          2 B      46-1500 B  4 B\n\nPreamble and SFD are transmitted but are not normally counted in the frame size."
+      },
+      {
+        "h": "The fields one by one",
+        "kind": "table",
+        "cols": [
+          "Field",
+          "Size",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Preamble",
+            "7 B",
+            "Bit synchronisation between the transmitter and the receiver"
+          ],
+          [
+            "SFD",
+            "1 B",
+            "Start Frame Delimiter — the frame begins here"
+          ],
+          [
+            "Destination MAC",
+            "6 B",
+            "The **forwarding** lookup key"
+          ],
+          [
+            "Source MAC",
+            "6 B",
+            "The **learning** key"
+          ],
+          [
+            "802.1Q tag",
+            "4 B",
+            "Optional VLAN information (TPID plus TCI)"
+          ],
+          [
+            "Type/Length",
+            "2 B",
+            "EtherType in Ethernet II, Length in IEEE 802.3"
+          ],
+          [
+            "Payload",
+            "46–1500 B",
+            "The encapsulated packet, padded to the 46 byte minimum"
+          ],
+          [
+            "FCS",
+            "4 B",
+            "CRC-based **error detection** trailer"
+          ]
+        ]
+      },
+      {
+        "h": "Ethernet II versus IEEE 802.3",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Ethernet II (the dominant format)",
+            "d": "The 2-byte field is an **EtherType** naming the upper-layer protocol. Values of 0x0600 and above are EtherTypes."
+          },
+          {
+            "t": "IEEE 802.3",
+            "d": "The 2-byte field can be a **Length**, with LLC and sometimes SNAP carrying the upper-layer identity. Values up to 1500 decimal are lengths."
+          },
+          {
+            "t": "The reserved gap",
+            "d": "Values 1501 to 1535 are reserved, which is what makes the distinction unambiguous."
+          },
+          {
+            "t": "802.3 is not Token Ring",
+            "d": "IEEE 802.3 Ethernet is a completely different technology from Token Ring — do not let the number confuse you."
+          }
+        ]
+      },
+      {
+        "h": "The EtherType values you must know",
+        "kind": "table",
+        "cols": [
+          "EtherType",
+          "Protocol"
+        ],
+        "rows": [
+          [
+            "0x0800",
+            "IPv4"
+          ],
+          [
+            "0x0806",
+            "ARP"
+          ],
+          [
+            "0x86DD",
+            "IPv6"
+          ],
+          [
+            "0x8100",
+            "IEEE 802.1Q VLAN tag"
+          ],
+          [
+            "0x88A8",
+            "IEEE 802.1ad S-Tag / QinQ"
+          ]
+        ]
+      },
+      {
+        "h": "The 802.1Q tag in detail",
+        "kind": "list",
+        "items": [
+          {
+            "t": "TPID",
+            "d": "The 2-byte Tag Protocol Identifier that marks a tagged frame — 0x8100 for 802.1Q, 0x88A8 for a QinQ service-provider S-Tag."
+          },
+          {
+            "t": "TCI",
+            "d": "The 2-byte Tag Control Information field: 3 bits of PCP (802.1p priority), 1 bit of DEI, and 12 bits of VLAN ID."
+          },
+          {
+            "t": "VLAN ID range",
+            "d": "12 bits gives 0 to 4095, but 0 is reserved for priority tagging and 4095 is reserved — usable IDs are 1 to 4094."
+          },
+          {
+            "t": "QinQ",
+            "d": "Stacks an outer provider tag on top of the customer 802.1Q tag, so a provider can carry customer VLANs and add its own."
+          }
+        ]
+      },
+      {
+        "h": "Frame sizes and the MTU",
+        "kind": "table",
+        "cols": [
+          "Frame type",
+          "Size breakdown",
+          "Total"
+        ],
+        "rows": [
+          [
+            "Minimum frame",
+            "6 + 6 + 2 + 46 + 4",
+            "**64 bytes**"
+          ],
+          [
+            "Maximum untagged",
+            "6 + 6 + 2 + 1500 + 4",
+            "**1518 bytes**"
+          ],
+          [
+            "Maximum 802.1Q tagged",
+            "6 + 6 + 4 + 2 + 1500 + 4",
+            "**1522 bytes**"
+          ],
+          [
+            "Standard IP MTU",
+            "the Layer 3 payload carried",
+            "**1500 bytes**"
+          ]
+        ]
+      },
+      {
+        "h": "Runts, giants and baby giants",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Runt",
+            "d": "A frame below the 64 byte minimum — physical problems, legacy collisions, duplex mismatch or faulty hardware."
+          },
+          {
+            "t": "Giant",
+            "d": "A frame larger than the maximum the interface or platform supports."
+          },
+          {
+            "t": "Baby giant",
+            "d": "A frame slightly over the classic 1518 byte maximum that is still legitimate — an 802.1Q tagged frame at 1522 bytes is the classic example."
+          },
+          {
+            "t": "Jumbo frame",
+            "d": "A larger-than-standard frame, commonly around 9000 bytes, but support is platform and vendor specific rather than a fixed standard."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Checking frame errors and interface counters",
+        "code": "# Look for CRC, frame, overrun and ignored counters\nshow interfaces GigabitEthernet0/1\n\n# The size of the packet this interface can carry\nshow interfaces GigabitEthernet0/1 | include MTU\n\n# Neighbour tables while you are there\nshow mac address-table\nshow arp\nshow interfaces trunk"
+      }
+    ],
+    "traps": [
+      "**The minimum frame is 64 bytes** and the count starts at the destination MAC and ends at the FCS.",
+      "**Preamble is 7 bytes and SFD is 1 byte**, but neither is normally included in a frame-size calculation.",
+      "**A 1500 byte MTU is not a 1500 byte frame** — add 14 bytes of header and 4 bytes of FCS.",
+      "**FCS detects errors, it does not correct them** — a frame that fails the CRC check is discarded.",
+      "**802.1Q adds exactly 4 bytes**, and 0x8100 is the standard TPID while 0x88A8 is the QinQ outer S-Tag."
+    ],
+    "table": {
+      "cols": [
+        "Field / concept",
+        "Size",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Preamble",
+          "7 B",
+          "Synchronisation"
+        ],
+        [
+          "SFD",
+          "1 B",
+          "Start-of-frame indication"
+        ],
+        [
+          "Destination MAC",
+          "6 B",
+          "Forwarding lookup"
+        ],
+        [
+          "Source MAC",
+          "6 B",
+          "MAC learning"
+        ],
+        [
+          "802.1Q tag",
+          "4 B",
+          "VLAN information, optional"
+        ],
+        [
+          "Type/Length",
+          "2 B",
+          "EtherType or 802.3 length"
+        ],
+        [
+          "Payload",
+          "46–1500 B",
+          "Encapsulated data plus padding"
+        ],
+        [
+          "FCS",
+          "4 B",
+          "CRC error detection"
+        ],
+        [
+          "Minimum frame",
+          "64 B",
+          "Standard minimum"
+        ],
+        [
+          "Maximum untagged",
+          "1518 B",
+          "Standard maximum"
+        ],
+        [
+          "Maximum 802.1Q tagged",
+          "1522 B",
+          "Standard tagged maximum"
+        ],
+        [
+          "Standard IP MTU",
+          "1500 B",
+          "Typical Ethernet Layer 3 MTU"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. MAC Address",
+        "d": "the addresses inside the frame"
+      },
+      {
+        "t": "06. Forwarding",
+        "d": "what the switch does with it"
+      },
+      {
+        "t": "08. Broadcast Domains",
+        "d": "where a frame can reach"
+      }
+    ],
+    "glossary": [
+      "Ethernet Frame",
+      "MAC Address",
+      "MTU",
+      "PDU",
+      "VLAN",
+      "Encapsulation",
+      "IPv4",
+      "IPv6"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "addr",
+    "title": "CAM Table",
+    "blurb": "The hardware forwarding database behind every Layer 2 decision",
+    "overview": "The **[[CAM Table]]** — the MAC address table — is the hardware Layer 2 forwarding database of a switch. It maps **MAC address plus VLAN to egress port**, and it is searched by content rather than by address, which is what makes the lookup a single hardware operation.",
+    "keyIdea": "**Key idea:** CAM means Content-Addressable Memory. Traditional memory is searched by address to fetch data; CAM is searched by content to find a matching entry. A CAM lookup therefore takes the **destination MAC plus VLAN** and returns the port.",
+    "sections": [
+      {
+        "h": "Switch operations",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">SWITCHING OPERATIONS</text><rect x=\"60\" y=\"80\" width=\"220\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"320\" y=\"80\" width=\"220\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"580\" y=\"80\" width=\"220\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><text x=\"170\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Learn</text><text x=\"430\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Forward/Filter</text><text x=\"690\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Flood</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">CAM table: MAC -> interface</text><text x=\"60\" y=\"190\" font-size=\"8\" fill=\"currentColor\">Microsegmentation per port</text></g></svg>",
+        "caption": "Learn, forward/filter, flood."
+      },
+      {
+        "h": "What a CAM entry holds",
+        "kind": "table",
+        "cols": [
+          "Field",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "VLAN",
+            "The VLAN context of the entry — the same MAC can appear in several VLANs"
+          ],
+          [
+            "MAC address",
+            "The 48-bit address that was learned"
+          ],
+          [
+            "Entry type",
+            "**DYNAMIC** (learned from traffic) or **STATIC** (configured)"
+          ],
+          [
+            "Port",
+            "The switch port where the address was seen"
+          ]
+        ]
+      },
+      {
+        "h": "Dynamic versus static entries",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Dynamic",
+            "d": "Learned automatically from the source MAC of incoming frames, and aged out after a timer when the host stops sending."
+          },
+          {
+            "t": "Static",
+            "d": "Configured by an administrator with the mac address-table static command. It does not age out like a dynamic entry."
+          },
+          {
+            "t": "Why static entries exist",
+            "d": "To pin a critical server to a specific port, to stop a flapping host from moving, or to pre-seed a forwarding decision."
+          }
+        ]
+      },
+      {
+        "h": "The lookup",
+        "kind": "code",
+        "code": "Destination MAC + VLAN\n          |\n          v\n    +---------------------+\n    |  CAM lookup (ASIC)  |\n    +---------------------+\n          |\n          v\n   Egress port (or flood / filter / drop)"
+      },
+      {
+        "h": "CAM entry aging",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The timer",
+            "d": "A commonly encountered Cisco default for dynamic MAC aging is **300 seconds, five minutes**. Defaults vary by platform and software version."
+          },
+          {
+            "t": "Why it exists",
+            "d": "Hosts move. Without aging, the table would fill with addresses that no longer exist."
+          },
+          {
+            "t": "The consequence",
+            "d": "When an entry ages out the destination becomes unknown again and its traffic is flooded until the address is relearned."
+          },
+          {
+            "t": "Too short a timer",
+            "d": "Hosts are relearned constantly, and unknown-unicast flooding rises."
+          }
+        ]
+      },
+      {
+        "h": "MAC movement and MAC flapping",
+        "kind": "list",
+        "items": [
+          {
+            "t": "What it looks like",
+            "d": "The same MAC address is learned on port Gi0/1, then Gi0/2, then Gi0/1 again. The switch logs a move or flap message."
+          },
+          {
+            "t": "Usual causes",
+            "d": "Layer 2 loops, an STP topology change, incorrect cabling, a host that physically moved, virtual machine mobility, hypervisor networking, duplicate MAC addresses, or a virtual MAC behaving oddly."
+          },
+          {
+            "t": "What it is not",
+            "d": "MAC flapping does **not** automatically mean a rogue switch is plugged in — a moving VM causes exactly the same symptom."
+          }
+        ]
+      },
+      {
+        "h": "CAM versus TCAM",
+        "kind": "table",
+        "cols": [
+          "Memory type",
+          "Matching style",
+          "Typical use"
+        ],
+        "rows": [
+          [
+            "**CAM**",
+            "Exact match on the whole key",
+            "MAC plus VLAN to port"
+          ],
+          [
+            "**TCAM**",
+            "Ternary — 0, 1 or do not care",
+            "Routing lookups, ACLs, QoS classification, policy matching"
+          ]
+        ]
+      },
+      {
+        "h": "The MAC table is not the ARP table",
+        "kind": "table",
+        "cols": [
+          "Table",
+          "Maps",
+          "Command"
+        ],
+        "rows": [
+          [
+            "CAM / MAC address table",
+            "MAC plus VLAN to switch port",
+            "show mac address-table"
+          ],
+          [
+            "ARP table",
+            "IPv4 address to MAC address",
+            "show ip arp"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Inspecting and tuning the CAM table",
+        "code": "show mac address-table\nshow mac address-table dynamic\nshow mac address-table static\nshow mac address-table vlan 10\nshow mac address-table address 001B.21AA.BBCC\nshow mac address-table count\n\n# Change the aging timer for dynamic entries\nmac address-table aging-time 300\n\n# Pin an address to a port\nmac address-table static 001B.21AA.BBCC vlan 10 interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**CAM and TCAM are not the same thing** — CAM is exact-match Layer 2 forwarding, TCAM is ternary matching for routing, ACLs and QoS.",
+      "**A CAM lookup needs the VLAN context**, not just the MAC address.",
+      "**The common Cisco aging default is 300 seconds**, though it varies by platform.",
+      "**The same MAC can legitimately exist in different VLANs** — that is not a duplicate.",
+      "**ARP maps IPv4 to MAC, the CAM table maps MAC to port** — confusing the two is a classic trap."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "Content-Addressable Memory"
+        ],
+        [
+          "Primary use",
+          "Layer 2 exact-match forwarding"
+        ],
+        [
+          "Lookup context",
+          "MAC plus VLAN"
+        ],
+        [
+          "Result",
+          "Switch port and forwarding information"
+        ],
+        [
+          "Dynamic entry",
+          "Learned from the source MAC"
+        ],
+        [
+          "Static entry",
+          "Manually configured"
+        ],
+        [
+          "Known unicast",
+          "Forward to the learned port"
+        ],
+        [
+          "Unknown unicast",
+          "Flood within the VLAN"
+        ],
+        [
+          "Common aging default",
+          "300 seconds / 5 minutes"
+        ],
+        [
+          "MAC movement",
+          "Same MAC learned on different ports"
+        ],
+        [
+          "ARP",
+          "IPv4 to MAC"
+        ],
+        [
+          "CAM/MAC table",
+          "MAC plus VLAN to port"
+        ],
+        [
+          "TCAM",
+          "Ternary and pattern matching"
+        ],
+        [
+          "TCAM uses",
+          "Routing, ACLs, QoS, policy matching"
+        ],
+        [
+          "Primary command",
+          "show mac address-table"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. MAC Learning",
+        "d": "what fills the table"
+      },
+      {
+        "t": "06. Forwarding",
+        "d": "what the lookup drives"
+      },
+      {
+        "t": "05. Flooding",
+        "d": "when the lookup misses"
+      }
+    ],
+    "glossary": [
+      "CAM Table",
+      "MAC Learning",
+      "MAC Address",
+      "Forwarding",
+      "Flooding",
+      "Port Security",
+      "VLAN"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "switch",
+    "title": "MAC Learning",
+    "blurb": "How a switch builds its forwarding table from the source MAC",
+    "overview": "**[[MAC Learning]]** is how a switch populates its **[[CAM Table]]**: it inspects the **source MAC** of every received frame and records the VLAN plus the ingress port. No configuration is needed — the switch learns from live traffic.",
+    "keyIdea": "**Key idea:** Learn from the **source**, forward by the **destination**. Learning and forwarding are two different lookups on the two different MAC addresses in the same frame.",
+    "sections": [
+      {
+        "h": "The learning rule",
+        "kind": "code",
+        "code": "Frame arrives on Gi0/1\n      |\n      v\nSource MAC = AAAA.AAAA.AAAA\nVLAN       = 10\nPort       = Gi0/1\n      |\n      v\nCAM: AAAA.AAAA.AAAA + VLAN 10  ->  Gi0/1"
+      },
+      {
+        "h": "The three cases",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The source MAC is new",
+            "d": "A new entry is created, pointing at the ingress port in that VLAN."
+          },
+          {
+            "t": "The source MAC is already known on the same port",
+            "d": "Nothing changes — the entry is refreshed."
+          },
+          {
+            "t": "The source MAC is known on a different port",
+            "d": "The entry moves to the new port. Repeated movement is MAC flapping."
+          }
+        ]
+      },
+      {
+        "h": "Learning is per VLAN",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The key is MAC plus VLAN",
+            "d": "The same MAC can be learned on Gi0/1 in VLAN 10 and Gi0/5 in VLAN 20 without any conflict."
+          },
+          {
+            "t": "Access ports",
+            "d": "Traffic is learned in the VLAN configured on the access port."
+          },
+          {
+            "t": "Trunk ports",
+            "d": "Tagged traffic is learned in the VLAN named by its 802.1Q tag; untagged traffic on a trunk is associated with the native VLAN."
+          },
+          {
+            "t": "STP non-forwarding ports",
+            "d": "A discarding or blocking port does not normally learn user-data source addresses."
+          }
+        ]
+      },
+      {
+        "h": "What aging does to a learned entry",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The timer runs",
+            "d": "A dynamic entry expires after the aging time — 300 seconds on a commonly encountered Cisco default."
+          },
+          {
+            "t": "The entry disappears",
+            "d": "The switch forgets where the host was, so its traffic becomes unknown unicast and gets flooded."
+          },
+          {
+            "t": "It gets relearned",
+            "d": "The next frame from that host re-creates the entry immediately."
+          },
+          {
+            "t": "Static entries are different",
+            "d": "A statically configured entry normally does not age out of the table."
+          }
+        ]
+      },
+      {
+        "h": "Learning versus the ARP table",
+        "kind": "table",
+        "cols": [
+          "Table",
+          "Key",
+          "Value",
+          "Command"
+        ],
+        "rows": [
+          [
+            "ARP table",
+            "IPv4 address",
+            "MAC address",
+            "show ip arp"
+          ],
+          [
+            "CAM / MAC table",
+            "MAC plus VLAN",
+            "Switch port",
+            "show mac address-table"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Watching the table learn",
+        "code": "show mac address-table\nshow mac address-table dynamic\nshow mac address-table interface GigabitEthernet0/1\nshow mac address-table vlan 10\n\n# Look for movement between ports\nshow logging | include MAC|flap|move\n\n# Force a relearn by aging\nclear mac address-table dynamic"
+      }
+    ],
+    "traps": [
+      "**Learning uses the source MAC** — never the destination.",
+      "**Forwarding uses the destination MAC** — the other half of the same rule.",
+      "**Aged-out entries do not break connectivity** — the traffic is flooded until the host is relearned.",
+      "**A fast aging timer makes flooding worse**, not better.",
+      "**Do not assume MAC flapping means a rogue switch** — virtual machine mobility looks identical."
+    ],
+    "table": {
+      "cols": [
+        "Rule",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Learning",
+          "Source MAC to VLAN plus ingress port"
+        ],
+        [
+          "Forwarding",
+          "Destination MAC to CAM lookup"
+        ],
+        [
+          "Known destination",
+          "Selective forwarding"
+        ],
+        [
+          "Unknown destination",
+          "Unknown-unicast flooding"
+        ],
+        [
+          "MAC move",
+          "Same MAC learned on another port"
+        ],
+        [
+          "MAC flapping",
+          "Repeated MAC movement"
+        ],
+        [
+          "Aging",
+          "Dynamic entries age out"
+        ],
+        [
+          "Common Cisco default",
+          "300 seconds"
+        ],
+        [
+          "Static MAC",
+          "Configured; normally does not age"
+        ],
+        [
+          "VLAN context",
+          "Learning is per VLAN"
+        ],
+        [
+          "Access port",
+          "Learned in the access VLAN"
+        ],
+        [
+          "Trunk port",
+          "Learned in the VLAN identified by the tag"
+        ],
+        [
+          "Untagged trunk traffic",
+          "Associated with the native VLAN"
+        ],
+        [
+          "CAM capacity",
+          "Platform dependent"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. CAM Table",
+        "d": "the table being populated"
+      },
+      {
+        "t": "05. Flooding",
+        "d": "what happens when learning misses"
+      },
+      {
+        "t": "01. MAC Address",
+        "d": "the address being learned"
+      }
+    ],
+    "glossary": [
+      "MAC Learning",
+      "CAM Table",
+      "MAC Address",
+      "Forwarding",
+      "Flooding",
+      "VLAN",
+      "STP"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "switch",
+    "title": "Flooding",
+    "blurb": "Sending a frame out every eligible port in the VLAN",
+    "overview": "**[[Flooding]]** is the Layer 2 behaviour of sending a frame out every port in the same VLAN except the ingress port. It happens when the destination MAC is **unknown**, when the frame is a **broadcast**, and sometimes for **multicast** when the switch has no multicast-forwarding state.",
+    "keyIdea": "**Key idea:** Flooding is scoped to the VLAN, and the ingress port is always excluded. Unknown unicast and broadcast look identical on the wire, but they mean very different things — unknown unicast is fixed the moment the switch learns the address.",
+    "sections": [
+      {
+        "h": "When a switch floods",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Unknown unicast",
+            "d": "The destination MAC is not in the CAM table — the host has moved, the entry aged out, or it has never been seen."
+          },
+          {
+            "t": "Broadcast",
+            "d": "The destination is FF:FF:FF:FF:FF:FF. Broadcasts are always flooded inside the broadcast domain."
+          },
+          {
+            "t": "Multicast",
+            "d": "Multicast may be flooded when the switch has no multicast-forwarding state, or constrained by a multicast-aware feature such as IGMP snooping."
+          },
+          {
+            "t": "After MAC aging",
+            "d": "When a learned entry ages out, the traffic to that destination becomes unknown unicast and is flooded again."
+          },
+          {
+            "t": "The very first frame",
+            "d": "The first frame to a newly discovered host is always flooded, because the switch does not know the destination yet."
+          }
+        ]
+      },
+      {
+        "h": "The rules that bound flooding",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Within one VLAN",
+            "d": "Flooding never crosses a VLAN boundary."
+          },
+          {
+            "t": "Never back out the ingress port",
+            "d": "The frame is not returned to the port it arrived on."
+          },
+          {
+            "t": "Only VLAN members receive it",
+            "d": "A port that is not a member of the VLAN does not get the flooded frame."
+          },
+          {
+            "t": "Only forwarding ports are used",
+            "d": "A path blocked by STP is not used for normal data forwarding."
+          },
+          {
+            "t": "Trunks carry the flood onward",
+            "d": "A trunk forwards the flooded frame for that VLAN to the next switch, provided the VLAN is allowed and the port is forwarding."
+          }
+        ]
+      },
+      {
+        "h": "Broadcast versus unknown unicast",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "Broadcast",
+          "Unknown unicast"
+        ],
+        "rows": [
+          [
+            "Destination",
+            "FF:FF:FF:FF:FF:FF",
+            "A specific MAC address"
+          ],
+          [
+            "Needs a CAM entry?",
+            "No",
+            "Yes — it must be missing"
+          ],
+          [
+            "Typical examples",
+            "ARP request, DHCP Discover",
+            "Traffic to a newly moved or aged-out host"
+          ],
+          [
+            "Stops being broadcast?",
+            "No — it stays a broadcast",
+            "Yes — it becomes known unicast once learned"
+          ],
+          [
+            "Main concern",
+            "Broadcast storms",
+            "Excessive unknown-unicast traffic"
+          ]
+        ]
+      },
+      {
+        "h": "Why excessive flooding hurts",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Switch resources",
+            "d": "Every flooded frame consumes forwarding resources on every port in the VLAN."
+          },
+          {
+            "t": "Link bandwidth",
+            "d": "The same frame is replicated across many links."
+          },
+          {
+            "t": "Host processing",
+            "d": "Every host has to receive and discard frames that are not for it."
+          },
+          {
+            "t": "Broadcast storms",
+            "d": "A Layer 2 loop turns flooding into a runaway loop — rising traffic, unstable MAC tables, high switch CPU and network-wide connectivity loss."
+          }
+        ]
+      },
+      {
+        "h": "How to reduce it",
+        "kind": "list",
+        "items": [
+          {
+            "t": "VLAN segmentation",
+            "d": "Smaller VLANs mean fewer ports receive each broadcast."
+          },
+          {
+            "t": "MAC learning",
+            "d": "The best cure for unknown-unicast flooding is simply learning the address."
+          },
+          {
+            "t": "IGMP snooping",
+            "d": "Constrains multicast forwarding to the ports that asked for it."
+          },
+          {
+            "t": "Unknown-unicast suppression",
+            "d": "Some platforms can drop unknown unicast instead of flooding it."
+          },
+          {
+            "t": "Static MAC entries",
+            "d": "Pinning critical addresses avoids repeated relearning."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Finding the source of excess flooding",
+        "code": "show mac address-table\nshow mac address-table dynamic\nshow mac address-table vlan 10\n\n# Which ports are busy, and are there errors?\nshow interfaces counters\nshow interfaces status\n\n# Pin a frequently-moved host\nmac address-table static 001b.21aa.bbcc vlan 10 interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**Flooding is not only broadcast** — unknown unicast floods too.",
+      "**Flooding does not go out every port on the switch** — VLAN membership, the ingress port, STP state and trunk VLAN allowance all constrain it.",
+      "**Flooding never crosses a VLAN boundary.**",
+      "**An aged-out MAC does not break connectivity** — the traffic is flooded until the address is relearned.",
+      "**STP does not block flooded traffic** — it blocks the redundant path that would otherwise loop it."
+    ],
+    "table": {
+      "cols": [
+        "Traffic type",
+        "Destination known?",
+        "Switch behaviour"
+      ],
+      "rows": [
+        [
+          "Known unicast",
+          "Yes",
+          "Forward toward the destination port"
+        ],
+        [
+          "Unknown unicast",
+          "No",
+          "Flood within the VLAN"
+        ],
+        [
+          "Broadcast",
+          "Not applicable",
+          "Flood within the VLAN"
+        ],
+        [
+          "Multicast",
+          "Depends on multicast state",
+          "May be flooded or constrained"
+        ],
+        [
+          "Ingress port",
+          "—",
+          "Never flooded back out"
+        ],
+        [
+          "VLAN boundary",
+          "—",
+          "Flooding does not cross it"
+        ],
+        [
+          "STP blocking",
+          "—",
+          "Non-forwarding paths are not used"
+        ],
+        [
+          "MAC aging",
+          "—",
+          "Can turn known traffic into unknown unicast"
+        ],
+        [
+          "Reduce broadcasts",
+          "—",
+          "VLAN segmentation"
+        ],
+        [
+          "Reduce multicast flooding",
+          "—",
+          "IGMP snooping"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. MAC Learning",
+        "d": "the cure for unknown unicast"
+      },
+      {
+        "t": "06. Forwarding",
+        "d": "the alternative to flooding"
+      },
+      {
+        "t": "08. Broadcast Domains",
+        "d": "the scope of the flood"
+      }
+    ],
+    "glossary": [
+      "Flooding",
+      "CAM Table",
+      "MAC Learning",
+      "Forwarding",
+      "Broadcast Domain",
+      "VLAN",
+      "MAC Address"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "switch",
+    "title": "Forwarding",
+    "blurb": "Choosing the egress port for a received frame",
+    "overview": "**[[Forwarding]]** at Layer 2 is choosing **which egress port** a received frame leaves by, based on the **destination MAC plus VLAN** lookup in the **[[CAM Table]]**. It is one third of a trio with learning and filtering.",
+    "keyIdea": "**Key idea:** The decision tree is small and absolute — known on another port means forward, known on the ingress port means filter, unknown means flood. Everything else, including multicast, is a variation on those three answers.",
+    "sections": [
+      {
+        "h": "The full decision sequence",
+        "kind": "code",
+        "code": "Receive frame on Gi0/1\n        |\n        v\nLearn source MAC  ->  AAAA.AAAA.AAAA + VLAN 10 -> Gi0/1\n        |\n        v\nLook up destination MAC + VLAN in the CAM table\n        |\n        +-- known on another forwarding port ---> FORWARD out that port\n        +-- known on the ingress port -----------> FILTER / drop\n        +-- unknown ----------------------------> FLOOD within the VLAN\n        |\n        v\nBroadcast -> flood.  Multicast -> flood or constrain by multicast state.\n        |\n        v\nTransmit with the appropriate Layer 2 encapsulation"
+      },
+      {
+        "h": "Store-and-forward versus cut-through",
+        "kind": "table",
+        "cols": [
+          "Mode",
+          "Behaviour",
+          "Advantage",
+          "Disadvantage"
+        ],
+        "rows": [
+          [
+            "**Store-and-forward**",
+            "Receives the whole frame before forwarding",
+            "Can validate the FCS and discard a corrupt frame",
+            "More latency"
+          ],
+          [
+            "**Cut-through**",
+            "Starts forwarding before the frame is complete",
+            "Lower latency",
+            "May forward a frame before its FCS can be checked"
+          ],
+          [
+            "**Fragment-free**",
+            "Waits for the first part of the frame",
+            "Less chance of forwarding a collision fragment",
+            "Older switching method"
+          ]
+        ]
+      },
+      {
+        "h": "Forwarding is hardware work",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The ASIC does the work",
+            "d": "Normal forwarding is performed in hardware, so the switch CPU is not involved in moving frames."
+          },
+          {
+            "t": "What does reach the CPU",
+            "d": "Control-plane protocols, management traffic, exceptional or punted packets, and anything that needs software processing."
+          },
+          {
+            "t": "CAM versus TCAM again",
+            "d": "The exact-match MAC lookup lives in CAM; the ternary matching used by ACLs, QoS and policy lives in TCAM."
+          }
+        ]
+      },
+      {
+        "h": "Layer 2 forwarding versus Layer 3 routing",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "Layer 2 forwarding",
+          "Layer 3 routing"
+        ],
+        "rows": [
+          [
+            "Primary address",
+            "Destination MAC",
+            "Destination IP"
+          ],
+          [
+            "Main table",
+            "MAC address table",
+            "Routing table and FIB"
+          ],
+          [
+            "Unit",
+            "Ethernet frame",
+            "IP packet"
+          ],
+          [
+            "Typical device",
+            "Layer 2 switch",
+            "Router or Layer 3 switch"
+          ],
+          [
+            "Broadcast domain",
+            "Stays inside the VLAN",
+            "The routed boundary stops Layer 2 broadcast"
+          ],
+          [
+            "The question answered",
+            "Which Layer 2 port?",
+            "Which next hop or interface?"
+          ]
+        ]
+      },
+      {
+        "h": "Forwarding, flooding and filtering side by side",
+        "kind": "table",
+        "cols": [
+          "Behaviour",
+          "Condition",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Forward**",
+            "Destination known on another eligible port",
+            "Send out that specific port"
+          ],
+          [
+            "**Flood**",
+            "Destination unknown, or a broadcast",
+            "Send out every eligible port in the VLAN"
+          ],
+          [
+            "**Filter**",
+            "Destination known on the ingress port, or policy blocks it",
+            "Do not send it out that egress"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Verifying the forwarding decision",
+        "code": "show mac address-table\nshow mac address-table vlan 10\nshow mac address-table interface GigabitEthernet0/1\n\n# Is the port even allowed to forward?\nshow spanning-tree interface GigabitEthernet0/1\nshow interfaces trunk"
+      }
+    ],
+    "traps": [
+      "**Forwarding happens after learning, in that order** — the switch learns the source and then looks up the destination.",
+      "**A known destination on the ingress port is filtered, not forwarded.**",
+      "**Store-and-forward and cut-through are switching methods, not routing methods.**",
+      "**An STP-blocked port is not a backup path for busy traffic** — it carries no user data frames.",
+      "**Not every frame is processed by the switch CPU** — normal forwarding is done in hardware."
+    ],
+    "table": {
+      "cols": [
+        "Step",
+        "Action"
+      ],
+      "rows": [
+        [
+          "1. Receive",
+          "Frame arrives on the ingress interface"
+        ],
+        [
+          "2. Learn",
+          "Source MAC to ingress port plus VLAN"
+        ],
+        [
+          "3. Lookup",
+          "Search destination MAC plus VLAN"
+        ],
+        [
+          "4. Known, other port",
+          "Forward out that port"
+        ],
+        [
+          "5. Known, ingress port",
+          "Filter or drop"
+        ],
+        [
+          "6. Unknown unicast",
+          "Flood within the VLAN"
+        ],
+        [
+          "7. Broadcast",
+          "Flood within the VLAN"
+        ],
+        [
+          "8. Multicast",
+          "Flood or constrain by multicast state"
+        ],
+        [
+          "9. Hardware",
+          "Normal forwarding is handled by ASICs"
+        ],
+        [
+          "10. Egress",
+          "Transmit with the right Layer 2 encapsulation"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Flooding",
+        "d": "the fallback path"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "the deliberate non-delivery"
+      },
+      {
+        "t": "13. CEF Basics",
+        "d": "the Layer 3 equivalent"
+      }
+    ],
+    "glossary": [
+      "Forwarding",
+      "CAM Table",
+      "MAC Learning",
+      "Flooding",
+      "Filtering",
+      "CEF",
+      "VLAN"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "switch",
+    "title": "Filtering",
+    "blurb": "Dropping frames on purpose: same-port, policy and security",
+    "overview": "**[[Filtering]]** at Layer 2 means the switch **deliberately does not send a frame out a given port**. The classic case is a frame destined for a MAC that was learned on the **same ingress port** — it is dropped rather than echoed back.",
+    "keyIdea": "**Key idea:** Filtering is much broader than the same-port rule. Port security, ACLs, storm control, trunk VLAN restrictions and protected ports are all filtering mechanisms, and STP blocking is a form of it too.",
+    "sections": [
+      {
+        "h": "The same-port rule",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The situation",
+            "d": "A frame arrives on Gi0/1 and its destination MAC is already learned on Gi0/1."
+          },
+          {
+            "t": "The action",
+            "d": "The switch does not send it back out Gi0/1 — it is filtered."
+          },
+          {
+            "t": "Why",
+            "d": "There is no valid alternate egress, and echoing it back would waste bandwidth and could cause loops."
+          }
+        ]
+      },
+      {
+        "h": "Filtering at a VLAN boundary",
+        "kind": "list",
+        "items": [
+          {
+            "t": "VLANs do not talk at Layer 2",
+            "d": "A frame never crosses a VLAN boundary — it must go to a Layer 3 gateway first."
+          },
+          {
+            "t": "STP blocking is filtering too",
+            "d": "A port in the blocking or discarding state does not forward user data — that path is filtered, not broken."
+          },
+          {
+            "t": "Not a security feature",
+            "d": "STP filtering exists for loop prevention. It is not an access control mechanism."
+          }
+        ]
+      },
+      {
+        "h": "The explicit filtering mechanisms",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "What it can restrict",
+          "Typical configuration"
+        ],
+        "rows": [
+          [
+            "**Port security**",
+            "Unauthorized source MAC addresses",
+            "switchport port-security"
+          ],
+          [
+            "**Trunk allowed VLANs**",
+            "Which VLANs may cross a trunk",
+            "switchport trunk allowed vlan"
+          ],
+          [
+            "**Storm control**",
+            "Excessive broadcast, multicast or unicast traffic",
+            "storm-control broadcast level 20"
+          ],
+          [
+            "**MAC ACL**",
+            "Traffic matched on MAC addresses",
+            "mac access-group"
+          ],
+          [
+            "**VACL**",
+            "Traffic inside a VLAN, matched by policy",
+            "vlan access-map"
+          ],
+          [
+            "**IP ACL**",
+            "IP traffic on Layer 3 interfaces and SVIs",
+            "ip access-group"
+          ],
+          [
+            "**Protected port**",
+            "Layer 2 traffic between protected ports",
+            "switchport protected"
+          ]
+        ]
+      },
+      {
+        "h": "Port security and its violation modes",
+        "kind": "table",
+        "cols": [
+          "Mode",
+          "Behaviour"
+        ],
+        "rows": [
+          [
+            "**Protect**",
+            "Drops the violating frames and generates no notification"
+          ],
+          [
+            "**Restrict**",
+            "Drops the violating frames and records violation counters, which can raise SNMP traps or syslog messages"
+          ],
+          [
+            "**Shutdown**",
+            "Puts the port into an error-disabled state"
+          ]
+        ]
+      },
+      {
+        "h": "MAC ACL versus VACL versus IP ACL",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "Applied to"
+        ],
+        "rows": [
+          [
+            "**IP ACL**",
+            "Layer 3 interfaces, SVIs and routed interfaces"
+          ],
+          [
+            "**MAC ACL**",
+            "Layer 2 traffic matched on the MAC address"
+          ],
+          [
+            "**VACL**",
+            "VLAN-wide Layer 2 and Layer 3 filtering policy"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configuring and verifying Layer 2 filtering",
+        "code": "interface GigabitEthernet0/1\n switchport mode access\n switchport port-security\n switchport port-security maximum 2\n switchport port-security violation restrict\n switchport port-security mac-address sticky\n!\ninterface GigabitEthernet0/24\n switchport trunk allowed vlan remove 50\n!\ninterface GigabitEthernet0/2\n switchport protected\n\nshow port-security\nshow port-security interface GigabitEthernet0/1\nshow interfaces trunk\nshow storm-control"
+      }
+    ],
+    "traps": [
+      "**Filtering is much more than the same-port rule** — port security, ACLs, storm control, trunk VLAN limits and protected ports all filter.",
+      "**Layer 2 forwarding never crosses a VLAN boundary.**",
+      "**STP blocking is a loop-prevention mechanism, not a security feature.**",
+      "**Storm control does not fix a Layer 2 loop** — it only limits the traffic a loop can amplify.",
+      "**Protect, restrict and shutdown are different** — only restrict logs, only shutdown error-disables the port."
+    ],
+    "table": {
+      "cols": [
+        "Filter behaviour",
+        "Result"
+      ],
+      "rows": [
+        [
+          "Same-port destination",
+          "The frame is not sent back out the ingress port"
+        ],
+        [
+          "Different VLAN",
+          "Layer 2 forwarding does not cross the boundary"
+        ],
+        [
+          "STP non-forwarding port",
+          "Not used for normal Layer 2 data forwarding"
+        ],
+        [
+          "Port security",
+          "Can discard unauthorized source MAC traffic"
+        ],
+        [
+          "Trunk allowed VLAN",
+          "Prevents the specified VLAN from crossing the trunk"
+        ],
+        [
+          "Storm control",
+          "Limits excessive supported traffic categories"
+        ],
+        [
+          "MAC ACL",
+          "Filters based on MAC addresses"
+        ],
+        [
+          "VACL",
+          "Applies policy to VLAN traffic"
+        ],
+        [
+          "Protected port",
+          "Isolates protected ports on the same switch"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Forwarding",
+        "d": "the other half of the decision"
+      },
+      {
+        "t": "05. Flooding",
+        "d": "the third outcome"
+      },
+      {
+        "t": "08. Broadcast Domains",
+        "d": "why VLANs bound traffic"
+      }
+    ],
+    "glossary": [
+      "Filtering",
+      "Forwarding",
+      "Flooding",
+      "CAM Table",
+      "MAC Learning",
+      "Port Security",
+      "VLAN",
+      "STP"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "domains",
+    "title": "Broadcast Domains",
+    "blurb": "The Layer 2 boundary that a VLAN creates",
+    "overview": "A **[[Broadcast Domain]]** is the set of Layer 2 devices and interfaces that receive a Layer 2 broadcast such as FF:FF:FF:FF:FF:FF. **Routers stop broadcasts; switches forward them inside a VLAN.** One VLAN is essentially one broadcast domain.",
+    "keyIdea": "**Key idea:** A trunk carries many VLANs but does not merge their broadcast domains. Each VLAN keeps its own broadcast domain, and a router or Layer 3 SVI is what puts a boundary between them.",
+    "sections": [
+      {
+        "h": "What bounds a broadcast domain",
+        "kind": "table",
+        "cols": [
+          "Device or feature",
+          "Effect on the broadcast domain"
+        ],
+        "rows": [
+          [
+            "**Hub**",
+            "Does not divide it"
+          ],
+          [
+            "**Layer 2 switch**",
+            "One broadcast domain per VLAN"
+          ],
+          [
+            "**Router**",
+            "Separates broadcast domains"
+          ],
+          [
+            "**Layer 3 switch with an SVI**",
+            "Provides a Layer 3 boundary between VLANs"
+          ],
+          [
+            "**VLAN**",
+            "Defines a Layer 2 broadcast domain"
+          ],
+          [
+            "**Routed interface**",
+            "Creates a Layer 3 boundary"
+          ],
+          [
+            "**Trunk**",
+            "Carries several VLANs without merging their broadcast domains"
+          ]
+        ]
+      },
+      {
+        "h": "The protocols that need broadcast",
+        "kind": "list",
+        "items": [
+          {
+            "t": "ARP",
+            "d": "The \"who has\" request is a Layer 2 broadcast; the reply is normally unicast."
+          },
+          {
+            "t": "DHCP",
+            "d": "The Discover message is a broadcast, as is the Offer in the classic exchange."
+          },
+          {
+            "t": "NetBIOS and service discovery",
+            "d": "Legacy name resolution and service discovery still rely on broadcast."
+          },
+          {
+            "t": "Some routing protocol versions",
+            "d": "Certain network-layer protocols or versions still use broadcast for discovery."
+          }
+        ]
+      },
+      {
+        "h": "Why a large broadcast domain hurts",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Scalability",
+            "d": "Every host in the VLAN receives and processes every broadcast."
+          },
+          {
+            "t": "Host resources",
+            "d": "CPU, interrupt processing and network traffic are all spent on frames that are not for them."
+          },
+          {
+            "t": "Failure containment",
+            "d": "One Layer 2 loop turns into a broadcast storm that takes the whole VLAN down."
+          },
+          {
+            "t": "Security and visibility",
+            "d": "Broadcasts leak ARP information, host details and service announcements to the whole VLAN."
+          }
+        ]
+      },
+      {
+        "h": "The tools that shrink or protect a broadcast domain",
+        "kind": "list",
+        "items": [
+          {
+            "t": "VLAN segmentation",
+            "d": "The primary method — smaller VLANs mean smaller broadcast domains."
+          },
+          {
+            "t": "Inter-VLAN routing",
+            "d": "A Layer 3 gateway between VLANs, with ACLs and inspection between them."
+          },
+          {
+            "t": "Routed access",
+            "d": "Putting the Layer 3 function at the access layer instead of the core."
+          },
+          {
+            "t": "DHCP snooping, DAI, port security, private VLANs",
+            "d": "Layer 2 security features that limit the damage a broadcast or spoofed frame can do."
+          },
+          {
+            "t": "IGMP snooping",
+            "d": "Constrains multicast forwarding — but it does **not** shrink the broadcast domain."
+          }
+        ]
+      },
+      {
+        "h": "Broadcast domain versus collision domain",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "Broadcast domain",
+          "Collision domain"
+        ],
+        "rows": [
+          [
+            "Concern",
+            "Layer 2 broadcast propagation",
+            "Frame contention and collisions"
+          ],
+          [
+            "Example traffic",
+            "ARP broadcast",
+            "Simultaneous transmission"
+          ],
+          [
+            "Primary boundary",
+            "VLAN or Layer 3 boundary",
+            "Switch port or bridge segment"
+          ],
+          [
+            "Router",
+            "Separates broadcast domains",
+            "Separates Layer 2 segments"
+          ],
+          [
+            "Layer 2 switch",
+            "One broadcast domain per VLAN",
+            "Usually one collision domain per port"
+          ],
+          [
+            "Hub",
+            "Extends one broadcast domain",
+            "All devices share one collision domain"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Mapping VLANs to their broadcast domains",
+        "code": "vlan 10\n name Users\n!\ninterface Vlan10\n ip address 10.1.10.1 255.255.255.0\n!\nip routing\n\nshow vlan brief\nshow ip interface brief\nshow interfaces trunk\nshow spanning-tree\nshow ip route"
+      }
+    ],
+    "traps": [
+      "**A switch is not one broadcast domain** — it is one per VLAN.",
+      "**A trunk does not merge VLANs** — each VLAN keeps its own broadcast domain.",
+      "**A router does not forward broadcasts between VLANs.**",
+      "**An SVI is a Layer 3 boundary** — it gives each VLAN a gateway, it does not create the broadcast domain.",
+      "**IGMP snooping does not reduce the broadcast domain** — it only constrains multicast forwarding."
+    ],
+    "table": {
+      "cols": [
+        "Element",
+        "Effect"
+      ],
+      "rows": [
+        [
+          "**VLAN**",
+          "Defines a Layer 2 broadcast domain"
+        ],
+        [
+          "**Layer 2 switch**",
+          "Keeps separate broadcast domains per VLAN"
+        ],
+        [
+          "**Trunk**",
+          "Carries multiple VLANs without merging them"
+        ],
+        [
+          "**Router**",
+          "Separates Layer 2 broadcast domains"
+        ],
+        [
+          "**SVI**",
+          "The Layer 3 gateway interface for a VLAN"
+        ],
+        [
+          "**Broadcast**",
+          "Flooded within the applicable VLAN"
+        ],
+        [
+          "**ARP request**",
+          "A common IPv4 Layer 2 broadcast"
+        ],
+        [
+          "**DHCP Discover**",
+          "A common Layer 2 broadcast"
+        ],
+        [
+          "**STP**",
+          "Prevents Layer 2 loops"
+        ],
+        [
+          "**Storm control**",
+          "Limits excessive supported traffic"
+        ],
+        [
+          "**IGMP snooping**",
+          "Constrains multicast forwarding"
+        ],
+        [
+          "**Private VLAN**",
+          "Layer 2 isolation inside a primary VLAN"
+        ],
+        [
+          "**VRF**",
+          "Separates Layer 3 routing and forwarding tables"
+        ],
+        [
+          "**Reduce the domain**",
+          "VLAN segmentation, routed access, Layer 3 boundaries"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. Collision Domains",
+        "d": "the contrasting domain"
+      },
+      {
+        "t": "05. Flooding",
+        "d": "how broadcasts spread"
+      },
+      {
+        "t": "07. Filtering",
+        "d": "VLANs as a filter boundary"
+      }
+    ],
+    "glossary": [
+      "Broadcast Domain",
+      "Collision Domain",
+      "VLAN",
+      "Flooding",
+      "MAC Address",
+      "STP"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "domains",
+    "title": "Collision Domains",
+    "blurb": "Where frames can collide, and why modern Ethernet never does",
+    "overview": "A **[[Collision Domain]]** is a Layer 2 segment whose devices can collide by transmitting simultaneously on a shared half-duplex medium. **Switches split collision domains, one per port; hubs merge them.** On modern full-duplex links there are no collisions at all.",
+    "keyIdea": "**Key idea:** Collision domains and broadcast domains are completely different concepts. A switch creates one collision domain per port but still has one broadcast domain per VLAN — and on a full-duplex link the collision domain becomes a historical concept.",
+    "sections": [
+      {
+        "h": "Where collisions come from",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Shared Ethernet",
+            "d": "Hub or coax segments where several devices transmit on the same medium at once."
+          },
+          {
+            "t": "Half-duplex links",
+            "d": "A device can only send or receive, so simultaneous transmission is a collision."
+          },
+          {
+            "t": "CSMA/CD",
+            "d": "Carrier Sense Multiple Access with Collision Detection was the original way of handling this."
+          },
+          {
+            "t": "Duplex mismatch",
+            "d": "A full-duplex switch port against a half-duplex device produces late collisions and a wall of errors."
+          }
+        ]
+      },
+      {
+        "h": "CSMA/CD in four steps",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Carrier sense",
+            "d": "Is the medium busy? If so, wait."
+          },
+          {
+            "t": "Multiple access",
+            "d": "Every device on the shared segment may transmit, so the medium must be arbitrated."
+          },
+          {
+            "t": "Collision detection",
+            "d": "A transmitting device watches the medium; if it sees a collision it stops sending."
+          },
+          {
+            "t": "Binary exponential backoff",
+            "d": "After a collision each device waits a random interval, doubling the window with each successive collision."
+          }
+        ]
+      },
+      {
+        "h": "Hub versus switch",
+        "kind": "table",
+        "cols": [
+          "Device",
+          "Collision domains",
+          "Broadcast domains"
+        ],
+        "rows": [
+          [
+            "**Hub**",
+            "One shared collision domain",
+            "Does not divide the broadcast domain"
+          ],
+          [
+            "**Layer 2 switch**",
+            "One per port",
+            "One per VLAN"
+          ]
+        ]
+      },
+      {
+        "h": "Full duplex removes the problem",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Simultaneous send and receive",
+            "d": "A full-duplex link transmits and receives at the same time, so two devices can never collide with each other."
+          },
+          {
+            "t": "No CSMA/CD needed",
+            "d": "The mechanism is switched off, and the link becomes collision-free and predictable."
+          },
+          {
+            "t": "Broadcasts still exist",
+            "d": "Full duplex changes nothing about the broadcast domain — ARP and DHCP still flood."
+          },
+          {
+            "t": "Never configure it by hand",
+            "d": "Modern interfaces auto-negotiate speed and duplex. A mismatch happens when one side cannot negotiate."
+          }
+        ]
+      },
+      {
+        "h": "Duplex mismatch symptoms",
+        "kind": "list",
+        "items": [
+          {
+            "t": "What you see",
+            "d": "Collisions and late collisions on the half-duplex side, FCS errors, rising input and output errors, retransmissions and poor throughput."
+          },
+          {
+            "t": "Why it happens",
+            "d": "One side is full duplex and the other is half duplex, so the full-duplex side transmits freely while the other half-duplex device can still cause a collision."
+          },
+          {
+            "t": "How to spot it",
+            "d": "show interfaces shows the negotiated speed and duplex, and the interface counters show the error types."
+          }
+        ]
+      },
+      {
+        "h": "Counting collision domains",
+        "kind": "para",
+        "p": "In classic exam arithmetic, every switch port is its own Layer 2 segment, so a 24-port switch with two uplink ports has 26 collision domains. A hub adds no segment of its own — it merges everything plugged into it into one. Modern full-duplex Ethernet makes the whole count a legacy exercise, but the exam still asks it."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Checking duplex and collision counters",
+        "code": "show interfaces GigabitEthernet0/1\n!\nshow interfaces status\n\n# Watch for: collisions, late collisions, CRC, frame, input/output errors\nshow interfaces counters"
+      }
+    ],
+    "traps": [
+      "**A hub creates one collision domain, not several.**",
+      "**A switch creates one collision domain per port** — and one broadcast domain per VLAN.",
+      "**Full duplex does not mean there is no collision domain** — it means collisions cannot occur on that link.",
+      "**CSMA/CD is not required on modern full-duplex Ethernet.**",
+      "**Do not manually configure duplex everywhere** — a mismatch is a common source of late collisions and FCS errors."
+    ],
+    "table": {
+      "cols": [
+        "Element",
+        "Collision-domain behaviour"
+      ],
+      "rows": [
+        [
+          "**Hub**",
+          "One shared collision domain"
+        ],
+        [
+          "**Layer 2 switch**",
+          "Separates collision domains by port"
+        ],
+        [
+          "**Switch port**",
+          "One separate Layer 2 segment in classic terminology"
+        ],
+        [
+          "**Full duplex**",
+          "Collisions are impossible"
+        ],
+        [
+          "**Half duplex**",
+          "Collisions can occur"
+        ],
+        [
+          "**CSMA/CD**",
+          "Used with traditional half-duplex Ethernet"
+        ],
+        [
+          "**Router interface**",
+          "A separate Layer 2 segment"
+        ],
+        [
+          "**Broadcast domain**",
+          "An independent concept, normally one per VLAN"
+        ],
+        [
+          "**Duplex mismatch**",
+          "Can cause collisions, errors and performance problems"
+        ],
+        [
+          "**Modern Ethernet**",
+          "Normally full duplex and collision-free"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Broadcast Domains",
+        "d": "the contrasting domain"
+      },
+      {
+        "t": "01. Physical Layer",
+        "d": "duplex and cabling"
+      },
+      {
+        "t": "02. Ethernet Frame",
+        "d": "where FCS errors show up"
+      }
+    ],
+    "glossary": [
+      "Collision Domain",
+      "Broadcast Domain",
+      "Duplex",
+      "Ethernet",
+      "VLAN"
+    ]
+  },
+  {
+    "id": "t10",
+    "num": "10",
+    "group": "arp",
+    "title": "ARP",
+    "blurb": "Resolving an IPv4 next-hop address to a MAC address",
+    "overview": "**[[ARP]]** maps an **IPv4 address to a MAC address** on the local Layer 2 segment. It is the glue between a Layer 3 destination and Layer 2 delivery — and it always resolves a **next hop**, never a remote host across the internet.",
+    "keyIdea": "**Key idea:** Same subnet means ARP for the destination host. Different subnet means ARP for the **default gateway**. ARP is not encapsulated in IP, it is its own Ethernet protocol with EtherType 0x0806.",
+    "sections": [
+      {
+        "h": "When ARP is used",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Same subnet",
+            "d": "The host ARPs for the **destination host** IPv4 address and sends the frame directly to it."
+          },
+          {
+            "t": "Different subnet",
+            "d": "The host ARPs for the **default gateway** IPv4 address. The IP destination stays the remote address, but the frame goes to the gateway MAC."
+          },
+          {
+            "t": "Never the remote host",
+            "d": "A source host does not resolve a MAC for a destination that is not on its own subnet."
+          }
+        ]
+      },
+      {
+        "h": "The message exchange",
+        "kind": "code",
+        "code": "ARP Request (broadcast):\n  \"Who has 10.1.1.20? Tell 10.1.1.10\"\n  Ethernet destination = FF:FF:FF:FF:FF:FF\n\nARP Reply (normally unicast):\n  \"10.1.1.20 is at AA:BB:CC:DD:EE:FF\"\n  Ethernet destination = the requester's MAC"
+      },
+      {
+        "h": "The ARP message format",
+        "kind": "table",
+        "cols": [
+          "Field",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "HTYPE",
+            "Hardware type — Ethernet is 1"
+          ],
+          [
+            "PTYPE",
+            "Protocol type — IPv4 is 0x0800"
+          ],
+          [
+            "HLEN",
+            "Hardware address length — an Ethernet MAC is 6"
+          ],
+          [
+            "PLEN",
+            "Protocol address length — an IPv4 address is 4"
+          ],
+          [
+            "Opcode",
+            "**1** is a request, **2** is a reply"
+          ],
+          [
+            "Sender MAC / IP",
+            "The sender hardware and protocol addresses"
+          ],
+          [
+            "Target MAC / IP",
+            "The hardware address being asked for and the protocol address being queried"
+          ]
+        ]
+      },
+      {
+        "h": "The ARP table",
+        "kind": "list",
+        "items": [
+          {
+            "t": "What it holds",
+            "d": "A mapping of IPv4 address to MAC address, plus the interface it was learned on."
+          },
+          {
+            "t": "Aging",
+            "d": "The Cisco IOS default dynamic ARP timeout is **14,400 seconds, four hours**."
+          },
+          {
+            "t": "Static entries",
+            "d": "A static ARP entry pins an IPv4 address to a MAC and does not age."
+          }
+        ]
+      },
+      {
+        "h": "ARP and IPv6",
+        "kind": "table",
+        "cols": [
+          "IPv4",
+          "IPv6"
+        ],
+        "rows": [
+          [
+            "ARP",
+            "Neighbor Discovery"
+          ],
+          [
+            "ARP Request",
+            "Neighbor Solicitation"
+          ],
+          [
+            "ARP Reply",
+            "Neighbor Advertisement"
+          ],
+          [
+            "Broadcast ARP request",
+            "ICMPv6 multicast discovery"
+          ]
+        ]
+      },
+      {
+        "h": "ARP security",
+        "kind": "list",
+        "items": [
+          {
+            "t": "ARP poisoning",
+            "d": "A forged ARP reply redirects traffic to the attacker, giving man-in-the-middle, interception, redirection and denial of service."
+          },
+          {
+            "t": "Dynamic ARP Inspection",
+            "d": "Validates ARP replies against a trusted database and drops the ones that do not match."
+          },
+          {
+            "t": "The DAI dependency",
+            "d": "DAI commonly validates against the **DHCP Snooping** binding database, which is what tells it which addresses are legitimate."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Working with the ARP table",
+        "code": "show ip arp\nshow ip arp | include 10.1.1.\n!\nclear ip arp 10.1.1.2\n\n# Pin a mapping and change the aging time\narp 10.1.1.2 abcd.1234.5678 arpa\n!\ninterface GigabitEthernet0/0\n arp timeout 14400\n!\ndebug arp"
+      }
+    ],
+    "traps": [
+      "**ARP resolves IPv4 to MAC** — it has nothing to do with IPv6, which uses Neighbor Discovery.",
+      "**An ARP request is normally broadcast; the reply is normally unicast.**",
+      "**For a remote destination the host ARPs for the gateway**, not the remote host.",
+      "**ARP is not encapsulated inside IP** — it is its own Ethernet protocol with EtherType 0x0806.",
+      "**The ARP table and the CAM table are different** — IPv4 to MAC versus MAC to port."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "IPv4 address to MAC address resolution"
+        ],
+        [
+          "Protocol",
+          "ARP"
+        ],
+        [
+          "Ethernet EtherType",
+          "0x0806"
+        ],
+        [
+          "ARP request",
+          "Normally broadcast"
+        ],
+        [
+          "ARP reply",
+          "Normally unicast"
+        ],
+        [
+          "Same subnet",
+          "ARP for the destination host"
+        ],
+        [
+          "Different subnet",
+          "ARP for the next hop or default gateway"
+        ],
+        [
+          "Scope",
+          "The local Layer 2 broadcast domain"
+        ],
+        [
+          "ARP table",
+          "IPv4 to MAC"
+        ],
+        [
+          "CAM/MAC table",
+          "MAC to switch port"
+        ],
+        [
+          "Cisco default ARP timeout",
+          "14,400 seconds / 4 hours"
+        ],
+        [
+          "IPv6 equivalent",
+          "Neighbor Discovery over ICMPv6"
+        ],
+        [
+          "Security threat",
+          "ARP spoofing and poisoning"
+        ],
+        [
+          "Main Cisco mitigation",
+          "Dynamic ARP Inspection"
+        ],
+        [
+          "DAI dependency",
+          "The DHCP Snooping binding database"
+        ],
+        [
+          "Proxy ARP",
+          "A router answers for a reachable destination"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "11. Gratuitous ARP",
+        "d": "the unsolicited variant"
+      },
+      {
+        "t": "12. Proxy ARP",
+        "d": "ARP on behalf of someone else"
+      },
+      {
+        "t": "01. MAC Address",
+        "d": "the answer ARP produces"
+      }
+    ],
+    "glossary": [
+      "ARP",
+      "Gratuitous ARP",
+      "Proxy ARP",
+      "MAC Address",
+      "IPv4",
+      "IPv6",
+      "DHCP Snooping"
+    ]
+  },
+  {
+    "id": "t11",
+    "num": "11",
+    "group": "arp",
+    "title": "Gratuitous ARP",
+    "blurb": "Unsolicited ARP that announces \"my IP is at my MAC\"",
+    "overview": "A **[[Gratuitous ARP]]** is **unsolicited ARP traffic** that announces \"my IP address is at my MAC address\" without anyone asking. It is used for duplicate-address detection, for telling neighbours about a MAC change, and for fast gateway failover.",
+    "keyIdea": "**Key idea:** The common GARP form is an ARP **request** whose sender IP and target IP are the **same** address, sent to the broadcast MAC with a target MAC of all zeros. It updates other hosts ARP caches so traffic keeps flowing after a MAC or gateway change.",
+    "sections": [
+      {
+        "h": "What a GARP looks like",
+        "kind": "code",
+        "code": "ARP Opcode       = Request (1)\nSender IP        = 10.1.1.10\nSender MAC       = AA:AA:AA:AA:AA:AA\nTarget IP        = 10.1.1.10      <- the sender's own address\nTarget MAC       = 00:00:00:00:00:00\n\nEthernet destination = FF:FF:FF:FF:FF:FF"
+      },
+      {
+        "h": "The four uses",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Announcing a MAC change",
+            "d": "After a NIC replacement or a move, the new owner broadcasts the new mapping so neighbours update their caches."
+          },
+          {
+            "t": "High-availability failover",
+            "d": "When the active gateway fails over, the new active router announces the virtual IP with the new MAC so hosts update immediately."
+          },
+          {
+            "t": "Duplicate address detection",
+            "d": "An ARP probe asks \"is anyone using this address?\" — it is related to, but not identical with, GARP."
+          },
+          {
+            "t": "NIC teaming",
+            "d": "A bonded pair announces the active interface MAC when it fails over."
+          }
+        ]
+      },
+      {
+        "h": "GARP versus normal ARP",
+        "kind": "table",
+        "cols": [
+          "Aspect",
+          "Normal ARP",
+          "Gratuitous ARP"
+        ],
+        "rows": [
+          [
+            "Trigger",
+            "A need to resolve an address",
+            "A proactive announcement"
+          ],
+          [
+            "Purpose",
+            "Discover a next-hop MAC",
+            "Announce or update your own mapping"
+          ],
+          [
+            "Common opcode",
+            "Request and reply",
+            "Usually a request"
+          ],
+          [
+            "Sender IP",
+            "The sender own IP",
+            "Usually the sender own IP"
+          ],
+          [
+            "Target IP",
+            "Another device IP",
+            "Usually the sender own IP"
+          ],
+          [
+            "Ethernet destination",
+            "Broadcast for the request",
+            "Normally broadcast"
+          ],
+          [
+            "Target MAC field",
+            "Depends on the message",
+            "Commonly 00:00:00:00:00:00"
+          ],
+          [
+            "Cache effect",
+            "Resolves a mapping",
+            "Refreshes or updates an existing mapping"
+          ]
+        ]
+      },
+      {
+        "h": "The cache update it triggers",
+        "kind": "code",
+        "code": "Host A: 10.1.1.10 -> MAC-A     (old cache entry)\n\nGARP arrives:  10.1.1.10 is at MAC-B\n\nHost A: 10.1.1.10 -> MAC-B     (cache refreshed)\n\nThe switch also relearns MAC-B on the port the GARP arrived on."
+      },
+      {
+        "h": "Security and the IPv6 contrast",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The abuse",
+            "d": "GARP can be spoofed to poison neighbour caches and redirect traffic — the same man-in-the-middle risk as ordinary ARP poisoning."
+          },
+          {
+            "t": "The defence",
+            "d": "Dynamic ARP Inspection, backed by DHCP Snooping bindings, is the key Cisco protection."
+          },
+          {
+            "t": "IPv6 has no GARP",
+            "d": "IPv6 uses Neighbor Discovery and Duplicate Address Detection instead."
+          },
+          {
+            "t": "Do not confuse the two broadcast MACs",
+            "d": "The Ethernet destination is broadcast; the ARP **target MAC field** is separately zero."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Watching for GARP traffic",
+        "code": "show ip arp\nshow ip arp | include 10.1.1.10\n\n# ARP inspection state and the trusted binding database\nshow ip arp inspection\nshow ip dhcp snooping binding\n\n# On the wire\ndebug arp"
+      }
+    ],
+    "traps": [
+      "**GARP is unsolicited ARP** — nobody asked for it.",
+      "**The common GARP is an ARP request for the sender own address** — but GARP is not defined only as a request; implementations differ.",
+      "**Do not confuse the broadcast Ethernet destination with the ARP target MAC field** — the target MAC is commonly all zeros.",
+      "**GARP and ARP probe are related but not identical** — a probe usually uses sender IP 0.0.0.0.",
+      "**IPv6 has no GARP** — it uses ND and Duplicate Address Detection."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Gratuitous ARP"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Proactively announce or update an IPv4-to-MAC mapping"
+        ],
+        [
+          "Protocol",
+          "ARP"
+        ],
+        [
+          "Common opcode",
+          "Request"
+        ],
+        [
+          "Common GARP request",
+          "Sender IP equals target IP"
+        ],
+        [
+          "Ethernet destination",
+          "Broadcast"
+        ],
+        [
+          "ARP target MAC",
+          "Commonly 00:00:00:00:00:00"
+        ],
+        [
+          "Scope",
+          "The local Layer 2 segment"
+        ],
+        [
+          "Main use",
+          "MAC or IP change, and failover"
+        ],
+        [
+          "Gateway use",
+          "HSRP and VRRP failover"
+        ],
+        [
+          "Related mechanism",
+          "ARP probe"
+        ],
+        [
+          "Security risk",
+          "ARP spoofing and poisoning"
+        ],
+        [
+          "Main Cisco mitigation",
+          "Dynamic ARP Inspection"
+        ],
+        [
+          "DAI commonly uses",
+          "DHCP Snooping bindings"
+        ],
+        [
+          "IPv6 equivalent",
+          "None — IPv6 uses ND over ICMPv6"
+        ],
+        [
+          "IPv6 duplicate detection",
+          "DAD"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. ARP",
+        "d": "the underlying protocol"
+      },
+      {
+        "t": "12. Proxy ARP",
+        "d": "the other unusual ARP variant"
+      },
+      {
+        "t": "01. MAC Address",
+        "d": "the virtual MACs in failover"
+      }
+    ],
+    "glossary": [
+      "Gratuitous ARP",
+      "ARP",
+      "First Hop Redundancy Protocol",
+      "DHCP Snooping",
+      "MAC Address"
+    ]
+  },
+  {
+    "id": "t12",
+    "num": "12",
+    "group": "arp",
+    "title": "Proxy ARP",
+    "blurb": "A router answering ARP on behalf of someone else",
+    "overview": "**[[Proxy ARP]]** is a router behaviour where the router **answers an ARP request on behalf of another device** that is reachable through it. That lets a host reach an off-subnet destination **without a default gateway configured**.",
+    "keyIdea": "**Key idea:** Proxy ARP replies with the **router own MAC address**, not the remote host MAC. The host then sends the frame to the router, and the router performs ordinary Layer 3 routing toward the real destination.",
+    "sections": [
+      {
+        "h": "Normal routing without proxy ARP",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The host decision",
+            "d": "The destination is outside my subnet, so I send the frame to my default gateway."
+          },
+          {
+            "t": "The ARP",
+            "d": "The host ARPs for 10.1.1.1, the gateway address."
+          },
+          {
+            "t": "The frame",
+            "d": "IP destination 10.2.2.2, MAC destination the router MAC."
+          }
+        ]
+      },
+      {
+        "h": "What changes with proxy ARP",
+        "kind": "code",
+        "code": "Host A: 10.1.1.10/24\n        |\n        | ARP request: \"Who has 10.2.2.2?\"\n        v\n     Router\n        |\n        | ARP reply: \"10.2.2.2 is at <the router's own MAC>\"\n        v\nHost A believes 10.2.2.2 -> router MAC, and sends the frame there.\nThe router then routes the packet normally toward 10.2.2.2."
+      },
+      {
+        "h": "Proxy ARP versus normal ARP",
+        "kind": "table",
+        "cols": [
+          "Aspect",
+          "Normal ARP",
+          "Proxy ARP"
+        ],
+        "rows": [
+          [
+            "ARP target",
+            "A local destination or next hop",
+            "A remote but reachable destination"
+          ],
+          [
+            "Who answers",
+            "The device that owns the address",
+            "The router"
+          ],
+          [
+            "MAC returned",
+            "The target own MAC",
+            "The router own MAC"
+          ],
+          [
+            "Router involvement",
+            "Not necessarily",
+            "Yes — the router routes the packet afterwards"
+          ],
+          [
+            "Main purpose",
+            "Resolve IPv4 to MAC",
+            "Make a remote destination look locally reachable"
+          ],
+          [
+            "Typical modern use",
+            "Everyday operation",
+            "Specific and legacy scenarios"
+          ]
+        ]
+      },
+      {
+        "h": "Why proxy ARP exists",
+        "kind": "list",
+        "items": [
+          {
+            "t": "No default gateway",
+            "d": "A host that was never given a gateway can still reach remote networks."
+          },
+          {
+            "t": "Wrong subnet mask",
+            "d": "A host with a too-generic mask believes the remote network is local."
+          },
+          {
+            "t": "Legacy reachability",
+            "d": "Sites that need to reach across a routed boundary without reconfiguring the host."
+          }
+        ]
+      },
+      {
+        "h": "Cisco IOS behaviour",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The default",
+            "d": "Traditional Cisco IOS routed interfaces have proxy ARP **enabled by default**."
+          },
+          {
+            "t": "Turning it off",
+            "d": "no ip proxy-arp under the interface."
+          },
+          {
+            "t": "Why you might turn it off",
+            "d": "It creates unexpected Layer 2 adjacency, complicates troubleshooting, and increases exposure to ARP-based attacks."
+          },
+          {
+            "t": "Not a replacement for DAI",
+            "d": "Disabling proxy ARP does not protect you against ARP poisoning — Dynamic ARP Inspection does."
+          }
+        ]
+      },
+      {
+        "h": "Proxy ARP versus gratuitous ARP",
+        "kind": "table",
+        "cols": [
+          "Feature",
+          "Proxy ARP",
+          "Gratuitous ARP"
+        ],
+        "rows": [
+          [
+            "Typical sender",
+            "The router",
+            "A host or device"
+          ],
+          [
+            "IP being announced",
+            "Another device IP",
+            "Usually the sender own IP"
+          ],
+          [
+            "MAC returned",
+            "The router MAC",
+            "The sender MAC"
+          ],
+          [
+            "Trigger",
+            "The host ARPs for a remote reachable IP",
+            "A proactive announcement"
+          ],
+          [
+            "Purpose",
+            "Make a remote destination look local",
+            "Update or announce an IP-to-MAC mapping"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Checking and controlling proxy ARP",
+        "code": "show running-config interface GigabitEthernet0/1\n!\ninterface GigabitEthernet0/1\n no ip proxy-arp\n\nshow ip route 10.2.2.2\nshow ip arp\ndebug arp"
+      }
+    ],
+    "traps": [
+      "**Proxy ARP replies with the router MAC, not the remote host MAC.**",
+      "**The router then routes the packet normally** — proxy ARP does not replace Layer 3 routing.",
+      "**Proxy ARP is a router function, not a switch CAM-table function.**",
+      "**It is enabled by default on traditional Cisco IOS routed interfaces** — and can be a security concern.",
+      "**Proxy ARP is not GARP** — GARP announces your own mapping, proxy ARP answers for someone else."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Proxy ARP"
+      ],
+      "rows": [
+        [
+          "Function",
+          "The router answers ARP for a reachable remote IPv4 destination"
+        ],
+        [
+          "Who answers",
+          "The router or Layer 3 device"
+        ],
+        [
+          "MAC returned",
+          "The router own MAC"
+        ],
+        [
+          "Target IP",
+          "A remote or non-local IPv4 address"
+        ],
+        [
+          "Host behaviour",
+          "Sends the Ethernet frame to the router"
+        ],
+        [
+          "Router behaviour",
+          "Routes the packet toward the actual destination"
+        ],
+        [
+          "Typical default",
+          "Enabled on traditional routed interfaces"
+        ],
+        [
+          "Disable",
+          "no ip proxy-arp"
+        ],
+        [
+          "Main purpose",
+          "Legacy or specialised remote reachability"
+        ],
+        [
+          "Modern requirement",
+          "Usually unnecessary with correct host gateways"
+        ],
+        [
+          "Security",
+          "Disable where it is unnecessary"
+        ],
+        [
+          "Poisoning defence",
+          "DAI, not simply disabling proxy ARP"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. ARP",
+        "d": "the underlying protocol"
+      },
+      {
+        "t": "11. Gratuitous ARP",
+        "d": "the contrasting variant"
+      },
+      {
+        "t": "13. CEF Basics",
+        "d": "where the router resolves the next hop"
+      }
+    ],
+    "glossary": [
+      "Proxy ARP",
+      "ARP",
+      "Gratuitous ARP",
+      "MAC Address"
+    ]
+  },
+  {
+    "id": "t13",
+    "num": "13",
+    "group": "cef",
+    "title": "CEF Basics",
+    "blurb": "The forwarding architecture behind Cisco Express Forwarding",
+    "overview": "**[[CEF|Cisco Express Forwarding]]** is Cisco high-performance IP forwarding architecture. The **[[Control Plane]]** builds two pre-computed structures — the **[[FIB]]** and the adjacency table — and the **[[Data Plane]]** uses them to forward at line rate without touching the CPU.",
+    "keyIdea": "**Key idea:** The RIB is what the router knows; the FIB is what it forwards with. CEF derives the FIB from the RIB, and the adjacency table supplies the Layer 2 rewrite information for the next hop.",
+    "sections": [
+      {
+        "h": "Control plane versus data plane",
+        "kind": "code",
+        "code": "CONTROL PLANE                DATA PLANE\n  Routing protocols              FIB + Adjacency\n  Static routes                       |\n  Connected routes                    v\n         |                      Forward in hardware\n         v\n       RIB\n         |\n         v\n    FIB (derived)\n\nControl plane = decides.  Data plane = forwards."
+      },
+      {
+        "h": "The three data structures",
+        "kind": "table",
+        "cols": [
+          "Component",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**RIB**",
+            "The routing database — everything connected, static and routing-protocol sources know, after AD and metric selection"
+          ],
+          [
+            "**FIB**",
+            "The optimised forwarding copy derived from the RIB, ready for a longest-prefix lookup"
+          ],
+          [
+            "**Adjacency**",
+            "The Layer 2 rewrite information for the next hop — outgoing interface, next-hop MAC"
+          ],
+          [
+            "**CEF**",
+            "The architecture that uses the FIB and adjacency for fast forwarding"
+          ]
+        ]
+      },
+      {
+        "h": "How CEF forwards a packet",
+        "kind": "code",
+        "code": "1. FIB lookup\n   destination 10.10.10.50\n        |\n        v\n   longest prefix match -> 10.10.10.0/24 -> next hop 192.168.1.2\n\n2. Adjacency lookup\n   next hop 192.168.1.2 -> MAC AABB.CCDD.EEFF\n\n3. Rewrite and forward\n   destination MAC = AABB.CCDD.EEFF\n   source MAC      = the outgoing interface MAC\n   IP destination  = 10.10.10.50   (unchanged)"
+      },
+      {
+        "h": "Longest prefix match",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The candidates",
+            "d": "10.0.0.0/8, 10.10.0.0/16 and 10.10.10.0/24 all cover 10.10.10.50."
+          },
+          {
+            "t": "The winner",
+            "d": "The most specific one — 10.10.10.0/24 — always wins. This is the classic exam question about overlapping routes."
+          },
+          {
+            "t": "The same rule everywhere",
+            "d": "Routing tables, the FIB and the Cisco routing table all use longest prefix match."
+          }
+        ]
+      },
+      {
+        "h": "Load balancing",
+        "kind": "list",
+        "items": [
+          {
+            "t": "ECMP",
+            "d": "When several equal-cost paths exist, CEF balances across them."
+          },
+          {
+            "t": "Hashing inputs",
+            "d": "Typically the source and destination IP addresses, and sometimes the Layer 4 ports, depending on the platform and the configured hashing method."
+          },
+          {
+            "t": "Per-packet balancing",
+            "d": "Available on some platforms, but it can reorder packets within a flow — flow-based balancing is preferred."
+          }
+        ]
+      },
+      {
+        "h": "CEF on hardware platforms",
+        "kind": "list",
+        "items": [
+          {
+            "t": "ASICs",
+            "d": "Hardware forwarding engines and hardware forwarding tables do the work."
+          },
+          {
+            "t": "TCAM",
+            "d": "A hardware resource used by some platforms for fast matching — but CEF and TCAM are not the same thing."
+          },
+          {
+            "t": "What CEF does not remove",
+            "d": "CEF does not eliminate ARP or Neighbor Discovery — the router still needs the next-hop Layer 2 information."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Reading the control plane and the data plane",
+        "code": "show ip route\nshow ip route 10.10.10.50\n\nshow ip cef\nshow ip cef 10.10.10.50\nshow ip cef 10.10.10.50 detail\n\nshow adjacency\nshow ip interface GigabitEthernet0/0"
+      }
+    ],
+    "traps": [
+      "**RIB is not FIB** — the RIB holds routing knowledge, the FIB holds optimised forwarding information.",
+      "**CEF is a forwarding architecture, not just \"hardware acceleration\".**",
+      "**Adjacency information provides the Layer 2 rewrite** for the next hop.",
+      "**CEF is not the same as TCAM** — TCAM is the hardware resource some platforms use.",
+      "**Do not reach for clear ip cef as a first-line fix** — check the RIB, the FIB and the adjacency first."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "**RIB**",
+          "Routing knowledge and selected routes"
+        ],
+        [
+          "**FIB**",
+          "Optimised forwarding information"
+        ],
+        [
+          "**Adjacency**",
+          "Layer 2 rewrite information for the next hop"
+        ],
+        [
+          "**CEF**",
+          "The Cisco forwarding architecture using FIB and adjacency"
+        ],
+        [
+          "**TCAM**",
+          "A hardware resource used for fast matching"
+        ],
+        [
+          "**ASIC**",
+          "The hardware forwarding engine"
+        ],
+        [
+          "**LPM**",
+          "The most specific route wins"
+        ],
+        [
+          "**ECMP**",
+          "Multiple equal-cost forwarding paths"
+        ],
+        [
+          "**Load balancing**",
+          "Typically flow or per-destination hashing"
+        ],
+        [
+          "**ARP**",
+          "IPv4 next-hop MAC resolution"
+        ],
+        [
+          "**ND**",
+          "IPv6 neighbour resolution"
+        ],
+        [
+          "show ip route",
+          "View the RIB"
+        ],
+        [
+          "show ip cef",
+          "View the FIB"
+        ],
+        [
+          "show adjacency",
+          "View adjacency information"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Forwarding",
+        "d": "the Layer 2 counterpart"
+      },
+      {
+        "t": "10. ARP",
+        "d": "where the adjacency MAC comes from"
+      },
+      {
+        "t": "09. Routing Fundamentals",
+        "d": "the routing table behind the RIB"
+      }
+    ],
+    "glossary": [
+      "CEF",
+      "Control Plane",
+      "Data Plane",
+      "FIB",
+      "RIB",
+      "ARP",
+      "Forwarding"
+    ]
+  }
+];
         const GROUPS = [
           { key: 'addr', label: 'Addressing & Frames', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
           { key: 'switch', label: 'Switching Logic', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
@@ -2437,6 +4045,7 @@ show ip interface GigabitEthernet0/0`
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

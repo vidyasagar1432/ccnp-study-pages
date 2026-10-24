@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,874 +600,2251 @@
         const heroIntro = `VPNs answer two different needs. **[[GRE]]** builds a tunnel that carries routing protocols and multicast but encrypts nothing, **[[IPsec]]** supplies the encryption, and **[[IKEv2]]** negotiates the keys. On top of those primitives sit the designs: **[[DMVPN]]** for dynamic branches, **[[FlexVPN]]** as the IKEv2 framework, **[[Virtual Tunnel Interface|VTIs]]** for route-based IPsec, **[[GET VPN]]** for tunnel-free any-to-any over **[[MPLS]]**, and **[[SSL VPN]]** or **[[Remote Access VPN]]** for users.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'tunnel', title: 'GRE',
-            blurb: 'Protocol 47 tunnels, overhead, keepalives and MTU tuning',
-            overview: '**[[GRE]]** encapsulates arbitrary Layer 3 payloads inside an IP tunnel between routers. It runs as **IP protocol 47**, adds a **4-byte GRE header plus a 20-byte outer IP header**, and provides **no encryption and no reliability**. That is why GRE is almost always paired with **[[IPsec]]**.',
-            keyIdea: 'Protocol 47, no encryption, any L3 payload including multicast. Pair it with IPsec and tune MTU and MSS.',
-            sections: [
-              { kind: 'table', h: 'The tunnel concept', cols: ['Element', 'Detail'], rows: [
-                ['**Tunnel interface**', 'Virtual Layer 3 interface the router treats as real'],
-                ['**Outer IP**', 'Transport address on the physical underlay'],
-                ['**Inner IP**', 'Original packet being carried'],
-                ['**GRE header**', 'IP protocol 47, 4 bytes']
-              ]},
-              { kind: 'code', h: 'Basic GRE tunnel', code:
-`  interface Tunnel0
-   ip address 10.10.0.1 255.255.255.252
-   tunnel source GigabitEthernet0/0
-   tunnel destination 203.0.113.1
-   ip mtu 1400
-   ip tcp adjust-mss 1360` },
-              { kind: 'table', h: 'GRE versus IPsec', cols: ['Aspect', 'GRE', 'IPsec'], rows: [
-                ['Encryption', '**None**', '**Yes**'],
-                ['Payload', 'Any L3, including multicast', 'Typically unicast'],
-                ['Routing over it', '**Yes**, any IGP or BGP', 'Only via GRE or VTI'],
-                ['Role', 'Transport glue', 'Confidentiality']
-              ]},
-              { kind: 'para', h: 'MTU and fragmentation', p: 'Overhead is **24 bytes or more** before IPsec is added. Reduce the tunnel **%%ip mtu%%** and shrink the TCP maximum segment size with **%%ip tcp adjust-mss%%** so packets fit without fragmentation. PMTUD helps, but adjusting MSS is the reliable fix.' },
-              { kind: 'code', h: 'Keepalives and verification', code:
-`  interface Tunnel0
-   keepalive 10 3
-  !
-  show ip interface brief | include Tunnel
-  show interface Tunnel0
-  show ip route
-  ping 10.10.0.2` }
-            ],
-            commands: [
-              { label: 'Build the tunnel', code:
-`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1` },
-              { label: 'Tune MTU and MSS', code:
-`interface Tunnel0\n ip mtu 1400\n ip tcp adjust-mss 1360` },
-              { label: 'Verify', code:
-`show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow ip route` }
-            ],
-            traps: [
-              'GRE is **IP protocol 47**, not TCP or UDP.',
-              'GRE provides **no encryption** on its own; pair it with IPsec.',
-              'GRE carries **multicast and any L3 payload**, which is what makes DMVPN possible.',
-              'Overhead is **24 bytes or more** once IPsec is added.',
-              'Without **%%ip mtu%%** and **%%ip tcp adjust-mss%%**, large packets silently fail.',
-              '**%%tunnel source%%** and **%%tunnel destination%%** define the underlay endpoints, not the protected subnets.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Protocol', 'IP 47'],
-                ['Encryption', 'None'],
-                ['Payload', 'Any L3 and multicast'],
-                ['Header', '4 B plus 20 B outer IP'],
-                ['Overhead', 'About 24 B'],
-                ['MTU fix', 'ip mtu plus ip tcp adjust-mss'],
-                ['Keepalive', 'tunnel keepalive'],
-                ['Pairing', 'GRE over IPsec'],
-                ['Verify', 'show interface Tunnel0']
-              ]
-            },
-            related: [
-              { t: '02. IPsec', d: 'Encrypts the GRE tunnel' },
-              { t: '03. DMVPN', d: 'Multipoint GRE at scale' }
-            ],
-            glossary: ['GRE', 'IPsec', 'DMVPN', 'MTU', 'Multicast', 'VPN']
-          },
-          {
-            id: 't02', num: '02', group: 'tunnel', title: 'IPsec',
-            blurb: 'AH versus ESP, transport versus tunnel mode, and the IKE phases',
-            overview: '**[[IPsec]]** secures IP traffic at the packet level with **confidentiality, integrity and authentication**. Key management runs through **[[IKEv2]]** on **UDP 500**, with **NAT-T on UDP 4500**; the data plane uses **ESP (protocol 50)** or the legacy **AH (protocol 51)**.',
-            keyIdea: 'ESP 50 encrypts, AH 51 does not. Tunnel mode wraps the whole packet, transport mode protects the payload only.',
-            sections: [
-              { kind: 'table', h: 'AH versus ESP', cols: ['Protocol', 'Job', 'Notes'], rows: [
-                ['**AH** (51)', 'Integrity and authentication', '**No encryption**, no NAT traversal'],
-                ['**ESP** (50)', 'Confidentiality, integrity, authentication', 'The standard choice for real encryption']
-              ]},
-              { kind: 'table', h: 'Transport versus tunnel mode', cols: ['Mode', 'Protects', 'Use'], rows: [
-                ['**Transport**', 'Payload only, original header visible', 'Host to host, or GRE payload'],
-                ['**Tunnel**', 'Entire IP packet with a new outer header', 'Site-to-site VPN']
-              ]},
-              { kind: 'table', h: 'IKE phases and ports', cols: ['Item', 'Purpose'], rows: [
-                ['Phase 1', 'Authenticate peers and build the ISAKMP SA'],
-                ['Phase 2', 'Negotiate data-plane keys and build the IPsec SA'],
-                ['UDP 500', 'ISAKMP and IKE'],
-                ['UDP 4500', 'NAT-T, ESP wrapped inside UDP'],
-                ['Main mode', 'Six messages, secure'],
-                ['Aggressive mode', 'Three messages, faster but weaker']
-              ]},
-              { kind: 'code', h: 'Legacy crypto map configuration', code:
-`  crypto isakmp policy 10
-   encryption aes
-   authentication pre-share
-   group 14
-  !
-  crypto isakmp key Secret123 address 203.0.113.1
-  !
-  crypto ipsec transform-set TS esp-aes esp-sha-hmac
-  !
-  crypto map CM 10 ipsec-isakmp
-   set peer 203.0.113.1
-   set transform-set TS
-   match address VPN-TRAFFIC
-  !
-  interface GigabitEthernet0/0
-   crypto map CM` },
-              { kind: 'para', h: 'Transform sets', p: 'A transform set pairs **encryption** with **integrity**, for example **%%esp-aes%%** plus **%%esp-sha-hmac%%**. Both peers must agree on the algorithms, or phase 2 fails even when the IKE SA is up.' }
-            ],
-            commands: [
-              { label: 'ISAKMP policy and pre-shared key', code:
-`crypto isakmp policy 10\n encryption aes\n authentication pre-share\n group 14\ncrypto isakmp key Secret123 address 203.0.113.1` },
-              { label: 'Transform set and crypto map', code:
-`crypto ipsec transform-set TS esp-aes esp-sha-hmac\ncrypto map CM 10 ipsec-isakmp\n set peer 203.0.113.1\n set transform-set TS\n match address VPN-TRAFFIC` },
-              { label: 'Verify', code:
-`show crypto isakmp sa\nshow crypto ipsec sa\nshow crypto session` }
-            ],
-            traps: [
-              '**ESP (50) encrypts; AH (51) does not.**',
-              'Use **tunnel mode** for site-to-site and **transport mode** for host-to-host.',
-              'IKE uses **UDP 500**; NAT-T uses **UDP 4500**.',
-              'A transform set pairs **encryption and integrity** algorithms.',
-              'Both peers must match proposals, keys and transform sets.',
-              '**[[IKEv2]]** is the modern standard; IKEv1 is legacy.'
-            ],
-            table: {
-              cols: ['Item', 'IPsec'],
-              rows: [
-                ['Encrypts', 'ESP, protocol 50'],
-                ['Auth only', 'AH, protocol 51'],
-                ['Tunnel mode', 'Wraps the whole packet'],
-                ['Transport mode', 'Payload only'],
-                ['IKE', 'UDP 500'],
-                ['NAT-T', 'UDP 4500'],
-                ['Phase 1', 'ISAKMP SA'],
-                ['Phase 2', 'IPsec SA'],
-                ['Transform', 'esp-aes plus esp-sha-hmac']
-              ]
-            },
-            related: [
-              { t: '01. GRE', d: 'Payload IPsec often protects' },
-              { t: '07. IPsec IKEv2', d: 'Modern key exchange' },
-              { t: '06. Site-to-Site VPN', d: 'Typical deployment' }
-            ],
-            glossary: ['IPsec', 'IKEv2', 'GRE', 'Site-to-Site VPN', 'NAT', 'VPN']
-          },
-          {
-            id: 't03', num: '03', group: 'tunnel', title: 'IPsec IKEv2',
-            blurb: 'IKE_SA_INIT and IKE_AUTH, native NAT-T and EAP, and the profile model',
-            overview: '**[[IKEv2]]** is the modern IPsec key-exchange protocol from **RFC 7296**. It folds IKEv1 phase 1 and phase 2 into a single IKE SA built from **IKE_SA_INIT** and **IKE_AUTH**, adds **native NAT-T** and **EAP**, and underpins **[[FlexVPN]]**.',
-            keyIdea: 'IKE_SA_INIT plus IKE_AUTH in four messages, with native NAT-T and EAP. Configured with proposal, policy, keyring and profile.',
-            sections: [
-              { kind: 'table', h: 'IKEv1 versus IKEv2', cols: ['Aspect', 'IKEv1', 'IKEv2'], rows: [
-                ['Exchanges', 'Phase 1 plus phase 2', 'One IKE SA, four messages'],
-                ['Phase 1 modes', 'Main or aggressive', 'None, fixed INIT and AUTH'],
-                ['NAT-T', 'Add-on', '**Built in**'],
-                ['EAP', 'Not native', '**Native**'],
-                ['Rekey', 'Separate IPsec SA phase', 'CREATE_CHILD_SA'],
-                ['Status', 'Legacy', '**Preferred**']
-              ]},
-              { kind: 'code', h: 'The exchange flow', code:
-`  1. IKE_SA_INIT  ->  DH, nonces, algorithms  ->  IKE SA
-  2. IKE_AUTH    ->  authenticate peers      ->  first child SA
-  3. CREATE_CHILD_SA  ->  extra SAs and rekeying
-  4. INFORMATIONAL    ->  delete, error, liveness` },
-              { kind: 'table', h: 'Protocol details', cols: ['Item', 'Detail'], rows: [
-                ['Standard', 'RFC 7296'],
-                ['Ports', 'UDP 500, plus UDP 4500 for NAT-T'],
-                ['IKE SA lifetime', '86400 seconds on Cisco'],
-                ['Child SA lifetime', '3600 seconds on Cisco'],
-                ['Liveness', 'Dead Peer Detection'],
-                ['NAT discovery', 'NAT detection source and destination payloads']
-              ]},
-              { kind: 'table', h: 'IOS XE building blocks', cols: ['Block', 'Role'], rows: [
-                ['**%%crypto ikev2 proposal%%**', 'Encryption, integrity and DH group'],
-                ['**%%crypto ikev2 policy%%**', 'Proposal set and lifetime'],
-                ['**%%crypto ikev2 keyring%%**', 'Pre-shared keys per peer'],
-                ['**%%crypto ikev2 profile%%**', 'Match identity, authentication and keyring'],
-                ['**%%crypto ipsec profile%%**', 'Transform set plus IKEv2 profile']
-              ]},
-              { kind: 'code', h: 'IKEv2 site-to-site configuration', code:
-`  crypto ikev2 proposal PROP
-   encryption aes-gcm-256
-   integrity sha256
-   group 14
-  !
-  crypto ikev2 policy POL
-   proposal PROP
-  !
-  crypto ikev2 keyring KR
-   peer SPOKE
-    address 203.0.113.1
-    pre-shared-key local Secret123
-  !
-  crypto ikev2 profile IKEV2-PROF
-   match identity remote address 203.0.113.1
-   authentication remote pre-share
-   authentication local pre-share
-   keyring local KR` }
-            ],
-            commands: [
-              { label: 'Proposal, policy and keyring', code:
-`crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP\ncrypto ikev2 keyring KR\n peer SPOKE\n  address 203.0.113.1\n  pre-shared-key local Secret123` },
-              { label: 'IKEv2 profile and IPsec profile', code:
-`crypto ikev2 profile IKEV2-PROF\n match identity remote address 203.0.113.1\n authentication remote pre-share\n authentication local pre-share\n keyring local KR\ncrypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF` },
-              { label: 'Verify', code:
-`show crypto ikev2 sa\nshow crypto ikev2 profile\nshow crypto ipsec sa` }
-            ],
-            traps: [
-              'IKEv2 merges the phases into **IKE_SA_INIT plus IKE_AUTH**, not main and aggressive mode.',
-              '**IKEv2 is RFC 7296** and the modern standard; IKEv1 is legacy.',
-              'IKEv2 supports **EAP and NAT-T natively**; IKEv1 needs add-ons.',
-              'Ports remain **UDP 500 and 4500** for both versions.',
-              'On IOS XE, IKEv2 uses **profiles**, not **%%crypto map%%**.',
-              'A mismatched **match identity** fails IKE_AUTH even when the key is correct.'
-            ],
-            table: {
-              cols: ['Item', 'IKEv2'],
-              rows: [
-                ['Standard', 'RFC 7296'],
-                ['Exchange', 'IKE_SA_INIT plus IKE_AUTH'],
-                ['Phases', 'One IKE SA'],
-                ['Main or aggressive', 'Not used'],
-                ['NAT-T', 'Built in'],
-                ['EAP', 'Native'],
-                ['Ports', 'UDP 500 and 4500'],
-                ['IOS XE config', 'Proposal, policy, keyring, profile'],
-                ['Status', 'Preferred']
-              ]
-            },
-            related: [
-              { t: '02. IPsec', d: 'The data plane it protects' },
-              { t: '04. FlexVPN', d: 'Built on IKEv2 profiles' }
-            ],
-            glossary: ['IKEv2', 'IPsec', 'FlexVPN', 'Site-to-Site VPN', 'Remote Access VPN', 'NAT']
-          },
-          {
-            id: 't04', num: '04', group: 'arch', title: 'DMVPN',
-            blurb: 'mGRE plus NHRP plus IPsec, and the spoke-to-spoke shortcut',
-            overview: '**[[DMVPN]]** builds dynamic, full-mesh IPsec tunnels from a hub-and-spoke design using three building blocks: **mGRE** (multipoint GRE), **NHRP** (spoke discovery) and **[[IPsec]]**. Spokes talk directly to each other after NHRP maps them, so data is not hair-pinned through the hub.',
-            keyIdea: 'mGRE plus NHRP plus IPsec. Control stays at the hub, data goes spoke to spoke.',
-            sections: [
-              { kind: 'table', h: 'The three building blocks', cols: ['Protocol', 'Role'], rows: [
-                ['**mGRE**', 'One tunnel interface peering with many destinations'],
-                ['**NHRP**', 'Resolves public addresses of spokes'],
-                ['**IPsec**', 'Encrypts the mGRE tunnel traffic']
-              ]},
-              { kind: 'code', h: 'Spoke-to-spoke shortcut', code:
-`  Spoke A --NHRP register--> Hub (NHS)
-  Spoke B --NHRP register--> Hub (NHS)
-  A wants B: A -> NHRP query -> Hub -> "B is at 198.51.100.2"
-  A --direct IPsec GRE tunnel--> B
-  Control via the hub, data directly between spokes` },
-              { kind: 'table', h: 'Roles and phases', cols: ['Item', 'Description'], rows: [
-                ['**Hub**', 'NHRP next-hop server and permanent mGRE endpoint'],
-                ['**Spoke**', 'Registers with the hub and learns peers'],
-                ['**Phase 1**', 'Hub-and-spoke only, no shortcuts'],
-                ['**Phase 2**', 'Spoke-to-spoke shortcuts, the usual default'],
-                ['**Phase 3**', 'NHRP redirect for best-path routing']
-              ]},
-              { kind: 'code', h: 'Spoke configuration', code:
-`  interface Tunnel0
-   ip address 10.255.0.2 255.255.255.0
-   ip nhrp map 10.255.0.1 203.0.113.1
-   ip nhrp network-id 1
-   ip nhrp nhs 10.255.0.1
-   tunnel source GigabitEthernet0/0
-   tunnel mode gre multipoint
-   tunnel protection ipsec profile DMVPN-PROF` },
-              { kind: 'table', h: 'Why DMVPN scales', cols: ['Benefit', 'Detail'], rows: [
-                ['Scale', 'One hub tunnel interface serves every spoke'],
-                ['Direct path', 'No hub bottleneck for spoke-to-spoke data'],
-                ['Zero touch', 'New spokes register automatically'],
-                ['Resilient', 'Tunnels re-establish dynamically']
-              ]}
-            ],
-            commands: [
-              { label: 'Register the spoke', code:
-`interface Tunnel0\n ip nhrp map 10.255.0.1 203.0.113.1\n ip nhrp network-id 1\n ip nhrp nhs 10.255.0.1` },
-              { label: 'Multipoint GRE with IPsec', code:
-`interface Tunnel0\n tunnel source GigabitEthernet0/0\n tunnel mode gre multipoint\n tunnel protection ipsec profile DMVPN-PROF` },
-              { label: 'Verify', code:
-`show dmvpn\nshow ip nhrp\nshow ip nhrp summary\nshow crypto session` }
-            ],
-            traps: [
-              'DMVPN is **mGRE plus NHRP plus IPsec**, all three.',
-              'NHRP resolves **spoke public addresses** through the hub acting as NHS.',
-              'After the shortcut, **data goes spoke to spoke**; only control uses the hub.',
-              'One mGRE tunnel interface serves **many destinations**.',
-              'Phase 1 has **no spoke-to-spoke shortcuts**; phase 2 does.',
-              '**%%tunnel protection ipsec profile%%** binds IPsec to the tunnel.'
-            ],
-            table: {
-              cols: ['Item', 'DMVPN'],
-              rows: [
-                ['Building blocks', 'mGRE, NHRP, IPsec'],
-                ['Hub role', 'NHRP next-hop server'],
-                ['Spoke discovery', 'NHRP'],
-                ['Data path', 'Direct spoke to spoke'],
-                ['Phase 2', 'Shortcuts enabled'],
-                ['Tunnel mode', 'gre multipoint'],
-                ['Scale', 'One hub tunnel'],
-                ['Verify', 'show dmvpn']
-              ]
-            },
-            related: [
-              { t: '01. GRE', d: 'The multipoint encapsulation' },
-              { t: '02. IPsec', d: 'Encrypts each tunnel' },
-              { t: '11. VPN Technology Comparison', d: 'When to choose DMVPN' }
-            ],
-            glossary: ['DMVPN', 'GRE', 'IPsec', 'VPN', 'Multicast']
-          },
-          {
-            id: 't05', num: '05', group: 'arch', title: 'FlexVPN',
-            blurb: 'One IKEv2 profile framework for every VPN topology',
-            overview: '**[[FlexVPN]]** is Cisco’s **[[IKEv2]]-based** VPN framework: one unified design that does site-to-site, remote access, hub-and-spoke and spoke-to-spoke using the same IKEv2 profile building blocks. It replaces legacy **%%crypto map%%** and ISAKMP configuration with profiles.',
-            keyIdea: 'Proposal, policy, keyring, IKEv2 profile and IPsec profile. One framework for every topology.',
-            sections: [
-              { kind: 'table', h: 'The IKEv2 profile model', cols: ['Block', 'Role'], rows: [
-                ['**%%crypto ikev2 proposal%%**', 'Encryption, integrity and DH group'],
-                ['**%%crypto ikev2 policy%%**', 'Proposal set and lifetime'],
-                ['**%%crypto ikev2 keyring%%**', 'Pre-shared keys per peer'],
-                ['**%%crypto ikev2 profile%%**', 'Match identity, authentication and keyring'],
-                ['**%%crypto ipsec profile%%**', 'Transform set plus IKEv2 profile']
-              ]},
-              { kind: 'table', h: 'FlexVPN modes', cols: ['Mode', 'Use'], rows: [
-                ['**Site-to-site**', 'Static tunnel between two sites'],
-                ['**Remote access**', 'IKEv2 clients to a headend'],
-                ['**Hub-and-spoke**', 'DMVPN-style topology over IKEv2'],
-                ['**Spoke-to-spoke**', 'Dynamic shortcuts between spokes']
-              ]},
-              { kind: 'code', h: 'Site-to-site profile configuration', code:
-`  crypto ikev2 proposal PROP
-   encryption aes-gcm-256
-   integrity sha256
-   group 14
-  !
-  crypto ikev2 policy POL
-   proposal PROP
-  !
-  crypto ikev2 keyring KR
-   peer SPOKE
-    address 203.0.113.10
-    pre-shared-key local Secret123
-  !
-  crypto ikev2 profile IKEV2-PROF
-   match identity remote address 203.0.113.10
-   authentication remote pre-share
-   authentication local pre-share
-   keyring local KR
-  !
-  crypto ipsec profile IPSEC-PROF
-   set transform-set TS
-   set ikev2-profile IKEV2-PROF
-  !
-  interface Tunnel0
-   tunnel protection ipsec profile IPSEC-PROF` },
-              { kind: 'table', h: 'FlexVPN versus DMVPN', cols: ['Aspect', 'DMVPN', 'FlexVPN'], rows: [
-                ['IKE', 'IKEv1 or IKEv2', '**IKEv2 native**'],
-                ['Key technology', 'NHRP plus mGRE', 'IKEv2 profiles'],
-                ['Modes', 'Hub-and-spoke', 'Site-to-site, RA, hub, spoke'],
-                ['Config', 'NHRP plus multipoint tunnel', 'Profile driven']
-              ]},
-              { kind: 'para', h: 'Remote access', p: 'An IKEv2 client such as AnyConnect can terminate on the same IKEv2 profile that serves site-to-site peers. Certificates or pre-shared keys authenticate the client, and dynamic **[[Virtual Tunnel Interface|VTIs]]** scale the number of client tunnels.' }
-            ],
-            commands: [
-              { label: 'Build the profile chain', code:
-`crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP` },
-              { label: 'Attach IPsec to a tunnel', code:
-`crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF` },
-              { label: 'Verify', code:
-`show crypto ikev2 profile\nshow crypto ikev2 sa\nshow crypto ipsec sa\nshow crypto session` }
-            ],
-            traps: [
-              'FlexVPN is **IKEv2 profile based**, not crypto map or ISAKMP based.',
-              'One framework covers **site-to-site, remote access, hub-and-spoke and spoke-to-spoke**.',
-              'AES-GCM with SHA-256 is a common modern proposal.',
-              'IPsec is attached with **%%tunnel protection ipsec profile%%**.',
-              'FlexVPN is profile-first; DMVPN is NHRP and mGRE first.',
-              'FlexVPN can also run hub-and-spoke using NHRP.'
-            ],
-            table: {
-              cols: ['Item', 'FlexVPN'],
-              rows: [
-                ['Base', 'IKEv2'],
-                ['Config', 'Profiles'],
-                ['Modes', 'Site-to-site, RA, hub, spoke'],
-                ['Keyring', 'Pre-shared keys'],
-                ['Transform', 'IPsec profile'],
-                ['Tunnel hook', 'tunnel protection ipsec profile'],
-                ['Authentication', 'Certificates or pre-shared keys'],
-                ['Alternative', 'DMVPN with NHRP']
-              ]
-            },
-            related: [
-              { t: '07. IPsec IKEv2', d: 'The key exchange underneath' },
-              { t: '03. DMVPN', d: 'NHRP-based alternative' },
-              { t: '08. Virtual Tunnel Interface', d: 'Interface that carries the profile' }
-            ],
-            glossary: ['FlexVPN', 'IKEv2', 'DMVPN', 'IPsec', 'Site-to-Site VPN', 'Remote Access VPN', 'Virtual Tunnel Interface']
-          },
-          {
-            id: 't06', num: '06', group: 'arch', title: 'Virtual Tunnel Interface',
-            blurb: 'Route-based IPsec with no crypto map and no interesting-traffic ACL',
-            overview: 'A **[[Virtual Tunnel Interface|Virtual Tunnel Interface (VTI)]]** is a route-based **[[IPsec]]** tunnel interface. There is no interesting-traffic ACL and no crypto map: the tunnel gets an IP address, the routing table decides what enters it, and IPsec is bound with **%%tunnel protection ipsec profile%%**.',
-            keyIdea: 'tunnel mode ipsec ipv4 plus tunnel protection ipsec profile. Routing triggers encryption, not an ACL.',
-            sections: [
-              { kind: 'table', h: 'Policy-based versus route-based', cols: ['Aspect', 'Crypto map', 'VTI'], rows: [
-                ['Encryption trigger', '**Interesting-traffic ACL**', '**Route toward the tunnel**'],
-                ['Interface', 'Crypto map on a physical interface', 'Dedicated virtual tunnel'],
-                ['Routing over it', 'Difficult', '**Natural**, any IGP or BGP'],
-                ['Multicast', 'Not directly', '**Yes**'],
-                ['Complexity', 'Higher', 'Lower']
-              ]},
-              { kind: 'code', h: 'VTI configuration', code:
-`  crypto ipsec profile IPSEC-PROF
-   set transform-set TS
-   set ikev2-profile IKEV2-PROF
-  !
-  interface Tunnel0
-   ip address 10.10.0.1 255.255.255.252
-   tunnel source GigabitEthernet0/0
-   tunnel destination 203.0.113.1
-   tunnel mode ipsec ipv4
-   tunnel protection ipsec profile IPSEC-PROF` },
-              { kind: 'table', h: 'VTI versus GRE over IPsec', cols: ['Aspect', 'GRE over IPsec', 'VTI'], rows: [
-                ['Overhead', 'GRE 4 B plus IPsec', 'IPsec only'],
-                ['Multicast', 'Yes', 'Yes'],
-                ['Routing', 'Over the GRE tunnel', 'Over the VTI directly'],
-                ['Encapsulation', 'IP, GRE, IPsec', 'IP, IPsec'],
-                ['Config', 'Tunnel plus GRE plus profile', 'Tunnel plus profile']
-              ]},
-              { kind: 'para', h: 'Why it is simpler', p: 'The VTI decouples **what to encrypt** from **how to encrypt**. The routing table, including **[[OSPF]]** or **[[BGP]]** routes and **[[Multicast]]** state, selects the traffic, while the IPsec profile defines the algorithms and keys.' }
-            ],
-            commands: [
-              { label: 'Make the tunnel an IPsec VTI', code:
-`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel mode ipsec ipv4` },
-              { label: 'Bind the IPsec profile', code:
-`crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF` },
-              { label: 'Verify', code:
-`show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow crypto ipsec sa\nshow crypto session` }
-            ],
-            traps: [
-              'VTI is **route-based**; a crypto map is **policy-based**.',
-              '**%%tunnel mode ipsec ipv4%%** marks the tunnel as an IPsec VTI.',
-              '**%%tunnel protection ipsec profile%%** binds IPsec, not a crypto map.',
-              'No interesting-traffic ACL is needed; **routing triggers encryption**.',
-              'IPsec VTIs support **multicast and dynamic routing**.',
-              'A VTI drops the GRE layer, so overhead is lower than GRE over IPsec.'
-            ],
-            table: {
-              cols: ['Item', 'VTI'],
-              rows: [
-                ['Type', 'Route-based IPsec'],
-                ['Trigger', 'Routing, not an ACL'],
-                ['Config', 'Tunnel plus IPsec profile'],
-                ['Mode', 'tunnel mode ipsec ipv4'],
-                ['Crypto map', 'Not used'],
-                ['Multicast', 'Yes'],
-                ['Routing', 'OSPF, EIGRP, BGP'],
-                ['Modern', 'Yes']
-              ]
-            },
-            related: [
-              { t: '02. IPsec', d: 'Encryption layer' },
-              { t: '01. GRE', d: 'Alternative tunnel encapsulation' },
-              { t: '06. Site-to-Site VPN', d: 'Deployment context' }
-            ],
-            glossary: ['Virtual Tunnel Interface', 'IPsec', 'GRE', 'Site-to-Site VPN', 'OSPF', 'Multicast']
-          },
-          {
-            id: 't07', num: '07', group: 'arch', title: 'GET VPN',
-            blurb: 'GDOI group keys and any-to-any encryption with no tunnels',
-            overview: '**[[GET VPN]] (Group Encrypted Transport VPN)** provides **any-to-any encryption over an [[MPLS]] or IP backbone without tunnel interfaces**. All routers in a group share one group key, distributed by **GDOI (Group Domain of Interpretation)** on **UDP 848**, so there is no hub bottleneck and no overlay routing.',
-            keyIdea: 'No tunnels. GDOI on UDP 848 distributes a group key, and members encrypt directly to each other.',
-            sections: [
-              { kind: 'table', h: 'The GDOI model', cols: ['Role', 'Description'], rows: [
-                ['**Key Server**', 'Manages and distributes group keys'],
-                ['**Member**', 'Group router that encrypts traffic'],
-                ['**Group**', 'Shared key domain'],
-                ['**GDOI**', 'Group key management on UDP 848'],
-                ['**KEK**', 'Key Encryption Key, protects key distribution'],
-                ['**TEK**', 'Traffic Encryption Key, encrypts data']
-              ]},
-              { kind: 'code', h: 'How registration works', code:
-`  Member --register--> Key Server (GDOI, UDP 848)
-  Key Server sends KEK and TEK
-  Member A --encrypt with TEK--> Member B
-  Direct any-to-any, no tunnel between members` },
-              { kind: 'table', h: 'Ports and transport', cols: ['Item', 'Detail'], rows: [
-                ['GDOI port', '**UDP 848**'],
-                ['Data protection', 'ESP group SA'],
-                ['IPsec mode', 'Usually transport'],
-                ['Rekey', 'Key Server pushes a new TEK'],
-                ['Registration', 'IKE between member and Key Server']
-              ]},
-              { kind: 'table', h: 'GET VPN versus tunnel-based designs', cols: ['Aspect', 'GET VPN', 'DMVPN', 'VTI'], rows: [
-                ['Tunnel interface', '**None**', 'mGRE', 'VTI'],
-                ['Data path', '**Direct any-to-any**', 'Spoke to spoke via NHRP', 'Point to point'],
-                ['Key management', 'GDOI group key', 'Per-tunnel IKE', 'Per-tunnel IKE'],
-                ['Overlay routing', '**None**, native', 'NHRP', 'IGP over tunnel'],
-                ['Best for', '**MPLS backbone**', 'Internet branches', 'Fixed sites']
-              ]},
-              { kind: 'table', h: 'Operational features', cols: ['Feature', 'Detail'], rows: [
-                ['Any-to-any', 'Full mesh with no hub in the data path'],
-                ['Backbone', 'MPLS or any IP network'],
-                ['Multicast', 'Supported'],
-                ['COOP', 'Cooperative Key Servers for redundancy'],
-                ['Anti-replay', 'Sequence numbers, which can drop reordered WAN traffic']
-              ]},
-              { kind: 'code', h: 'Key Server configuration snapshot', code:
-`  crypto gdoi group ENCRYPT
-   identity number 98765
-   server local
-   rekey
-    address ipv4 10.0.0.1
-    authorization address ipv4 10.0.0.0 255.255.255.0
-  !
-  crypto gdoi server local` }
-            ],
-            commands: [
-              { label: 'Define the GDOI group', code:
-`crypto gdoi group ENCRYPT\n identity number 98765\n server local\n rekey\n  address ipv4 10.0.0.1\n  authorization address ipv4 10.0.0.0 255.255.255.0` },
-              { label: 'Verify membership and keys', code:
-`show crypto gdoi group\nshow crypto gdoi ks\nshow crypto gdoi member` },
-              { label: 'Verify data encryption', code:
-`show crypto ipsec sa\nshow crypto session` }
-            ],
-            traps: [
-              'GET VPN has **no tunnel interfaces**; members encrypt directly.',
-              'GDOI runs on **UDP 848**, not 500 or 4500.',
-              '**TEK encrypts data; KEK protects key distribution.**',
-              'GET VPN suits a private **MPLS** backbone with native any-to-any.',
-              '**COOP** provides redundant Key Servers.',
-              'Anti-replay can drop reordered packets on a WAN.'
-            ],
-            table: {
-              cols: ['Item', 'GET VPN'],
-              rows: [
-                ['Basis', 'GDOI group key'],
-                ['Tunnels', 'None'],
-                ['Data path', 'Direct any-to-any'],
-                ['Protocol', 'GDOI, UDP 848'],
-                ['Key Server', 'Distributes keys'],
-                ['Data key', 'TEK'],
-                ['Key encryption key', 'KEK'],
-                ['Best fit', 'MPLS or private backbone']
-              ]
-            },
-            related: [
-              { t: '02. IPsec', d: 'Group encryption mechanics' },
-              { t: '11. VPN Technology Comparison', d: 'When GET VPN wins' }
-            ],
-            glossary: ['GET VPN', 'IPsec', 'MPLS', 'DMVPN', 'VPN']
-          },
-          {
-            id: 't08', num: '08', group: 'access', title: 'Site-to-Site VPN',
-            blurb: 'GRE over IPsec, interesting traffic and routing across the tunnel',
-            overview: 'A **[[Site-to-Site VPN|site-to-site (L2L) VPN]]** secures traffic between two fixed sites over a shared underlay. The classic recipes are **[[GRE]] over [[IPsec]]** for routing flexibility, or pure IPsec tunnel mode with an interesting-traffic ACL. It is the simplest VPN for fixed branch locations.',
-            keyIdea: 'GRE over IPsec for routing and multicast; pure IPsec for simple traffic. Mirror-image ACLs on both ends.',
-            sections: [
-              { kind: 'table', h: 'The recipe choices', cols: ['Design', 'Uses', 'Trade-off'], rows: [
-                ['**Pure IPsec**', 'Interesting-traffic ACL', 'No multicast or routing'],
-                ['**GRE over IPsec**', 'GRE tunnel plus IPsec', 'Routing and multicast plus crypto'],
-                ['**FlexVPN**', 'IKEv2 profiles', 'Modern and simpler']
-              ]},
-              { kind: 'code', h: 'Interesting traffic for pure IPsec', code:
-`  access-list VPN-TRAFFIC permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255
-  !
-  crypto map CM 10 ipsec-isakmp
-   match address VPN-TRAFFIC` },
-              { kind: 'table', h: 'GRE over IPsec recipe', cols: ['Step', 'Detail'], rows: [
-                ['1', 'Build the GRE tunnel interface'],
-                ['2', 'Create the IPsec transform and profile'],
-                ['3', 'Attach with tunnel protection ipsec profile'],
-                ['4', 'Run a routing protocol over the tunnel']
-              ]},
-              { kind: 'code', h: 'Encrypted GRE tunnel', code:
-`  interface Tunnel0
-   ip address 10.10.0.1 255.255.255.252
-   tunnel source GigabitEthernet0/0
-   tunnel destination 203.0.113.1
-   tunnel protection ipsec profile IPSEC-PROF
-  !
-  router ospf 1
-   network 10.10.0.0 0.0.0.3 area 0` },
-              { kind: 'table', h: 'Routing over the VPN', cols: ['Protocol', 'Behavior'], rows: [
-                ['**Static**', 'Simple, no failover'],
-                ['**[[OSPF]] or EIGRP**', 'Converges over the tunnel'],
-                ['**[[BGP]]**', 'Scales to many sites']
-              ]},
-              { kind: 'para', h: 'The failure model', p: 'With pure IPsec, **no interesting traffic means no IPsec SA**, even when the IKE SA is up. With GRE over IPsec the tunnel is a normal interface, so tunnel state and routing give you a clearer signal.' }
-            ],
-            commands: [
-              { label: 'Define interesting traffic', code:
-`ip access-list extended VPN-TRAFFIC\n permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255\ncrypto map CM 10 ipsec-isakmp\n match address VPN-TRAFFIC` },
-              { label: 'Encrypted GRE tunnel', code:
-`interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel protection ipsec profile IPSEC-PROF` },
-              { label: 'Verify', code:
-`show crypto ipsec sa\nshow crypto ikev2 sa\nshow crypto session\nshow interface Tunnel0` }
-            ],
-            traps: [
-              'The **interesting-traffic ACL** defines what the tunnel protects.',
-              'GRE over IPsec gives **routing, multicast and encryption**.',
-              '**%%tunnel protection ipsec profile%%** is the modern hook.',
-              'ACLs must be **mirror images** on both ends.',
-              'With pure IPsec, no interesting traffic means **no IPsec SA**.',
-              'A GRE tunnel needs its own IP addressing and a route over it.'
-            ],
-            table: {
-              cols: ['Item', 'Site-to-Site'],
-              rows: [
-                ['Design', 'L2L VPN'],
-                ['Best recipe', 'GRE over IPsec'],
-                ['Interesting ACL', 'Local and remote subnets'],
-                ['Routing', 'OSPF or BGP over the tunnel'],
-                ['IPsec hook', 'Profile via tunnel protection'],
-                ['Classic failure', 'No interesting traffic'],
-                ['Scale', 'BGP for many sites'],
-                ['Verify', 'show crypto session']
-              ]
-            },
-            related: [
-              { t: '01. GRE', d: 'Routing-capable tunnel' },
-              { t: '02. IPsec', d: 'Encryption layer' },
-              { t: '03. DMVPN', d: 'Dynamic alternative' }
-            ],
-            glossary: ['Site-to-Site VPN', 'IPsec', 'GRE', 'OSPF', 'BGP', 'VPN']
-          },
-          {
-            id: 't09', num: '09', group: 'access', title: 'SSL VPN',
-            blurb: 'TLS 443, clientless portals and AnyConnect full tunnels',
-            overview: '**[[SSL VPN]]** gives remote users secure access through a browser or the AnyConnect client using **TLS on TCP 443**. Clientless mode presents a portal to internal applications; AnyConnect builds a full tunnel. No IPsec client is needed, and 443 passes almost every firewall.',
-            keyIdea: 'TLS 443, plus DTLS 443 for latency. Clientless is a portal, AnyConnect is a full tunnel.',
-            sections: [
-              { kind: 'table', h: 'Two access modes', cols: ['Mode', 'Description'], rows: [
-                ['**Clientless**', 'Browser portal to internal applications, zero install'],
-                ['**AnyConnect**', 'Client installs a full network tunnel']
-              ]},
-              { kind: 'table', h: 'Transport', cols: ['Item', 'Detail'], rows: [
-                ['Primary port', '**TCP 443**, TLS'],
-                ['Fast path', '**UDP 443**, DTLS'],
-                ['NAT friendly', 'Yes, 443 passes almost anywhere'],
-                ['Client', 'Browser or AnyConnect'],
-                ['Headend', 'ASA, ASAv, ISR or FTD']
-              ]},
-              { kind: 'table', h: 'SSL VPN versus IPsec remote access', cols: ['Aspect', 'SSL VPN', 'IPsec RA'], rows: [
-                ['Client', 'Browser or AnyConnect', 'IPsec client'],
-                ['Port', '**443**, rarely blocked', '500 and 4500, often blocked'],
-                ['Access', 'Fine grained, portal friendly', 'Full tunnel'],
-                ['Corporate control', 'Moderate', 'Strong'],
-                ['Setup friction', 'Low', 'Higher']
-              ]},
-              { kind: 'table', h: 'Authentication and posture', cols: ['Layer', 'Mechanism'], rows: [
-                ['User authentication', 'LDAP, RADIUS or AAA'],
-                ['MFA', 'Token, certificate or push'],
-                ['Posture', 'AnyConnect endpoint assessment'],
-                ['Group policy', 'Split tunnel or full tunnel, ACLs']
-              ]},
-              { kind: 'code', h: 'Verification on the headend', code:
-`  show vpn-sessiondb anyconnect
-  show vpn-sessiondb svc
-  show webvpn
-  show crypto ikev2 sa` }
-            ],
-            commands: [
-              { label: 'Check active client sessions', code:
-`show vpn-sessiondb anyconnect\nshow vpn-sessiondb svc` },
-              { label: 'Check the web portal state', code:
-`show webvpn` },
-              { label: 'Check the IKEv2 fallback path', code:
-`show crypto ikev2 sa\nshow crypto session` }
-            ],
-            traps: [
-              'SSL VPN uses **TLS on TCP 443** and is firewall friendly.',
-              '**Clientless** is a portal; **AnyConnect** is a full tunnel.',
-              '**DTLS on UDP 443** improves latency for real-time traffic.',
-              'MFA, certificates and posture are the security enhancements.',
-              'SSL VPN wins on **per-user reachability** through NAT and firewalls.',
-              'Clientless access is application level, not full network access.'
-            ],
-            table: {
-              cols: ['Item', 'SSL VPN'],
-              rows: [
-                ['Transport', 'TLS on TCP 443'],
-                ['Modes', 'Clientless and AnyConnect'],
-                ['Full tunnel', 'AnyConnect'],
-                ['Fast path', 'DTLS on UDP 443'],
-                ['Client', 'Browser or client'],
-                ['Authentication', 'AAA, MFA, certificates'],
-                ['NAT friendly', 'Yes'],
-                ['Compared with', 'IPsec remote access']
-              ]
-            },
-            related: [
-              { t: '10. Remote Access VPN', d: 'Client-based counterpart' },
-              { t: '02. IPsec', d: 'The alternative transport' }
-            ],
-            glossary: ['SSL VPN', 'Remote Access VPN', 'VPN', 'IPsec', 'NAT']
-          },
-          {
-            id: 't10', num: '10', group: 'access', title: 'Remote Access VPN',
-            blurb: 'AnyConnect, full versus split tunnel, and the authentication triad',
-            overview: '**[[Remote Access VPN|Remote Access (RA) VPN]]** lets individual users connect into the enterprise from any location. Client-based RA uses software such as Cisco AnyConnect to build an encrypted tunnel and gives full network access, unlike a clientless portal.',
-            keyIdea: 'AnyConnect over IPsec on UDP 500 and 4500, or over SSL on 443. Full tunnel for control, split tunnel for performance.',
-            sections: [
-              { kind: 'table', h: 'Client-based versus clientless', cols: ['Aspect', 'Client-based', 'Clientless'], rows: [
-                ['Client', 'Software, AnyConnect', 'Browser only'],
-                ['Access', '**Full network**', 'Applications in a portal'],
-                ['Control', 'Strong, DNS and ACLs', 'Application level'],
-                ['Install', 'Required', 'None'],
-                ['Transport', 'IPsec or SSL and DTLS', 'HTTPS']
-              ]},
-              { kind: 'table', h: 'Two client-based transports', cols: ['Transport', 'Details'], rows: [
-                ['**IPsec RA**', 'IKEv1 or IKEv2, **UDP 500 and 4500**, strong control'],
-                ['**SSL and AnyConnect**', 'TLS **TCP 443**, DTLS **UDP 443**, firewall friendly']
-              ]},
-              { kind: 'table', h: 'Full tunnel versus split tunnel', cols: ['Mode', 'Behavior', 'Use'], rows: [
-                ['**Full tunnel**', 'All client traffic goes through the headend', 'Security and filtering'],
-                ['**Split tunnel**', 'Only corporate subnets go through the tunnel', 'Performance and local Internet']
-              ]},
-              { kind: 'table', h: 'Authentication and policy', cols: ['Layer', 'Mechanism'], rows: [
-                ['User', 'AAA, RADIUS or LDAP'],
-                ['MFA', 'Token, certificate or push'],
-                ['Posture', 'AnyConnect endpoint assessment'],
-                ['Authorization', 'Attributes from AAA'],
-                ['Group policy', 'Per-user access, split or full tunnel, ACLs']
-              ]},
-              { kind: 'code', h: 'ASA headend configuration', code:
-`  crypto ikev2 enable outside
-  !
-  group-policy RA internal
-  group-policy RA attributes
-   vpn-tunnel-protocol ikev2 ssl-client
-   split-tunnel-policy tunnelspecified
-   split-tunnel-network-list value SPLIT-ACL
-  !
-  tunnel-group RA type remote-access
-  tunnel-group RA general-attributes
-   address-pool POOL
-   default-group-policy RA` }
-            ],
-            commands: [
-              { label: 'Show active RA sessions', code:
-`show vpn-sessiondb anyconnect\nshow vpn-sessiondb ikev2\nshow vpn-sessiondb summary` },
-              { label: 'Inspect tunnel group and authentication', code:
-`show tunnel-group\nshow aaa-server\nshow crypto ikev2 sa` },
-              { label: 'Verify the address pool', code:
-`show ip local pool\nshow vpn-sessiondb detail anyconnect` }
-            ],
-            traps: [
-              'Client-based RA means a **software client and full network access**; clientless means a browser.',
-              '**IPsec RA uses UDP 500 and 4500**; SSL uses **TCP 443** and **UDP 443** for DTLS.',
-              '**DTLS** is the low-latency path for voice and video.',
-              '**Full tunnel** sends all traffic through the headend; split tunnel sends corporate traffic only.',
-              'RA security is **MFA plus certificate plus posture plus group policy**.',
-              'A missing address pool leaves the client authenticated but without an IP address.'
-            ],
-            table: {
-              cols: ['Item', 'RA VPN'],
-              rows: [
-                ['Client', 'AnyConnect'],
-                ['IPsec ports', 'UDP 500 and 4500'],
-                ['SSL port', 'TCP 443'],
-                ['DTLS', 'UDP 443'],
-                ['Full tunnel', 'All traffic via the headend'],
-                ['Split tunnel', 'Corporate traffic only'],
-                ['Authentication', 'AAA, MFA, certificates'],
-                ['Headend', 'ASA, ISR or FTD']
-              ]
-            },
-            related: [
-              { t: '05. SSL VPN', d: 'Portal-based variant' },
-              { t: '06. Site-to-Site VPN', d: 'Fixed-site contrast' },
-              { t: '02. IPsec', d: 'IPsec RA transport' }
-            ],
-            glossary: ['Remote Access VPN', 'SSL VPN', 'IKEv2', 'VPN', 'NAT']
-          },
-          {
-            id: 't11', num: '11', group: 'access', title: 'VPN Technology Comparison',
-            blurb: 'Choosing between GRE, IPsec, DMVPN, FlexVPN, GET VPN and SSL',
-            overview: 'ENCOR expects you to choose the right **[[VPN]]** technology for a topology: **[[GRE]]** for transport and multicast, **[[IPsec]]** for encryption, **[[DMVPN]]** for dynamic spokes, **[[FlexVPN]]** as the unified IKEv2 framework, **[[GET VPN]]** for tunnel-free any-to-any over **[[MPLS]]**, and **[[SSL VPN]]** for remote users.',
-            keyIdea: 'Map the topology to the tool. Fixed sites use IPsec, multicast needs GRE over IPsec, dynamic branches use DMVPN or FlexVPN, MPLS any-to-any uses GET VPN, users use SSL.',
-            sections: [
-              { kind: 'table', h: 'The six technologies at a glance', cols: ['Technology', 'Building blocks', 'Best for', 'Encryption'], rows: [
-                ['**GRE**', 'IP protocol 47 tunnel', 'Transport, multicast, routing', 'None, add IPsec'],
-                ['**IPsec**', 'ESP or AH plus IKE', 'Point-to-point confidentiality', 'Yes'],
-                ['**DMVPN**', 'mGRE plus NHRP plus IPsec', 'Dynamic hub and spoke over Internet', 'Yes'],
-                ['**FlexVPN**', 'IKEv2 profiles', 'Unified site-to-site and RA', 'Yes'],
-                ['**GET VPN**', 'GDOI group key', 'Tunnel-free any-to-any on MPLS', 'Yes'],
-                ['**SSL VPN**', 'TLS and DTLS on 443', 'Remote users and clientless', 'Yes']
-              ]},
-              { kind: 'table', h: 'GRE versus IPsec', cols: ['Aspect', 'GRE', 'IPsec'], rows: [
-                ['Encryption', '**None**', 'Yes'],
-                ['Multicast', 'Yes', 'Not directly'],
-                ['Routing over it', 'Any IGP or BGP', 'Via VTI or GRE'],
-                ['Overhead', '4 B plus 20 B outer IP', 'ESP, varies'],
-                ['Typical combination', 'GRE inside IPsec', 'Site-to-site']
-              ]},
-              { kind: 'table', h: 'DMVPN versus FlexVPN', cols: ['Aspect', 'DMVPN', 'FlexVPN'], rows: [
-                ['IKE', 'IKEv1 or IKEv2', '**IKEv2 only**'],
-                ['Key technology', 'NHRP plus mGRE', 'IKEv2 profiles'],
-                ['Modes', 'Dynamic spoke to spoke', 'Site-to-site, RA, hub, spoke'],
-                ['Config', 'NHRP plus multipoint', 'Profile driven']
-              ]},
-              { kind: 'table', h: 'GET VPN versus DMVPN versus VTI', cols: ['Aspect', 'GET VPN', 'DMVPN', 'Crypto map or VTI'], rows: [
-                ['Tunnel interface', 'None', 'mGRE', 'VTI or GRE'],
-                ['Data path', 'Direct any-to-any', 'Spoke to spoke', 'Point to point'],
-                ['Key management', 'GDOI group key', 'Per-tunnel IKE', 'Per-tunnel IKE'],
-                ['Overlay routing', 'None, native', 'NHRP', 'IGP over tunnel'],
-                ['Best fit', 'MPLS backbone', 'Internet branches', 'Fixed sites']
-              ]},
-              { kind: 'table', h: 'Decision table', cols: ['Requirement', 'Choice'], rows: [
-                ['Encryption between two fixed sites', 'IPsec, or GRE over IPsec'],
-                ['Carry multicast and routing protocols', 'GRE over IPsec'],
-                ['Dynamic branches over the Internet', 'DMVPN'],
-                ['One framework for sites and remote access', 'FlexVPN'],
-                ['Any-to-any over MPLS without tunnels', 'GET VPN'],
-                ['Remote users with minimal client friction', 'SSL VPN']
-              ]},
-              { kind: 'code', h: 'Cross-technology verification', code:
-`  show dmvpn
-  show crypto session
-  show crypto ipsec sa
-  show ip nhrp
-  show vpn-sessiondb
-  show ip mroute | include Tunnel` }
-            ],
-            commands: [
-              { label: 'Check overlay state across technologies', code:
-`show dmvpn\nshow ip nhrp\nshow crypto session\nshow crypto ipsec sa` },
-              { label: 'Check remote access state', code:
-`show vpn-sessiondb summary\nshow vpn-sessiondb anyconnect` },
-              { label: 'Check multicast over a tunnel', code:
-`show ip mroute | include Tunnel\nshow ip pim neighbor` }
-            ],
-            traps: [
-              '**GRE alone does not encrypt**; pair it with IPsec.',
-              '**DMVPN is mGRE plus NHRP plus IPsec**; FlexVPN is IKEv2 profiles.',
-              '**GET VPN has no tunnels**; it uses a GDOI group key on MPLS.',
-              '**SSL VPN on 443** is firewall friendly; IPsec RA uses 500 and 4500.',
-              'Choose by **topology and traffic**: dynamic spokes, users, or MPLS any-to-any.',
-              'A VTI is route-based, a crypto map is policy-based.'
-            ],
-            table: {
-              cols: ['Need', 'Pick'],
-              rows: [
-                ['Encrypt fixed links', 'IPsec'],
-                ['Multicast and routing', 'GRE over IPsec'],
-                ['Dynamic branches', 'DMVPN'],
-                ['Unified framework', 'FlexVPN'],
-                ['Tunnel-free any-to-any', 'GET VPN'],
-                ['Remote users', 'SSL VPN'],
-                ['Route-based IPsec', 'VTI'],
-                ['Overhead and MTU', 'Tune ip mtu and adjust-mss']
-              ]
-            },
-            related: [
-              { t: '02. IPsec', d: 'Core encryption technology' },
-              { t: '03. DMVPN', d: 'Hub-and-spoke comparison' },
-              { t: '07. GET VPN', d: 'Tunnel-free comparison' }
-            ],
-            glossary: ['VPN', 'GRE', 'IPsec', 'DMVPN', 'FlexVPN', 'GET VPN', 'SSL VPN', 'Site-to-Site VPN', 'Remote Access VPN', 'MPLS']
-          }
-        ];
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "tunnel",
+    "title": "GRE",
+    "blurb": "Protocol 47 tunnels, overhead, keepalives and MTU tuning",
+    "overview": "**[[GRE]]** encapsulates arbitrary Layer 3 payloads inside an IP tunnel between routers. It runs as **IP protocol 47**, adds a **4-byte GRE header plus a 20-byte outer IP header**, and provides **no encryption and no reliability**. That is why GRE is almost always paired with **[[IPsec]]**.",
+    "keyIdea": "Protocol 47, no encryption, any L3 payload including multicast. Pair it with IPsec and tune MTU and MSS.",
+    "sections": [
+      {
+        "h": "VPN",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">VPN TUNNELS</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">IPSec, GRE, DMVPN, Site-to-Site</text></g></svg>",
+        "caption": "Secure encrypted tunnels."
+      },
+      {
+        "kind": "table",
+        "h": "The tunnel concept",
+        "cols": [
+          "Element",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Tunnel interface**",
+            "Virtual Layer 3 interface the router treats as real"
+          ],
+          [
+            "**Outer IP**",
+            "Transport address on the physical underlay"
+          ],
+          [
+            "**Inner IP**",
+            "Original packet being carried"
+          ],
+          [
+            "**GRE header**",
+            "IP protocol 47, 4 bytes"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Basic GRE tunnel",
+        "code": "  interface Tunnel0\n   ip address 10.10.0.1 255.255.255.252\n   tunnel source GigabitEthernet0/0\n   tunnel destination 203.0.113.1\n   ip mtu 1400\n   ip tcp adjust-mss 1360"
+      },
+      {
+        "kind": "table",
+        "h": "GRE versus IPsec",
+        "cols": [
+          "Aspect",
+          "GRE",
+          "IPsec"
+        ],
+        "rows": [
+          [
+            "Encryption",
+            "**None**",
+            "**Yes**"
+          ],
+          [
+            "Payload",
+            "Any L3, including multicast",
+            "Typically unicast"
+          ],
+          [
+            "Routing over it",
+            "**Yes**, any IGP or BGP",
+            "Only via GRE or VTI"
+          ],
+          [
+            "Role",
+            "Transport glue",
+            "Confidentiality"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "MTU and fragmentation",
+        "p": "Overhead is **24 bytes or more** before IPsec is added. Reduce the tunnel **%%ip mtu%%** and shrink the TCP maximum segment size with **%%ip tcp adjust-mss%%** so packets fit without fragmentation. PMTUD helps, but adjusting MSS is the reliable fix."
+      },
+      {
+        "kind": "code",
+        "h": "Keepalives and verification",
+        "code": "  interface Tunnel0\n   keepalive 10 3\n  !\n  show ip interface brief | include Tunnel\n  show interface Tunnel0\n  show ip route\n  ping 10.10.0.2"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build the tunnel",
+        "code": "interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1"
+      },
+      {
+        "label": "Tune MTU and MSS",
+        "code": "interface Tunnel0\n ip mtu 1400\n ip tcp adjust-mss 1360"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow ip route"
+      }
+    ],
+    "traps": [
+      "GRE is **IP protocol 47**, not TCP or UDP.",
+      "GRE provides **no encryption** on its own; pair it with IPsec.",
+      "GRE carries **multicast and any L3 payload**, which is what makes DMVPN possible.",
+      "Overhead is **24 bytes or more** once IPsec is added.",
+      "Without **%%ip mtu%%** and **%%ip tcp adjust-mss%%**, large packets silently fail.",
+      "**%%tunnel source%%** and **%%tunnel destination%%** define the underlay endpoints, not the protected subnets."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Protocol",
+          "IP 47"
+        ],
+        [
+          "Encryption",
+          "None"
+        ],
+        [
+          "Payload",
+          "Any L3 and multicast"
+        ],
+        [
+          "Header",
+          "4 B plus 20 B outer IP"
+        ],
+        [
+          "Overhead",
+          "About 24 B"
+        ],
+        [
+          "MTU fix",
+          "ip mtu plus ip tcp adjust-mss"
+        ],
+        [
+          "Keepalive",
+          "tunnel keepalive"
+        ],
+        [
+          "Pairing",
+          "GRE over IPsec"
+        ],
+        [
+          "Verify",
+          "show interface Tunnel0"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. IPsec",
+        "d": "Encrypts the GRE tunnel"
+      },
+      {
+        "t": "03. DMVPN",
+        "d": "Multipoint GRE at scale"
+      }
+    ],
+    "glossary": [
+      "GRE",
+      "IPsec",
+      "DMVPN",
+      "MTU",
+      "Multicast",
+      "VPN"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "tunnel",
+    "title": "IPsec",
+    "blurb": "AH versus ESP, transport versus tunnel mode, and the IKE phases",
+    "overview": "**[[IPsec]]** secures IP traffic at the packet level with **confidentiality, integrity and authentication**. Key management runs through **[[IKEv2]]** on **UDP 500**, with **NAT-T on UDP 4500**; the data plane uses **ESP (protocol 50)** or the legacy **AH (protocol 51)**.",
+    "keyIdea": "ESP 50 encrypts, AH 51 does not. Tunnel mode wraps the whole packet, transport mode protects the payload only.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "AH versus ESP",
+        "cols": [
+          "Protocol",
+          "Job",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "**AH** (51)",
+            "Integrity and authentication",
+            "**No encryption**, no NAT traversal"
+          ],
+          [
+            "**ESP** (50)",
+            "Confidentiality, integrity, authentication",
+            "The standard choice for real encryption"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Transport versus tunnel mode",
+        "cols": [
+          "Mode",
+          "Protects",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Transport**",
+            "Payload only, original header visible",
+            "Host to host, or GRE payload"
+          ],
+          [
+            "**Tunnel**",
+            "Entire IP packet with a new outer header",
+            "Site-to-site VPN"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "IKE phases and ports",
+        "cols": [
+          "Item",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Phase 1",
+            "Authenticate peers and build the ISAKMP SA"
+          ],
+          [
+            "Phase 2",
+            "Negotiate data-plane keys and build the IPsec SA"
+          ],
+          [
+            "UDP 500",
+            "ISAKMP and IKE"
+          ],
+          [
+            "UDP 4500",
+            "NAT-T, ESP wrapped inside UDP"
+          ],
+          [
+            "Main mode",
+            "Six messages, secure"
+          ],
+          [
+            "Aggressive mode",
+            "Three messages, faster but weaker"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Legacy crypto map configuration",
+        "code": "  crypto isakmp policy 10\n   encryption aes\n   authentication pre-share\n   group 14\n  !\n  crypto isakmp key Secret123 address 203.0.113.1\n  !\n  crypto ipsec transform-set TS esp-aes esp-sha-hmac\n  !\n  crypto map CM 10 ipsec-isakmp\n   set peer 203.0.113.1\n   set transform-set TS\n   match address VPN-TRAFFIC\n  !\n  interface GigabitEthernet0/0\n   crypto map CM"
+      },
+      {
+        "kind": "para",
+        "h": "Transform sets",
+        "p": "A transform set pairs **encryption** with **integrity**, for example **%%esp-aes%%** plus **%%esp-sha-hmac%%**. Both peers must agree on the algorithms, or phase 2 fails even when the IKE SA is up."
+      }
+    ],
+    "commands": [
+      {
+        "label": "ISAKMP policy and pre-shared key",
+        "code": "crypto isakmp policy 10\n encryption aes\n authentication pre-share\n group 14\ncrypto isakmp key Secret123 address 203.0.113.1"
+      },
+      {
+        "label": "Transform set and crypto map",
+        "code": "crypto ipsec transform-set TS esp-aes esp-sha-hmac\ncrypto map CM 10 ipsec-isakmp\n set peer 203.0.113.1\n set transform-set TS\n match address VPN-TRAFFIC"
+      },
+      {
+        "label": "Verify",
+        "code": "show crypto isakmp sa\nshow crypto ipsec sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "**ESP (50) encrypts; AH (51) does not.**",
+      "Use **tunnel mode** for site-to-site and **transport mode** for host-to-host.",
+      "IKE uses **UDP 500**; NAT-T uses **UDP 4500**.",
+      "A transform set pairs **encryption and integrity** algorithms.",
+      "Both peers must match proposals, keys and transform sets.",
+      "**[[IKEv2]]** is the modern standard; IKEv1 is legacy."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "IPsec"
+      ],
+      "rows": [
+        [
+          "Encrypts",
+          "ESP, protocol 50"
+        ],
+        [
+          "Auth only",
+          "AH, protocol 51"
+        ],
+        [
+          "Tunnel mode",
+          "Wraps the whole packet"
+        ],
+        [
+          "Transport mode",
+          "Payload only"
+        ],
+        [
+          "IKE",
+          "UDP 500"
+        ],
+        [
+          "NAT-T",
+          "UDP 4500"
+        ],
+        [
+          "Phase 1",
+          "ISAKMP SA"
+        ],
+        [
+          "Phase 2",
+          "IPsec SA"
+        ],
+        [
+          "Transform",
+          "esp-aes plus esp-sha-hmac"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. GRE",
+        "d": "Payload IPsec often protects"
+      },
+      {
+        "t": "07. IPsec IKEv2",
+        "d": "Modern key exchange"
+      },
+      {
+        "t": "06. Site-to-Site VPN",
+        "d": "Typical deployment"
+      }
+    ],
+    "glossary": [
+      "IPsec",
+      "IKEv2",
+      "GRE",
+      "Site-to-Site VPN",
+      "NAT",
+      "VPN"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "tunnel",
+    "title": "IPsec IKEv2",
+    "blurb": "IKE_SA_INIT and IKE_AUTH, native NAT-T and EAP, and the profile model",
+    "overview": "**[[IKEv2]]** is the modern IPsec key-exchange protocol from **RFC 7296**. It folds IKEv1 phase 1 and phase 2 into a single IKE SA built from **IKE_SA_INIT** and **IKE_AUTH**, adds **native NAT-T** and **EAP**, and underpins **[[FlexVPN]]**.",
+    "keyIdea": "IKE_SA_INIT plus IKE_AUTH in four messages, with native NAT-T and EAP. Configured with proposal, policy, keyring and profile.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "IKEv1 versus IKEv2",
+        "cols": [
+          "Aspect",
+          "IKEv1",
+          "IKEv2"
+        ],
+        "rows": [
+          [
+            "Exchanges",
+            "Phase 1 plus phase 2",
+            "One IKE SA, four messages"
+          ],
+          [
+            "Phase 1 modes",
+            "Main or aggressive",
+            "None, fixed INIT and AUTH"
+          ],
+          [
+            "NAT-T",
+            "Add-on",
+            "**Built in**"
+          ],
+          [
+            "EAP",
+            "Not native",
+            "**Native**"
+          ],
+          [
+            "Rekey",
+            "Separate IPsec SA phase",
+            "CREATE_CHILD_SA"
+          ],
+          [
+            "Status",
+            "Legacy",
+            "**Preferred**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "The exchange flow",
+        "code": "  1. IKE_SA_INIT  ->  DH, nonces, algorithms  ->  IKE SA\n  2. IKE_AUTH    ->  authenticate peers      ->  first child SA\n  3. CREATE_CHILD_SA  ->  extra SAs and rekeying\n  4. INFORMATIONAL    ->  delete, error, liveness"
+      },
+      {
+        "kind": "table",
+        "h": "Protocol details",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Standard",
+            "RFC 7296"
+          ],
+          [
+            "Ports",
+            "UDP 500, plus UDP 4500 for NAT-T"
+          ],
+          [
+            "IKE SA lifetime",
+            "86400 seconds on Cisco"
+          ],
+          [
+            "Child SA lifetime",
+            "3600 seconds on Cisco"
+          ],
+          [
+            "Liveness",
+            "Dead Peer Detection"
+          ],
+          [
+            "NAT discovery",
+            "NAT detection source and destination payloads"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "IOS XE building blocks",
+        "cols": [
+          "Block",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**%%crypto ikev2 proposal%%**",
+            "Encryption, integrity and DH group"
+          ],
+          [
+            "**%%crypto ikev2 policy%%**",
+            "Proposal set and lifetime"
+          ],
+          [
+            "**%%crypto ikev2 keyring%%**",
+            "Pre-shared keys per peer"
+          ],
+          [
+            "**%%crypto ikev2 profile%%**",
+            "Match identity, authentication and keyring"
+          ],
+          [
+            "**%%crypto ipsec profile%%**",
+            "Transform set plus IKEv2 profile"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "IKEv2 site-to-site configuration",
+        "code": "  crypto ikev2 proposal PROP\n   encryption aes-gcm-256\n   integrity sha256\n   group 14\n  !\n  crypto ikev2 policy POL\n   proposal PROP\n  !\n  crypto ikev2 keyring KR\n   peer SPOKE\n    address 203.0.113.1\n    pre-shared-key local Secret123\n  !\n  crypto ikev2 profile IKEV2-PROF\n   match identity remote address 203.0.113.1\n   authentication remote pre-share\n   authentication local pre-share\n   keyring local KR"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Proposal, policy and keyring",
+        "code": "crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP\ncrypto ikev2 keyring KR\n peer SPOKE\n  address 203.0.113.1\n  pre-shared-key local Secret123"
+      },
+      {
+        "label": "IKEv2 profile and IPsec profile",
+        "code": "crypto ikev2 profile IKEV2-PROF\n match identity remote address 203.0.113.1\n authentication remote pre-share\n authentication local pre-share\n keyring local KR\ncrypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF"
+      },
+      {
+        "label": "Verify",
+        "code": "show crypto ikev2 sa\nshow crypto ikev2 profile\nshow crypto ipsec sa"
+      }
+    ],
+    "traps": [
+      "IKEv2 merges the phases into **IKE_SA_INIT plus IKE_AUTH**, not main and aggressive mode.",
+      "**IKEv2 is RFC 7296** and the modern standard; IKEv1 is legacy.",
+      "IKEv2 supports **EAP and NAT-T natively**; IKEv1 needs add-ons.",
+      "Ports remain **UDP 500 and 4500** for both versions.",
+      "On IOS XE, IKEv2 uses **profiles**, not **%%crypto map%%**.",
+      "A mismatched **match identity** fails IKE_AUTH even when the key is correct."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "IKEv2"
+      ],
+      "rows": [
+        [
+          "Standard",
+          "RFC 7296"
+        ],
+        [
+          "Exchange",
+          "IKE_SA_INIT plus IKE_AUTH"
+        ],
+        [
+          "Phases",
+          "One IKE SA"
+        ],
+        [
+          "Main or aggressive",
+          "Not used"
+        ],
+        [
+          "NAT-T",
+          "Built in"
+        ],
+        [
+          "EAP",
+          "Native"
+        ],
+        [
+          "Ports",
+          "UDP 500 and 4500"
+        ],
+        [
+          "IOS XE config",
+          "Proposal, policy, keyring, profile"
+        ],
+        [
+          "Status",
+          "Preferred"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. IPsec",
+        "d": "The data plane it protects"
+      },
+      {
+        "t": "04. FlexVPN",
+        "d": "Built on IKEv2 profiles"
+      }
+    ],
+    "glossary": [
+      "IKEv2",
+      "IPsec",
+      "FlexVPN",
+      "Site-to-Site VPN",
+      "Remote Access VPN",
+      "NAT"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "arch",
+    "title": "DMVPN",
+    "blurb": "mGRE plus NHRP plus IPsec, and the spoke-to-spoke shortcut",
+    "overview": "**[[DMVPN]]** builds dynamic, full-mesh IPsec tunnels from a hub-and-spoke design using three building blocks: **mGRE** (multipoint GRE), **NHRP** (spoke discovery) and **[[IPsec]]**. Spokes talk directly to each other after NHRP maps them, so data is not hair-pinned through the hub.",
+    "keyIdea": "mGRE plus NHRP plus IPsec. Control stays at the hub, data goes spoke to spoke.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The three building blocks",
+        "cols": [
+          "Protocol",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**mGRE**",
+            "One tunnel interface peering with many destinations"
+          ],
+          [
+            "**NHRP**",
+            "Resolves public addresses of spokes"
+          ],
+          [
+            "**IPsec**",
+            "Encrypts the mGRE tunnel traffic"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Spoke-to-spoke shortcut",
+        "code": "  Spoke A --NHRP register--> Hub (NHS)\n  Spoke B --NHRP register--> Hub (NHS)\n  A wants B: A -> NHRP query -> Hub -> \"B is at 198.51.100.2\"\n  A --direct IPsec GRE tunnel--> B\n  Control via the hub, data directly between spokes"
+      },
+      {
+        "kind": "table",
+        "h": "Roles and phases",
+        "cols": [
+          "Item",
+          "Description"
+        ],
+        "rows": [
+          [
+            "**Hub**",
+            "NHRP next-hop server and permanent mGRE endpoint"
+          ],
+          [
+            "**Spoke**",
+            "Registers with the hub and learns peers"
+          ],
+          [
+            "**Phase 1**",
+            "Hub-and-spoke only, no shortcuts"
+          ],
+          [
+            "**Phase 2**",
+            "Spoke-to-spoke shortcuts, the usual default"
+          ],
+          [
+            "**Phase 3**",
+            "NHRP redirect for best-path routing"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Spoke configuration",
+        "code": "  interface Tunnel0\n   ip address 10.255.0.2 255.255.255.0\n   ip nhrp map 10.255.0.1 203.0.113.1\n   ip nhrp network-id 1\n   ip nhrp nhs 10.255.0.1\n   tunnel source GigabitEthernet0/0\n   tunnel mode gre multipoint\n   tunnel protection ipsec profile DMVPN-PROF"
+      },
+      {
+        "kind": "table",
+        "h": "Why DMVPN scales",
+        "cols": [
+          "Benefit",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Scale",
+            "One hub tunnel interface serves every spoke"
+          ],
+          [
+            "Direct path",
+            "No hub bottleneck for spoke-to-spoke data"
+          ],
+          [
+            "Zero touch",
+            "New spokes register automatically"
+          ],
+          [
+            "Resilient",
+            "Tunnels re-establish dynamically"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Register the spoke",
+        "code": "interface Tunnel0\n ip nhrp map 10.255.0.1 203.0.113.1\n ip nhrp network-id 1\n ip nhrp nhs 10.255.0.1"
+      },
+      {
+        "label": "Multipoint GRE with IPsec",
+        "code": "interface Tunnel0\n tunnel source GigabitEthernet0/0\n tunnel mode gre multipoint\n tunnel protection ipsec profile DMVPN-PROF"
+      },
+      {
+        "label": "Verify",
+        "code": "show dmvpn\nshow ip nhrp\nshow ip nhrp summary\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "DMVPN is **mGRE plus NHRP plus IPsec**, all three.",
+      "NHRP resolves **spoke public addresses** through the hub acting as NHS.",
+      "After the shortcut, **data goes spoke to spoke**; only control uses the hub.",
+      "One mGRE tunnel interface serves **many destinations**.",
+      "Phase 1 has **no spoke-to-spoke shortcuts**; phase 2 does.",
+      "**%%tunnel protection ipsec profile%%** binds IPsec to the tunnel."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "DMVPN"
+      ],
+      "rows": [
+        [
+          "Building blocks",
+          "mGRE, NHRP, IPsec"
+        ],
+        [
+          "Hub role",
+          "NHRP next-hop server"
+        ],
+        [
+          "Spoke discovery",
+          "NHRP"
+        ],
+        [
+          "Data path",
+          "Direct spoke to spoke"
+        ],
+        [
+          "Phase 2",
+          "Shortcuts enabled"
+        ],
+        [
+          "Tunnel mode",
+          "gre multipoint"
+        ],
+        [
+          "Scale",
+          "One hub tunnel"
+        ],
+        [
+          "Verify",
+          "show dmvpn"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. GRE",
+        "d": "The multipoint encapsulation"
+      },
+      {
+        "t": "02. IPsec",
+        "d": "Encrypts each tunnel"
+      },
+      {
+        "t": "11. VPN Technology Comparison",
+        "d": "When to choose DMVPN"
+      }
+    ],
+    "glossary": [
+      "DMVPN",
+      "GRE",
+      "IPsec",
+      "VPN",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "arch",
+    "title": "FlexVPN",
+    "blurb": "One IKEv2 profile framework for every VPN topology",
+    "overview": "**[[FlexVPN]]** is Cisco’s **[[IKEv2]]-based** VPN framework: one unified design that does site-to-site, remote access, hub-and-spoke and spoke-to-spoke using the same IKEv2 profile building blocks. It replaces legacy **%%crypto map%%** and ISAKMP configuration with profiles.",
+    "keyIdea": "Proposal, policy, keyring, IKEv2 profile and IPsec profile. One framework for every topology.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The IKEv2 profile model",
+        "cols": [
+          "Block",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**%%crypto ikev2 proposal%%**",
+            "Encryption, integrity and DH group"
+          ],
+          [
+            "**%%crypto ikev2 policy%%**",
+            "Proposal set and lifetime"
+          ],
+          [
+            "**%%crypto ikev2 keyring%%**",
+            "Pre-shared keys per peer"
+          ],
+          [
+            "**%%crypto ikev2 profile%%**",
+            "Match identity, authentication and keyring"
+          ],
+          [
+            "**%%crypto ipsec profile%%**",
+            "Transform set plus IKEv2 profile"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "FlexVPN modes",
+        "cols": [
+          "Mode",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Site-to-site**",
+            "Static tunnel between two sites"
+          ],
+          [
+            "**Remote access**",
+            "IKEv2 clients to a headend"
+          ],
+          [
+            "**Hub-and-spoke**",
+            "DMVPN-style topology over IKEv2"
+          ],
+          [
+            "**Spoke-to-spoke**",
+            "Dynamic shortcuts between spokes"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Site-to-site profile configuration",
+        "code": "  crypto ikev2 proposal PROP\n   encryption aes-gcm-256\n   integrity sha256\n   group 14\n  !\n  crypto ikev2 policy POL\n   proposal PROP\n  !\n  crypto ikev2 keyring KR\n   peer SPOKE\n    address 203.0.113.10\n    pre-shared-key local Secret123\n  !\n  crypto ikev2 profile IKEV2-PROF\n   match identity remote address 203.0.113.10\n   authentication remote pre-share\n   authentication local pre-share\n   keyring local KR\n  !\n  crypto ipsec profile IPSEC-PROF\n   set transform-set TS\n   set ikev2-profile IKEV2-PROF\n  !\n  interface Tunnel0\n   tunnel protection ipsec profile IPSEC-PROF"
+      },
+      {
+        "kind": "table",
+        "h": "FlexVPN versus DMVPN",
+        "cols": [
+          "Aspect",
+          "DMVPN",
+          "FlexVPN"
+        ],
+        "rows": [
+          [
+            "IKE",
+            "IKEv1 or IKEv2",
+            "**IKEv2 native**"
+          ],
+          [
+            "Key technology",
+            "NHRP plus mGRE",
+            "IKEv2 profiles"
+          ],
+          [
+            "Modes",
+            "Hub-and-spoke",
+            "Site-to-site, RA, hub, spoke"
+          ],
+          [
+            "Config",
+            "NHRP plus multipoint tunnel",
+            "Profile driven"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Remote access",
+        "p": "An IKEv2 client such as AnyConnect can terminate on the same IKEv2 profile that serves site-to-site peers. Certificates or pre-shared keys authenticate the client, and dynamic **[[Virtual Tunnel Interface|VTIs]]** scale the number of client tunnels."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build the profile chain",
+        "code": "crypto ikev2 proposal PROP\n encryption aes-gcm-256\n integrity sha256\n group 14\ncrypto ikev2 policy POL\n proposal PROP"
+      },
+      {
+        "label": "Attach IPsec to a tunnel",
+        "code": "crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF"
+      },
+      {
+        "label": "Verify",
+        "code": "show crypto ikev2 profile\nshow crypto ikev2 sa\nshow crypto ipsec sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "FlexVPN is **IKEv2 profile based**, not crypto map or ISAKMP based.",
+      "One framework covers **site-to-site, remote access, hub-and-spoke and spoke-to-spoke**.",
+      "AES-GCM with SHA-256 is a common modern proposal.",
+      "IPsec is attached with **%%tunnel protection ipsec profile%%**.",
+      "FlexVPN is profile-first; DMVPN is NHRP and mGRE first.",
+      "FlexVPN can also run hub-and-spoke using NHRP."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "FlexVPN"
+      ],
+      "rows": [
+        [
+          "Base",
+          "IKEv2"
+        ],
+        [
+          "Config",
+          "Profiles"
+        ],
+        [
+          "Modes",
+          "Site-to-site, RA, hub, spoke"
+        ],
+        [
+          "Keyring",
+          "Pre-shared keys"
+        ],
+        [
+          "Transform",
+          "IPsec profile"
+        ],
+        [
+          "Tunnel hook",
+          "tunnel protection ipsec profile"
+        ],
+        [
+          "Authentication",
+          "Certificates or pre-shared keys"
+        ],
+        [
+          "Alternative",
+          "DMVPN with NHRP"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. IPsec IKEv2",
+        "d": "The key exchange underneath"
+      },
+      {
+        "t": "03. DMVPN",
+        "d": "NHRP-based alternative"
+      },
+      {
+        "t": "08. Virtual Tunnel Interface",
+        "d": "Interface that carries the profile"
+      }
+    ],
+    "glossary": [
+      "FlexVPN",
+      "IKEv2",
+      "DMVPN",
+      "IPsec",
+      "Site-to-Site VPN",
+      "Remote Access VPN",
+      "Virtual Tunnel Interface"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "arch",
+    "title": "Virtual Tunnel Interface",
+    "blurb": "Route-based IPsec with no crypto map and no interesting-traffic ACL",
+    "overview": "A **[[Virtual Tunnel Interface|Virtual Tunnel Interface (VTI)]]** is a route-based **[[IPsec]]** tunnel interface. There is no interesting-traffic ACL and no crypto map: the tunnel gets an IP address, the routing table decides what enters it, and IPsec is bound with **%%tunnel protection ipsec profile%%**.",
+    "keyIdea": "tunnel mode ipsec ipv4 plus tunnel protection ipsec profile. Routing triggers encryption, not an ACL.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Policy-based versus route-based",
+        "cols": [
+          "Aspect",
+          "Crypto map",
+          "VTI"
+        ],
+        "rows": [
+          [
+            "Encryption trigger",
+            "**Interesting-traffic ACL**",
+            "**Route toward the tunnel**"
+          ],
+          [
+            "Interface",
+            "Crypto map on a physical interface",
+            "Dedicated virtual tunnel"
+          ],
+          [
+            "Routing over it",
+            "Difficult",
+            "**Natural**, any IGP or BGP"
+          ],
+          [
+            "Multicast",
+            "Not directly",
+            "**Yes**"
+          ],
+          [
+            "Complexity",
+            "Higher",
+            "Lower"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "VTI configuration",
+        "code": "  crypto ipsec profile IPSEC-PROF\n   set transform-set TS\n   set ikev2-profile IKEV2-PROF\n  !\n  interface Tunnel0\n   ip address 10.10.0.1 255.255.255.252\n   tunnel source GigabitEthernet0/0\n   tunnel destination 203.0.113.1\n   tunnel mode ipsec ipv4\n   tunnel protection ipsec profile IPSEC-PROF"
+      },
+      {
+        "kind": "table",
+        "h": "VTI versus GRE over IPsec",
+        "cols": [
+          "Aspect",
+          "GRE over IPsec",
+          "VTI"
+        ],
+        "rows": [
+          [
+            "Overhead",
+            "GRE 4 B plus IPsec",
+            "IPsec only"
+          ],
+          [
+            "Multicast",
+            "Yes",
+            "Yes"
+          ],
+          [
+            "Routing",
+            "Over the GRE tunnel",
+            "Over the VTI directly"
+          ],
+          [
+            "Encapsulation",
+            "IP, GRE, IPsec",
+            "IP, IPsec"
+          ],
+          [
+            "Config",
+            "Tunnel plus GRE plus profile",
+            "Tunnel plus profile"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Why it is simpler",
+        "p": "The VTI decouples **what to encrypt** from **how to encrypt**. The routing table, including **[[OSPF]]** or **[[BGP]]** routes and **[[Multicast]]** state, selects the traffic, while the IPsec profile defines the algorithms and keys."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Make the tunnel an IPsec VTI",
+        "code": "interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel mode ipsec ipv4"
+      },
+      {
+        "label": "Bind the IPsec profile",
+        "code": "crypto ipsec profile IPSEC-PROF\n set transform-set TS\n set ikev2-profile IKEV2-PROF\ninterface Tunnel0\n tunnel protection ipsec profile IPSEC-PROF"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip interface brief | include Tunnel\nshow interface Tunnel0\nshow crypto ipsec sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "VTI is **route-based**; a crypto map is **policy-based**.",
+      "**%%tunnel mode ipsec ipv4%%** marks the tunnel as an IPsec VTI.",
+      "**%%tunnel protection ipsec profile%%** binds IPsec, not a crypto map.",
+      "No interesting-traffic ACL is needed; **routing triggers encryption**.",
+      "IPsec VTIs support **multicast and dynamic routing**.",
+      "A VTI drops the GRE layer, so overhead is lower than GRE over IPsec."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "VTI"
+      ],
+      "rows": [
+        [
+          "Type",
+          "Route-based IPsec"
+        ],
+        [
+          "Trigger",
+          "Routing, not an ACL"
+        ],
+        [
+          "Config",
+          "Tunnel plus IPsec profile"
+        ],
+        [
+          "Mode",
+          "tunnel mode ipsec ipv4"
+        ],
+        [
+          "Crypto map",
+          "Not used"
+        ],
+        [
+          "Multicast",
+          "Yes"
+        ],
+        [
+          "Routing",
+          "OSPF, EIGRP, BGP"
+        ],
+        [
+          "Modern",
+          "Yes"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. IPsec",
+        "d": "Encryption layer"
+      },
+      {
+        "t": "01. GRE",
+        "d": "Alternative tunnel encapsulation"
+      },
+      {
+        "t": "06. Site-to-Site VPN",
+        "d": "Deployment context"
+      }
+    ],
+    "glossary": [
+      "Virtual Tunnel Interface",
+      "IPsec",
+      "GRE",
+      "Site-to-Site VPN",
+      "OSPF",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "arch",
+    "title": "GET VPN",
+    "blurb": "GDOI group keys and any-to-any encryption with no tunnels",
+    "overview": "**[[GET VPN]] (Group Encrypted Transport VPN)** provides **any-to-any encryption over an [[MPLS]] or IP backbone without tunnel interfaces**. All routers in a group share one group key, distributed by **GDOI (Group Domain of Interpretation)** on **UDP 848**, so there is no hub bottleneck and no overlay routing.",
+    "keyIdea": "No tunnels. GDOI on UDP 848 distributes a group key, and members encrypt directly to each other.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The GDOI model",
+        "cols": [
+          "Role",
+          "Description"
+        ],
+        "rows": [
+          [
+            "**Key Server**",
+            "Manages and distributes group keys"
+          ],
+          [
+            "**Member**",
+            "Group router that encrypts traffic"
+          ],
+          [
+            "**Group**",
+            "Shared key domain"
+          ],
+          [
+            "**GDOI**",
+            "Group key management on UDP 848"
+          ],
+          [
+            "**KEK**",
+            "Key Encryption Key, protects key distribution"
+          ],
+          [
+            "**TEK**",
+            "Traffic Encryption Key, encrypts data"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "How registration works",
+        "code": "  Member --register--> Key Server (GDOI, UDP 848)\n  Key Server sends KEK and TEK\n  Member A --encrypt with TEK--> Member B\n  Direct any-to-any, no tunnel between members"
+      },
+      {
+        "kind": "table",
+        "h": "Ports and transport",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "GDOI port",
+            "**UDP 848**"
+          ],
+          [
+            "Data protection",
+            "ESP group SA"
+          ],
+          [
+            "IPsec mode",
+            "Usually transport"
+          ],
+          [
+            "Rekey",
+            "Key Server pushes a new TEK"
+          ],
+          [
+            "Registration",
+            "IKE between member and Key Server"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "GET VPN versus tunnel-based designs",
+        "cols": [
+          "Aspect",
+          "GET VPN",
+          "DMVPN",
+          "VTI"
+        ],
+        "rows": [
+          [
+            "Tunnel interface",
+            "**None**",
+            "mGRE",
+            "VTI"
+          ],
+          [
+            "Data path",
+            "**Direct any-to-any**",
+            "Spoke to spoke via NHRP",
+            "Point to point"
+          ],
+          [
+            "Key management",
+            "GDOI group key",
+            "Per-tunnel IKE",
+            "Per-tunnel IKE"
+          ],
+          [
+            "Overlay routing",
+            "**None**, native",
+            "NHRP",
+            "IGP over tunnel"
+          ],
+          [
+            "Best for",
+            "**MPLS backbone**",
+            "Internet branches",
+            "Fixed sites"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Operational features",
+        "cols": [
+          "Feature",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Any-to-any",
+            "Full mesh with no hub in the data path"
+          ],
+          [
+            "Backbone",
+            "MPLS or any IP network"
+          ],
+          [
+            "Multicast",
+            "Supported"
+          ],
+          [
+            "COOP",
+            "Cooperative Key Servers for redundancy"
+          ],
+          [
+            "Anti-replay",
+            "Sequence numbers, which can drop reordered WAN traffic"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Key Server configuration snapshot",
+        "code": "  crypto gdoi group ENCRYPT\n   identity number 98765\n   server local\n   rekey\n    address ipv4 10.0.0.1\n    authorization address ipv4 10.0.0.0 255.255.255.0\n  !\n  crypto gdoi server local"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Define the GDOI group",
+        "code": "crypto gdoi group ENCRYPT\n identity number 98765\n server local\n rekey\n  address ipv4 10.0.0.1\n  authorization address ipv4 10.0.0.0 255.255.255.0"
+      },
+      {
+        "label": "Verify membership and keys",
+        "code": "show crypto gdoi group\nshow crypto gdoi ks\nshow crypto gdoi member"
+      },
+      {
+        "label": "Verify data encryption",
+        "code": "show crypto ipsec sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "GET VPN has **no tunnel interfaces**; members encrypt directly.",
+      "GDOI runs on **UDP 848**, not 500 or 4500.",
+      "**TEK encrypts data; KEK protects key distribution.**",
+      "GET VPN suits a private **MPLS** backbone with native any-to-any.",
+      "**COOP** provides redundant Key Servers.",
+      "Anti-replay can drop reordered packets on a WAN."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "GET VPN"
+      ],
+      "rows": [
+        [
+          "Basis",
+          "GDOI group key"
+        ],
+        [
+          "Tunnels",
+          "None"
+        ],
+        [
+          "Data path",
+          "Direct any-to-any"
+        ],
+        [
+          "Protocol",
+          "GDOI, UDP 848"
+        ],
+        [
+          "Key Server",
+          "Distributes keys"
+        ],
+        [
+          "Data key",
+          "TEK"
+        ],
+        [
+          "Key encryption key",
+          "KEK"
+        ],
+        [
+          "Best fit",
+          "MPLS or private backbone"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. IPsec",
+        "d": "Group encryption mechanics"
+      },
+      {
+        "t": "11. VPN Technology Comparison",
+        "d": "When GET VPN wins"
+      }
+    ],
+    "glossary": [
+      "GET VPN",
+      "IPsec",
+      "MPLS",
+      "DMVPN",
+      "VPN"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "access",
+    "title": "Site-to-Site VPN",
+    "blurb": "GRE over IPsec, interesting traffic and routing across the tunnel",
+    "overview": "A **[[Site-to-Site VPN|site-to-site (L2L) VPN]]** secures traffic between two fixed sites over a shared underlay. The classic recipes are **[[GRE]] over [[IPsec]]** for routing flexibility, or pure IPsec tunnel mode with an interesting-traffic ACL. It is the simplest VPN for fixed branch locations.",
+    "keyIdea": "GRE over IPsec for routing and multicast; pure IPsec for simple traffic. Mirror-image ACLs on both ends.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The recipe choices",
+        "cols": [
+          "Design",
+          "Uses",
+          "Trade-off"
+        ],
+        "rows": [
+          [
+            "**Pure IPsec**",
+            "Interesting-traffic ACL",
+            "No multicast or routing"
+          ],
+          [
+            "**GRE over IPsec**",
+            "GRE tunnel plus IPsec",
+            "Routing and multicast plus crypto"
+          ],
+          [
+            "**FlexVPN**",
+            "IKEv2 profiles",
+            "Modern and simpler"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Interesting traffic for pure IPsec",
+        "code": "  access-list VPN-TRAFFIC permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255\n  !\n  crypto map CM 10 ipsec-isakmp\n   match address VPN-TRAFFIC"
+      },
+      {
+        "kind": "table",
+        "h": "GRE over IPsec recipe",
+        "cols": [
+          "Step",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "1",
+            "Build the GRE tunnel interface"
+          ],
+          [
+            "2",
+            "Create the IPsec transform and profile"
+          ],
+          [
+            "3",
+            "Attach with tunnel protection ipsec profile"
+          ],
+          [
+            "4",
+            "Run a routing protocol over the tunnel"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Encrypted GRE tunnel",
+        "code": "  interface Tunnel0\n   ip address 10.10.0.1 255.255.255.252\n   tunnel source GigabitEthernet0/0\n   tunnel destination 203.0.113.1\n   tunnel protection ipsec profile IPSEC-PROF\n  !\n  router ospf 1\n   network 10.10.0.0 0.0.0.3 area 0"
+      },
+      {
+        "kind": "table",
+        "h": "Routing over the VPN",
+        "cols": [
+          "Protocol",
+          "Behavior"
+        ],
+        "rows": [
+          [
+            "**Static**",
+            "Simple, no failover"
+          ],
+          [
+            "**[[OSPF]] or EIGRP**",
+            "Converges over the tunnel"
+          ],
+          [
+            "**[[BGP]]**",
+            "Scales to many sites"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The failure model",
+        "p": "With pure IPsec, **no interesting traffic means no IPsec SA**, even when the IKE SA is up. With GRE over IPsec the tunnel is a normal interface, so tunnel state and routing give you a clearer signal."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Define interesting traffic",
+        "code": "ip access-list extended VPN-TRAFFIC\n permit ip 10.0.0.0 0.0.0.255 10.1.0.0 0.0.0.255\ncrypto map CM 10 ipsec-isakmp\n match address VPN-TRAFFIC"
+      },
+      {
+        "label": "Encrypted GRE tunnel",
+        "code": "interface Tunnel0\n ip address 10.10.0.1 255.255.255.252\n tunnel source GigabitEthernet0/0\n tunnel destination 203.0.113.1\n tunnel protection ipsec profile IPSEC-PROF"
+      },
+      {
+        "label": "Verify",
+        "code": "show crypto ipsec sa\nshow crypto ikev2 sa\nshow crypto session\nshow interface Tunnel0"
+      }
+    ],
+    "traps": [
+      "The **interesting-traffic ACL** defines what the tunnel protects.",
+      "GRE over IPsec gives **routing, multicast and encryption**.",
+      "**%%tunnel protection ipsec profile%%** is the modern hook.",
+      "ACLs must be **mirror images** on both ends.",
+      "With pure IPsec, no interesting traffic means **no IPsec SA**.",
+      "A GRE tunnel needs its own IP addressing and a route over it."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Site-to-Site"
+      ],
+      "rows": [
+        [
+          "Design",
+          "L2L VPN"
+        ],
+        [
+          "Best recipe",
+          "GRE over IPsec"
+        ],
+        [
+          "Interesting ACL",
+          "Local and remote subnets"
+        ],
+        [
+          "Routing",
+          "OSPF or BGP over the tunnel"
+        ],
+        [
+          "IPsec hook",
+          "Profile via tunnel protection"
+        ],
+        [
+          "Classic failure",
+          "No interesting traffic"
+        ],
+        [
+          "Scale",
+          "BGP for many sites"
+        ],
+        [
+          "Verify",
+          "show crypto session"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. GRE",
+        "d": "Routing-capable tunnel"
+      },
+      {
+        "t": "02. IPsec",
+        "d": "Encryption layer"
+      },
+      {
+        "t": "03. DMVPN",
+        "d": "Dynamic alternative"
+      }
+    ],
+    "glossary": [
+      "Site-to-Site VPN",
+      "IPsec",
+      "GRE",
+      "OSPF",
+      "BGP",
+      "VPN"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "access",
+    "title": "SSL VPN",
+    "blurb": "TLS 443, clientless portals and AnyConnect full tunnels",
+    "overview": "**[[SSL VPN]]** gives remote users secure access through a browser or the AnyConnect client using **TLS on TCP 443**. Clientless mode presents a portal to internal applications; AnyConnect builds a full tunnel. No IPsec client is needed, and 443 passes almost every firewall.",
+    "keyIdea": "TLS 443, plus DTLS 443 for latency. Clientless is a portal, AnyConnect is a full tunnel.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Two access modes",
+        "cols": [
+          "Mode",
+          "Description"
+        ],
+        "rows": [
+          [
+            "**Clientless**",
+            "Browser portal to internal applications, zero install"
+          ],
+          [
+            "**AnyConnect**",
+            "Client installs a full network tunnel"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Transport",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Primary port",
+            "**TCP 443**, TLS"
+          ],
+          [
+            "Fast path",
+            "**UDP 443**, DTLS"
+          ],
+          [
+            "NAT friendly",
+            "Yes, 443 passes almost anywhere"
+          ],
+          [
+            "Client",
+            "Browser or AnyConnect"
+          ],
+          [
+            "Headend",
+            "ASA, ASAv, ISR or FTD"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "SSL VPN versus IPsec remote access",
+        "cols": [
+          "Aspect",
+          "SSL VPN",
+          "IPsec RA"
+        ],
+        "rows": [
+          [
+            "Client",
+            "Browser or AnyConnect",
+            "IPsec client"
+          ],
+          [
+            "Port",
+            "**443**, rarely blocked",
+            "500 and 4500, often blocked"
+          ],
+          [
+            "Access",
+            "Fine grained, portal friendly",
+            "Full tunnel"
+          ],
+          [
+            "Corporate control",
+            "Moderate",
+            "Strong"
+          ],
+          [
+            "Setup friction",
+            "Low",
+            "Higher"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Authentication and posture",
+        "cols": [
+          "Layer",
+          "Mechanism"
+        ],
+        "rows": [
+          [
+            "User authentication",
+            "LDAP, RADIUS or AAA"
+          ],
+          [
+            "MFA",
+            "Token, certificate or push"
+          ],
+          [
+            "Posture",
+            "AnyConnect endpoint assessment"
+          ],
+          [
+            "Group policy",
+            "Split tunnel or full tunnel, ACLs"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Verification on the headend",
+        "code": "  show vpn-sessiondb anyconnect\n  show vpn-sessiondb svc\n  show webvpn\n  show crypto ikev2 sa"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Check active client sessions",
+        "code": "show vpn-sessiondb anyconnect\nshow vpn-sessiondb svc"
+      },
+      {
+        "label": "Check the web portal state",
+        "code": "show webvpn"
+      },
+      {
+        "label": "Check the IKEv2 fallback path",
+        "code": "show crypto ikev2 sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "SSL VPN uses **TLS on TCP 443** and is firewall friendly.",
+      "**Clientless** is a portal; **AnyConnect** is a full tunnel.",
+      "**DTLS on UDP 443** improves latency for real-time traffic.",
+      "MFA, certificates and posture are the security enhancements.",
+      "SSL VPN wins on **per-user reachability** through NAT and firewalls.",
+      "Clientless access is application level, not full network access."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "SSL VPN"
+      ],
+      "rows": [
+        [
+          "Transport",
+          "TLS on TCP 443"
+        ],
+        [
+          "Modes",
+          "Clientless and AnyConnect"
+        ],
+        [
+          "Full tunnel",
+          "AnyConnect"
+        ],
+        [
+          "Fast path",
+          "DTLS on UDP 443"
+        ],
+        [
+          "Client",
+          "Browser or client"
+        ],
+        [
+          "Authentication",
+          "AAA, MFA, certificates"
+        ],
+        [
+          "NAT friendly",
+          "Yes"
+        ],
+        [
+          "Compared with",
+          "IPsec remote access"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. Remote Access VPN",
+        "d": "Client-based counterpart"
+      },
+      {
+        "t": "02. IPsec",
+        "d": "The alternative transport"
+      }
+    ],
+    "glossary": [
+      "SSL VPN",
+      "Remote Access VPN",
+      "VPN",
+      "IPsec",
+      "NAT"
+    ]
+  },
+  {
+    "id": "t10",
+    "num": "10",
+    "group": "access",
+    "title": "Remote Access VPN",
+    "blurb": "AnyConnect, full versus split tunnel, and the authentication triad",
+    "overview": "**[[Remote Access VPN|Remote Access (RA) VPN]]** lets individual users connect into the enterprise from any location. Client-based RA uses software such as Cisco AnyConnect to build an encrypted tunnel and gives full network access, unlike a clientless portal.",
+    "keyIdea": "AnyConnect over IPsec on UDP 500 and 4500, or over SSL on 443. Full tunnel for control, split tunnel for performance.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Client-based versus clientless",
+        "cols": [
+          "Aspect",
+          "Client-based",
+          "Clientless"
+        ],
+        "rows": [
+          [
+            "Client",
+            "Software, AnyConnect",
+            "Browser only"
+          ],
+          [
+            "Access",
+            "**Full network**",
+            "Applications in a portal"
+          ],
+          [
+            "Control",
+            "Strong, DNS and ACLs",
+            "Application level"
+          ],
+          [
+            "Install",
+            "Required",
+            "None"
+          ],
+          [
+            "Transport",
+            "IPsec or SSL and DTLS",
+            "HTTPS"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Two client-based transports",
+        "cols": [
+          "Transport",
+          "Details"
+        ],
+        "rows": [
+          [
+            "**IPsec RA**",
+            "IKEv1 or IKEv2, **UDP 500 and 4500**, strong control"
+          ],
+          [
+            "**SSL and AnyConnect**",
+            "TLS **TCP 443**, DTLS **UDP 443**, firewall friendly"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Full tunnel versus split tunnel",
+        "cols": [
+          "Mode",
+          "Behavior",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Full tunnel**",
+            "All client traffic goes through the headend",
+            "Security and filtering"
+          ],
+          [
+            "**Split tunnel**",
+            "Only corporate subnets go through the tunnel",
+            "Performance and local Internet"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Authentication and policy",
+        "cols": [
+          "Layer",
+          "Mechanism"
+        ],
+        "rows": [
+          [
+            "User",
+            "AAA, RADIUS or LDAP"
+          ],
+          [
+            "MFA",
+            "Token, certificate or push"
+          ],
+          [
+            "Posture",
+            "AnyConnect endpoint assessment"
+          ],
+          [
+            "Authorization",
+            "Attributes from AAA"
+          ],
+          [
+            "Group policy",
+            "Per-user access, split or full tunnel, ACLs"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "ASA headend configuration",
+        "code": "  crypto ikev2 enable outside\n  !\n  group-policy RA internal\n  group-policy RA attributes\n   vpn-tunnel-protocol ikev2 ssl-client\n   split-tunnel-policy tunnelspecified\n   split-tunnel-network-list value SPLIT-ACL\n  !\n  tunnel-group RA type remote-access\n  tunnel-group RA general-attributes\n   address-pool POOL\n   default-group-policy RA"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Show active RA sessions",
+        "code": "show vpn-sessiondb anyconnect\nshow vpn-sessiondb ikev2\nshow vpn-sessiondb summary"
+      },
+      {
+        "label": "Inspect tunnel group and authentication",
+        "code": "show tunnel-group\nshow aaa-server\nshow crypto ikev2 sa"
+      },
+      {
+        "label": "Verify the address pool",
+        "code": "show ip local pool\nshow vpn-sessiondb detail anyconnect"
+      }
+    ],
+    "traps": [
+      "Client-based RA means a **software client and full network access**; clientless means a browser.",
+      "**IPsec RA uses UDP 500 and 4500**; SSL uses **TCP 443** and **UDP 443** for DTLS.",
+      "**DTLS** is the low-latency path for voice and video.",
+      "**Full tunnel** sends all traffic through the headend; split tunnel sends corporate traffic only.",
+      "RA security is **MFA plus certificate plus posture plus group policy**.",
+      "A missing address pool leaves the client authenticated but without an IP address."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "RA VPN"
+      ],
+      "rows": [
+        [
+          "Client",
+          "AnyConnect"
+        ],
+        [
+          "IPsec ports",
+          "UDP 500 and 4500"
+        ],
+        [
+          "SSL port",
+          "TCP 443"
+        ],
+        [
+          "DTLS",
+          "UDP 443"
+        ],
+        [
+          "Full tunnel",
+          "All traffic via the headend"
+        ],
+        [
+          "Split tunnel",
+          "Corporate traffic only"
+        ],
+        [
+          "Authentication",
+          "AAA, MFA, certificates"
+        ],
+        [
+          "Headend",
+          "ASA, ISR or FTD"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. SSL VPN",
+        "d": "Portal-based variant"
+      },
+      {
+        "t": "06. Site-to-Site VPN",
+        "d": "Fixed-site contrast"
+      },
+      {
+        "t": "02. IPsec",
+        "d": "IPsec RA transport"
+      }
+    ],
+    "glossary": [
+      "Remote Access VPN",
+      "SSL VPN",
+      "IKEv2",
+      "VPN",
+      "NAT"
+    ]
+  },
+  {
+    "id": "t11",
+    "num": "11",
+    "group": "access",
+    "title": "VPN Technology Comparison",
+    "blurb": "Choosing between GRE, IPsec, DMVPN, FlexVPN, GET VPN and SSL",
+    "overview": "ENCOR expects you to choose the right **[[VPN]]** technology for a topology: **[[GRE]]** for transport and multicast, **[[IPsec]]** for encryption, **[[DMVPN]]** for dynamic spokes, **[[FlexVPN]]** as the unified IKEv2 framework, **[[GET VPN]]** for tunnel-free any-to-any over **[[MPLS]]**, and **[[SSL VPN]]** for remote users.",
+    "keyIdea": "Map the topology to the tool. Fixed sites use IPsec, multicast needs GRE over IPsec, dynamic branches use DMVPN or FlexVPN, MPLS any-to-any uses GET VPN, users use SSL.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The six technologies at a glance",
+        "cols": [
+          "Technology",
+          "Building blocks",
+          "Best for",
+          "Encryption"
+        ],
+        "rows": [
+          [
+            "**GRE**",
+            "IP protocol 47 tunnel",
+            "Transport, multicast, routing",
+            "None, add IPsec"
+          ],
+          [
+            "**IPsec**",
+            "ESP or AH plus IKE",
+            "Point-to-point confidentiality",
+            "Yes"
+          ],
+          [
+            "**DMVPN**",
+            "mGRE plus NHRP plus IPsec",
+            "Dynamic hub and spoke over Internet",
+            "Yes"
+          ],
+          [
+            "**FlexVPN**",
+            "IKEv2 profiles",
+            "Unified site-to-site and RA",
+            "Yes"
+          ],
+          [
+            "**GET VPN**",
+            "GDOI group key",
+            "Tunnel-free any-to-any on MPLS",
+            "Yes"
+          ],
+          [
+            "**SSL VPN**",
+            "TLS and DTLS on 443",
+            "Remote users and clientless",
+            "Yes"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "GRE versus IPsec",
+        "cols": [
+          "Aspect",
+          "GRE",
+          "IPsec"
+        ],
+        "rows": [
+          [
+            "Encryption",
+            "**None**",
+            "Yes"
+          ],
+          [
+            "Multicast",
+            "Yes",
+            "Not directly"
+          ],
+          [
+            "Routing over it",
+            "Any IGP or BGP",
+            "Via VTI or GRE"
+          ],
+          [
+            "Overhead",
+            "4 B plus 20 B outer IP",
+            "ESP, varies"
+          ],
+          [
+            "Typical combination",
+            "GRE inside IPsec",
+            "Site-to-site"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DMVPN versus FlexVPN",
+        "cols": [
+          "Aspect",
+          "DMVPN",
+          "FlexVPN"
+        ],
+        "rows": [
+          [
+            "IKE",
+            "IKEv1 or IKEv2",
+            "**IKEv2 only**"
+          ],
+          [
+            "Key technology",
+            "NHRP plus mGRE",
+            "IKEv2 profiles"
+          ],
+          [
+            "Modes",
+            "Dynamic spoke to spoke",
+            "Site-to-site, RA, hub, spoke"
+          ],
+          [
+            "Config",
+            "NHRP plus multipoint",
+            "Profile driven"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "GET VPN versus DMVPN versus VTI",
+        "cols": [
+          "Aspect",
+          "GET VPN",
+          "DMVPN",
+          "Crypto map or VTI"
+        ],
+        "rows": [
+          [
+            "Tunnel interface",
+            "None",
+            "mGRE",
+            "VTI or GRE"
+          ],
+          [
+            "Data path",
+            "Direct any-to-any",
+            "Spoke to spoke",
+            "Point to point"
+          ],
+          [
+            "Key management",
+            "GDOI group key",
+            "Per-tunnel IKE",
+            "Per-tunnel IKE"
+          ],
+          [
+            "Overlay routing",
+            "None, native",
+            "NHRP",
+            "IGP over tunnel"
+          ],
+          [
+            "Best fit",
+            "MPLS backbone",
+            "Internet branches",
+            "Fixed sites"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Decision table",
+        "cols": [
+          "Requirement",
+          "Choice"
+        ],
+        "rows": [
+          [
+            "Encryption between two fixed sites",
+            "IPsec, or GRE over IPsec"
+          ],
+          [
+            "Carry multicast and routing protocols",
+            "GRE over IPsec"
+          ],
+          [
+            "Dynamic branches over the Internet",
+            "DMVPN"
+          ],
+          [
+            "One framework for sites and remote access",
+            "FlexVPN"
+          ],
+          [
+            "Any-to-any over MPLS without tunnels",
+            "GET VPN"
+          ],
+          [
+            "Remote users with minimal client friction",
+            "SSL VPN"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Cross-technology verification",
+        "code": "  show dmvpn\n  show crypto session\n  show crypto ipsec sa\n  show ip nhrp\n  show vpn-sessiondb\n  show ip mroute | include Tunnel"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Check overlay state across technologies",
+        "code": "show dmvpn\nshow ip nhrp\nshow crypto session\nshow crypto ipsec sa"
+      },
+      {
+        "label": "Check remote access state",
+        "code": "show vpn-sessiondb summary\nshow vpn-sessiondb anyconnect"
+      },
+      {
+        "label": "Check multicast over a tunnel",
+        "code": "show ip mroute | include Tunnel\nshow ip pim neighbor"
+      }
+    ],
+    "traps": [
+      "**GRE alone does not encrypt**; pair it with IPsec.",
+      "**DMVPN is mGRE plus NHRP plus IPsec**; FlexVPN is IKEv2 profiles.",
+      "**GET VPN has no tunnels**; it uses a GDOI group key on MPLS.",
+      "**SSL VPN on 443** is firewall friendly; IPsec RA uses 500 and 4500.",
+      "Choose by **topology and traffic**: dynamic spokes, users, or MPLS any-to-any.",
+      "A VTI is route-based, a crypto map is policy-based."
+    ],
+    "table": {
+      "cols": [
+        "Need",
+        "Pick"
+      ],
+      "rows": [
+        [
+          "Encrypt fixed links",
+          "IPsec"
+        ],
+        [
+          "Multicast and routing",
+          "GRE over IPsec"
+        ],
+        [
+          "Dynamic branches",
+          "DMVPN"
+        ],
+        [
+          "Unified framework",
+          "FlexVPN"
+        ],
+        [
+          "Tunnel-free any-to-any",
+          "GET VPN"
+        ],
+        [
+          "Remote users",
+          "SSL VPN"
+        ],
+        [
+          "Route-based IPsec",
+          "VTI"
+        ],
+        [
+          "Overhead and MTU",
+          "Tune ip mtu and adjust-mss"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. IPsec",
+        "d": "Core encryption technology"
+      },
+      {
+        "t": "03. DMVPN",
+        "d": "Hub-and-spoke comparison"
+      },
+      {
+        "t": "07. GET VPN",
+        "d": "Tunnel-free comparison"
+      }
+    ],
+    "glossary": [
+      "VPN",
+      "GRE",
+      "IPsec",
+      "DMVPN",
+      "FlexVPN",
+      "GET VPN",
+      "SSL VPN",
+      "Site-to-Site VPN",
+      "Remote Access VPN",
+      "MPLS"
+    ]
+  }
+];
 
         const GROUPS = [
           { key: 'tunnel', label: 'Tunneling & Encryption', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
@@ -1622,6 +3006,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,339 +600,709 @@
         const heroIntro = `**[[NAT|Network Address Translation]]** allows private addresses to reach public networks. This level covers **[[Static NAT]]**, **[[Dynamic NAT]]**, **[[PAT]] (NAT overload)**, **[[Policy NAT]]**, **[[NAT64]]** for IPv6-IPv4 translation, and how to troubleshoot common NAT issues.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'types', title: 'Static NAT',
-            blurb: 'One-to-one permanent mapping between inside local and inside global',
-            overview: '**[[Static NAT]]** creates a permanent **one-to-one** mapping between an **[[Inside Local Address|inside local]]** and an **[[Inside Global Address|inside global]]** address. It is **bidirectional** and the mapping persists even when no traffic is active. Static NAT does not make a server reachable by itself — routing and ACLs/firewall rules still matter.',
-            keyIdea: 'Permanent 1:1 mapping. Bidirectional. Stays in the table until removed.',
-            sections: [
-              { kind: 'code', h: 'Concept', code:
-`  Inside Local        Inside Global
-  10.0.0.10    <---->  203.0.113.10` },
-              { kind: 'table', h: 'NAT address terms', cols: ['Term', 'Meaning'], rows: [
-                ['Inside Local', 'Private IP on the inside network'],
-                ['Inside Global', 'Public IP seen by the outside network'],
-                ['Outside Local', 'IP of outside host as seen from inside'],
-                ['Outside Global', 'Real IP of outside host on the outside network']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  interface GigabitEthernet0/0
-   ip nat inside
-  interface GigabitEthernet0/1
-   ip nat outside
-
-  ip nat inside source static 10.0.0.10 203.0.113.10` },
-              { kind: 'para', h: 'Requirements for inbound', p: 'For outside-initiated connections, you need the NAT mapping, a route to the inside host, and any required ACLs/firewall rules to allow traffic.' },
-              { kind: 'code', h: 'Verification', code:
-`  show ip nat translations
-  show ip nat statistics` }
-            ],
-            commands: [
-              { label: 'Configure Static NAT', code:
-`interface GigabitEthernet0/0
- ip nat inside
-interface GigabitEthernet0/1
- ip nat outside
-
-ip nat inside source static 10.0.0.10 203.0.113.10` },
-              { label: 'Verify', code:
-`show ip nat translations` }
-            ],
-            traps: [
-              '**Static NAT is bidirectional** and does not time out.',
-              'Static mappings are not removed by clearing translations.',
-              'NAT is not a firewall — ACLs may still be required.',
-              'Static NAT vs Static PAT: PAT adds port numbers.',
-              'You must define inside/outside interfaces.',
-              'Routing to the inside host is still required.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'One-to-one, permanent'],
-                ['Direction', 'Bidirectional'],
-                ['Timeout', 'Never (until removed)'],
-                ['Use case', 'Servers needing predictable public IPs'],
-                ['Ports', 'No port translation'],
-                ['Command', 'ip nat inside source static inside-local inside-global']
-              ]
-            },
-            related: [
-              { t: '03. PAT', d: 'Adds port-based translation' },
-              { t: '04. Policy NAT', d: 'Conditional translations' }
-            ],
-            glossary: ['Static NAT', 'NAT', 'Inside Local Address', 'Inside Global Address', 'Outside Local Address', 'Outside Global Address']
-          },
-          {
-            id: 't02', num: '02', group: 'types', title: 'Dynamic NAT',
-            blurb: 'Pool-based temporary 1:1 mappings for inside-initiated traffic',
-            overview: '**[[Dynamic NAT]]** maps inside local addresses to addresses from a **[[NAT Pool]]** on a first-come, first-served basis. Mappings are created when traffic matches and are temporary. Without **overload**, it is **1:1** — one pool address per active host. Outside hosts cannot reliably initiate connections.',
-            keyIdea: 'Temporary 1:1 from a pool. No overload = no port sharing. Pool exhaustion blocks new translations.',
-            sections: [
-              { kind: 'table', h: 'NAT terms recap', cols: ['Term', 'Meaning'], rows: [
-                ['NAT Pool', 'Range of public IPs available for translation'],
-                ['Inside Local', 'Private source address'],
-                ['Inside Global', 'Address assigned from the pool']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip access-list standard NAT-ACL
-   permit 10.0.0.0 0.0.0.255
-
-  ip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.15 netmask 255.255.255.0
-
-  interface GigabitEthernet0/0
-   ip nat inside
-  interface GigabitEthernet0/1
-   ip nat outside
-
-  ip nat inside source list NAT-ACL pool PUBLIC-POOL` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip nat translations
-  show ip nat statistics` }
-            ],
-            commands: [
-              { label: 'Configure Dynamic NAT', code:
-`ip access-list standard NAT-ACL
- permit 10.0.0.0 0.0.0.255
-ip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.15 netmask 255.255.255.0
-ip nat inside source list NAT-ACL pool PUBLIC-POOL` },
-              { label: 'Verify', code:
-`show ip nat translations\nshow ip nat statistics` }
-            ],
-            traps: [
-              'Dynamic NAT is **1:1 without overload**; **PAT** adds **overload** for sharing.',
-              'No overload means **pool exhaustion** prevents new translations.',
-              'Mappings are **temporary** and time out.',
-              'Outside hosts cannot reliably initiate connections.',
-              'The ACL is for **NAT classification**, not a security ACL.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'Pool-based, temporary'],
-                ['Mapping', '1:1 (no overload)'],
-                ['Initiation', 'Primarily inside-initiated'],
-                ['Pool exhaustion', 'Blocks new translations'],
-                ['Timeout', 'Yes'],
-                ['Command', 'ip nat inside source list ACL pool POOL']
-              ]
-            },
-            related: [
-              { t: '03. PAT', d: 'Sharing with overload' },
-              { t: '01. Static NAT', d: 'Permanent mapping' }
-            ],
-            glossary: ['Dynamic NAT', 'NAT Pool', 'NAT', 'Inside Local Address', 'Inside Global Address']
-          },
-          {
-            id: 't03', num: '03', group: 'types', title: 'PAT',
-            blurb: 'Port Address Translation (overload) shares one IP across many hosts',
-            overview: '**[[PAT]] (Port Address Translation)**, also known as **[[NAT Overload|NAT overload]]**, allows many inside hosts to share a single public IP address. The router uses **TCP/UDP source ports** to track flows, creating unique translations in the NAT table.',
-            keyIdea: 'Many-to-one using Layer 4 ports. Enable with overload. Can use a pool or the outside interface IP.',
-            sections: [
-              { kind: 'table', h: 'Comparison', cols: ['Feature', 'Dynamic NAT', 'PAT (overload)'], rows: [
-                ['Mapping', '1:1', '**Many:1**'],
-                ['Uses ports', 'No', '**Yes**'],
-                ['IP consumption', 'One per host', '**One (or few) per many hosts**'],
-                ['Pool exhaustion', 'Blocks new hosts', 'Less likely (uses ports)'],
-                ['Keyword', 'No overload', '**overload**']
-              ]},
-              { kind: 'code', h: 'PAT using outside interface', code:
-`  ip access-list standard NAT-ACL
-   permit 10.0.0.0 0.0.0.255
-
-  interface GigabitEthernet0/0
-   ip nat inside
-  interface GigabitEthernet0/1
-   ip nat outside
-
-  ip nat inside source list NAT-ACL interface GigabitEthernet0/1 overload` },
-              { kind: 'code', h: 'PAT using a pool', code:
-`  ip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.10 netmask 255.255.255.0
-  ip nat inside source list NAT-ACL pool PUBLIC-POOL overload` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip nat translations
-  show ip nat statistics` }
-            ],
-            commands: [
-              { label: 'PAT with interface', code:
-`ip nat inside source list NAT-ACL interface GigabitEthernet0/1 overload` },
-              { label: 'PAT with pool', code:
-`ip nat inside source list NAT-ACL pool PUBLIC-POOL overload` },
-              { label: 'Verify', code:
-`show ip nat translations` }
-            ],
-            traps: [
-              '**PAT requires the `overload` keyword**.',
-              'Can use the **outside interface IP** or a **pool**.',
-              'Uses **source ports** to distinguish flows.',
-              'Unsolicited inbound connections still need **Static NAT/Static PAT**.',
-              'Preserves source port when possible.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Type', 'Many-to-one (NAT overload)'],
-                ['Identifier', 'Source IP + source port'],
-                ['Interfaces/pools', 'Interface IP or NAT pool'],
-                ['Use case', 'Home/SOHO/edge where few public IPs'],
-                ['Command', 'ip nat inside source ... overload'],
-                ['Inbound', 'Only for existing translations']
-              ]
-            },
-            related: [
-              { t: '02. Dynamic NAT', d: 'Without overload' },
-              { t: '01. Static NAT', d: 'For inbound services' }
-            ],
-            glossary: ['PAT', 'NAT Overload', 'NAT', 'Inside Local Address', 'Inside Global Address']
-          },
-          {
-            id: 't04', num: '04', group: 'adv', title: 'Policy NAT',
-            blurb: 'Translate based on source/destination conditions using route-maps',
-            overview: '**[[Policy NAT]]** applies translation conditionally based on traffic characteristics using a **route-map**. Different flows can be translated differently (useful for multi-homed environments).',
-            keyIdea: 'Conditional translation using route-map match conditions.',
-            sections: [
-              { kind: 'table', h: 'When to use', cols: ['Scenario', 'Why'], rows: [
-                ['Multi-homed to different ISPs', 'Translate to different public IPs per destination'],
-                ['Selective translation', 'Only certain traffic needs translation']
-              ]},
-              { kind: 'code', h: 'Configuration example', code:
-`  ip access-list extended TO-ISP1
-   permit ip 10.0.0.0 0.0.0.255 192.168.100.0 0.0.0.255
-
-  route-map NAT-ISP1 permit 10
-   match ip address TO-ISP1
-
-  ip nat pool POOL1 203.0.113.10 203.0.113.10 netmask 255.255.255.0
-
-  ip nat inside source route-map NAT-ISP1 pool POOL1 overload` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip nat translations
-  show route-map` }
-            ],
-            commands: [
-              { label: 'Policy NAT with route-map', code:
-`route-map NAT-POLICY permit 10\n match ip address 101\nip nat inside source route-map NAT-POLICY pool POOL-ISP overload` },
-              { label: 'Verify', code:
-`show ip nat translations` }
-            ],
-            traps: [
-              'Policy NAT uses a **route-map** with `ip nat inside source route-map ...`.',
-              'Translation decision is based on **route-map match conditions**.',
-              'Useful for **dual-homed/multi-ISP** environments.',
-              'Still requires inside/outside interface configuration.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Conditional NAT based on policy'],
-                ['Mechanism', 'route-map match conditions'],
-                ['Use case', 'Different translations per destination/ISP'],
-                ['Command', 'ip nat inside source route-map NAME pool/INT overload'],
-                ['vs regular NAT', 'More selective']
-              ]
-            },
-            related: [
-              { t: '02. Dynamic NAT', d: 'Source-only NAT' },
-              { t: '03. PAT', d: 'Often used with overload' }
-            ],
-            glossary: ['Policy NAT', 'Route Map', 'NAT Pool', 'NAT', 'PAT']
-          },
-          {
-            id: 't05', num: '05', group: 'adv', title: 'NAT64',
-            blurb: 'Translate IPv6 to IPv4 for IPv6-only clients reaching IPv4-only servers',
-            overview: '**[[NAT64]]** enables communication between **IPv6-only** clients and **IPv4-only** servers by translating between address families. It is often deployed with **[[DNS64]]**, which synthesizes AAAA records for IPv4-only destinations so IPv6 clients can use them.',
-            keyIdea: 'Stateful or stateless NAT64 translates IPv6<->IPv4. DNS64 helps discover IPv4-only servers.',
-            sections: [
-              { kind: 'table', h: 'Concepts', cols: ['Term', 'Meaning'], rows: [
-                ['NAT64', 'Translates packets between IPv6 and IPv4'],
-                ['DNS64', 'Synthesizes AAAA from A records for IPv6 clients'],
-                ['Stateful NAT64', 'Similar to PAT, many IPv6 clients share IPv4 addresses'],
-                ['Stateless NAT64', '1:1 translation between IPv6 and IPv4 addresses']
-              ]},
-              { kind: 'code', h: 'High-level flow', code:
-`  IPv6-only client -> NAT64/DNS64 -> IPv4-only server
-  DNS64 returns synthetic AAAA so the client initiates over IPv6.` },
-              { kind: 'code', h: 'Verification', code:
-`  show nat64 translations
-  show nat64 statistics` }
-            ],
-            commands: [
-              { label: 'Conceptual check', code:
-`show nat64 translations\nshow nat64 statistics` }
-            ],
-            traps: [
-              '**NAT64** allows IPv6-only to reach IPv4-only.',
-              '**DNS64** synthesizes AAAA records for IPv4-only destinations.',
-              '**Stateful NAT64** shares IPv4 addresses (like PAT).',
-              '**Stateless NAT64** is 1:1.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'IPv6-only to IPv4-only connectivity'],
-                ['With DNS64', 'Synthesizes AAAA for A records'],
-                ['Stateful', 'Many-to-one (like PAT)'],
-                ['Stateless', 'One-to-one'],
-                ['Direction', 'Typically initiated by IPv6 client']
-              ]
-            },
-            related: [
-              { t: '01. Static NAT', d: '1:1 concept' },
-              { t: '03. PAT', d: 'Sharing concept' }
-            ],
-            glossary: ['NAT64', 'DNS64', 'IPv6', 'IPv4', 'NAT', 'PAT']
-          },
-          {
-            id: 't06', num: '06', group: 'trouble', title: 'Troubleshooting NAT',
-            blurb: 'Verify interfaces, ACLs, pools, translations and routing',
-            overview: 'NAT issues usually come down to **missing inside/outside interfaces**, **ACL not matching**, **pool exhaustion**, **no route back**, or **translations timing out**. Systematic verification of configuration, translations, and routing is key.',
-            keyIdea: 'Check: interfaces -> ACL/pool/route-map -> translations -> routing/ACLs.',
-            sections: [
-              { kind: 'table', h: 'Common issues', cols: ['Issue', 'Cause', 'Fix'], rows: [
-                ['No translation created', 'ACL does not match or inside/outside missing', 'Fix ACL and interface roles'],
-                ['Translations exist but no connectivity', 'Routing missing or return path wrong', 'Verify routes and reverse path'],
-                ['Pool exhausted', 'Not enough addresses, no overload', 'Add addresses or use PAT/overload'],
-                ['Outside cannot initiate', 'Dynamic/PAT mapping absent', 'Use Static NAT/Static PAT'],
-                ['Asymmetric routing', 'Return traffic takes different path', 'Ensure return goes through NAT router']
-              ]},
-              { kind: 'code', h: 'Key verification commands', code:
-`  show ip nat translations
-  show ip nat statistics
-  show running-config | section ip nat
-  show ip route` },
-              { kind: 'para', h: 'Tips', p: 'Remember: the ACL used for NAT is a classification ACL, not necessarily a security ACL.' }
-            ],
-            commands: [
-              { label: 'Verify NAT state', code:
-`show ip nat translations\nshow ip nat statistics\nshow running-config | section ip nat` },
-              { label: 'Check routing', code:
-`show ip route` }
-            ],
-            traps: [
-              'ACL mismatch is a common cause of no translation.',
-              '**Pool exhaustion** with no overload blocks new hosts.',
-              'Outside-initiated connections need **Static NAT/Static PAT**.',
-              'Asymmetric routing breaks return traffic.',
-              'NAT ACL is not a security ACL.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['First check', 'Inside/outside interfaces'],
-                ['Translations', 'show ip nat translations'],
-                ['Statistics', 'show ip nat statistics'],
-                ['Pool full', 'Look for translation failures'],
-                ['Return path', 'Must go through NAT router']
-              ]
-            },
-            related: [
-              { t: '02. Dynamic NAT', d: 'Pool exhaustion' },
-              { t: '03. PAT', d: 'Overload issues' },
-              { t: '01. Static NAT', d: 'Inbound connectivity' }
-            ],
-            glossary: ['NAT', 'NAT Pool', 'Static NAT', 'Dynamic NAT', 'PAT', 'Routing Table', 'Access Control List']
-          }
-        ];
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "types",
+    "title": "Static NAT",
+    "blurb": "One-to-one permanent mapping between inside local and inside global",
+    "overview": "**[[Static NAT]]** creates a permanent **one-to-one** mapping between an **[[Inside Local Address|inside local]]** and an **[[Inside Global Address|inside global]]** address. It is **bidirectional** and the mapping persists even when no traffic is active. Static NAT does not make a server reachable by itself — routing and ACLs/firewall rules still matter.",
+    "keyIdea": "Permanent 1:1 mapping. Bidirectional. Stays in the table until removed.",
+    "sections": [
+      {
+        "h": "NAT",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">NAT/PAT</text><rect x=\"60\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"350\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"640\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><text x=\"160\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Inside Local</text><text x=\"450\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Inside Global</text><text x=\"740\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Outside</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">PAT uses ports to share addresses</text></g></svg>",
+        "caption": "Translate private to public addresses."
+      },
+      {
+        "kind": "code",
+        "h": "Concept",
+        "code": "  Inside Local        Inside Global\n  10.0.0.10    <---->  203.0.113.10"
+      },
+      {
+        "kind": "table",
+        "h": "NAT address terms",
+        "cols": [
+          "Term",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "Inside Local",
+            "Private IP on the inside network"
+          ],
+          [
+            "Inside Global",
+            "Public IP seen by the outside network"
+          ],
+          [
+            "Outside Local",
+            "IP of outside host as seen from inside"
+          ],
+          [
+            "Outside Global",
+            "Real IP of outside host on the outside network"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  interface GigabitEthernet0/0\n   ip nat inside\n  interface GigabitEthernet0/1\n   ip nat outside\n\n  ip nat inside source static 10.0.0.10 203.0.113.10"
+      },
+      {
+        "kind": "para",
+        "h": "Requirements for inbound",
+        "p": "For outside-initiated connections, you need the NAT mapping, a route to the inside host, and any required ACLs/firewall rules to allow traffic."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip nat translations\n  show ip nat statistics"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure Static NAT",
+        "code": "interface GigabitEthernet0/0\n ip nat inside\ninterface GigabitEthernet0/1\n ip nat outside\n\nip nat inside source static 10.0.0.10 203.0.113.10"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip nat translations"
+      }
+    ],
+    "traps": [
+      "**Static NAT is bidirectional** and does not time out.",
+      "Static mappings are not removed by clearing translations.",
+      "NAT is not a firewall — ACLs may still be required.",
+      "Static NAT vs Static PAT: PAT adds port numbers.",
+      "You must define inside/outside interfaces.",
+      "Routing to the inside host is still required."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "One-to-one, permanent"
+        ],
+        [
+          "Direction",
+          "Bidirectional"
+        ],
+        [
+          "Timeout",
+          "Never (until removed)"
+        ],
+        [
+          "Use case",
+          "Servers needing predictable public IPs"
+        ],
+        [
+          "Ports",
+          "No port translation"
+        ],
+        [
+          "Command",
+          "ip nat inside source static inside-local inside-global"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. PAT",
+        "d": "Adds port-based translation"
+      },
+      {
+        "t": "04. Policy NAT",
+        "d": "Conditional translations"
+      }
+    ],
+    "glossary": [
+      "Static NAT",
+      "NAT",
+      "Inside Local Address",
+      "Inside Global Address",
+      "Outside Local Address",
+      "Outside Global Address"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "types",
+    "title": "Dynamic NAT",
+    "blurb": "Pool-based temporary 1:1 mappings for inside-initiated traffic",
+    "overview": "**[[Dynamic NAT]]** maps inside local addresses to addresses from a **[[NAT Pool]]** on a first-come, first-served basis. Mappings are created when traffic matches and are temporary. Without **overload**, it is **1:1** — one pool address per active host. Outside hosts cannot reliably initiate connections.",
+    "keyIdea": "Temporary 1:1 from a pool. No overload = no port sharing. Pool exhaustion blocks new translations.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "NAT terms recap",
+        "cols": [
+          "Term",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "NAT Pool",
+            "Range of public IPs available for translation"
+          ],
+          [
+            "Inside Local",
+            "Private source address"
+          ],
+          [
+            "Inside Global",
+            "Address assigned from the pool"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip access-list standard NAT-ACL\n   permit 10.0.0.0 0.0.0.255\n\n  ip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.15 netmask 255.255.255.0\n\n  interface GigabitEthernet0/0\n   ip nat inside\n  interface GigabitEthernet0/1\n   ip nat outside\n\n  ip nat inside source list NAT-ACL pool PUBLIC-POOL"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip nat translations\n  show ip nat statistics"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure Dynamic NAT",
+        "code": "ip access-list standard NAT-ACL\n permit 10.0.0.0 0.0.0.255\nip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.15 netmask 255.255.255.0\nip nat inside source list NAT-ACL pool PUBLIC-POOL"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip nat translations\nshow ip nat statistics"
+      }
+    ],
+    "traps": [
+      "Dynamic NAT is **1:1 without overload**; **PAT** adds **overload** for sharing.",
+      "No overload means **pool exhaustion** prevents new translations.",
+      "Mappings are **temporary** and time out.",
+      "Outside hosts cannot reliably initiate connections.",
+      "The ACL is for **NAT classification**, not a security ACL."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "Pool-based, temporary"
+        ],
+        [
+          "Mapping",
+          "1:1 (no overload)"
+        ],
+        [
+          "Initiation",
+          "Primarily inside-initiated"
+        ],
+        [
+          "Pool exhaustion",
+          "Blocks new translations"
+        ],
+        [
+          "Timeout",
+          "Yes"
+        ],
+        [
+          "Command",
+          "ip nat inside source list ACL pool POOL"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. PAT",
+        "d": "Sharing with overload"
+      },
+      {
+        "t": "01. Static NAT",
+        "d": "Permanent mapping"
+      }
+    ],
+    "glossary": [
+      "Dynamic NAT",
+      "NAT Pool",
+      "NAT",
+      "Inside Local Address",
+      "Inside Global Address"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "types",
+    "title": "PAT",
+    "blurb": "Port Address Translation (overload) shares one IP across many hosts",
+    "overview": "**[[PAT]] (Port Address Translation)**, also known as **[[NAT Overload|NAT overload]]**, allows many inside hosts to share a single public IP address. The router uses **TCP/UDP source ports** to track flows, creating unique translations in the NAT table.",
+    "keyIdea": "Many-to-one using Layer 4 ports. Enable with overload. Can use a pool or the outside interface IP.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Comparison",
+        "cols": [
+          "Feature",
+          "Dynamic NAT",
+          "PAT (overload)"
+        ],
+        "rows": [
+          [
+            "Mapping",
+            "1:1",
+            "**Many:1**"
+          ],
+          [
+            "Uses ports",
+            "No",
+            "**Yes**"
+          ],
+          [
+            "IP consumption",
+            "One per host",
+            "**One (or few) per many hosts**"
+          ],
+          [
+            "Pool exhaustion",
+            "Blocks new hosts",
+            "Less likely (uses ports)"
+          ],
+          [
+            "Keyword",
+            "No overload",
+            "**overload**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "PAT using outside interface",
+        "code": "  ip access-list standard NAT-ACL\n   permit 10.0.0.0 0.0.0.255\n\n  interface GigabitEthernet0/0\n   ip nat inside\n  interface GigabitEthernet0/1\n   ip nat outside\n\n  ip nat inside source list NAT-ACL interface GigabitEthernet0/1 overload"
+      },
+      {
+        "kind": "code",
+        "h": "PAT using a pool",
+        "code": "  ip nat pool PUBLIC-POOL 203.0.113.10 203.0.113.10 netmask 255.255.255.0\n  ip nat inside source list NAT-ACL pool PUBLIC-POOL overload"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip nat translations\n  show ip nat statistics"
+      }
+    ],
+    "commands": [
+      {
+        "label": "PAT with interface",
+        "code": "ip nat inside source list NAT-ACL interface GigabitEthernet0/1 overload"
+      },
+      {
+        "label": "PAT with pool",
+        "code": "ip nat inside source list NAT-ACL pool PUBLIC-POOL overload"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip nat translations"
+      }
+    ],
+    "traps": [
+      "**PAT requires the `overload` keyword**.",
+      "Can use the **outside interface IP** or a **pool**.",
+      "Uses **source ports** to distinguish flows.",
+      "Unsolicited inbound connections still need **Static NAT/Static PAT**.",
+      "Preserves source port when possible."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Type",
+          "Many-to-one (NAT overload)"
+        ],
+        [
+          "Identifier",
+          "Source IP + source port"
+        ],
+        [
+          "Interfaces/pools",
+          "Interface IP or NAT pool"
+        ],
+        [
+          "Use case",
+          "Home/SOHO/edge where few public IPs"
+        ],
+        [
+          "Command",
+          "ip nat inside source ... overload"
+        ],
+        [
+          "Inbound",
+          "Only for existing translations"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Dynamic NAT",
+        "d": "Without overload"
+      },
+      {
+        "t": "01. Static NAT",
+        "d": "For inbound services"
+      }
+    ],
+    "glossary": [
+      "PAT",
+      "NAT Overload",
+      "NAT",
+      "Inside Local Address",
+      "Inside Global Address"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "adv",
+    "title": "Policy NAT",
+    "blurb": "Translate based on source/destination conditions using route-maps",
+    "overview": "**[[Policy NAT]]** applies translation conditionally based on traffic characteristics using a **route-map**. Different flows can be translated differently (useful for multi-homed environments).",
+    "keyIdea": "Conditional translation using route-map match conditions.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "When to use",
+        "cols": [
+          "Scenario",
+          "Why"
+        ],
+        "rows": [
+          [
+            "Multi-homed to different ISPs",
+            "Translate to different public IPs per destination"
+          ],
+          [
+            "Selective translation",
+            "Only certain traffic needs translation"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration example",
+        "code": "  ip access-list extended TO-ISP1\n   permit ip 10.0.0.0 0.0.0.255 192.168.100.0 0.0.0.255\n\n  route-map NAT-ISP1 permit 10\n   match ip address TO-ISP1\n\n  ip nat pool POOL1 203.0.113.10 203.0.113.10 netmask 255.255.255.0\n\n  ip nat inside source route-map NAT-ISP1 pool POOL1 overload"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip nat translations\n  show route-map"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Policy NAT with route-map",
+        "code": "route-map NAT-POLICY permit 10\n match ip address 101\nip nat inside source route-map NAT-POLICY pool POOL-ISP overload"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip nat translations"
+      }
+    ],
+    "traps": [
+      "Policy NAT uses a **route-map** with `ip nat inside source route-map ...`.",
+      "Translation decision is based on **route-map match conditions**.",
+      "Useful for **dual-homed/multi-ISP** environments.",
+      "Still requires inside/outside interface configuration."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Conditional NAT based on policy"
+        ],
+        [
+          "Mechanism",
+          "route-map match conditions"
+        ],
+        [
+          "Use case",
+          "Different translations per destination/ISP"
+        ],
+        [
+          "Command",
+          "ip nat inside source route-map NAME pool/INT overload"
+        ],
+        [
+          "vs regular NAT",
+          "More selective"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Dynamic NAT",
+        "d": "Source-only NAT"
+      },
+      {
+        "t": "03. PAT",
+        "d": "Often used with overload"
+      }
+    ],
+    "glossary": [
+      "Policy NAT",
+      "Route Map",
+      "NAT Pool",
+      "NAT",
+      "PAT"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "adv",
+    "title": "NAT64",
+    "blurb": "Translate IPv6 to IPv4 for IPv6-only clients reaching IPv4-only servers",
+    "overview": "**[[NAT64]]** enables communication between **IPv6-only** clients and **IPv4-only** servers by translating between address families. It is often deployed with **[[DNS64]]**, which synthesizes AAAA records for IPv4-only destinations so IPv6 clients can use them.",
+    "keyIdea": "Stateful or stateless NAT64 translates IPv6<->IPv4. DNS64 helps discover IPv4-only servers.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Concepts",
+        "cols": [
+          "Term",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "NAT64",
+            "Translates packets between IPv6 and IPv4"
+          ],
+          [
+            "DNS64",
+            "Synthesizes AAAA from A records for IPv6 clients"
+          ],
+          [
+            "Stateful NAT64",
+            "Similar to PAT, many IPv6 clients share IPv4 addresses"
+          ],
+          [
+            "Stateless NAT64",
+            "1:1 translation between IPv6 and IPv4 addresses"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "High-level flow",
+        "code": "  IPv6-only client -> NAT64/DNS64 -> IPv4-only server\n  DNS64 returns synthetic AAAA so the client initiates over IPv6."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show nat64 translations\n  show nat64 statistics"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Conceptual check",
+        "code": "show nat64 translations\nshow nat64 statistics"
+      }
+    ],
+    "traps": [
+      "**NAT64** allows IPv6-only to reach IPv4-only.",
+      "**DNS64** synthesizes AAAA records for IPv4-only destinations.",
+      "**Stateful NAT64** shares IPv4 addresses (like PAT).",
+      "**Stateless NAT64** is 1:1."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "IPv6-only to IPv4-only connectivity"
+        ],
+        [
+          "With DNS64",
+          "Synthesizes AAAA for A records"
+        ],
+        [
+          "Stateful",
+          "Many-to-one (like PAT)"
+        ],
+        [
+          "Stateless",
+          "One-to-one"
+        ],
+        [
+          "Direction",
+          "Typically initiated by IPv6 client"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Static NAT",
+        "d": "1:1 concept"
+      },
+      {
+        "t": "03. PAT",
+        "d": "Sharing concept"
+      }
+    ],
+    "glossary": [
+      "NAT64",
+      "DNS64",
+      "IPv6",
+      "IPv4",
+      "NAT",
+      "PAT"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "trouble",
+    "title": "Troubleshooting NAT",
+    "blurb": "Verify interfaces, ACLs, pools, translations and routing",
+    "overview": "NAT issues usually come down to **missing inside/outside interfaces**, **ACL not matching**, **pool exhaustion**, **no route back**, or **translations timing out**. Systematic verification of configuration, translations, and routing is key.",
+    "keyIdea": "Check: interfaces -> ACL/pool/route-map -> translations -> routing/ACLs.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Common issues",
+        "cols": [
+          "Issue",
+          "Cause",
+          "Fix"
+        ],
+        "rows": [
+          [
+            "No translation created",
+            "ACL does not match or inside/outside missing",
+            "Fix ACL and interface roles"
+          ],
+          [
+            "Translations exist but no connectivity",
+            "Routing missing or return path wrong",
+            "Verify routes and reverse path"
+          ],
+          [
+            "Pool exhausted",
+            "Not enough addresses, no overload",
+            "Add addresses or use PAT/overload"
+          ],
+          [
+            "Outside cannot initiate",
+            "Dynamic/PAT mapping absent",
+            "Use Static NAT/Static PAT"
+          ],
+          [
+            "Asymmetric routing",
+            "Return traffic takes different path",
+            "Ensure return goes through NAT router"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Key verification commands",
+        "code": "  show ip nat translations\n  show ip nat statistics\n  show running-config | section ip nat\n  show ip route"
+      },
+      {
+        "kind": "para",
+        "h": "Tips",
+        "p": "Remember: the ACL used for NAT is a classification ACL, not necessarily a security ACL."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Verify NAT state",
+        "code": "show ip nat translations\nshow ip nat statistics\nshow running-config | section ip nat"
+      },
+      {
+        "label": "Check routing",
+        "code": "show ip route"
+      }
+    ],
+    "traps": [
+      "ACL mismatch is a common cause of no translation.",
+      "**Pool exhaustion** with no overload blocks new hosts.",
+      "Outside-initiated connections need **Static NAT/Static PAT**.",
+      "Asymmetric routing breaks return traffic.",
+      "NAT ACL is not a security ACL."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "First check",
+          "Inside/outside interfaces"
+        ],
+        [
+          "Translations",
+          "show ip nat translations"
+        ],
+        [
+          "Statistics",
+          "show ip nat statistics"
+        ],
+        [
+          "Pool full",
+          "Look for translation failures"
+        ],
+        [
+          "Return path",
+          "Must go through NAT router"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Dynamic NAT",
+        "d": "Pool exhaustion"
+      },
+      {
+        "t": "03. PAT",
+        "d": "Overload issues"
+      },
+      {
+        "t": "01. Static NAT",
+        "d": "Inbound connectivity"
+      }
+    ],
+    "glossary": [
+      "NAT",
+      "NAT Pool",
+      "Static NAT",
+      "Dynamic NAT",
+      "PAT",
+      "Routing Table",
+      "Access Control List"
+    ]
+  }
+];
 
         const GROUPS = [
           { key: 'types', label: 'NAT Types', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
@@ -1058,6 +1435,7 @@ ip nat inside source list NAT-ACL pool PUBLIC-POOL` },
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

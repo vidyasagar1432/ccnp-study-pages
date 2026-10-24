@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,3853 +600,1509 @@
         const heroIntro = "**[[Virtual Machine|Virtual machines]]** run a full guest OS on a **[[Hypervisor]]**, while **[[Container|containers]]** share the kernel and are orchestrated by **[[Docker]]** and **[[Kubernetes]]**. **[[VRF]]** brings that isolation to routing, and **[[Public Cloud]]**, **[[Private Cloud]]** and **[[Hybrid Cloud]]** are consumed as **[[SaaS]]**, **[[PaaS]]** or **[[IaaS]]**.";
 
         const topics = [
- {
-  "num": "01",
-  "id": "t01",
-  "group": "server",
-  "title": "Virtual Machines",
-  "blurb": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v",
-  "overview": "A **[[Virtual Machine|VM]]** is a software-emulated computer: a full guest OS running on **virtualized hardware** (vCPU, vRAM, vNIC, vDisk) atop a **[[Hypervisor|hypervisor]]**. VMs give **isolation** and **workload mobility** at the cost of resource overhead. For network engineers, VMs are the unit of **virtual appliances** (routers, WLCs, firewalls) and the cloud.",
-  "keyIdea": "VM = **full guest OS on virtual hardware**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What makes a VM",
-    "cols": [
-     "Component",
-     "Detail"
+  {
+    "num": "01",
+    "id": "t01",
+    "group": "server",
+    "title": "Virtual Machines",
+    "blurb": "A virtual machine runs a full guest operating system on virtualized CPU, memory and network hardware.",
+    "overview": "A **[[Virtual Machine|VM]]** is a software-emulated computer: a full guest OS running on **virtualized hardware** (vCPU, vRAM, vNIC, vDisk) atop a **[[Hypervisor|hypervisor]]**. VMs give **isolation** and **workload mobility** at the cost of resource overhead. For network engineers, VMs are the unit of **virtual appliances** (routers, WLCs, firewalls) and the cloud.",
+    "keyIdea": "VM = **full guest OS on virtual hardware**.",
+    "sections": [
+      {
+        "h": "Virtualization & Cloud",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">VIRTUALIZATION</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">VMs, Hypervisor, NFV, Cloud</text></g></svg>",
+        "caption": "Virtualized infrastructure."
+      },
+      {
+        "kind": "para",
+        "h": "A complete guest computer",
+        "p": "A virtual machine is a software-defined computer with its own virtual CPU, memory, disk and network adapter. The hypervisor schedules those virtual resources onto physical hardware, and the guest runs a full operating system. Because the guest is isolated, a VM can be snapshotted, cloned or moved without changing the application inside it."
+      },
+      {
+        "kind": "list",
+        "h": "Lifecycle and operations",
+        "items": [
+          {
+            "t": "Provision",
+            "d": "Create the VM from an image or template, then assign CPU, memory, disk and network settings."
+          },
+          {
+            "t": "Install and configure",
+            "d": "Install the guest OS and the hypervisor tools that improve drivers, clocks and management."
+          },
+          {
+            "t": "Protect",
+            "d": "Use backups for recovery and snapshots only for short-term rollback before a change."
+          },
+          {
+            "t": "Move",
+            "d": "Live migration moves a running VM between hosts when the shared storage and network support it."
+          },
+          {
+            "t": "Retire",
+            "d": "Remove the VM, its disks and its network records so unused resources and addresses are released."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Exam traps",
+        "items": [
+          {
+            "t": "Snapshots are not backups",
+            "d": "A snapshot depends on the original disk and can grow large; it does not protect against storage loss."
+          },
+          {
+            "t": "Overcommit",
+            "d": "A host can promise more vCPU or memory than it has, but contention appears when every VM needs its full allocation."
+          },
+          {
+            "t": "Virtual switch",
+            "d": "The vNIC connects to a virtual switch, which then uses a physical uplink or a host-only network."
+          },
+          {
+            "t": "Guest tools",
+            "d": "Without guest tools, time sync, graceful shutdown and driver performance often suffer."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "vCPU",
-      "virtual cores"
-     ],
-     [
-      "vRAM",
-      "allocated memory"
-     ],
-     [
-      "vNIC",
-      "virtual NIC"
-     ],
-     [
-      "vDisk",
-      "virtual disk"
-     ],
-     [
-      "Guest OS",
-      "full OS"
-     ],
-     [
+    "commands": [
+      {
+        "label": "List VMs on an ESXi host",
+        "code": "esxcli vm process list\nvim-cmd vmsvc/getallvms"
+      },
+      {
+        "label": "Check a VM's network adapter",
+        "code": "esxcli network vm list\nesxcli network vm port list -w 12345"
+      }
+    ],
+    "traps": [
+      "VM = **full guest OS on virtual hardware**.",
+      "**VM = own kernel; container = shared**.",
+      "Virtual appliances = **CSR1000v, vWLC, ASAv**.",
+      "Strong isolation, higher overhead.",
+      "Snapshots/migration give agility."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "What it provides"
+      ],
+      "rows": [
+        [
+          "vCPU",
+          "A virtual processor scheduled on a physical core or thread"
+        ],
+        [
+          "vRAM",
+          "Memory assigned to the guest operating system"
+        ],
+        [
+          "Virtual disk",
+          "A file or volume that behaves like a local disk"
+        ],
+        [
+          "vNIC",
+          "A virtual network adapter connected to a virtual switch"
+        ],
+        [
+          "Snapshot",
+          "A point-in-time rollback state, not a full backup"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Hypervisors",
+        "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
+      },
+      {
+        "t": "03. Containers",
+        "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+      }
+    ],
+    "glossary": [
+      "Virtual Machine",
+      "Hypervisor"
+    ]
+  },
+  {
+    "num": "02",
+    "id": "t02",
+    "group": "server",
+    "title": "Hypervisors",
+    "blurb": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware.",
+    "overview": "A **[[Hypervisor|hypervisor]]** (VMM) is the software layer that creates and runs [[Virtual Machine|VMs]] by abstracting hardware. **Type 1 (bare-metal)** runs directly on hardware — the datacenter standard (ESXi, Hyper-V, KVM). **Type 2 (hosted)** runs on an OS (VirtualBox, Workstation). The exam contrasts the types and their roles.",
+    "keyIdea": "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "The layer that schedules virtual hardware",
+        "p": "A hypervisor allocates CPU, memory, storage and network access to virtual machines and keeps them isolated. Type 1 hypervisors run directly on the hardware and are used for data centres and cloud platforms. Type 2 hypervisors run as an application on a desktop OS and are mainly for testing and development."
+      },
+      {
+        "kind": "table",
+        "h": "Type 1 versus Type 2",
+        "cols": [
+          "Aspect",
+          "Type 1",
+          "Type 2"
+        ],
+        "rows": [
+          [
+            "Runs on",
+            "Bare metal",
+            "A host operating system"
+          ],
+          [
+            "Examples",
+            "VMware ESXi, KVM, Microsoft Hyper-V",
+            "VirtualBox, VMware Workstation"
+          ],
+          [
+            "Typical use",
+            "Data centre and cloud",
+            "Desktop testing and small labs"
+          ],
+          [
+            "Performance",
+            "Direct hardware access, lower overhead",
+            "Depends on the host OS, higher overhead"
+          ],
+          [
+            "Management",
+            "vCenter, KVM/libvirt, clustered tools",
+            "Local application console"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Management and design",
+        "items": [
+          {
+            "t": "Cluster",
+            "d": "Group hosts so VMs can be restarted or migrated when a host fails."
+          },
+          {
+            "t": "Shared storage",
+            "d": "Live migration and high availability need storage that every host can reach."
+          },
+          {
+            "t": "Virtual networking",
+            "d": "Plan virtual switches, VLANs, uplinks and security policy before adding workloads."
+          },
+          {
+            "t": "Resource controls",
+            "d": "Reservations, limits and shares decide what happens under contention."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "ESXi checks",
+        "code": "esxcli vm process list\nesxcli network vswitch standard list\nesxcli storage filesystem list"
+      },
+      {
+        "label": "Host and VM inventory",
+        "code": "esxcli hardware platform get\nesxcli software vib list"
+      }
+    ],
+    "traps": [
+      "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
+      "Type 1 = **datacenter/cloud** standard.",
+      "Hypervisor = CPU/memory/I/O **scheduling + isolation**.",
+      "Hardware-assisted virtualization is the norm.",
+      "Virtual switches connect **vNICs**."
+    ],
+    "table": {
+      "cols": [
+        "Type",
+        "Runs on",
+        "Examples"
+      ],
+      "rows": [
+        [
+          "Type 1",
+          "Bare-metal hardware",
+          "VMware ESXi, KVM, Hyper-V"
+        ],
+        [
+          "Type 2",
+          "A host operating system",
+          "VirtualBox, VMware Workstation"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Virtual Machines",
+        "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
+      },
+      {
+        "t": "03. Containers",
+        "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+      }
+    ],
+    "glossary": [
       "Hypervisor",
-      "host layer"
-     ]
+      "Virtual Machine"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Full isolation",
-    "cols": [
-     "Aspect",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Kernel",
-      "separate per VM"
-     ],
-     [
-      "Apps",
-      "isolated"
-     ],
-     [
-      "Crash",
-      "contained"
-     ],
-     [
-      "Security",
-      "strong boundary"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "VMs are **hard-isolated**",
-      "d": "a crash stays in the VM."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "VM vs container",
-    "cols": [
-     "Aspect",
-     "VM",
-     "Container"
-    ],
-    "rows": [
-     [
-      "Kernel",
-      "own",
-      "shared"
-     ],
-     [
-      "Overhead",
-      "high",
-      "low"
-     ],
-     [
-      "Isolation",
-      "strong",
-      "lighter"
-     ],
-     [
-      "Boot",
-      "minutes",
-      "seconds"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Virtual appliances",
-    "cols": [
-     "Appliance",
-     "Role"
-    ],
-    "rows": [
-     [
-      "CSR1000v",
-      "router"
-     ],
-     [
-      "vWLC",
-      "wireless controller"
-     ],
-     [
-      "ASAv",
-      "firewall"
-     ],
-     [
-      "vManage/vSmart",
-      "SD-WAN"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Network functions ship as **VMs**",
-      "d": "same config as hardware."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Migration",
-    "cols": [
-     "Feature",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Snapshot",
-      "save state"
-     ],
-     [
-      "Clone",
-      "copy"
-     ],
-     [
-      "Migrate",
-      "move live"
-     ],
-     [
-      "Export",
-      "OVF/OVA"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Snapshots + migration",
-      "d": "agility and DR."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Trade-offs",
-    "cols": [
-     "Cost",
-     "Reason"
-    ],
-    "rows": [
-     [
-      "Resource",
-      "kernel duplication"
-     ],
-     [
-      "Boot",
-      "slower"
-     ],
-     [
-      "Density",
-      "lower"
-     ],
-     [
-      "Isolation",
-      "bonus"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Slow VM",
-      "vCPU/ram",
-      "resources"
-     ],
-     [
-      "vNIC down",
-      "driver",
-      "virtual switch"
-     ],
-     [
-      "Migration fail",
-      "storage",
-      "host"
-     ],
-     [
-      "Crash",
-      "kernel",
-      "console"
-     ],
-     [
-      "Overcommit",
-      "hosts",
-      "capacity"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "List VMs on an ESXi host",
-    "code": "esxcli vm process list\nvim-cmd vmsvc/getallvms"
-   },
-   {
-    "label": "Check a VM's network adapter",
-    "code": "esxcli network vm list\nesxcli network vm port list -w 12345"
-   }
-  ],
-  "traps": [
-   "VM = **full guest OS on virtual hardware**.",
-   "**VM = own kernel; container = shared**.",
-   "Virtual appliances = **CSR1000v, vWLC, ASAv**.",
-   "Strong isolation, higher overhead.",
-   "Snapshots/migration give agility."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "VM"
-   ],
-   "rows": [
-    [
-     "Guest",
-     "full OS"
-    ],
-    [
-     "Kernel",
-     "own"
-    ],
-    [
-     "Isolation",
-     "strong"
-    ],
-    [
-     "Overhead",
-     "high"
-    ],
-    [
-     "vNIC",
-     "virtual"
-    ],
-    [
-     "Appliance",
-     "CSR1000v"
-    ],
-    [
-     "Snapshot",
-     "state"
-    ],
-    [
-     "vs container",
-     "kernel"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Hypervisors",
-    "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
-   },
-   {
-    "t": "03. Containers",
-    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
-   }
-  ],
-  "glossary": [
-   "Virtual Machine",
-   "Hypervisor"
-  ]
- },
- {
-  "num": "02",
-  "id": "t02",
-  "group": "server",
-  "title": "Hypervisors",
-  "blurb": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware.",
-  "overview": "A **[[Hypervisor|hypervisor]]** (VMM) is the software layer that creates and runs [[Virtual Machine|VMs]] by abstracting hardware. **Type 1 (bare-metal)** runs directly on hardware — the datacenter standard (ESXi, Hyper-V, KVM). **Type 2 (hosted)** runs on an OS (VirtualBox, Workstation). The exam contrasts the types and their roles.",
-  "keyIdea": "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Hypervisor types",
-    "cols": [
-     "Type",
-     "Runs on",
-     "Examples"
+  {
+    "num": "03",
+    "id": "t03",
+    "group": "server",
+    "title": "Containers",
+    "blurb": "Containers share the host kernel and package an application with its dependencies.",
+    "overview": "**[[Container|Containers]]** package an app + its dependencies to run **isolated but kernel-shared** workloads — no guest OS, no hypervisor overhead. They boot in **seconds** and scale easily. For network, containers run **containerized NFs** (e.g., IOS-XE on Catalyst 8000v in models), and the exam stresses VM vs container differences.",
+    "keyIdea": "Container = **shared kernel + namespaces/cgroups**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Isolation without a guest kernel",
+        "p": "A container packages an application with its libraries and dependencies, but it shares the host kernel. Linux namespaces isolate what the process can see, and cgroups limit how much CPU and memory it can use. That makes containers much lighter and faster to start than virtual machines, but the host kernel becomes a shared security boundary."
+      },
+      {
+        "kind": "table",
+        "h": "Virtual machine versus container",
+        "cols": [
+          "Aspect",
+          "Virtual machine",
+          "Container"
+        ],
+        "rows": [
+          [
+            "Guest OS",
+            "Full operating system",
+            "None; shares the host kernel"
+          ],
+          [
+            "Startup",
+            "Usually minutes",
+            "Usually seconds or less"
+          ],
+          [
+            "Density",
+            "Fewer per host",
+            "Many more per host"
+          ],
+          [
+            "Isolation",
+            "Strong hardware-level boundary",
+            "Process-level boundary"
+          ],
+          [
+            "Image",
+            "OS plus application",
+            "Application plus dependencies"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Operational notes",
+        "items": [
+          {
+            "t": "Immutable images",
+            "d": "Build a new image for a change instead of editing a running container."
+          },
+          {
+            "t": "Persistent data",
+            "d": "Containers are disposable; store state in a volume or external service."
+          },
+          {
+            "t": "Networking",
+            "d": "Containers need a bridge, overlay or CNI plugin to communicate across hosts."
+          },
+          {
+            "t": "Security",
+            "d": "Run as non-root, scan images and keep the host kernel patched."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Type 1",
-      "bare metal",
-      "ESXi, Hyper-V, KVM"
-     ],
-     [
-      "Type 2",
-      "host OS",
-      "VirtualBox, Workstation"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "docker pull image\ndocker run -d image"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "docker ps\nkubectl get pods"
+      }
+    ],
+    "traps": [
+      "Container = **shared kernel + namespaces/cgroups**.",
+      "**vs VM: light/fast/low-isolation vs heavy/slow/strong**.",
+      "Image + runtime + registry model.",
+      "**CNI** = container networking standard.",
+      "Containerized **network functions** are modern ION."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Virtual machine",
+        "Container"
+      ],
+      "rows": [
+        [
+          "Guest OS",
+          "Full operating system",
+          "Shared host kernel"
+        ],
+        [
+          "Startup",
+          "Minutes",
+          "Seconds"
+        ],
+        [
+          "Density",
+          "Lower",
+          "Higher"
+        ],
+        [
+          "Isolation",
+          "Hardware-level",
+          "Process-level"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Hypervisors",
+        "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
+      },
+      {
+        "t": "04. Docker",
+        "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
+      }
+    ],
+    "glossary": [
+      "Container"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Type 1 (bare-metal)",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Performance",
-      "near-native"
-     ],
-     [
-      "Overhead",
-      "minimal"
-     ],
-     [
-      "Use",
-      "datacenter/cloud"
-     ],
-     [
-      "Security",
-      "smaller surface"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "ESXi/KVM power the clouds",
-      "d": "direct hardware access."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Type 2 (hosted)",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Performance",
-      "lower"
-     ],
-     [
-      "Use",
-      "desktop/lab"
-     ],
-     [
-      "Install",
-      "simple"
-     ],
-     [
-      "Dependence",
-      "host OS"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "What the hypervisor does",
-    "cols": [
-     "Task",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "CPU",
-      "schedule vCPUs"
-     ],
-     [
-      "Memory",
-      "allocate"
-     ],
-     [
-      "I/O",
-      "emulate/passthrough"
-     ],
-     [
-      "Isolation",
-      "between VMs"
-     ],
-     [
-      "Management",
-      "lifecycle"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Virtualization models",
-    "cols": [
-     "Model",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Full",
-      "emulate hardware"
-     ],
-     [
-      "Paravirtual",
-      "guest-aware"
-     ],
-     [
-      "Hardware-assisted",
-      "CPU VT-x"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Management",
-    "cols": [
-     "Tool",
-     "Role"
-    ],
-    "rows": [
-     [
-      "vCenter",
-      "ESXi cluster mgmt"
-     ],
-     [
-      "Libvirt",
-      "KVM"
-     ],
-     [
-      "SCVMM",
-      "Hyper-V"
-     ],
-     [
-      "Cloud",
-      "orchestrated"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "VM won't start",
-      "resources",
-      "capacity"
-     ],
-     [
-      "Slow I/O",
-      "storage",
-      "datastore"
-     ],
-     [
-      "No vNIC",
-      "virtual switch",
-      "network"
-     ],
-     [
-      "Overcommit",
-      "memory",
-      "host"
-     ],
-     [
-      "Migration fail",
-      "cluster",
-      "vCenter"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "ESXi checks",
-    "code": "esxcli vm process list\nesxcli network vswitch standard list\nesxcli storage filesystem list"
-   },
-   {
-    "label": "Host and VM inventory",
-    "code": "esxcli hardware platform get\nesxcli software vib list"
-   }
-  ],
-  "traps": [
-   "**Type 1 = bare-metal (ESXi/KVM); Type 2 = hosted (VirtualBox)**.",
-   "Type 1 = **datacenter/cloud** standard.",
-   "Hypervisor = CPU/memory/I/O **scheduling + isolation**.",
-   "Hardware-assisted virtualization is the norm.",
-   "Virtual switches connect **vNICs**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Hypervisor"
-   ],
-   "rows": [
-    [
-     "Type 1",
-     "bare-metal"
-    ],
-    [
-     "Type 2",
-     "hosted"
-    ],
-    [
-     "ESXi",
-     "Type 1"
-    ],
-    [
-     "VirtualBox",
-     "Type 2"
-    ],
-    [
-     "Job",
-     "schedule+isolate"
-    ],
-    [
-     "Model",
-     "HW-assisted"
-    ],
-    [
-     "Mgmt",
-     "vCenter"
-    ],
-    [
-     "Use",
-     "cloud/DC"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "01. Virtual Machines",
-    "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
-   },
-   {
-    "t": "03. Containers",
-    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
-   }
-  ],
-  "glossary": [
-   "Hypervisor",
-   "Virtual Machine"
-  ]
- },
- {
-  "num": "03",
-  "id": "t03",
-  "group": "server",
-  "title": "Containers",
-  "blurb": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest",
-  "overview": "**[[Container|Containers]]** package an app + its dependencies to run **isolated but kernel-shared** workloads — no guest OS, no hypervisor overhead. They boot in **seconds** and scale easily. For network, containers run **containerized NFs** (e.g., IOS-XE on Catalyst 8000v in models), and the exam stresses VM vs container differences.",
-  "keyIdea": "Container = **shared kernel + namespaces/cgroups**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "How containers work",
-    "cols": [
-     "Layer",
-     "Detail"
+  {
+    "num": "04",
+    "id": "t04",
+    "group": "server",
+    "title": "Docker",
+    "blurb": "Docker builds and runs container images from a Dockerfile and shares them through a registry.",
+    "overview": "**[[Docker]]** is the most common **container runtime/platform**: build images from a **Dockerfile**, share them in a **registry**, and run them anywhere. Core concepts — **image, container, volume, network, compose** — underpin cloud-native networking (CNF, CI/CD). The exam tests the object model and key commands.",
+    "keyIdea": "Docker objects: **image, container, volume, network**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Images, containers and runtime objects",
+        "p": "Docker builds an image from a Dockerfile, stores it in a registry and runs it as a container. A container is a running instance of that image. Volumes persist data, networks connect containers, and Docker Compose describes a small multi-container application in one file. Docker is a container runtime, not a hypervisor."
+      },
+      {
+        "kind": "list",
+        "h": "Core objects",
+        "items": [
+          {
+            "t": "Image",
+            "d": "A read-only template containing the application and its dependencies."
+          },
+          {
+            "t": "Container",
+            "d": "A running or stopped instance created from an image."
+          },
+          {
+            "t": "Volume",
+            "d": "Persistent storage that survives container replacement."
+          },
+          {
+            "t": "Network",
+            "d": "A bridge or overlay network that gives containers connectivity and name resolution."
+          },
+          {
+            "t": "Registry",
+            "d": "A repository such as Docker Hub or a private registry for images."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Build",
+            "d": "`docker build -t app:1.0 .` creates an image from the Dockerfile in the current directory."
+          },
+          {
+            "t": "Run",
+            "d": "`docker run -d -p 8080:80 app:1.0` starts a detached container and publishes a port."
+          },
+          {
+            "t": "Inspect",
+            "d": "`docker ps`, `docker logs` and `docker exec` show state, output and a shell inside the container."
+          },
+          {
+            "t": "Do not store data in the container",
+            "d": "A replaced container loses its writable layer; use a volume for persistent data."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Kernel",
-      "shared host"
-     ],
-     [
-      "Namespaces",
-      "isolation"
-     ],
-     [
-      "cgroups",
-      "resources"
-     ],
-     [
-      "Image",
-      "app + deps"
-     ],
-     [
-      "Runtime",
-      "Docker/containerd"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "docker build -t myapp .\ndocker run -d -p 8080:80 myapp"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "docker ps\ndocker logs <id>\ndocker exec -it <id> /bin/bash"
+      }
+    ],
+    "traps": [
+      "Docker objects: **image, container, volume, network**.",
+      "Dockerfile: **FROM/RUN/COPY/EXPOSE/CMD**.",
+      "Default network = **bridge/NAT**.",
+      "%%docker ps/run/exec/build%% — know the verbs.",
+      "Docker = process isolation; **K8s = orchestration**."
+    ],
+    "table": {
+      "cols": [
+        "Object",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Image",
+          "Read-only application template"
+        ],
+        [
+          "Container",
+          "Running instance of an image"
+        ],
+        [
+          "Volume",
+          "Persistent data storage"
+        ],
+        [
+          "Network",
+          "Connectivity between containers and hosts"
+        ],
+        [
+          "Registry",
+          "Storage and distribution for images"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Containers",
+        "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
+      },
+      {
+        "t": "05. Kubernetes Basics",
+        "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
+      }
+    ],
+    "glossary": [
+      "Docker"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Namespaces isolate; cgroups limit",
-      "d": "no separate kernel."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Container vs VM",
-    "cols": [
-     "Aspect",
-     "Container",
-     "VM"
-    ],
-    "rows": [
-     [
-      "Kernel",
-      "shared",
-      "own"
-     ],
-     [
-      "Boot",
-      "seconds",
-      "minutes"
-     ],
-     [
-      "Overhead",
-      "low",
-      "high"
-     ],
-     [
-      "Isolation",
-      "lighter",
-      "strong"
-     ],
-     [
-      "Density",
-      "high",
-      "low"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Components",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Image",
-      "read-only template"
-     ],
-     [
-      "Container",
-      "running image"
-     ],
-     [
-      "Registry",
-      "image store"
-     ],
-     [
-      "Orchestrator",
-      "K8s (note 05)"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Benefits",
-    "cols": [
-     "Benefit",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Portable",
-      "same everywhere"
-     ],
-     [
-      "Light",
-      "fast startup"
-     ],
-     [
-      "Scale",
-      "replicate easily"
-     ],
-     [
-      "CI/CD",
-      "natural fit"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking model",
-    "cols": [
-     "Model",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Bridge",
-      "NAT default"
-     ],
-     [
-      "Host",
-      "share host net"
-     ],
-     [
-      "Overlay",
-      "multi-node mesh"
-     ],
-     [
-      "CNI",
-      "plugin standard"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Container NFs",
-    "cols": [
-     "NF",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "IOS-XE",
-      "containerized router"
-     ],
-     [
-      "Cloud services",
-      "microservices"
-     ],
-     [
-      "vAppliance",
-      "many vendors"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Won't start",
-      "port",
-      "docker ps"
-     ],
-     [
-      "No network",
-      "CNI/bridge",
-      "networks"
-     ],
-     [
-      "Crash",
-      "resources",
-      "cgroups"
-     ],
-     [
-      "Image pull fail",
-      "registry",
-      "pull"
-     ],
-     [
-      "Scale issue",
-      "orchestrator",
-      "nodes"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "docker pull image\ndocker run -d image"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "docker ps\nkubectl get pods (note 05)"
-   }
-  ],
-  "traps": [
-   "Container = **shared kernel + namespaces/cgroups**.",
-   "**vs VM: light/fast/low-isolation vs heavy/slow/strong**.",
-   "Image + runtime + registry model.",
-   "**CNI** = container networking standard.",
-   "Containerized **network functions** are modern ION."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Container"
-   ],
-   "rows": [
-    [
-     "Kernel",
-     "shared"
-    ],
-    [
-     "Isolation",
-     "namespaces"
-    ],
-    [
-     "Limits",
-     "cgroups"
-    ],
-    [
-     "Boot",
-     "seconds"
-    ],
-    [
-     "Overhead",
-     "low"
-    ],
-    [
-     "Image",
-     "app+deps"
-    ],
-    [
-     "Network",
-     "CNI"
-    ],
-    [
-     "vs VM",
-     "lighter"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Hypervisors",
-    "d": "A hypervisor (VMM) is the software layer that creates and runs VMs by abstracting hardware."
-   },
-   {
-    "t": "04. Docker",
-    "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
-   }
-  ],
-  "glossary": [
-   "Container"
-  ]
- },
- {
-  "num": "04",
-  "id": "t04",
-  "group": "server",
-  "title": "Docker",
-  "blurb": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in",
-  "overview": "**[[Docker]]** is the most common **container runtime/platform**: build images from a **Dockerfile**, share them in a **registry**, and run them anywhere. Core concepts — **image, container, volume, network, compose** — underpin cloud-native networking (CNF, CI/CD). The exam tests the object model and key commands.",
-  "keyIdea": "Docker objects: **image, container, volume, network**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Object model",
-    "cols": [
-     "Object",
-     "Meaning"
+  {
+    "num": "05",
+    "id": "t05",
+    "group": "server",
+    "title": "Kubernetes Basics",
+    "blurb": "Kubernetes schedules, scales and heals container workloads across a cluster.",
+    "overview": "**[[Kubernetes|Kubernetes (K8s)]]** is the **container orchestrator** — it schedules, scales, and heals container workloads across a **cluster**. Core objects: **nodes, pods, deployments, services, namespaces**. For networking, K8s services and **CNI/Ingress** are the key concepts to remember.",
+    "keyIdea": "K8s = **orchestration; Docker = runtime**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Desired state for containers",
+        "p": "Kubernetes is a container orchestrator. You declare the desired state, such as three replicas of an application, and the control plane works to make the cluster match it. The control plane includes the API server, scheduler, controller manager and etcd; worker nodes run the kubelet and a container runtime. Pods are the smallest deployable unit, and a pod can contain one or more tightly coupled containers."
+      },
+      {
+        "kind": "list",
+        "h": "Networking and traps",
+        "items": [
+          {
+            "t": "Pod network",
+            "d": "Every pod gets an IP address; a CNI plugin implements pod-to-pod connectivity."
+          },
+          {
+            "t": "Service network",
+            "d": "A service provides a stable address while pod IPs change."
+          },
+          {
+            "t": "Ingress",
+            "d": "An ingress controller exposes HTTP services; it is not the same object as a service."
+          },
+          {
+            "t": "Stateless versus stateful",
+            "d": "Use a Deployment for stateless replicas and a StatefulSet when stable identity and storage are required."
+          },
+          {
+            "t": "Network policy",
+            "d": "By default many CNI plugins allow all pod traffic; apply a policy if segmentation is required."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Image",
-      "read-only template"
-     ],
-     [
-      "Container",
-      "running image"
-     ],
-     [
-      "Volume",
-      "persistent data"
-     ],
-     [
-      "Network",
-      "connectivity"
-     ],
-     [
-      "Compose",
-      "multi-container"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "kubectl apply -f manifest.yaml\nkubectl scale deployment <name> --replicas=3"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "kubectl get nodes,pods,services,namespaces\nkubectl describe pod <name>\nkubectl logs <pod>"
+      }
+    ],
+    "traps": [
+      "K8s = **orchestration; Docker = runtime**.",
+      "**Pod = unit; Service = stable endpoint; Deployment = replicas**.",
+      "Control plane vs worker nodes.",
+      "Networking: **CNI (pods), Service (clusterIP), Ingress (L7)**.",
+      "Declarative desired state + **self-healing**."
+    ],
+    "table": {
+      "cols": [
+        "Object",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Pod",
+          "Smallest deployable unit"
+        ],
+        [
+          "Deployment",
+          "Replicated stateless application"
+        ],
+        [
+          "Service",
+          "Stable access to a set of pods"
+        ],
+        [
+          "Namespace",
+          "Logical cluster partition"
+        ],
+        [
+          "Ingress",
+          "HTTP routing into the cluster"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Docker",
+        "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
+      },
+      {
+        "t": "06. VRF (Virtual Routing and Forwarding)",
+        "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
+      }
+    ],
+    "glossary": [
+      "Kubernetes"
     ]
-   },
-   {
-    "kind": "code",
-    "h": "Dockerfile",
-    "code": "FROM ubuntu\nRUN apt-get update\nCOPY app.py /app.py\nEXPOSE 80\nCMD [\"python3\", \"/app.py\"]"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Instruction",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "FROM",
-      "base image"
-     ],
-     [
-      "RUN",
-      "build step"
-     ],
-     [
-      "COPY",
-      "add file"
-     ],
-     [
-      "EXPOSE",
-      "port"
-     ],
-     [
-      "CMD",
-      "runtime command"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Dockerfile",
-      "d": "A Dockerfile **builds images declaratively**."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Key commands",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%docker build%%",
-      "create image"
-     ],
-     [
-      "%%docker pull/push%%",
-      "registry"
-     ],
-     [
-      "%%docker run%%",
-      "start container"
-     ],
-     [
-      "%%docker ps%%",
-      "list running"
-     ],
-     [
-      "%%docker exec%%",
-      "run inside"
-     ],
-     [
-      "%%docker stop/rm%%",
-      "manage"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "pull → run → exec → stop",
-      "d": "the lifecycle."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking",
-    "cols": [
-     "Mode",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "bridge",
-      "default NAT"
-     ],
-     [
-      "host",
-      "shared net"
-     ],
-     [
-      "none",
-      "isolated"
-     ],
-     [
-      "custom",
-      "user networks"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Networking",
-      "d": "Containers default to a **bridge/NAT** network."
-     },
-     {
-      "t": "Networking",
-      "d": "%%-p%% publishes host→container ports."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Docker vs VM mindset",
-    "cols": [
-     "Aspect",
-     "Docker"
-    ],
-    "rows": [
-     [
-      "Kernel",
-      "shared"
-     ],
-     [
-      "Process",
-      "per container"
-     ],
-     [
-      "Startup",
-      "milliseconds"
-     ],
-     [
-      "Isolation",
-      "namespaces"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Docker in networking",
-    "cols": [
-     "Use",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "CNF",
-      "containerized NFs"
-     ],
-     [
-      "Lab",
-      "test topologies"
-     ],
-     [
-      "CI/CD",
-      "automated"
-     ],
-     [
-      "Orchestration",
-      "K8s (note 05)"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Port conflict",
-      "-p",
-      "docker ps"
-     ],
-     [
-      "Image pull fail",
-      "registry/network",
-      "pull"
-     ],
-     [
-      "Container exits",
-      "CMD",
-      "logs"
-     ],
-     [
-      "No network",
-      "bridge",
-      "networks"
-     ],
-     [
-      "Data lost",
-      "no volume",
-      "volumes"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "docker build -t myapp .\ndocker run -d -p 8080:80 myapp"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "docker ps\ndocker logs <id>\ndocker exec -it <id> /bin/bash"
-   }
-  ],
-  "traps": [
-   "Docker objects: **image, container, volume, network**.",
-   "Dockerfile: **FROM/RUN/COPY/EXPOSE/CMD**.",
-   "Default network = **bridge/NAT**.",
-   "%%docker ps/run/exec/build%% — know the verbs.",
-   "Docker = process isolation; **K8s = orchestration**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Docker"
-   ],
-   "rows": [
-    [
-     "Image",
-     "template"
-    ],
-    [
-     "Container",
-     "running"
-    ],
-    [
-     "Volume",
-     "persist"
-    ],
-    [
-     "Network",
-     "bridge"
-    ],
-    [
-     "Build",
-     "docker build"
-    ],
-    [
-     "Run",
-     "docker run"
-    ],
-    [
-     "Exec",
-     "docker exec"
-    ],
-    [
-     "Scale",
-     "K8s"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. Containers",
-    "d": "Containers package an app + its dependencies to run isolated but kernel-shared workloads — no guest"
-   },
-   {
-    "t": "05. Kubernetes Basics",
-    "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
-   }
-  ],
-  "glossary": [
-   "Docker"
-  ]
- },
- {
-  "num": "05",
-  "id": "t05",
-  "group": "server",
-  "title": "Kubernetes Basics",
-  "blurb": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads",
-  "overview": "**[[Kubernetes|Kubernetes (K8s)]]** is the **container orchestrator** — it schedules, scales, and heals container workloads across a **cluster**. Core objects: **nodes, pods, deployments, services, namespaces**. For networking, K8s services and **CNI/Ingress** are the key concepts to remember.",
-  "keyIdea": "K8s = **orchestration; Docker = runtime**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Cluster structure",
-    "cols": [
-     "Component",
-     "Role"
+  {
+    "num": "06",
+    "id": "t06",
+    "group": "network",
+    "title": "VRF (Virtual Routing and Forwarding)",
+    "blurb": "VRF creates separate routing and forwarding tables on one router for traffic isolation.",
+    "overview": "**[[VRF]]** creates **multiple isolated routing tables on one router** — each with its own RIB, CEF, interfaces, and routing protocol. It's the core of **L3VPN segmentation** (Level 20 note 07) and of **VRF-lite** for simple, MPLS-free isolation. In the cloud context, VRFs mirror **virtual networks** per tenant.",
+    "keyIdea": "VRF = **separate RIB/FIB/interfaces**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Separate routing and forwarding tables",
+        "p": "A VRF creates an independent Layer 3 routing table and forwarding table on the same router. Interfaces, routes and routing-protocol instances are bound to a VRF, so overlapping addresses can exist in different VRFs without colliding. VRFs are the foundation of MPLS L3VPN, but they are also useful on a single device for management, guest or tenant separation."
+      },
+      {
+        "kind": "list",
+        "h": "Configuration and verification",
+        "items": [
+          {
+            "t": "Create the VRF",
+            "d": "`ip vrf NAME` or `vrf definition NAME`, depending on the platform and address family."
+          },
+          {
+            "t": "Bind the interface",
+            "d": "`ip vrf forwarding NAME` removes the existing IP address, so reapply it after binding."
+          },
+          {
+            "t": "Run protocols per VRF",
+            "d": "Start a separate OSPF, EIGRP or BGP instance inside the VRF."
+          },
+          {
+            "t": "Verify",
+            "d": "Use `show ip vrf`, `show ip route vrf NAME` and `ping vrf NAME`."
+          },
+          {
+            "t": "Do not assume isolation",
+            "d": "A VRF isolates routes, not physical links or encryption; route leaking can intentionally cross the boundary."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Control plane",
-      "brain (API server)"
-     ],
-     [
-      "Worker nodes",
-      "run pods"
-     ],
-     [
-      "kubelet",
-      "node agent"
-     ],
-     [
-      "etcd",
-      "state store"
-     ]
+    "commands": [
+      {
+        "label": "VRF verification",
+        "code": "show ip vrf\nshow ip vrf detail CUST1\nshow ip route vrf CUST1\nshow ip cef vrf CUST1\nshow bgp vpnv4 unicast vrf CUST1"
+      },
+      {
+        "label": "Test inside the VRF",
+        "code": "ping vrf CUST1 10.1.1.1\ntraceroute vrf CUST1 10.1.1.1"
+      }
+    ],
+    "traps": [
+      "VRF = **separate RIB/FIB/interfaces**.",
+      "**RD = identity; RT = membership** (for MPLS).",
+      "%%ip vrf forwarding%% removes the IP.",
+      "VRF-lite = **isolation without MPLS** (note 07).",
+      "Cloud VPC ≈ the VRF concept."
+    ],
+    "table": {
+      "cols": [
+        "Concept",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "VRF",
+          "Independent routing table"
+        ],
+        [
+          "RD",
+          "Makes prefixes unique in MP-BGP"
+        ],
+        [
+          "RT",
+          "Controls route import and export"
+        ],
+        [
+          "Route leaking",
+          "Controlled route exchange between VRFs"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Kubernetes Basics",
+        "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
+      },
+      {
+        "t": "07. VRF Lite",
+        "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
+      }
+    ],
+    "glossary": [
+      "VRF"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Core objects",
-    "cols": [
-     "Object",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Node",
-      "a worker machine"
-     ],
-     [
-      "Pod",
-      "smallest unit (1+ containers)"
-     ],
-     [
-      "Deployment",
-      "desired replicas"
-     ],
-     [
-      "Service",
-      "stable network endpoint"
-     ],
-     [
-      "Namespace",
-      "logical partition"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Pod vs Service",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Pod",
-      "ephemeral, own IP"
-     ],
-     [
-      "Service",
-      "stable VIP/clusterIP"
-     ],
-     [
-      "Selector",
-      "labels to match pods"
-     ],
-     [
-      "Result",
-      "apps don't chase IPs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking model",
-    "cols": [
-     "Layer",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Pod network",
-      "full mesh, CNI"
-     ],
-     [
-      "Service",
-      "clusterIP"
-     ],
-     [
-      "Ingress",
-      "external L7"
-     ],
-     [
-      "NodePort/LB",
-      "external access"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Scaling & self-healing",
-    "cols": [
-     "Behavior",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Desired state",
-      "declarative"
-     ],
-     [
-      "Replicas",
-      "auto scale"
-     ],
-     [
-      "Health",
-      "liveness probes"
-     ],
-     [
-      "Restart",
-      "crashed pods re-created"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Key commands",
-    "code": "kubectl get nodes\nkubectl get pods -A\nkubectl get services\nkubectl apply -f deployment.yaml\nkubectl scale deploy app --replicas=5"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "get",
-      "list resources"
-     ],
-     [
-      "apply",
-      "declarative apply"
-     ],
-     [
-      "scale",
-      "change replicas"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Pod pending",
-      "resources",
-      "describe"
-     ],
-     [
-      "CrashLoop",
-      "app",
-      "logs"
-     ],
-     [
-      "No service",
-      "selector",
-      "services"
-     ],
-     [
-      "Node not ready",
-      "kubelet",
-      "get nodes"
-     ],
-     [
-      "Image pull",
-      "registry",
-      "events"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "kubectl apply -f manifest.yaml\nkubectl scale deployment --replicas=N"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "kubectl get nodes/pods/services/namespaces\nkubectl describe pod <name>\nkubectl logs <pod>"
-   }
-  ],
-  "traps": [
-   "K8s = **orchestration; Docker = runtime**.",
-   "**Pod = unit; Service = stable endpoint; Deployment = replicas**.",
-   "Control plane vs worker nodes.",
-   "Networking: **CNI (pods), Service (clusterIP), Ingress (L7)**.",
-   "Declarative desired state + **self-healing**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Kubernetes"
-   ],
-   "rows": [
-    [
-     "Orchestrate",
-     "containers"
-    ],
-    [
-     "Node",
-     "worker"
-    ],
-    [
-     "Pod",
-     "unit"
-    ],
-    [
-     "Service",
-     "endpoint"
-    ],
-    [
-     "Deployment",
-     "replicas"
-    ],
-    [
-     "Namespace",
-     "partition"
-    ],
-    [
-     "Network",
-     "CNI"
-    ],
-    [
-     "Run",
-     "kubectl"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. Docker",
-    "d": "Docker is the most common container runtime/platform: build images from a Dockerfile, share them in"
-   },
-   {
-    "t": "06. VRF (Virtual Routing and Forwarding)",
-    "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
-   }
-  ],
-  "glossary": [
-   "Kubernetes"
-  ]
- },
- {
-  "num": "06",
-  "id": "t06",
-  "group": "network",
-  "title": "VRF (Virtual Routing and Forwarding)",
-  "blurb": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces",
-  "overview": "**[[VRF]]** creates **multiple isolated routing tables on one router** — each with its own RIB, CEF, interfaces, and routing protocol. It's the core of **L3VPN segmentation** (Level 20 note 07) and of **VRF-lite** for simple, MPLS-free isolation. In the cloud context, VRFs mirror **virtual networks** per tenant.",
-  "keyIdea": "VRF = **separate RIB/FIB/interfaces**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What a VRF isolates",
-    "cols": [
-     "Table",
-     "Per-VRF"
+  {
+    "num": "07",
+    "id": "t07",
+    "group": "network",
+    "title": "VRF Lite",
+    "blurb": "VRF Lite provides isolated routing tables without MPLS or MP-BGP.",
+    "overview": "**[[VRF|VRF-lite]]** uses **VRFs without MPLS/MP-BGP**: separate routing tables and interfaces provide L3 segmentation on a single router — **cheap and simple**, ideal for small multi-tenant or service-separation designs. The trade-off: **no VPN label/MP-BGP scalability** — each hop must carry the same VRFs.",
+    "keyIdea": "VRF-lite = **VRFs without MPLS/MP-BGP**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "VRF without MPLS",
+        "p": "VRF Lite uses VRFs on a router or a small site without an MPLS provider network. Each VRF runs its own routing protocols and has its own interfaces, but there are no VPN labels or MP-BGP overlay. It provides separation on a single device or across a simple WAN, not the scalable any-to-any VPN service that MPLS L3VPN provides."
+      },
+      {
+        "kind": "table",
+        "h": "VRF Lite versus MPLS L3VPN",
+        "cols": [
+          "Aspect",
+          "VRF Lite",
+          "MPLS L3VPN"
+        ],
+        "rows": [
+          [
+            "Scope",
+            "Single router or small site",
+            "Provider-wide VPN service"
+          ],
+          [
+            "Forwarding",
+            "Ordinary IP lookup inside each VRF",
+            "MPLS label stack"
+          ],
+          [
+            "Control plane",
+            "Per-VRF routing protocols",
+            "MP-BGP with VPNv4 or VPNv6"
+          ],
+          [
+            "Scale",
+            "Limited",
+            "Designed for many sites and customers"
+          ],
+          [
+            "Typical use",
+            "Management, guest or small tenant separation",
+            "Service provider and large enterprise VPN"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Design notes",
+        "items": [
+          {
+            "t": "Global table",
+            "d": "The global routing table still exists; decide which VRF owns the management and transit interfaces."
+          },
+          {
+            "t": "Default route",
+            "d": "Each VRF needs its own default or summary route if it must reach the Internet or a shared service."
+          },
+          {
+            "t": "NAT and firewalls",
+            "d": "VRF-aware NAT and firewall contexts may be required to translate or inspect traffic between tenants."
+          },
+          {
+            "t": "Verification",
+            "d": "Always test with `show ip route vrf`, `ping vrf` and a traceroute inside the VRF."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "RIB",
-      "routes"
-     ],
-     [
-      "CEF/FIB",
-      "forwarding"
-     ],
-     [
-      "Interfaces",
-      "membership"
-     ],
-     [
-      "Protocol",
-      "per-VRF process"
-     ]
+    "commands": [
+      {
+        "label": "VRF Lite verification",
+        "code": "show ip vrf\nshow ip vrf detail GUEST\nshow ip route vrf GUEST\nshow ip cef vrf GUEST"
+      },
+      {
+        "label": "Test the guest path",
+        "code": "ping vrf GUEST 192.0.2.10\ntraceroute vrf GUEST 192.0.2.10"
+      }
+    ],
+    "traps": [
+      "VRF-lite = **VRFs without MPLS/MP-BGP**.",
+      "Every hop must **map the same VRFs** to links.",
+      "Great for **single-site isolation**; not for large WAN.",
+      "No label stack — **scale limit**.",
+      "L3VPN = the scalable upgrade path."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "VRF Lite",
+        "MPLS L3VPN"
+      ],
+      "rows": [
+        [
+          "Scope",
+          "Single device or small site",
+          "Provider-wide service"
+        ],
+        [
+          "Labels",
+          "Not used",
+          "MPLS label stack"
+        ],
+        [
+          "Control plane",
+          "Per-VRF routing",
+          "MP-BGP VPN address family"
+        ],
+        [
+          "Scale",
+          "Limited",
+          "Large"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. VRF (Virtual Routing and Forwarding)",
+        "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
+      },
+      {
+        "t": "08. Public Cloud",
+        "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
+      }
+    ],
+    "glossary": [
+      "VRF"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Use cases",
-    "cols": [
-     "Use",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "L3VPN",
-      "MPLS + MP-BGP"
-     ],
-     [
-      "VRF-lite",
-      "no MPLS needed"
-     ],
-     [
-      "Multi-tenant",
-      "per customer"
-     ],
-     [
-      "Management",
-      "OOB VRF"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "RD and RT",
-    "cols": [
-     "Item",
-     "Function"
-    ],
-    "rows": [
-     [
-      "RD",
-      "uniqueness (MP-BGP)"
-     ],
-     [
-      "RT",
-      "membership/policy"
-     ],
-     [
-      "Lite",
-      "RTs optional"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "RD = identity; RT = who shares",
-      "d": "needed for MPLS VPNs."
-     }
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Config",
-    "code": "ip vrf CUST1\n rd 65000:100\n!\ninterface Gi0/1\n ip vrf forwarding CUST1\n ip address 10.0.0.1 255.255.255.0\n!\nrouter bgp 65000\n address-family ipv4 vrf CUST1"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip vrf%%",
-      "create"
-     ],
-     [
-      "%%rd%%",
-      "distinguisher"
-     ],
-     [
-      "%%ip vrf forwarding%%",
-      "bind interface"
-     ],
-     [
-      "%%address-family ipv4 vrf%%",
-      "per-VRF BGP"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "%%ip vrf forwarding%% clears the IP address",
-      "d": "reapply it."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "VRF in the cloud",
-    "cols": [
-     "Concept",
-     "Cloud equivalent"
-    ],
-    "rows": [
-     [
-      "VRF",
-      "VPC/tenant network"
-     ],
-     [
-      "Isolation",
-      "per-tenant tables"
-     ],
-     [
-      "Routing",
-      "per-network"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Clouds use **similar isolation**",
-      "d": "VPCs are the \"VRF\" of the cloud."
-     }
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "show ip vrf\nshow ip route vrf CUST1\nshow ip cef vrf CUST1\nping vrf CUST1 10.0.0.2"
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No routes",
-      "protocol",
-      "show ip route vrf"
-     ],
-     [
-      "Interface missing",
-      "binding",
-      "show ip vrf"
-     ],
-     [
-      "Overlap",
-      "RD",
-      "rd"
-     ],
-     [
-      "Wrong sharing",
-      "RT",
-      "route-target"
-     ],
-     [
-      "Ping fail",
-      "wrong VRF",
-      "ping vrf"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "VRF verification",
-    "code": "show ip vrf\nshow ip vrf detail CUST1\nshow ip route vrf CUST1\nshow ip cef vrf CUST1\nshow bgp vpnv4 unicast vrf CUST1"
-   },
-   {
-    "label": "Test inside the VRF",
-    "code": "ping vrf CUST1 10.1.1.1\ntraceroute vrf CUST1 10.1.1.1"
-   }
-  ],
-  "traps": [
-   "VRF = **separate RIB/FIB/interfaces**.",
-   "**RD = identity; RT = membership** (for MPLS).",
-   "%%ip vrf forwarding%% removes the IP.",
-   "VRF-lite = **isolation without MPLS** (note 07).",
-   "Cloud VPC ≈ the VRF concept."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "VRF"
-   ],
-   "rows": [
-    [
-     "Isolates",
-     "RIB/FIB"
-    ],
-    [
-     "Use",
-     "VPN/lite"
-    ],
-    [
-     "RD",
-     "uniqueness"
-    ],
-    [
-     "RT",
-     "membership"
-    ],
-    [
-     "Bind",
-     "ip vrf forwarding"
-    ],
-    [
-     "Cloud",
-     "VPC"
-    ],
-    [
-     "Lite",
-     "no MPLS"
-    ],
-    [
-     "Ping",
-     "ping vrf"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "05. Kubernetes Basics",
-    "d": "Kubernetes (K8s) is the container orchestrator — it schedules, scales, and heals container workloads"
-   },
-   {
-    "t": "07. VRF Lite",
-    "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
-   }
-  ],
-  "glossary": [
-   "VRF"
-  ]
- },
- {
-  "num": "07",
-  "id": "t07",
-  "group": "network",
-  "title": "VRF Lite",
-  "blurb": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati",
-  "overview": "**[[VRF|VRF-lite]]** uses **VRFs without MPLS/MP-BGP**: separate routing tables and interfaces provide L3 segmentation on a single router — **cheap and simple**, ideal for small multi-tenant or service-separation designs. The trade-off: **no VPN label/MP-BGP scalability** — each hop must carry the same VRFs.",
-  "keyIdea": "VRF-lite = **VRFs without MPLS/MP-BGP**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "VRF-lite vs L3VPN",
-    "cols": [
-     "Aspect",
-     "VRF-lite",
-     "MPLS L3VPN"
+  {
+    "num": "08",
+    "id": "t08",
+    "group": "cloud",
+    "title": "Public Cloud",
+    "blurb": "A public cloud delivers shared, on-demand infrastructure owned and operated by a provider.",
+    "overview": "A **[[Public Cloud|public cloud]]** is shared, on-demand infrastructure run by a provider (**AWS, Azure, GCP**) and delivered as **IaaS/PaaS/SaaS**. You rent capacity, get **elasticity** and **capex-to-opex** conversion. Networking: **VPC/VNet** isolation, virtual networks, NAT/load balancers, and **connectivity back to the campus via VPN/Direct Connect**.",
+    "keyIdea": "Public cloud = **shared, elastic, pay-as-you-go**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Provider-owned, multi-tenant infrastructure",
+        "p": "In a public cloud, a provider owns and operates the physical infrastructure and offers resources to many customers over its API. The customer gets self-service, elasticity and consumption-based billing, but shares the underlying hardware with other tenants. The provider secures the physical platform; the customer remains responsible for identity, configuration, data and the workloads it deploys."
+      },
+      {
+        "kind": "list",
+        "h": "Connectivity options",
+        "items": [
+          {
+            "t": "Internet VPN",
+            "d": "An IPsec tunnel over the public Internet is quick to deploy and cheaper, but its quality depends on the Internet path."
+          },
+          {
+            "t": "Private circuit",
+            "d": "A dedicated connection such as Direct Connect or ExpressRoute gives predictable latency and bandwidth."
+          },
+          {
+            "t": "Colocation",
+            "d": "A private cross-connect at a provider facility can link on-premises and cloud networks."
+          },
+          {
+            "t": "SD-WAN",
+            "d": "An SD-WAN overlay can steer traffic across Internet and private paths using policy."
+          },
+          {
+            "t": "Redundancy",
+            "d": "Use at least two diverse paths when the cloud workload is business critical."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Design considerations",
+        "items": [
+          {
+            "t": "Address overlap",
+            "d": "Cloud VPC and on-premises CIDRs must not overlap unless you plan NAT."
+          },
+          {
+            "t": "Egress charges",
+            "d": "Traffic leaving the cloud can cost more than traffic inside it; design where data is processed."
+          },
+          {
+            "t": "Identity",
+            "d": "Federate identity and enforce least privilege through the provider's IAM."
+          },
+          {
+            "t": "Shared responsibility",
+            "d": "The provider secures the cloud; the customer secures what it puts in the cloud."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "MPLS",
-      "no",
-      "yes"
-     ],
-     [
-      "MP-BGP",
-      "no",
-      "yes"
-     ],
-     [
-      "Labels",
-      "none",
-      "two-label"
-     ],
-     [
-      "Scale",
-      "small",
-      "large"
-     ],
-     [
-      "Scope",
-      "single site",
-      "WAN-wide"
-     ]
+    "commands": [
+      {
+        "label": "Read the cloud network",
+        "code": "aws ec2 describe-vpcs\naws ec2 describe-subnets\naws ec2 describe-vpn-connections\naws ec2 describe-route-tables"
+      },
+      {
+        "label": "Azure equivalents",
+        "code": "az network vnet list\naz network vnet subnet list --vnet-name VNET --resource-group RG\naz network vpn-connection list"
+      },
+      {
+        "label": "Test the path",
+        "code": "ping 10.0.0.1\ntraceroute 10.0.0.1\nshow crypto ipsec sa\nshow crypto session"
+      }
+    ],
+    "traps": [
+      "Public cloud = **shared, elastic, pay-as-you-go**.",
+      "**VPC/VNet = isolation**; security groups = filters.",
+      "Connectivity: **VPN/Direct Connect** back to campus.",
+      "IaaS/PaaS/SaaS are the service models.",
+      "vs private: **shared + provider-owned**."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Public cloud"
+      ],
+      "rows": [
+        [
+          "Ownership",
+          "Provider owns the physical infrastructure"
+        ],
+        [
+          "Tenancy",
+          "Shared, logically isolated"
+        ],
+        [
+          "Cost model",
+          "Consumption-based operating expense"
+        ],
+        [
+          "Connectivity",
+          "Internet VPN, private circuit or SD-WAN"
+        ],
+        [
+          "Customer responsibility",
+          "Identity, configuration, data and workloads"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. VRF Lite",
+        "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
+      },
+      {
+        "t": "09. Private Cloud",
+        "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
+      }
+    ],
+    "glossary": [
+      "Public Cloud"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "VRF-lite = isolation without MPLS",
-      "d": "point-to-point of VRFs between routers."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "How it works",
-    "cols": [
-     "Element",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "VRF per tenant",
-      "on each router"
-     ],
-     [
-      "Interfaces",
-      "bound per VRF"
-     ],
-     [
-      "Routing",
-      "per-VRF IGP/static"
-     ],
-     [
-      "Links",
-      "same VRF both ends"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Use cases",
-    "cols": [
-     "Use",
-     "Reason"
-    ],
-    "rows": [
-     [
-      "Small sites",
-      "cheap isolation"
-     ],
-     [
-      "Guest/mgmt",
-      "separate tables"
-     ],
-     [
-      "Lab",
-      "quick segmentation"
-     ],
-     [
-      "Enterprise core",
-      "simplified"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Config",
-    "code": "ip vrf GUEST\n rd 65000:10\n!\ninterface Gi0/0\n ip vrf forwarding GUEST\n ip address 10.0.0.1 255.255.255.0\n!\nrouter bgp 65000\n address-family ipv4 vrf GUEST"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip vrf%%",
-      "create"
-     ],
-     [
-      "%%ip vrf forwarding%%",
-      "bind"
-     ],
-     [
-      "%%address-family ipv4 vrf%%",
-      "per-VRF BGP"
-     ],
-     [
-      "%%rd%%",
-      "optional locally"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Limitations",
-    "cols": [
-     "Limit",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Scale",
-      "manual per hop"
-     ],
-     [
-      "Overlap",
-      "RD/RT not global"
-     ],
-     [
-      "WAN",
-      "no MPLS transit"
-     ],
-     [
-      "Complexity",
-      "per-device"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "show ip vrf\nshow ip route vrf GUEST\nshow ip cef vrf GUEST\nping vrf GUEST ..."
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No routes",
-      "link not in VRF",
-      "show ip vrf"
-     ],
-     [
-      "Overlap",
-      "both ends",
-      "mapping"
-     ],
-     [
-      "Leak",
-      "interface",
-      "binding"
-     ],
-     [
-      "No ping",
-      "wrong VRF",
-      "ping vrf"
-     ],
-     [
-      "BGP missing",
-      "AF",
-      "address-family"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "VRF Lite verification",
-    "code": "show ip vrf\nshow ip vrf detail GUEST\nshow ip route vrf GUEST\nshow ip cef vrf GUEST"
-   },
-   {
-    "label": "Test the guest path",
-    "code": "ping vrf GUEST 192.0.2.10\ntraceroute vrf GUEST 192.0.2.10"
-   }
-  ],
-  "traps": [
-   "VRF-lite = **VRFs without MPLS/MP-BGP**.",
-   "Every hop must **map the same VRFs** to links.",
-   "Great for **single-site isolation**; not for large WAN.",
-   "No label stack — **scale limit**.",
-   "L3VPN = the scalable upgrade path."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "VRF Lite"
-   ],
-   "rows": [
-    [
-     "MPLS",
-     "none"
-    ],
-    [
-     "MP-BGP",
-     "none"
-    ],
-    [
-     "Isolation",
-     "per-router"
-    ],
-    [
-     "Scope",
-     "single site"
-    ],
-    [
-     "Scale",
-     "small"
-    ],
-    [
-     "RD/RT",
-     "local"
-    ],
-    [
-     "WAN",
-     "no"
-    ],
-    [
-     "Upgrade",
-     "L3VPN"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. VRF (Virtual Routing and Forwarding)",
-    "d": "VRF creates multiple isolated routing tables on one router — each with its own RIB, CEF, interfaces"
-   },
-   {
-    "t": "08. Public Cloud",
-    "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
-   }
-  ],
-  "glossary": [
-   "VRF"
-  ]
- },
- {
-  "num": "08",
-  "id": "t08",
-  "group": "cloud",
-  "title": "Public Cloud",
-  "blurb": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered",
-  "overview": "A **[[Public Cloud|public cloud]]** is shared, on-demand infrastructure run by a provider (**AWS, Azure, GCP**) and delivered as **IaaS/PaaS/SaaS**. You rent capacity, get **elasticity** and **capex-to-opex** conversion. Networking: **VPC/VNet** isolation, virtual networks, NAT/load balancers, and **connectivity back to the campus via VPN/Direct Connect**.",
-  "keyIdea": "Public cloud = **shared, elastic, pay-as-you-go**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Definition",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "09",
+    "id": "t09",
+    "group": "cloud",
+    "title": "Private Cloud",
+    "blurb": "A private cloud offers self-service and elastic resources on dedicated infrastructure.",
+    "overview": "A **[[Private Cloud|private cloud]]** is cloud-like infrastructure (self-service, elastic, metered) that runs on **dedicated, on-premises** resources — e.g., **VMware/OpenStack** under your control. It keeps data and compliance in-house but adds **capex and operational cost**. The exam contrasts private vs public and when to pick each.",
+    "keyIdea": "Private cloud = **dedicated + on-prem + full control**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Cloud-like operations on dedicated infrastructure",
+        "p": "A private cloud provides self-service, automation and resource pooling on infrastructure dedicated to one organisation. It can run on-premises or in a hosted facility. The organisation keeps control over hardware, data location and compliance, but it also owns the capital cost and the operational work of the platform."
+      },
+      {
+        "kind": "list",
+        "h": "Building blocks",
+        "items": [
+          {
+            "t": "Compute",
+            "d": "A hypervisor cluster or bare-metal pool provides the virtual or physical servers."
+          },
+          {
+            "t": "Storage",
+            "d": "Shared block, file or object storage supports VM disks, backups and applications."
+          },
+          {
+            "t": "Network",
+            "d": "Virtual switches, VLANs or overlays connect tenants and provide isolation."
+          },
+          {
+            "t": "Management",
+            "d": "A portal, orchestration layer and monitoring stack provide self-service and operations."
+          },
+          {
+            "t": "Automation",
+            "d": "Templates and APIs make provisioning repeatable instead of manual."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Tradeoffs",
+        "items": [
+          {
+            "t": "Control",
+            "d": "The organisation controls hardware, network path, data residency and security tooling."
+          },
+          {
+            "t": "Cost",
+            "d": "Capital expense and staff costs are predictable, but capacity must be purchased ahead of demand."
+          },
+          {
+            "t": "Elasticity",
+            "d": "Scaling is limited by the installed hardware unless the private cloud can burst into a public cloud."
+          },
+          {
+            "t": "Operations",
+            "d": "The organisation owns patching, upgrades, capacity planning and disaster recovery."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Owner",
-      "provider"
-     ],
-     [
-      "Access",
-      "internet/shared"
-     ],
-     [
-      "Model",
-      "pay-as-you-go"
-     ],
-     [
-      "Tenancy",
-      "multi-tenant"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "esxcli network vswitch standard list\nesxcli network ip interface list"
+      }
+    ],
+    "traps": [
+      "Private cloud = **dedicated + on-prem + full control**.",
+      "Platforms: **VMware, OpenStack, Azure Stack**.",
+      "Cost = **capex**; public = opex.",
+      "Wins on **compliance/latency**; public wins on scale.",
+      "Networking via **vSwitch/VLAN or NSX**."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Private cloud"
+      ],
+      "rows": [
+        [
+          "Ownership",
+          "Organisation or dedicated host"
+        ],
+        [
+          "Tenancy",
+          "Single organisation"
+        ],
+        [
+          "Control",
+          "High"
+        ],
+        [
+          "Cost model",
+          "Mostly capital expense"
+        ],
+        [
+          "Elasticity",
+          "Limited by installed capacity"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Public Cloud",
+        "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
+      },
+      {
+        "t": "10. Hybrid Cloud",
+        "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
+      }
+    ],
+    "glossary": [
+      "Private Cloud"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Cloud services (notes 11–13)",
-    "cols": [
-     "Service",
-     "Example"
+  },
+  {
+    "num": "10",
+    "id": "t10",
+    "group": "cloud",
+    "title": "Hybrid Cloud",
+    "blurb": "A hybrid cloud connects private and public environments into one operational model.",
+    "overview": "A **[[Hybrid Cloud|hybrid cloud]]** combines **on-premises (private)** and **public cloud** into one operational model — with **shared networking, security, and management** between them. Movement of workloads/data plus **connectivity (VPN/Direct Connect/ExpressRoute/SD-WAN)** are the core concepts. The exam wants the split of where what runs.",
+    "keyIdea": "Hybrid = **private + public in one model**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Two environments, one operating model",
+        "p": "Hybrid cloud combines private infrastructure with public cloud services and connects them with networking, identity and management. The goal is to place each workload where it fits best: sensitive data on-premises, elastic capacity in the public cloud, and shared services across both. Hybrid is an operating model, not just a VPN between two data centres."
+      },
+      {
+        "kind": "list",
+        "h": "Design and traps",
+        "items": [
+          {
+            "t": "Routing",
+            "d": "Advertise only the prefixes that each side needs; avoid overlapping address space."
+          },
+          {
+            "t": "Identity",
+            "d": "Use federation or a shared directory so users and automation have consistent access."
+          },
+          {
+            "t": "Encryption",
+            "d": "Encrypt traffic across the public Internet and inspect it where policy requires."
+          },
+          {
+            "t": "Latency",
+            "d": "Place chatty applications and their data together; the WAN becomes part of the application path."
+          },
+          {
+            "t": "Operations",
+            "d": "Use consistent monitoring, logging and configuration policy across both environments."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show crypto ipsec sa\nshow crypto session\nping 10.0.0.1\ntraceroute 10.0.0.1"
+      }
+    ],
+    "traps": [
+      "Hybrid = **private + public in one model**.",
+      "Connectivity: **IPsec VPN, Direct Connect/ExpressRoute, SD-WAN**.",
+      "Sensitive data stays **on-prem**; bursts go public.",
+      "Consistent **identity/security/routing** across both.",
+      "Migration: **glide path**; DR: cloud."
+    ],
+    "table": {
+      "cols": [
+        "Pattern",
+        "Typical use"
+      ],
+      "rows": [
+        [
+          "Cloud bursting",
+          "Temporary extra capacity"
+        ],
+        [
+          "Disaster recovery",
+          "Secondary site for recovery"
+        ],
+        [
+          "Data locality",
+          "Keep regulated data on-premises"
+        ],
+        [
+          "SaaS integration",
+          "Connect identity and data to SaaS"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. Private Cloud",
+        "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
+      },
+      {
+        "t": "11. SaaS",
+        "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
+      }
+    ],
+    "glossary": [
+      "Hybrid Cloud"
+    ]
+  },
+  {
+    "num": "11",
+    "id": "t11",
+    "group": "service",
+    "title": "SaaS",
+    "blurb": "SaaS delivers a complete application managed by the provider and configured by the customer.",
+    "overview": "**[[SaaS]]** delivers **complete applications over the internet** — no install, no server management; the provider runs everything (e.g., **Office 365, Salesforce, Webex**). The customer manages only **users and data**. The exam contrasts the three service models (IaaS/PaaS/SaaS) and their **division of responsibility**.",
+    "keyIdea": "SaaS = **full application, provider-managed**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A finished application delivered as a service",
+        "p": "Software as a Service delivers a complete application over the Internet. The provider manages the infrastructure, operating system, runtime and application, while the customer manages users, data, configuration and access policy. Examples include Microsoft 365, Salesforce and web-based collaboration tools."
+      },
+      {
+        "kind": "list",
+        "h": "Network and visibility",
+        "items": [
+          {
+            "t": "Internet dependency",
+            "d": "SaaS quality depends on the path to the provider, not just the enterprise WAN."
+          },
+          {
+            "t": "TLS limits inspection",
+            "d": "Most traffic is encrypted; security teams rely on endpoint controls, CASB or provider logs."
+          },
+          {
+            "t": "Direct Internet access",
+            "d": "Branch users may need local Internet egress for SaaS performance instead of backhauling."
+          },
+          {
+            "t": "Identity is the control plane",
+            "d": "SSO, MFA and conditional access often matter more than network ACLs."
+          },
+          {
+            "t": "Data loss",
+            "d": "The provider protects the platform, but the customer still owns data loss prevention and retention policy."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Identify SaaS flows",
+        "code": "show ip nbar protocol-id\nshow ip nbar protocol-discovery top-n 10\nshow flow monitor"
+      }
+    ],
+    "traps": [
+      "SaaS = **full application, provider-managed**.",
+      "Customer manages **data + users only**.",
+      "**Least control of the three models**.",
+      "Examples: Office 365, Salesforce, Webex.",
+      "Network role: **prioritize + secure** traffic."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Provider",
+        "Customer"
+      ],
+      "rows": [
+        [
+          "Application",
+          "Builds and runs",
+          "Configures"
+        ],
+        [
+          "Operating system",
+          "Manages",
+          "No access"
+        ],
+        [
+          "Identity",
+          "Provides features",
+          "Configures access"
+        ],
+        [
+          "Data",
+          "Stores",
+          "Classifies and protects"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. Hybrid Cloud",
+        "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
+      },
+      {
+        "t": "12. PaaS",
+        "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
+      }
+    ],
+    "glossary": [
+      "SaaS"
+    ]
+  },
+  {
+    "num": "12",
+    "id": "t12",
+    "group": "service",
+    "title": "PaaS",
+    "blurb": "PaaS provides a managed runtime and platform where developers deploy application code.",
+    "overview": "**[[PaaS]]** provides a **managed platform** — runtime, DB, middleware — where developers deploy code without managing servers/OS. The provider handles **infra + platform**; you manage **app + data**. Examples: **Azure App Service, AWS Elastic Beanstalk, container services**. It sits **between IaaS and SaaS** in control.",
+    "keyIdea": "PaaS = **managed platform; you manage app + data**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "A managed platform for application code",
+        "p": "Platform as a Service provides a managed runtime, database and deployment environment. The provider manages the servers, operating system and middleware, and the customer deploys application code and data. This reduces operational work but also reduces control over the underlying host and network."
+      },
+      {
+        "kind": "list",
+        "h": "Network notes",
+        "items": [
+          {
+            "t": "Ingress",
+            "d": "Applications are usually exposed through a platform load balancer or API gateway."
+          },
+          {
+            "t": "Private endpoint",
+            "d": "Use a private link or private endpoint when the platform must not traverse the public Internet."
+          },
+          {
+            "t": "Egress",
+            "d": "Know how outbound traffic leaves the platform and whether it needs a NAT gateway or firewall."
+          },
+          {
+            "t": "Service identity",
+            "d": "Use managed identities or service accounts rather than embedded credentials."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Azure PaaS inventory",
+        "code": "az appservice plan list -o table\naz webapp list -o table"
+      },
+      {
+        "label": "AWS PaaS inventory",
+        "code": "aws elasticbeanstalk describe-applications\naws elasticbeanstalk describe-environments"
+      }
+    ],
+    "traps": [
+      "PaaS = **managed platform; you manage app + data**.",
+      "Examples: App Service, Beanstalk, managed DB.",
+      "Control: **between IaaS and SaaS**.",
+      "Provider: infra + OS + runtime.",
+      "Auto-scaling is a PaaS feature."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Provider",
+        "Customer"
+      ],
+      "rows": [
+        [
+          "Runtime",
+          "Manages",
+          "Uses"
+        ],
+        [
+          "Operating system",
+          "Manages",
+          "No access"
+        ],
+        [
+          "Application",
+          "Provides platform",
+          "Builds and deploys"
+        ],
+        [
+          "Data",
+          "Provides storage",
+          "Owns access and backups"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "11. SaaS",
+        "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
+      },
+      {
+        "t": "13. IaaS",
+        "d": "IaaS delivers raw compute, storage, and networking as a service — you rent VMs and virtual networks"
+      }
+    ],
+    "glossary": [
+      "PaaS"
+    ]
+  },
+  {
+    "num": "13",
+    "id": "t13",
+    "group": "service",
+    "title": "IaaS",
+    "blurb": "IaaS delivers virtual compute, storage and networking that the customer manages.",
+    "overview": "**[[IaaS]]** delivers **raw compute, storage, and networking** as a service — you rent **[[Virtual Machine|VMs]] and virtual networks** and manage the **OS, apps, and data** yourself (AWS EC2, Azure VMs, GCP Compute). It's the **most control** of the three service models and closest to classic infrastructure. The exam stresses the responsibility split.",
+    "keyIdea": "IaaS = **raw infra; you manage OS + app + data**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Virtual infrastructure on demand",
+        "p": "Infrastructure as a Service provides virtual compute, storage and networking over an API. The customer chooses the operating system, installs applications and manages patching, while the provider manages the physical hosts, hypervisor and data-centre facilities. It offers the most control of the three cloud service models, along with the most operational responsibility."
+      },
+      {
+        "kind": "table",
+        "h": "IaaS building blocks",
+        "cols": [
+          "Building block",
+          "What it provides"
+        ],
+        "rows": [
+          [
+            "Virtual machine",
+            "Compute with a customer-managed OS"
+          ],
+          [
+            "Virtual network",
+            "An isolated VPC or VNet with subnets and routing"
+          ],
+          [
+            "Security group",
+            "Stateful packet filtering at the instance or subnet level"
+          ],
+          [
+            "Load balancer",
+            "Distributes traffic across healthy instances"
+          ],
+          [
+            "Object or block storage",
+            "Persistent data for instances and applications"
+          ],
+          [
+            "NAT gateway",
+            "Outbound Internet access for private instances"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Design considerations",
+        "items": [
+          {
+            "t": "Address plan",
+            "d": "Size VPC and subnet CIDRs before deployment; changing them later is disruptive."
+          },
+          {
+            "t": "Routing",
+            "d": "Know which subnets are public, private or isolated, and where the default route points."
+          },
+          {
+            "t": "Security groups",
+            "d": "They are stateful and allow only what is explicitly permitted; do not confuse them with network ACLs."
+          },
+          {
+            "t": "High availability",
+            "d": "Use multiple availability zones and health-checked load balancing."
+          },
+          {
+            "t": "Cost",
+            "d": "Idle instances, oversized storage and egress traffic are common sources of waste."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Azure IaaS inventory",
+        "code": "az vm list -o table\naz network vnet list -o table\naz network nsg list -o table"
+      },
+      {
+        "label": "AWS IaaS inventory",
+        "code": "aws ec2 describe-instances\naws ec2 describe-vpcs\naws ec2 describe-security-groups"
+      }
+    ],
+    "traps": [
+      "IaaS = **raw infra; you manage OS + app + data**.",
+      "Examples: EC2, Azure VMs, VPC, S3.",
+      "**Most control of the three models**.",
+      "Virtual networking = **VPC/subnet/security groups**.",
+      "Lift-and-shift targets IaaS."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Provider",
+        "Customer"
+      ],
+      "rows": [
+        [
+          "Physical infrastructure",
+          "Owns and operates",
+          "No access"
+        ],
+        [
+          "Virtualisation",
+          "Manages",
+          "Consumes"
+        ],
+        [
+          "Operating system",
+          "Provides the platform",
+          "Patches and secures"
+        ],
+        [
+          "Application and data",
+          "Provides services",
+          "Owns"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "12. PaaS",
+        "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
+      },
+      {
+        "t": "01. Virtual Machines",
+        "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
+      }
+    ],
+    "glossary": [
       "IaaS",
-      "EC2/VMs"
-     ],
-     [
-      "PaaS",
-      "managed DB"
-     ],
-     [
-      "SaaS",
-      "Office 365"
-     ]
+      "Virtual Machine"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking model",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "VPC/VNet",
-      "isolated space"
-     ],
-     [
-      "Subnets",
-      "segmentation"
-     ],
-     [
-      "Security groups",
-      "L3/L4 rules"
-     ],
-     [
-      "LB",
-      "load balancing"
-     ],
-     [
-      "NAT GW",
-      "outbound"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "VPC = the cloud's \"VRF\"",
-      "d": "isolated per tenant."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Connectivity options",
-    "cols": [
-     "Method",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Internet VPN",
-      "IPsec"
-     ],
-     [
-      "Direct Connect",
-      "private link"
-     ],
-     [
-      "Cloud VPN",
-      "managed"
-     ],
-     [
-      "SD-WAN",
-      "overlay"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Public vs private",
-    "cols": [
-     "Aspect",
-     "Public",
-     "Private"
-    ],
-    "rows": [
-     [
-      "Tenancy",
-      "shared",
-      "dedicated"
-     ],
-     [
-      "Control",
-      "provider",
-      "you"
-     ],
-     [
-      "Location",
-      "provider DC",
-      "on-prem"
-     ],
-     [
-      "Cost",
-      "opex",
-      "capex"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Benefits/trade-offs",
-    "cols": [
-     "Pro",
-     "Con"
-    ],
-    "rows": [
-     [
-      "Elastic",
-      "shared"
-     ],
-     [
-      "Global",
-      "cost mgmt"
-     ],
-     [
-      "Fast",
-      "compliance"
-     ],
-     [
-      "Managed",
-      "lock-in"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No access",
-      "security group",
-      "rules"
-     ],
-     [
-      "Slow",
-      "region",
-      "distance"
-     ],
-     [
-      "Cost spike",
-      "scale",
-      "billing"
-     ],
-     [
-      "VPN down",
-      "IPsec",
-      "tunnel"
-     ],
-     [
-      "Leak",
-      "VPC",
-      "segmentation"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Cloud connectivity options",
-    "cols": [
-     "Option",
-     "Path",
-     "Best fit"
-    ],
-    "rows": [
-     [
-      "**Internet VPN**",
-      "IPsec over the public Internet",
-      "Fast to deploy, lower cost, variable quality"
-     ],
-     [
-      "**Private circuit**",
-      "Dedicated provider link such as Direct Connect or ExpressRoute",
-      "Predictable latency and bandwidth"
-     ],
-     [
-      "**Colocation**",
-      "Enterprise equipment meets the cloud provider at a neutral site",
-      "Low-latency private interconnect"
-     ],
-     [
-      "**SD-WAN to cloud**",
-      "Overlay across multiple transports with policy",
-      "Branch-to-cloud with application awareness"
-     ],
-     [
-      "**Cloud interconnect**",
-      "Provider-to-provider private peering",
-      "Multi-cloud and shared services"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Design questions before choosing a path",
-    "cols": [
-     "Question",
-     "Why it matters",
-     "Design response"
-    ],
-    "rows": [
-     [
-      "**Latency and jitter**",
-      "Interactive and real-time apps are sensitive",
-      "Private circuit, local egress or application placement"
-     ],
-     [
-      "**Data gravity**",
-      "Large data sets are expensive to move repeatedly",
-      "Keep compute near the data"
-     ],
-     [
-      "**Routing**",
-      "Overlapping addresses break connectivity",
-      "Plan NAT, VRF or unique address space"
-     ],
-     [
-      "**Encryption**",
-      "The provider path is outside your physical control",
-      "IPsec or application-layer encryption"
-     ],
-     [
-      "**Egress cost**",
-      "Cloud egress is often metered",
-      "Cache, compress and place services carefully"
-     ],
-     [
-      "**Identity**",
-      "Cloud APIs are internet-facing",
-      "MFA, least privilege, scoped tokens and audit logs"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "Cloud network design rules",
-    "items": [
-     {
-      "t": "Treat the cloud VPC or VNet as another routing domain",
-      "d": "Define address space, route tables and security boundaries explicitly."
-     },
-     {
-      "t": "Prefer private connectivity for production",
-      "d": "Use an Internet VPN for backup or rapid deployment, not as the only path for critical traffic."
-     },
-     {
-      "t": "Keep security consistent",
-      "d": "Apply the same segmentation, logging and identity policy on both sides of the interconnect."
-     },
-     {
-      "t": "Design for failure",
-      "d": "Use redundant tunnels, diverse providers or multiple Interconnect locations."
-     },
-     {
-      "t": "Validate the path",
-      "d": "Test routing, MTU, latency and failover, not just whether the tunnel is up."
-     }
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Read the cloud network",
-    "code": "aws ec2 describe-vpcs\naws ec2 describe-subnets\naws ec2 describe-vpn-connections\naws ec2 describe-route-tables"
-   },
-   {
-    "label": "Azure equivalents",
-    "code": "az network vnet list\naz network vnet subnet list --vnet-name VNET --resource-group RG\naz network vpn-connection list"
-   },
-   {
-    "label": "Test the path",
-    "code": "ping 10.0.0.1\ntraceroute 10.0.0.1\nshow crypto ipsec sa\nshow crypto session"
-   }
-  ],
-  "traps": [
-   "Public cloud = **shared, elastic, pay-as-you-go**.",
-   "**VPC/VNet = isolation**; security groups = filters.",
-   "Connectivity: **VPN/Direct Connect** back to campus.",
-   "IaaS/PaaS/SaaS are the service models.",
-   "vs private: **shared + provider-owned**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Public Cloud"
-   ],
-   "rows": [
-    [
-     "Owner",
-     "provider"
-    ],
-    [
-     "Tenancy",
-     "shared"
-    ],
-    [
-     "IaaS",
-     "VMs"
-    ],
-    [
-     "PaaS",
-     "managed"
-    ],
-    [
-     "SaaS",
-     "apps"
-    ],
-    [
-     "VPC",
-     "isolation"
-    ],
-    [
-     "Connect",
-     "VPN/Direct"
-    ],
-    [
-     "Cost",
-     "opex"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "07. VRF Lite",
-    "d": "VRF-lite uses VRFs without MPLS/MP-BGP: separate routing tables and interfaces provide L3 segmentati"
-   },
-   {
-    "t": "09. Private Cloud",
-    "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
-   }
-  ],
-  "glossary": [
-   "Public Cloud"
-  ]
- },
- {
-  "num": "09",
-  "id": "t09",
-  "group": "cloud",
-  "title": "Private Cloud",
-  "blurb": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated",
-  "overview": "A **[[Private Cloud|private cloud]]** is cloud-like infrastructure (self-service, elastic, metered) that runs on **dedicated, on-premises** resources — e.g., **VMware/OpenStack** under your control. It keeps data and compliance in-house but adds **capex and operational cost**. The exam contrasts private vs public and when to pick each.",
-  "keyIdea": "Private cloud = **dedicated + on-prem + full control**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Definition",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Owner",
-      "your org"
-     ],
-     [
-      "Location",
-      "on-prem / dedicated"
-     ],
-     [
-      "Tenancy",
-      "dedicated"
-     ],
-     [
-      "Control",
-      "full"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Cloud features locally",
-    "cols": [
-     "Feature",
-     "Local equivalent"
-    ],
-    "rows": [
-     [
-      "Self-service",
-      "portal"
-     ],
-     [
-      "Elasticity",
-      "hypervisor pools"
-     ],
-     [
-      "Metering",
-      "usage"
-     ],
-     [
-      "Orchestration",
-      "vRealize/OpenStack"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Platforms",
-    "cols": [
-     "Platform",
-     "Type"
-    ],
-    "rows": [
-     [
-      "VMware vSphere",
-      "most common"
-     ],
-     [
-      "OpenStack",
-      "open-source"
-     ],
-     [
-      "Nutanix",
-      "hyperconverged"
-     ],
-     [
-      "Azure Stack",
-      "hybrid"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Private vs public",
-    "cols": [
-     "Aspect",
-     "Private",
-     "Public"
-    ],
-    "rows": [
-     [
-      "Cost",
-      "capex",
-      "opex"
-     ],
-     [
-      "Control",
-      "full",
-      "limited"
-     ],
-     [
-      "Compliance",
-      "easier",
-      "shared"
-     ],
-     [
-      "Scale",
-      "limited",
-      "elastic"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "When private wins",
-    "cols": [
-     "Use",
-     "Reason"
-    ],
-    "rows": [
-     [
-      "Regulated data",
-      "compliance"
-     ],
-     [
-      "Latency",
-      "local"
-     ],
-     [
-      "Legacy",
-      "integration"
-     ],
-     [
-      "Cost control",
-      "steady load"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking in private cloud",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Virtual switches",
-      "vSwitch"
-     ],
-     [
-      "VLANs",
-      "segmentation"
-     ],
-     [
-      "NSX",
-      "SDN overlay"
-     ],
-     [
-      "East-west",
-      "internal"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No VM net",
-      "vSwitch",
-      "vSwitch"
-     ],
-     [
-      "Capacity",
-      "hosts",
-      "pools"
-     ],
-     [
-      "Isolation",
-      "VLAN",
-      "portgroup"
-     ],
-     [
-      "Slow",
-      "storage",
-      "datastore"
-     ],
-     [
-      "Orchestration",
-      "vCenter",
-      "cluster"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Virtual switching design",
-    "cols": [
-     "Piece",
-     "What it controls",
-     "Exam cue"
-    ],
-    "rows": [
-     [
-      "**vSwitch**",
-      "Virtual ports, uplinks and VLAN tagging",
-      "One host-level switch"
-     ],
-     [
-      "**Port group**",
-      "VLAN and policy for a group of VMs",
-      "VM network attachment"
-     ],
-     [
-      "**Uplink**",
-      "Physical NIC used by the virtual switch",
-      "Teaming and failover"
-     ],
-     [
-      "**Distributed switch**",
-      "Virtual switching across multiple hosts",
-      "Consistent policy and mobility"
-     ],
-     [
-      "**MTU**",
-      "Frame size across the virtual and physical path",
-      "VXLAN and storage traffic need jumbo frames"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "esxcli network vswitch standard list\nesxcli network ip interface list"
-   }
-  ],
-  "traps": [
-   "Private cloud = **dedicated + on-prem + full control**.",
-   "Platforms: **VMware, OpenStack, Azure Stack**.",
-   "Cost = **capex**; public = opex.",
-   "Wins on **compliance/latency**; public wins on scale.",
-   "Networking via **vSwitch/VLAN or NSX**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Private Cloud"
-   ],
-   "rows": [
-    [
-     "Owner",
-     "you"
-    ],
-    [
-     "Tenancy",
-     "dedicated"
-    ],
-    [
-     "Cost",
-     "capex"
-    ],
-    [
-     "Control",
-     "full"
-    ],
-    [
-     "Platform",
-     "VMware/OpenStack"
-    ],
-    [
-     "Compliance",
-     "easier"
-    ],
-    [
-     "Scale",
-     "limited"
-    ],
-    [
-     "Network",
-     "vSwitch/NSX"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "08. Public Cloud",
-    "d": "A public cloud is shared, on-demand infrastructure run by a provider (AWS, Azure, GCP) and delivered"
-   },
-   {
-    "t": "10. Hybrid Cloud",
-    "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
-   }
-  ],
-  "glossary": [
-   "Private Cloud"
-  ]
- },
- {
-  "num": "10",
-  "id": "t10",
-  "group": "cloud",
-  "title": "Hybrid Cloud",
-  "blurb": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha",
-  "overview": "A **[[Hybrid Cloud|hybrid cloud]]** combines **on-premises (private)** and **public cloud** into one operational model — with **shared networking, security, and management** between them. Movement of workloads/data plus **connectivity (VPN/Direct Connect/ExpressRoute/SD-WAN)** are the core concepts. The exam wants the split of where what runs.",
-  "keyIdea": "Hybrid = **private + public in one model**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Definition",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Private",
-      "on-prem workloads"
-     ],
-     [
-      "Public",
-      "elastic/overflow"
-     ],
-     [
-      "Shared",
-      "mgmt/networking"
-     ],
-     [
-      "Goal",
-      "best of both"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Why hybrid",
-    "cols": [
-     "Reason",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Burst",
-      "use public for spikes"
-     ],
-     [
-      "Compliance",
-      "sensitive stays local"
-     ],
-     [
-      "Migration",
-      "glide path to cloud"
-     ],
-     [
-      "DR",
-      "cloud backup"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Connectivity",
-    "cols": [
-     "Method",
-     "Use"
-    ],
-    "rows": [
-     [
-      "VPN/IPsec",
-      "internet tunnel"
-     ],
-     [
-      "Direct Connect",
-      "private link"
-     ],
-     [
-      "ExpressRoute",
-      "Azure"
-     ],
-     [
-      "SD-WAN",
-      "intelligent overlay"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking consistency",
-    "cols": [
-     "Layer",
-     "Hybrid"
-    ],
-    "rows": [
-     [
-      "Identity",
-      "same IdP/SSO"
-     ],
-     [
-      "Routing",
-      "extended subnets"
-     ],
-     [
-      "Firewall",
-      "consistent policies"
-     ],
-     [
-      "Mgmt",
-      "single control"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Challenges",
-    "cols": [
-     "Challenge",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Latency",
-      "distance"
-     ],
-     [
-      "Data gravity",
-      "transfer cost"
-     ],
-     [
-      "Security",
-      "consistent"
-     ],
-     [
-      "Complexity",
-      "two platforms"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "show ip route (extended)\nping / traceroute to cloud\nshow crypto ipsec sa (VPN)\nmonitor via cloud console"
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No cloud path",
-      "VPN/Link",
-      "crypto"
-     ],
-     [
-      "Latency",
-      "distance",
-      "traceroute"
-     ],
-     [
-      "Auth fail",
-      "IdP",
-      "SSO"
-     ],
-     [
-      "Policy gap",
-      "firewall",
-      "rules"
-     ],
-     [
-      "Cost",
-      "data",
-      "transfer"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show crypto ipsec sa\nshow crypto session\nping 10.0.x.x (cloud subnet)\ntraceroute 10.0.x.x"
-   }
-  ],
-  "traps": [
-   "Hybrid = **private + public in one model**.",
-   "Connectivity: **IPsec VPN, Direct Connect/ExpressRoute, SD-WAN**.",
-   "Sensitive data stays **on-prem**; bursts go public.",
-   "Consistent **identity/security/routing** across both.",
-   "Migration: **glide path**; DR: cloud."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Hybrid"
-   ],
-   "rows": [
-    [
-     "Private",
-     "on-prem"
-    ],
-    [
-     "Public",
-     "elastic"
-    ],
-    [
-     "Connect",
-     "VPN/Direct"
-    ],
-    [
-     "Burst",
-     "cloud"
-    ],
-    [
-     "Compliance",
-     "local"
-    ],
-    [
-     "Identity",
-     "shared"
-    ],
-    [
-     "Security",
-     "consistent"
-    ],
-    [
-     "Goal",
-     "best of both"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "09. Private Cloud",
-    "d": "A private cloud is cloud-like infrastructure (self-service, elastic, metered) that runs on dedicated"
-   },
-   {
-    "t": "11. SaaS",
-    "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
-   }
-  ],
-  "glossary": [
-   "Hybrid Cloud"
-  ]
- },
- {
-  "num": "11",
-  "id": "t11",
-  "group": "service",
-  "title": "SaaS",
-  "blurb": "SaaS delivers complete applications over the internet — no install, no server management; the provid",
-  "overview": "**[[SaaS]]** delivers **complete applications over the internet** — no install, no server management; the provider runs everything (e.g., **Office 365, Salesforce, Webex**). The customer manages only **users and data**. The exam contrasts the three service models (IaaS/PaaS/SaaS) and their **division of responsibility**.",
-  "keyIdea": "SaaS = **full application, provider-managed**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What SaaS is",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Deliverable",
-      "full app"
-     ],
-     [
-      "Access",
-      "browser/client"
-     ],
-     [
-      "Provider runs",
-      "infra + app"
-     ],
-     [
-      "Customer",
-      "users + data"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Examples",
-    "cols": [
-     "Service",
-     "Use"
-    ],
-    "rows": [
-     [
-      "Office 365",
-      "email/office"
-     ],
-     [
-      "Salesforce",
-      "CRM"
-     ],
-     [
-      "Webex",
-      "collaboration"
-     ],
-     [
-      "ServiceNow",
-      "IT service mgmt"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Responsibility split",
-    "cols": [
-     "Layer",
-     "Provider",
-     "Customer"
-    ],
-    "rows": [
-     [
-      "App",
-      "yes",
-      "no"
-     ],
-     [
-      "Middleware",
-      "yes",
-      "no"
-     ],
-     [
-      "OS/host",
-      "yes",
-      "no"
-     ],
-     [
-      "Data/access",
-      "no",
-      "yes"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "SaaS vs PaaS vs IaaS",
-    "cols": [
-     "Model",
-     "You manage"
-    ],
-    "rows": [
-     [
-      "IaaS",
-      "OS + app + data"
-     ],
-     [
-      "PaaS",
-      "app + data"
-     ],
-     [
-      "SaaS",
-      "data + users only"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking angle",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Access",
-      "internet/TLS"
-     ],
-     [
-      "Bandwidth",
-      "matters"
-     ],
-     [
-      "QoS",
-      "priority for apps"
-     ],
-     [
-      "Security",
-      "identity + DLP"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Pros/cons",
-    "cols": [
-     "Pro",
-     "Con"
-    ],
-    "rows": [
-     [
-      "Zero maintenance",
-      "less control"
-     ],
-     [
-      "Fast rollout",
-      "lock-in"
-     ],
-     [
-      "Predictable",
-      "compliance"
-     ],
-     [
-      "Mobile ready",
-      "internet-dependent"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Slow",
-      "bandwidth",
-      "QoS"
-     ],
-     [
-      "Access denied",
-      "IdP",
-      "identity"
-     ],
-     [
-      "Latency",
-      "path",
-      "route"
-     ],
-     [
-      "Data risk",
-      "DLP",
-      "policy"
-     ],
-     [
-      "Downtime",
-      "provider",
-      "status"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Identify SaaS flows",
-    "code": "show ip nbar protocol-id\nshow ip nbar protocol-discovery top-n 10\nshow flow monitor"
-   }
-  ],
-  "traps": [
-   "SaaS = **full application, provider-managed**.",
-   "Customer manages **data + users only**.",
-   "**Least control of the three models**.",
-   "Examples: Office 365, Salesforce, Webex.",
-   "Network role: **prioritize + secure** traffic."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "SaaS"
-   ],
-   "rows": [
-    [
-     "Deliverable",
-     "app"
-    ],
-    [
-     "Managed by",
-     "provider"
-    ],
-    [
-     "Customer",
-     "data/users"
-    ],
-    [
-     "Examples",
-     "Office 365, CRM"
-    ],
-    [
-     "Control",
-     "least"
-    ],
-    [
-     "Access",
-     "internet"
-    ],
-    [
-     "QoS",
-     "priority"
-    ],
-    [
-     "vs IaaS",
-     "more managed"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "10. Hybrid Cloud",
-    "d": "A hybrid cloud combines on-premises (private) and public cloud into one operational model — with sha"
-   },
-   {
-    "t": "12. PaaS",
-    "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
-   }
-  ],
-  "glossary": [
-   "SaaS"
-  ]
- },
- {
-  "num": "12",
-  "id": "t12",
-  "group": "service",
-  "title": "PaaS",
-  "blurb": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma",
-  "overview": "**[[PaaS]]** provides a **managed platform** — runtime, DB, middleware — where developers deploy code without managing servers/OS. The provider handles **infra + platform**; you manage **app + data**. Examples: **Azure App Service, AWS Elastic Beanstalk, container services**. It sits **between IaaS and SaaS** in control.",
-  "keyIdea": "PaaS = **managed platform; you manage app + data**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What PaaS is",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Deliverable",
-      "platform/runtime"
-     ],
-     [
-      "Provider",
-      "infra + OS + runtime"
-     ],
-     [
-      "Customer",
-      "app + data"
-     ],
-     [
-      "Access",
-      "deploy your code"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Examples",
-    "cols": [
-     "Service",
-     "Use"
-    ],
-    "rows": [
-     [
-      "Azure App Service",
-      "web apps"
-     ],
-     [
-      "AWS Beanstalk",
-      "deploy"
-     ],
-     [
-      "Google App Engine",
-      "scale"
-     ],
-     [
-      "Managed DB",
-      "PaaS data"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Responsibility split",
-    "cols": [
-     "Layer",
-     "Provider",
-     "Customer"
-    ],
-    "rows": [
-     [
-      "Infra",
-      "yes",
-      "no"
-     ],
-     [
-      "OS",
-      "yes",
-      "no"
-     ],
-     [
-      "Runtime/middleware",
-      "yes",
-      "no"
-     ],
-     [
-      "App + data",
-      "no",
-      "yes"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "PaaS vs IaaS vs SaaS",
-    "cols": [
-     "Model",
-     "You manage"
-    ],
-    "rows": [
-     [
-      "IaaS",
-      "OS + app + data"
-     ],
-     [
-      "PaaS",
-      "app + data"
-     ],
-     [
-      "SaaS",
-      "data + users"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "PaaS is mid-control",
-      "d": "less than IaaS, more than SaaS."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking angle",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Public endpoint",
-      "provider LB"
-     ],
-     [
-      "VNet/VPC",
-      "still isolated"
-     ],
-     [
-      "APIs",
-      "app integration"
-     ],
-     [
-      "Security",
-      "app-level"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Pros/cons",
-    "cols": [
-     "Pro",
-     "Con"
-    ],
-    "rows": [
-     [
-      "No infra mgmt",
-      "platform limits"
-     ],
-     [
-      "Fast dev",
-      "lock-in"
-     ],
-     [
-      "Auto scale",
-      "cost control"
-     ],
-     [
-      "Managed DB",
-      "data residency"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "App down",
-      "platform",
-      "console"
-     ],
-     [
-      "Slow DB",
-      "instance",
-      "managed DB"
-     ],
-     [
-      "Deploy fail",
-      "config",
-      "runtime"
-     ],
-     [
-      "Scale spike",
-      "cost",
-      "autoscale"
-     ],
-     [
-      "Access",
-      "network",
-      "VNet"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Azure PaaS inventory",
-    "code": "az appservice plan list -o table\naz webapp list -o table"
-   },
-   {
-    "label": "AWS PaaS inventory",
-    "code": "aws elasticbeanstalk describe-applications\naws elasticbeanstalk describe-environments"
-   }
-  ],
-  "traps": [
-   "PaaS = **managed platform; you manage app + data**.",
-   "Examples: App Service, Beanstalk, managed DB.",
-   "Control: **between IaaS and SaaS**.",
-   "Provider: infra + OS + runtime.",
-   "Auto-scaling is a PaaS feature."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "PaaS"
-   ],
-   "rows": [
-    [
-     "Deliverable",
-     "platform"
-    ],
-    [
-     "Provider",
-     "infra+OS"
-    ],
-    [
-     "Customer",
-     "app+data"
-    ],
-    [
-     "Examples",
-     "App Service"
-    ],
-    [
-     "Control",
-     "middle"
-    ],
-    [
-     "Auto scale",
-     "yes"
-    ],
-    [
-     "Managed DB",
-     "yes"
-    ],
-    [
-     "vs IaaS",
-     "less OS mgmt"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "11. SaaS",
-    "d": "SaaS delivers complete applications over the internet — no install, no server management; the provid"
-   },
-   {
-    "t": "13. IaaS",
-    "d": "IaaS delivers raw compute, storage, and networking as a service — you rent VMs and virtual networks"
-   }
-  ],
-  "glossary": [
-   "PaaS"
-  ]
- },
- {
-  "num": "13",
-  "id": "t13",
-  "group": "service",
-  "title": "IaaS",
-  "blurb": "IaaS delivers raw compute, storage, and networking as a service — you rent VMs and virtual networks",
-  "overview": "**[[IaaS]]** delivers **raw compute, storage, and networking** as a service — you rent **[[Virtual Machine|VMs]] and virtual networks** and manage the **OS, apps, and data** yourself (AWS EC2, Azure VMs, GCP Compute). It's the **most control** of the three service models and closest to classic infrastructure. The exam stresses the responsibility split.",
-  "keyIdea": "IaaS = **raw infra; you manage OS + app + data**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What IaaS is",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Deliverable",
-      "compute/storage/net"
-     ],
-     [
-      "Provider",
-      "hosts + hypervisor"
-     ],
-     [
-      "Customer",
-      "OS + app + data"
-     ],
-     [
-      "Access",
-      "VMs/networks"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Examples",
-    "cols": [
-     "Service",
-     "Use"
-    ],
-    "rows": [
-     [
-      "EC2",
-      "VMs"
-     ],
-     [
-      "Azure VM",
-      "compute"
-     ],
-     [
-      "VPC/VNet",
-      "networks"
-     ],
-     [
-      "S3/Blob",
-      "storage"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "VMs + virtual networks + storage",
-      "d": "IaaS."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Responsibility split",
-    "cols": [
-     "Layer",
-     "Provider",
-     "Customer"
-    ],
-    "rows": [
-     [
-      "Hardware",
-      "yes",
-      "no"
-     ],
-     [
-      "Hypervisor",
-      "yes",
-      "no"
-     ],
-     [
-      "OS",
-      "no",
-      "yes"
-     ],
-     [
-      "App + data",
-      "no",
-      "yes"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "IaaS vs PaaS vs SaaS",
-    "cols": [
-     "Model",
-     "You manage"
-    ],
-    "rows": [
-     [
-      "IaaS",
-      "OS + app + data"
-     ],
-     [
-      "PaaS",
-      "app + data"
-     ],
-     [
-      "SaaS",
-      "data + users"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Networking in IaaS",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "VPC/VNet",
-      "isolation"
-     ],
-     [
-      "Subnets",
-      "segmentation"
-     ],
-     [
-      "Security groups",
-      "filters"
-     ],
-     [
-      "LB/NAT",
-      "services"
-     ],
-     [
-      "VPN/Direct",
-      "connect"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Pros/cons",
-    "cols": [
-     "Pro",
-     "Con"
-    ],
-    "rows": [
-     [
-      "Full control",
-      "you manage OS"
-     ],
-     [
-      "Familiar",
-      "patching burden"
-     ],
-     [
-      "Elastic",
-      "cost discipline"
-     ],
-     [
-      "Migration",
-      "lift-and-shift"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "VM unreachable",
-      "security group",
-      "rules"
-     ],
-     [
-      "No route",
-      "subnet",
-      "VPC"
-     ],
-     [
-      "Patch debt",
-      "OS",
-      "updates"
-     ],
-     [
-      "Cost",
-      "sizing",
-      "billing"
-     ],
-     [
-      "Latency",
-      "region",
-      "placement"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Azure IaaS inventory",
-    "code": "az vm list -o table\naz network vnet list -o table\naz network nsg list -o table"
-   },
-   {
-    "label": "AWS IaaS inventory",
-    "code": "aws ec2 describe-instances\naws ec2 describe-vpcs\naws ec2 describe-security-groups"
-   }
-  ],
-  "traps": [
-   "IaaS = **raw infra; you manage OS + app + data**.",
-   "Examples: EC2, Azure VMs, VPC, S3.",
-   "**Most control of the three models**.",
-   "Virtual networking = **VPC/subnet/security groups**.",
-   "Lift-and-shift targets IaaS."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "IaaS"
-   ],
-   "rows": [
-    [
-     "Deliverable",
-     "infra"
-    ],
-    [
-     "Provider",
-     "hosts"
-    ],
-    [
-     "Customer",
-     "OS+app"
-    ],
-    [
-     "Examples",
-     "EC2"
-    ],
-    [
-     "Control",
-     "most"
-    ],
-    [
-     "Network",
-     "VPC"
-    ],
-    [
-     "Storage",
-     "S3"
-    ],
-    [
-     "vs SaaS",
-     "most mgmt"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "12. PaaS",
-    "d": "PaaS provides a managed platform — runtime, DB, middleware — where developers deploy code without ma"
-   },
-   {
-    "t": "01. Virtual Machines",
-    "d": "A VM is a software-emulated computer: a full guest OS running on virtualized hardware (vCPU, vRAM, v"
-   }
-  ],
-  "glossary": [
-   "IaaS",
-   "Virtual Machine"
-  ]
- }
+  }
 ];
 
         const GROUPS = [{"key":"server","label":"Server Virtualization","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"network","label":"Network Virtualization","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"},{"key":"cloud","label":"Cloud Models","chip":"bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300","dot":"bg-amber-600","bullet":"text-amber-600 dark:text-amber-400"},{"key":"service","label":"Cloud Services","chip":"bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300","dot":"bg-violet-600","bullet":"text-violet-600 dark:text-violet-400"}];
@@ -4513,389 +2176,136 @@
 
         const quiz = [
  {
-  "q": "Which cloud connectivity option normally provides the most predictable latency?",
+  "q": "Which resource does a virtual machine have that a container does not?",
   "options": [
-   "A public Internet IPsec tunnel",
-   "A private circuit such as Direct Connect or ExpressRoute",
-   "A consumer broadband link",
-   "A GRE tunnel over the Internet"
+   "A vNIC",
+   "Its own guest operating system",
+   "A filesystem",
+   "A network address"
   ],
   "answer": 1,
-  "why": "Private circuits bypass the public Internet and are designed for predictable latency and bandwidth. Internet VPNs are cheaper but less predictable."
+  "why": "A VM runs a complete guest OS. A container packages the application and dependencies but shares the host kernel."
  },
  {
-  "q": "Why is overlapping address space a problem in a hybrid cloud design?",
+  "q": "Which is an example of a Type 1 hypervisor?",
   "options": [
-   "Routes cannot distinguish the same prefix in two locations",
-   "It changes the cloud provider's billing model",
-   "It prevents DNS from using UDP",
-   "It disables TLS"
-  ],
-  "answer": 0,
-  "why": "Overlapping prefixes create ambiguous routes. Use unique address space, NAT or VRF separation."
- },
- {
-  "q": "What does a virtual switch port group usually define for a VM?",
-  "options": [
-   "The guest OS license",
-   "The physical CPU model",
-   "The backup schedule",
-   "VLAN and network policy"
-  ],
-  "answer": 3,
-  "why": "A port group attaches a VM to a virtual switch with a VLAN and related policy. CPU, licensing and backup are separate concerns."
- },
- {
-  "q": "Which design rule best protects a production cloud interconnect?",
-  "options": [
-   "Use only one Internet VPN for all traffic",
-   "Disable logging to reduce cost",
-   "Provide redundant tunnels or diverse private paths",
-   "Reuse the same RFC 1918 prefix everywhere"
+   "VirtualBox",
+   "VMware Workstation",
+   "VMware ESXi",
+   "A Docker container"
   ],
   "answer": 2,
-  "why": "Redundancy and path diversity prevent a single tunnel or provider link from becoming the only failure domain."
+  "why": "ESXi runs directly on hardware. VirtualBox and Workstation are Type 2 hypervisors that run on a host OS."
  },
  {
-  "q": "Which hypervisor type runs directly on the physical hardware?",
+  "q": "In Docker, what is an image?",
   "options": [
-   "Type 2, hosted",
-   "Type 1, bare metal",
-   "A container runtime",
-   "A virtual switch"
+   "A running container",
+   "A read-only template used to create containers",
+   "A persistent volume",
+   "A physical network interface"
   ],
   "answer": 1,
-  "why": "Type 1 runs on bare metal. Type 2 runs as an application on a host operating system."
+  "why": "An image is a read-only template. A container is a running instance created from that image."
  },
  {
-  "q": "What is the key difference between a VM and a container?",
+  "q": "In Kubernetes, which object provides a stable address for a set of pods?",
   "options": [
-   "A VM includes a guest OS; a container shares the host kernel",
-   "A container includes a hypervisor; a VM does not",
-   "A VM cannot use virtual NICs",
-   "A container cannot be isolated from other containers"
-  ],
-  "answer": 0,
-  "why": "VMs virtualise hardware and run a full guest OS. Containers share the host kernel and isolate processes, which makes them lighter."
- },
- {
-  "q": "Which statement about VRF Lite is correct?",
-  "options": [
-   "It requires MP-BGP and a provider core",
-   "It is another name for VLAN trunking",
-   "It only works with IPv6",
-   "It provides VRF separation without MPLS"
-  ],
-  "answer": 3,
-  "why": "VRF Lite uses separate routing tables on a device without MPLS. It still separates routes, but it is not a full MPLS L3VPN."
- },
- {
-  "q": "A company wants a managed application platform where it deploys code but not the operating system. Which model fits?",
-  "options": [
-   "IaaS",
-   "SaaS",
-   "PaaS",
-   "On-premises bare metal"
+   "A pod",
+   "A namespace",
+   "A service",
+   "A ConfigMap"
   ],
   "answer": 2,
-  "why": "PaaS provides the runtime and managed platform. IaaS provides virtual infrastructure, and SaaS provides the finished application."
+  "why": "A service gives clients a stable virtual IP and DNS name while the underlying pod IPs change."
  },
  {
-  "q": "Which cloud model gives the customer the most control over the operating system and network stack?",
+  "q": "What does a route target control in an MPLS L3VPN?",
   "options": [
-   "PaaS",
-   "IaaS",
-   "SaaS",
-   "A managed database service"
+   "The interface MTU",
+   "Which VRFs import and export routes",
+   "The OSPF area",
+   "The SSH port"
   ],
   "answer": 1,
-  "why": "IaaS exposes virtual machines, storage and networking. The customer manages the guest OS and application stack."
+  "why": "The route target is a BGP extended community that controls route import and export between VRFs."
  },
  {
-  "q": "In Virtual Machines — What makes a VM, which value matches \"vCPU\"?",
+  "q": "How does VRF Lite differ from MPLS L3VPN?",
   "options": [
-   "virtual cores",
-   "allocated memory",
-   "virtual NIC",
-   "virtual disk"
+   "It uses MPLS labels but no VRFs",
+   "It uses VRFs without an MPLS label-switched core",
+   "It requires MP-BGP on every router",
+   "It only works with IPv6"
   ],
-  "answer": 0,
-  "why": "What makes a VM in Virtual Machines pairs \"vCPU\" with \"virtual cores\"."
+  "answer": 1,
+  "why": "VRF Lite provides routing-table separation on a device or small site without MPLS labels or a provider VPN core."
  },
  {
-  "q": "In Virtual Machines — What makes a VM, which value matches \"vRAM\"?",
+  "q": "Under the shared responsibility model in public cloud, what does the customer always own?",
   "options": [
-   "virtual cores",
-   "virtual NIC",
-   "virtual disk",
-   "allocated memory"
-  ],
-  "answer": 3,
-  "why": "What makes a VM in Virtual Machines pairs \"vRAM\" with \"allocated memory\"."
- },
- {
-  "q": "In Hypervisors — Type 1 (bare-metal), which value matches \"Performance\"?",
-  "options": [
-   "minimal",
-   "datacenter/cloud",
-   "near-native",
-   "smaller surface"
+   "The physical data-centre power",
+   "The hypervisor patches",
+   "Identity, configuration and data",
+   "The provider's global network"
   ],
   "answer": 2,
-  "why": "Type 1 (bare-metal) in Hypervisors pairs \"Performance\" with \"near-native\"."
+  "why": "The provider secures the physical platform. The customer remains responsible for identity, configuration, data and workloads."
  },
  {
-  "q": "In Hypervisors — Type 1 (bare-metal), which value matches \"Overhead\"?",
+  "q": "What is the main tradeoff of a private cloud?",
   "options": [
-   "near-native",
-   "minimal",
-   "datacenter/cloud",
-   "smaller surface"
+   "No control over data location",
+   "High control but limited elasticity and capital cost",
+   "It cannot use virtualisation",
+   "It always costs less than public cloud"
   ],
   "answer": 1,
-  "why": "Type 1 (bare-metal) in Hypervisors pairs \"Overhead\" with \"minimal\"."
+  "why": "A private cloud gives control and data residency, but capacity must be purchased ahead of demand and the organisation owns operations."
  },
  {
-  "q": "In Containers — How containers work, which value matches \"Kernel\"?",
+  "q": "Which hybrid cloud pattern adds public capacity when private capacity is exhausted?",
   "options": [
-   "shared host",
-   "isolation",
-   "resources",
-   "app + deps"
+   "Cloud bursting",
+   "Route leaking",
+   "Anycast",
+   "Spanning tree"
   ],
   "answer": 0,
-  "why": "How containers work in Containers pairs \"Kernel\" with \"shared host\"."
+  "why": "Cloud bursting extends a private environment into public cloud during peak demand."
  },
  {
-  "q": "In Containers — How containers work, which value matches \"Namespaces\"?",
+  "q": "In SaaS, which layer does the customer normally configure?",
   "options": [
-   "shared host",
-   "resources",
-   "app + deps",
-   "isolation"
-  ],
-  "answer": 3,
-  "why": "How containers work in Containers pairs \"Namespaces\" with \"isolation\"."
- },
- {
-  "q": "In Docker — Object model, which value matches \"Image\"?",
-  "options": [
-   "running image",
-   "persistent data",
-   "read-only template",
-   "connectivity"
+   "The physical hypervisor",
+   "The guest operating system",
+   "Users, identity and application settings",
+   "The provider's storage hardware"
   ],
   "answer": 2,
-  "why": "Object model in Docker pairs \"Image\" with \"read-only template\"."
+  "why": "The provider operates the application and platform. The customer configures access, identity, data and business settings."
  },
  {
-  "q": "In Docker — Object model, which value matches \"Container\"?",
+  "q": "Which statement distinguishes PaaS from IaaS?",
   "options": [
-   "read-only template",
-   "running image",
-   "persistent data",
-   "connectivity"
+   "PaaS gives the customer the operating system to patch",
+   "PaaS manages the runtime and OS, while the customer deploys code",
+   "IaaS is always a finished application",
+   "PaaS does not use networking"
   ],
   "answer": 1,
-  "why": "Object model in Docker pairs \"Container\" with \"running image\"."
+  "why": "PaaS manages the platform and runtime; the customer deploys application code and data. IaaS leaves the OS to the customer."
  },
  {
-  "q": "In Kubernetes Basics — Cluster structure, which value matches \"Control plane\"?",
+  "q": "In an IaaS VPC, what is a security group primarily used for?",
   "options": [
-   "brain (API server)",
-   "run pods",
-   "node agent",
-   "state store"
-  ],
-  "answer": 0,
-  "why": "Cluster structure in Kubernetes Basics pairs \"Control plane\" with \"brain (API server)\"."
- },
- {
-  "q": "In Kubernetes Basics — Cluster structure, which value matches \"Worker nodes\"?",
-  "options": [
-   "brain (API server)",
-   "node agent",
-   "state store",
-   "run pods"
-  ],
-  "answer": 3,
-  "why": "Cluster structure in Kubernetes Basics pairs \"Worker nodes\" with \"run pods\"."
- },
- {
-  "q": "In VRF (Virtual Routing and Forwarding) — What a VRF isolates, which value matches \"RIB\"?",
-  "options": [
-   "forwarding",
-   "membership",
-   "routes",
-   "per-VRF process"
-  ],
-  "answer": 2,
-  "why": "What a VRF isolates in VRF (Virtual Routing and Forwarding) pairs \"RIB\" with \"routes\"."
- },
- {
-  "q": "In VRF (Virtual Routing and Forwarding) — What a VRF isolates, which value matches \"CEF/FIB\"?",
-  "options": [
-   "routes",
-   "forwarding",
-   "membership",
-   "per-VRF process"
+   "Assigning public IP addresses",
+   "Filtering traffic to instances or subnets",
+   "Routing BGP prefixes",
+   "Creating virtual machines"
   ],
   "answer": 1,
-  "why": "What a VRF isolates in VRF (Virtual Routing and Forwarding) pairs \"CEF/FIB\" with \"forwarding\"."
- },
- {
-  "q": "In VRF Lite — How it works, which value matches \"VRF per tenant\"?",
-  "options": [
-   "on each router",
-   "bound per VRF",
-   "per-VRF IGP/static",
-   "same VRF both ends"
-  ],
-  "answer": 0,
-  "why": "How it works in VRF Lite pairs \"VRF per tenant\" with \"on each router\"."
- },
- {
-  "q": "In VRF Lite — How it works, which value matches \"Interfaces\"?",
-  "options": [
-   "on each router",
-   "per-VRF IGP/static",
-   "same VRF both ends",
-   "bound per VRF"
-  ],
-  "answer": 3,
-  "why": "How it works in VRF Lite pairs \"Interfaces\" with \"bound per VRF\"."
- },
- {
-  "q": "In Public Cloud — Definition, which value matches \"Owner\"?",
-  "options": [
-   "internet/shared",
-   "pay-as-you-go",
-   "provider",
-   "multi-tenant"
-  ],
-  "answer": 2,
-  "why": "Definition in Public Cloud pairs \"Owner\" with \"provider\"."
- },
- {
-  "q": "In Public Cloud — Definition, which value matches \"Model\"?",
-  "options": [
-   "provider",
-   "pay-as-you-go",
-   "internet/shared",
-   "multi-tenant"
-  ],
-  "answer": 1,
-  "why": "Definition in Public Cloud pairs \"Model\" with \"pay-as-you-go\"."
- },
- {
-  "q": "In Private Cloud — Definition, which value matches \"Owner\"?",
-  "options": [
-   "your org",
-   "on-prem / dedicated",
-   "dedicated",
-   "full"
-  ],
-  "answer": 0,
-  "why": "Definition in Private Cloud pairs \"Owner\" with \"your org\"."
- },
- {
-  "q": "In Private Cloud — Definition, which value matches \"Location\"?",
-  "options": [
-   "your org",
-   "dedicated",
-   "full",
-   "on-prem / dedicated"
-  ],
-  "answer": 3,
-  "why": "Definition in Private Cloud pairs \"Location\" with \"on-prem / dedicated\"."
- },
- {
-  "q": "In Hybrid Cloud — Definition, which value matches \"Private\"?",
-  "options": [
-   "elastic/overflow",
-   "mgmt/networking",
-   "on-prem workloads",
-   "best of both"
-  ],
-  "answer": 2,
-  "why": "Definition in Hybrid Cloud pairs \"Private\" with \"on-prem workloads\"."
- },
- {
-  "q": "In Hybrid Cloud — Definition, which value matches \"Public\"?",
-  "options": [
-   "on-prem workloads",
-   "elastic/overflow",
-   "mgmt/networking",
-   "best of both"
-  ],
-  "answer": 1,
-  "why": "Definition in Hybrid Cloud pairs \"Public\" with \"elastic/overflow\"."
- },
- {
-  "q": "In SaaS — What SaaS is, which value matches \"Deliverable\"?",
-  "options": [
-   "full app",
-   "browser/client",
-   "infra + app",
-   "users + data"
-  ],
-  "answer": 0,
-  "why": "What SaaS is in SaaS pairs \"Deliverable\" with \"full app\"."
- },
- {
-  "q": "In SaaS — What SaaS is, which value matches \"Provider runs\"?",
-  "options": [
-   "full app",
-   "browser/client",
-   "users + data",
-   "infra + app"
-  ],
-  "answer": 3,
-  "why": "What SaaS is in SaaS pairs \"Provider runs\" with \"infra + app\"."
- },
- {
-  "q": "In PaaS — What PaaS is, which value matches \"Deliverable\"?",
-  "options": [
-   "infra + OS + runtime",
-   "app + data",
-   "platform/runtime",
-   "deploy your code"
-  ],
-  "answer": 2,
-  "why": "What PaaS is in PaaS pairs \"Deliverable\" with \"platform/runtime\"."
- },
- {
-  "q": "In PaaS — What PaaS is, which value matches \"Provider\"?",
-  "options": [
-   "platform/runtime",
-   "infra + OS + runtime",
-   "app + data",
-   "deploy your code"
-  ],
-  "answer": 1,
-  "why": "What PaaS is in PaaS pairs \"Provider\" with \"infra + OS + runtime\"."
- },
- {
-  "q": "In IaaS — What IaaS is, which value matches \"Deliverable\"?",
-  "options": [
-   "compute/storage/net",
-   "hosts + hypervisor",
-   "OS + app + data",
-   "VMs/networks"
-  ],
-  "answer": 0,
-  "why": "What IaaS is in IaaS pairs \"Deliverable\" with \"compute/storage/net\"."
- },
- {
-  "q": "In IaaS — What IaaS is, which value matches \"Provider\"?",
-  "options": [
-   "compute/storage/net",
-   "OS + app + data",
-   "VMs/networks",
-   "hosts + hypervisor"
-  ],
-  "answer": 3,
-  "why": "What IaaS is in IaaS pairs \"Provider\" with \"hosts + hypervisor\"."
+  "why": "A security group is a stateful packet filter. Routing, addressing and instance creation are separate controls."
  }
 ];
 
@@ -4983,6 +2393,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

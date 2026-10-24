@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,702 +600,1926 @@
         const heroIntro = `Multicast delivers one stream to many receivers, and the exam splits it into three layers. **[[IGMP]]** manages membership between hosts and the local router, with **[[IGMP Snooping]]** pruning at the switch. **[[PIM]]** builds the delivery tree: **[[PIM-DM]]** floods and prunes, while **[[PIM-SM]]** pulls joins through a **[[Rendezvous Point]]** and can switch to **[[Source-Specific Multicast|SSM]]**. Underneath it all sits the **[[Reverse Path Forwarding]]** check, plus boundaries and the **[[PIM DR]]** and assert rules that keep forwarding clean.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'membership', title: 'IGMP',
-            blurb: 'Versions, the querier election, and the membership workflow',
-            overview: '**[[IGMP]]** is the **host-to-router** protocol that manages multicast group membership on a LAN segment. Routers use it to learn which groups hosts want; without members, the router stops forwarding group traffic. **IGMPv2** is the common default and **IGMPv3** adds source filtering.',
-            keyIdea: 'IGMP is host to router. v3 source filtering enables SSM, and the lowest IP wins the querier election.',
-            sections: [
-              { kind: 'table', h: 'IGMP versions', cols: ['Version', 'Reports', 'Leaves', 'SSM'], rows: [
-                ['**v1**', 'General query only', 'Slow, about 2 minutes', 'No'],
-                ['**v2**', 'Fastest leaver', 'Leave group message', 'No'],
-                ['**v3**', 'Source-specific', 'Source filtering', '**Yes**']
-              ]},
-              { kind: 'table', h: 'Roles on the segment', cols: ['Role', 'Who', 'Job'], rows: [
-                ['**Querier**', 'Elected router', 'Sends general queries'],
-                ['**Member**', 'Host', 'Sends a report'],
-                ['**Non-member**', 'Host', 'Stays silent']
-              ]},
-              { kind: 'table', h: 'Membership workflow', cols: ['Step', 'Packet', 'Destination'], rows: [
-                ['1', 'General query', '**224.0.0.1**'],
-                ['2', 'Report', 'The group address'],
-                ['3', 'Leave, IGMPv2', '**224.0.0.2**'],
-                ['4', 'Group-specific query', 'The group address']
-              ]},
-              { kind: 'code', h: 'Enable IGMP and PIM', code:
-`  ip multicast-routing
-  !
-  interface GigabitEthernet0/1
-   ip pim sparse-mode
-   ip igmp version 3
-  !
-  interface Loopback0
-   ip igmp join-group 239.1.1.1` },
-              { kind: 'para', h: 'Querier election', p: 'One router per LAN acts as querier, and the **lowest IP address wins**. A host stays a member only while it keeps reporting, so **no report means timeout** and the group is pruned.' }
-            ],
-            commands: [
-              { label: 'Enable multicast and PIM on an interface', code:
-`ip multicast-routing\ninterface GigabitEthernet0/1\n ip pim sparse-mode` },
-              { label: 'Force IGMPv3 and join a group for testing', code:
-`interface GigabitEthernet0/1\n ip igmp version 3\ninterface Loopback0\n ip igmp join-group 239.1.1.1` },
-              { label: 'Verify', code:
-`show ip igmp groups\nshow ip igmp interface\nshow ip mroute` }
-            ],
-            traps: [
-              'IGMP is **host to router** membership, LAN side only.',
-              '**IGMPv3** adds source filtering, which is what enables SSM.',
-              '**%%ip pim sparse-mode%%** enables both PIM and IGMP on the interface.',
-              'IGMP snooping is a **switch** feature, not a router protocol.',
-              'Fast leave is an **IGMPv2** behaviour.',
-              'The querier is the **lowest IP** on the segment.'
-            ],
-            table: {
-              cols: ['Item', 'IGMP'],
-              rows: [
-                ['Scope', 'Host to router'],
-                ['v1', 'Basic queries'],
-                ['v2', 'Fast leave'],
-                ['v3', 'Source filtering and SSM'],
-                ['Querier', 'Lowest IP wins'],
-                ['Reports', 'Sent to the group'],
-                ['Enable', 'ip pim sparse-mode'],
-                ['Verify', 'show ip igmp groups']
-              ]
-            },
-            related: [
-              { t: '06. IGMP Snooping', d: 'The switch-side view' },
-              { t: '03. PIM Sparse', d: 'Routing after membership' }
-            ],
-            glossary: ['IGMP', 'IGMP Snooping', 'PIM', 'PIM-SM', 'Source-Specific Multicast', 'IPv4 Multicast', 'Multicast']
-          },
-          {
-            id: 't02', num: '02', group: 'membership', title: 'IGMP Snooping',
-            blurb: 'Member and mrouter ports, and snooping versus proxying',
-            overview: '**[[IGMP Snooping|IGMP snooping]]** is a switch feature that inspects **[[IGMP]]** membership messages and builds forwarding tables so multicast goes only to ports that have members, instead of flooding the whole VLAN.',
-            keyIdea: 'Switch feature, on by default. Forward out member ports plus the mrouter port; snooping passes queries, proxying regenerates them.',
-            sections: [
-              { kind: 'table', h: 'Why snooping exists', cols: ['Problem', 'Without snooping'], rows: [
-                ['Flooding', 'Group traffic flooded to every port'],
-                ['Waste', 'Hosts process traffic they never asked for'],
-                ['Isolation', 'No host-level filtering']
-              ]},
-              { kind: 'table', h: 'How snooping works', cols: ['Step', 'Action'], rows: [
-                ['1', 'Host sends an IGMP report'],
-                ['2', 'Switch inspects the report'],
-                ['3', 'Switch records the port as a member'],
-                ['4', 'Switch forwards group traffic only to member ports']
-              ]},
-              { kind: 'table', h: 'Key terms', cols: ['Term', 'Meaning'], rows: [
-                ['**Mrouter port**', 'Port facing the multicast router or querier'],
-                ['**Member port**', 'Port facing a host that reported the group'],
-                ['**Querier**', 'Router sending IGMP queries'],
-                ['**Static mrouter**', 'Manually defined router port']
-              ]},
-              { kind: 'table', h: 'Snooping versus proxying', cols: ['Feature', 'Snooping', 'Proxying'], rows: [
-                ['Level', 'Switch inspects reports', 'Switch acts as proxy'],
-                ['Forwarding', 'Per-port tables', 'Summarises membership'],
-                ['Queries', '**Passed through**', '**Terminated and regenerated**'],
-                ['State', 'Layer 2 tables', 'Layer 3-like state']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip igmp snooping
-  ip igmp snooping vlan 10
-  ip igmp snooping querier
-  ip igmp snooping mrouter learn pim
-  !
-  show ip igmp snooping
-  show ip igmp snooping groups vlan 10
-  show ip igmp snooping mrouter` }
-            ],
-            commands: [
-              { label: 'Enable snooping globally and per VLAN', code:
-`ip igmp snooping\nip igmp snooping vlan 10` },
-              { label: 'Run a switch querier and learn mrouter ports', code:
-`ip igmp snooping querier\nip igmp snooping mrouter learn pim` },
-              { label: 'Verify', code:
-`show ip igmp snooping\nshow ip igmp snooping groups vlan 10\nshow ip igmp snooping mrouter` }
-            ],
-            traps: [
-              'IGMP snooping is a **Layer 2 switch** feature; IGMP itself is host to router.',
-              'Snooping **passes queries through**; proxying terminates and regenerates them.',
-              'Traffic is forwarded out **member ports plus the mrouter port**.',
-              'Snooping is **on by default** on most Cisco switches.',
-              'The **switch querier** covers a VLAN with no multicast router.',
-              'Snooping state is **per VLAN**, not global.'
-            ],
-            table: {
-              cols: ['Item', 'IGMP Snooping'],
-              rows: [
-                ['Level', 'Layer 2, switch'],
-                ['Job', 'Limit flooding'],
-                ['Listens to', 'IGMP reports'],
-                ['Member', 'Tracked per port'],
-                ['Mrouter', 'Router-facing port'],
-                ['Querier', 'Optional switch'],
-                ['Default', 'On'],
-                ['Verify', 'show ip igmp snooping groups']
-              ]
-            },
-            related: [
-              { t: '01. IGMP', d: 'The protocol being snooped' },
-              { t: '08. Multicast Boundaries & RPF', d: 'Other forwarding controls' }
-            ],
-            glossary: ['IGMP Snooping', 'IGMP', 'Multicast', 'VLAN', 'PIM']
-          },
-          {
-            id: 't03', num: '03', group: 'routing', title: 'PIM Dense',
-            blurb: 'Flood, prune and graft with a source-based (S,G) tree and no RP',
-            overview: '**[[PIM-DM]]** assumes almost every LAN has a receiver. It floods multicast into the network, then prunes branches with no members, building a **source-based (S,G)** shortest-path tree. It needs no RP, but it is inefficient for sparse groups.',
-            keyIdea: 'Flood first, prune later. (S,G) only, no RP, and a graft restores a pruned branch.',
-            sections: [
-              { kind: 'table', h: 'Flood and prune', cols: ['Step', 'Action'], rows: [
-                ['1', 'Source starts sending'],
-                ['2', 'Traffic floods to all PIM neighbours'],
-                ['3', 'Leaf routers without members prune'],
-                ['4', 'Prune state times out and flooding repeats, about every 3 minutes']
-              ]},
-              { kind: 'table', h: 'State model', cols: ['State', 'Entry', 'Meaning'], rows: [
-                ['**(S,G)**', 'Source and group', 'Per-source tree'],
-                ['%%(*,G)%%', 'Any source', 'Not used in dense mode'],
-                ['**Prune**', 'Branch cut', 'No receivers below']
-              ]},
-              { kind: 'table', h: 'Traffic direction', cols: ['Item', 'Detail'], rows: [
-                ['**Flood**', 'Pushes traffic toward everyone'],
-                ['**Prune**', 'Cuts branches with no members'],
-                ['**Graft**', 'Restores a pruned branch quickly'],
-                ['**Source**', 'Starts the flow']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip multicast-routing
-  !
-  interface GigabitEthernet0/1
-   ip pim dense-mode
-  !
-  show ip mroute
-  show ip pim interface
-  show ip pim neighbor` },
-              { kind: 'table', h: 'Dense versus sparse', cols: ['Aspect', 'Dense', 'Sparse'], rows: [
-                ['Assumption', 'Members everywhere', 'Members are sparse'],
-                ['Flow', '**Push, flood**', '**Pull, join**'],
-                ['State', '(S,G) only', '%%(*,G)%% plus (S,G)'],
-                ['RP', '**Not needed**', 'Required'],
-                ['Default', 'No', '**Yes**']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable dense mode', code:
-`ip multicast-routing\ninterface GigabitEthernet0/1\n ip pim dense-mode` },
-              { label: 'Verify neighbours and state', code:
-`show ip pim interface\nshow ip pim neighbor\nshow ip mroute` },
-              { label: 'Debug the flood and prune behaviour', code:
-`debug ip pim` }
-            ],
-            traps: [
-              'PIM-DM is **flood and prune**, with a source-based **(S,G)** tree.',
-              '**No RP** is required in dense mode.',
-              'The %%(*,G)%% entry is not used by dense mode.',
-              'A **graft** restores a branch after a new receiver appears.',
-              'PIM-SM is the **production default**; dense is a lab and legacy topic.',
-              '**%%ip pim dense-mode%%** is configured per interface.'
-            ],
-            table: {
-              cols: ['Item', 'PIM-DM'],
-              rows: [
-                ['Model', 'Push and flood'],
-                ['State', '(S,G)'],
-                ['RP', 'Not needed'],
-                ['Tree', 'SPT from the source'],
-                ['Prune', 'Automatic when no members'],
-                ['Graft', 'Restores a branch'],
-                ['Default', 'No'],
-                ['Use', 'Dense LAN groups']
-              ]
-            },
-            related: [
-              { t: '04. PIM Sparse', d: 'The production default' },
-              { t: '05. Multicast Routing', d: 'RPF and forwarding' }
-            ],
-            glossary: ['PIM-DM', 'PIM', 'PIM-SM', 'Reverse Path Forwarding', 'Multicast', 'IPv4 Multicast']
-          },
-          {
-            id: 't04', num: '04', group: 'routing', title: 'PIM Sparse',
-            blurb: 'Join through the RP, then switch from the shared tree to the SPT',
-            overview: '**[[PIM-SM]]** is the production default for IP multicast. It assumes receivers are sparse, so nobody gets traffic until they explicitly join. Joins go through a **[[Rendezvous Point]]**, which builds a shared %%(*,G)%% tree; after the threshold the last-hop router may switch to a source-based **(S,G)** shortest-path tree.',
-            keyIdea: 'Pull, not push. Join %%(*,G)%% toward the RP, then switch to (S,G) with spt-threshold 0.',
-            sections: [
-              { kind: 'table', h: 'The pull model', cols: ['Step', 'Who', 'Action'], rows: [
-                ['1', 'Receiver', 'Sends an IGMP report'],
-                ['2', 'Designated Router', 'Joins %%(*,G)%% toward the RP'],
-                ['3', 'RP', 'Builds the shared tree'],
-                ['4', 'Source', 'Registers with the RP'],
-                ['5', 'Last-hop router', 'Switches over to the SPT']
-              ]},
-              { kind: 'table', h: 'Tree types', cols: ['Tree', 'Entry', 'Path', 'Use'], rows: [
-                ['**Shared**', '%%(*,G)%%', 'Via the RP', 'Initial state'],
-                ['**Shortest path**', '(S,G)', 'Direct from source', 'After switchover']
-              ]},
-              { kind: 'table', h: 'Key roles', cols: ['Role', 'Who'], rows: [
-                ['**RP**', 'Core of the shared tree'],
-                ['**DR**', 'First hop for the source, last hop for the receiver'],
-                ['**FHR**', 'The source designated router'],
-                ['**LHR**', 'The receiver designated router']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip multicast-routing
-  ip pim rp-address 192.168.10.10
-  !
-  interface GigabitEthernet0/1
-   ip pim sparse-mode
-  !
-  ip pim spt-threshold 0` },
-              { kind: 'table', h: 'The register process', cols: ['Step', 'Packet', 'Destination'], rows: [
-                ['1', 'Source to FHR', 'Multicast'],
-                ['2', 'FHR to RP', '**Register, unicast**'],
-                ['3', 'RP to FHR', 'Register-stop'],
-                ['4', 'RP forwarding', 'Down the shared tree']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable sparse mode with a static RP', code:
-`ip multicast-routing\nip pim rp-address 192.168.10.10\ninterface GigabitEthernet0/1\n ip pim sparse-mode` },
-              { label: 'Switch immediately to the SPT', code:
-`ip pim spt-threshold 0` },
-              { label: 'Verify', code:
-`show ip mroute\nshow ip pim rp mapping\nshow ip pim neighbor` }
-            ],
-            traps: [
-              'PIM-SM is a **pull and join** model that requires an **RP**.',
-              'The shared tree is %%(*,G)%%; the shortest-path tree is **(S,G)**.',
-              'The **register** message carries the first packet unicast to the RP.',
-              '**%%ip pim spt-threshold 0%%** means immediate SPT switchover.',
-              '**%%ip pim sparse-mode%%** is configured per interface.',
-              'Without a reachable RP there is no shared tree and no PIM-SM.'
-            ],
-            table: {
-              cols: ['Item', 'PIM-SM'],
-              rows: [
-                ['Model', 'Pull and join'],
-                ['RP', 'Required'],
-                ['Shared tree', '%%(*,G)%%'],
-                ['SPT', '(S,G)'],
-                ['Register', 'Unicast to the RP'],
-                ['Threshold', '0 means immediate switchover'],
-                ['Default', 'Yes'],
-                ['Config', 'rp-address plus sparse-mode']
-              ]
-            },
-            related: [
-              { t: '03. PIM Dense', d: 'The contrasting mode' },
-              { t: '05. Rendezvous Point', d: 'Core of sparse mode' },
-              { t: '07. Source-Specific Multicast', d: 'No RP at all' }
-            ],
-            glossary: ['PIM-SM', 'PIM', 'Rendezvous Point', 'Source-Specific Multicast', 'IGMP', 'PIM DR', 'Multicast']
-          },
-          {
-            id: 't05', num: '05', group: 'routing', title: 'Rendezvous Point',
-            blurb: 'Static, Auto-RP and BSR mapping, plus anycast redundancy',
-            overview: 'The **[[Rendezvous Point|RP]]** is where receivers join their %%(*,G)%% tree and the source registers its traffic. It is the hub of **[[PIM-SM]]**, and every PIM-SM router must know the group-to-RP mapping.',
-            keyIdea: 'Every router needs the group-to-RP mapping: static, Auto-RP or BSR. Anycast RP plus MSDP gives redundancy.',
-            sections: [
-              { kind: 'table', h: 'What the RP does', cols: ['Task', 'Detail'], rows: [
-                ['Join target', 'Receivers join %%(*,G)%% toward the RP'],
-                ['Register target', 'The source FHR registers with the RP'],
-                ['Forwarding', 'Shared-tree traffic flows through the RP'],
-                ['Mapping', 'Every router needs group to RP']
-              ]},
-              { kind: 'table', h: 'RP discovery methods', cols: ['Method', 'Mechanism', 'Trade-off'], rows: [
-                ['**Static**', 'Manual rp-address', 'Simple, manual per site'],
-                ['**Auto-RP**', 'Cisco proprietary', 'Dynamic, legacy'],
-                ['**BSR**', 'PIM draft standard', 'Dynamic, vendor neutral']
-              ]},
-              { kind: 'table', h: 'Auto-RP roles', cols: ['Role', 'Detail'], rows: [
-                ['**RP-announce**', 'Candidate RPs announce themselves'],
-                ['**RP-discovery**', 'Maps groups to RPs and distributes'],
-                ['**Mapping agent**', 'Picks the winning RP'],
-                ['**Groups**', '**224.0.1.39** and **224.0.1.40**']
-              ]},
-              { kind: 'table', h: 'BSR roles', cols: ['Item', 'Detail'], rows: [
-                ['**BSR**', 'Elected bootstrap router'],
-                ['**Candidate RP**', 'Announces RP capability'],
-                ['**Mapping**', 'BSR floods the mapping to all PIM routers'],
-                ['**Election**', 'Highest priority, then IP']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ! Static RP
-  ip pim rp-address 192.168.10.10
-  !
-  ! Auto-RP on the RP
-  ip pim send-rp-announce Loopback0 scope 32
-  ip pim send-rp-discovery Loopback0 scope 32
-  !
-  ! BSR candidate
-  ip pim bsr-candidate Loopback0 0
-  ip pim rp-candidate Loopback0` },
-              { kind: 'table', h: 'Placement and redundancy', cols: ['Strategy', 'Benefit'], rows: [
-                ['**Central RP**', 'Simple, but a single point of failure'],
-                ['**Anycast RP**', 'Redundancy and shared load via MSDP'],
-                ['**Per-group RP**', 'Scales the mapping domain']
-              ]}
-            ],
-            commands: [
-              { label: 'Static RP mapping', code:
-`ip pim rp-address 192.168.10.10` },
-              { label: 'Auto-RP announce and discovery', code:
-`ip pim send-rp-announce Loopback0 scope 32\nip pim send-rp-discovery Loopback0 scope 32` },
-              { label: 'BSR candidate and verification', code:
-`ip pim bsr-candidate Loopback0 0\nip pim rp-candidate Loopback0\nshow ip pim rp mapping` }
-            ],
-            traps: [
-              'Every PIM-SM router needs the **group-to-RP mapping**.',
-              'Know all three methods: **static, Auto-RP and BSR**.',
-              'Auto-RP uses **224.0.1.39 and 224.0.1.40** and is Cisco proprietary.',
-              'BSR is the **PIM draft standard**, not Cisco proprietary.',
-              '**Anycast RP** uses a shared loopback address plus **MSDP**.',
-              'No RP means **no shared tree** and no PIM-SM operation.'
-            ],
-            table: {
-              cols: ['Item', 'RP'],
-              rows: [
-                ['Role', 'PIM-SM hub'],
-                ['Static', 'ip pim rp-address'],
-                ['Auto-RP', 'Cisco, 224.0.1.39 and 224.0.1.40'],
-                ['BSR', 'PIM standard'],
-                ['No RP', 'No PIM-SM'],
-                ['Redundancy', 'Anycast RP'],
-                ['MSDP', 'Connects anycast RPs'],
-                ['Verify', 'show ip pim rp mapping']
-              ]
-            },
-            related: [
-              { t: '04. PIM Sparse', d: 'The mode it serves' },
-              { t: '05. Multicast Routing', d: 'Shared-tree forwarding' }
-            ],
-            glossary: ['Rendezvous Point', 'PIM-SM', 'PIM', 'Anycast', 'Loopback Address', 'Multicast']
-          }
-        ,
-          {
-            id: 't06', num: '06', group: 'routing', title: 'Multicast Routing',
-            blurb: 'RPF, mroute entries, MBGP and inter-domain delivery',
-            overview: 'Multicast routing forwards copies of a packet away from the source along a tree, and the core rule is **[[Reverse Path Forwarding|RPF]]**. A packet is forwarded only if it arrived on the interface the unicast table would use toward the source. Forwarding is source-driven and RPF-checked, with MBGP for inter-domain paths.',
-            keyIdea: 'Forward only from the RPF interface, and that interface comes from the unicast RIB. %%(*,G)%% is shared, (S,G) is source-specific.',
-            sections: [
-              { kind: 'table', h: 'The RPF check', cols: ['Rule', 'Detail'], rows: [
-                ['**Accept**', 'Packet arrived on the RPF interface'],
-                ['**Drop**', 'Packet arrived on any other interface'],
-                ['**Basis**', 'Unicast route toward the source'],
-                ['**Result**', 'A loop-free distribution tree']
-              ]},
-              { kind: 'table', h: 'Why multicast uses unicast routing', cols: ['Aspect', 'Unicast', 'Multicast'], rows: [
-                ['Destination', 'Host address', 'Group address'],
-                ['Decision', 'Toward the destination', '**Away from the source**'],
-                ['Routing basis', 'Destination', '**RPF, the source**'],
-                ['Protocol', 'Unicast IGP', 'PIM plus the unicast RIB']
-              ]},
-              { kind: 'table', h: 'mroute entries', cols: ['Entry', 'Meaning'], rows: [
-                ['%%(*,G)%%', 'Any source, shared tree'],
-                ['**(S,G)**', 'Specific source, shortest-path tree'],
-                ['**OIL**', 'Outgoing interface list'],
-                ['**Flags**', 'RPF check result']
-              ]},
-              { kind: 'table', h: 'MBGP', cols: ['Item', 'Detail'], rows: [
-                ['What', 'BGP carrying multicast NLRIs'],
-                ['SAFI', '1 is unicast, **2 is multicast**'],
-                ['Use', 'A separate RPF path for multicast'],
-                ['Benefit', 'RPF may differ from the unicast path']
-              ]},
-              { kind: 'table', h: 'Inter-domain tools', cols: ['Tool', 'Role'], rows: [
-                ['**MBGP**', 'Multicast reachability'],
-                ['**MSDP**', 'RP peering and source discovery'],
-                ['**PIM**', 'Forwarding between domains'],
-                ['**SSM**', 'Simplifies inter-domain with IGMPv3']
-              ]},
-              { kind: 'code', h: 'Verification', code:
-`  show ip mroute
-  show ip mroute count
-  show ip rpf 10.1.1.1
-  show ip pim interface
-  debug ip mpacket` }
-            ],
-            commands: [
-              { label: 'Inspect the multicast routing table', code:
-`show ip mroute\nshow ip mroute count` },
-              { label: 'Check the RPF interface for a source', code:
-`show ip rpf 10.1.1.1` },
-              { label: 'Check PIM interfaces and live forwarding', code:
-`show ip pim interface\ndebug ip mpacket` }
-            ],
-            traps: [
-              'The **RPF check** forwards only from the source-facing interface.',
-              'RPF uses the **unicast RIB**; there is no separate multicast topology.',
-              '**MBGP** carries multicast NLRI with **SAFI 2**.',
-              '%%(*,G)%% is the shared tree and **(S,G)** is the source tree.',
-              'SSM removes the RP and register model for source-specific delivery.',
-              'A wrong return path silently breaks forwarding as an **RPF failure**.'
-            ],
-            table: {
-              cols: ['Item', 'Multicast Routing'],
-              rows: [
-                ['Core rule', 'RPF check'],
-                ['Basis', 'Unicast RIB'],
-                ['Entries', '%%(*,G)%% and (S,G)'],
-                ['PIM', 'Builds the tree'],
-                ['MBGP', 'Multicast NLRI, SAFI 2'],
-                ['MSDP', 'RP peering and discovery'],
-                ['SSM', 'Source-driven'],
-                ['Verify', 'show ip mroute']
-              ]
-            },
-            related: [
-              { t: '04. PIM Sparse', d: 'The routing protocol' },
-              { t: '08. Multicast Boundaries & RPF', d: 'RPF failure and boundaries' },
-              { t: '01. IGMP', d: 'Membership feeding the tree' }
-            ],
-            glossary: ['Multicast', 'PIM', 'Reverse Path Forwarding', 'RIB', 'IGMP', 'Rendezvous Point', 'BGP']
-          },
-          {
-            id: 't07', num: '07', group: 'routing', title: 'Source-Specific Multicast',
-            blurb: '(S,G) joins in 232/8 with no RP, no shared tree and no register',
-            overview: '**[[Source-Specific Multicast|Source-Specific Multicast (SSM)]]** builds distribution trees directly from a specific source **(S,G)**. There is no RP, no shared tree and no register process. Receivers use **IGMPv3** to join the source explicitly, and PIM builds a shortest-path tree from that source.',
-            keyIdea: '(S,G) only, no RP, IGMPv3 on the receiver LAN, and the 232.0.0.0/8 group range.',
-            sections: [
-              { kind: 'table', h: 'SSM versus ASM', cols: ['Aspect', 'ASM, PIM-SM', 'SSM'], rows: [
-                ['Model', 'Any source %%(*,G)%%', '**Source-specific (S,G)**'],
-                ['RP', 'Required', '**None**'],
-                ['Shared tree', 'Yes, then SPT', '**Never**'],
-                ['Register', 'Source to RP', '**None**'],
-                ['Join', 'IGMPv2 %%(*,G)%%', '**IGMPv3 (S,G)**'],
-                ['Address range', '224/4', '**232.0.0.0/8**']
-              ]},
-              { kind: 'table', h: 'The SSM address range', cols: ['Item', 'Detail'], rows: [
-                ['Range', '**232.0.0.0/8**'],
-                ['Standard', 'RFC 4607'],
-                ['Outside the range', 'Standard ASM behaviour applies']
-              ]},
-              { kind: 'code', h: 'How an SSM join works', code:
-`  Receiver --IGMPv3 (S,G) report--> DR
-  DR --PIM (S,G) join--> toward the source
-  Source --(S,G) shortest-path tree--> receiver
-  No RP, no shared tree, no register` },
-              { kind: 'table', h: 'IGMPv3 requirement', cols: ['Version', 'Supports SSM'], rows: [
-                ['IGMPv1', 'No, only %%(*,G)%%'],
-                ['IGMPv2', 'No, only %%(*,G)%%'],
-                ['**IGMPv3**', '**Yes, include and exclude source lists**']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip multicast-routing
-  ip pim ssm default
-  !
-  ! Optional custom range
-  ip pim ssm range SSM-POOL
-  access-list 10 permit 232.0.0.0 0.255.255.255
-  !
-  interface GigabitEthernet0/1
-   ip pim sparse-mode
-   ip igmp version 3` },
-              { kind: 'table', h: 'Why SSM is simpler', cols: ['Benefit', 'Detail'], rows: [
-                ['No RP', 'No mapping to distribute'],
-                ['No shared tree', 'Immediate shortest path'],
-                ['No register', 'Less control-plane overhead'],
-                ['Inter-domain', 'No MSDP needed'],
-                ['Security', 'Only a known source is accepted'],
-                ['Latency', 'Best path from the first packet']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable SSM for 232/8', code:
-`ip multicast-routing\nip pim ssm default` },
-              { label: 'Use a custom SSM range', code:
-`ip pim ssm range SSM-POOL\naccess-list 10 permit 232.0.0.0 0.255.255.255` },
-              { label: 'Require IGMPv3 on the access link', code:
-`interface GigabitEthernet0/1\n ip pim sparse-mode\n ip igmp version 3\n!\nshow ip mroute ssm` }
-            ],
-            traps: [
-              'SSM is **source-specific (S,G)** with **no RP, no shared tree and no register**.',
-              'SSM uses **232.0.0.0/8**, defined in RFC 4607.',
-              '**IGMPv3** is required on the receiver segment.',
-              'Enable with **%%ip pim ssm default%%**.',
-              'SSM makes inter-domain multicast simple, with **no MSDP**.',
-              'A host running IGMPv2 cannot signal a source-specific join.'
-            ],
-            table: {
-              cols: ['Item', 'SSM'],
-              rows: [
-                ['Model', '(S,G) only'],
-                ['RP', 'None'],
-                ['Tree', 'SPT direct from source'],
-                ['Group range', '232/8'],
-                ['IGMP', 'v3'],
-                ['Register', 'None'],
-                ['Inter-domain', 'Simple'],
-                ['Config', 'ip pim ssm default']
-              ]
-            },
-            related: [
-              { t: '04. PIM Sparse', d: 'ASM counterpart' },
-              { t: '05. Rendezvous Point', d: 'Not used in SSM' }
-            ],
-            glossary: ['Source-Specific Multicast', 'PIM', 'IGMP', 'PIM-SM', 'Rendezvous Point', 'Multicast']
-          },
-          {
-            id: 't08', num: '08', group: 'control', title: 'Multicast Boundaries & RPF',
-            blurb: 'TTL and group scoping, plus RPF failures on asymmetric paths',
-            overview: 'Two controls keep multicast correct and confined. **Multicast boundaries** restrict where traffic may propagate, using a TTL threshold or a group ACL. The **[[Reverse Path Forwarding|RPF]]** check guarantees a loop-free, source-rooted tree by accepting traffic only on the interface the unicast table uses toward the source.',
-            keyIdea: 'RPF decides whether to forward, boundaries decide how far. RPF failure is a silent drop.',
-            sections: [
-              { kind: 'table', h: 'The RPF rule', cols: ['Rule', 'Detail'], rows: [
-                ['**Forward**', 'Packet arrived on the RPF interface'],
-                ['**Drop**', 'Packet arrived anywhere else'],
-                ['**RPF interface**', 'What the unicast RIB points at toward the source'],
-                ['**Result**', 'Loop-free, source-rooted tree']
-              ]},
-              { kind: 'table', h: 'Why RPF matters', cols: ['Benefit', 'Detail'], rows: [
-                ['Loop prevention', 'A packet never returns toward the source'],
-                ['Tree correctness', 'Only the source-facing interface forwards'],
-                ['Failure type', '**Silent drop**, no ICMP'],
-                ['Debug tool', 'show ip rpf']
-              ]},
-              { kind: 'table', h: 'RPF and asymmetric unicast', cols: ['Case', 'Effect'], rows: [
-                ['Symmetric backbone', 'RPF works normally'],
-                ['**Asymmetric routing**', '**RPF failure**, packet arrives on the wrong interface'],
-                ['Fix', 'MBGP alternate path, static RPF route or tunnel']
-              ]},
-              { kind: 'table', h: 'Boundary tools', cols: ['Tool', 'Mechanism'], rows: [
-                ['**TTL boundary**', 'ip multicast ttl-threshold on the interface'],
-                ['**Group boundary**', 'ip multicast boundary with an ACL'],
-                ['**Admin scoping**', '239.0.0.0/8 stays inside the domain'],
-                ['**Auto-RP scope**', 'Limits 224.0.1.39 and 224.0.1.40 propagation']
-              ]},
-              { kind: 'code', h: 'Configuration examples', code:
-`  ! TTL boundary
-  interface GigabitEthernet0/1
-   ip multicast ttl-threshold 16
-  !
-  ! Group boundary
-  access-list 10 deny 232.0.0.0 0.255.255.255
-  access-list 10 permit any
-  interface GigabitEthernet0/2
-   ip multicast boundary 10
-  !
-  ! Administratively scoped range
-  ip access-list standard SSM-LOCAL
-   permit 239.0.0.0 0.255.255.255` },
-              { kind: 'para', h: 'Administrative scoping', p: '**239.0.0.0/8** is reserved for administratively scoped multicast. It is never forwarded beyond the local domain, which makes it the safe range for internal applications.' }
-            ],
-            commands: [
-              { label: 'Set a TTL boundary', code:
-`interface GigabitEthernet0/1\n ip multicast ttl-threshold 16` },
-              { label: 'Set a group boundary with an ACL', code:
-`access-list 10 deny 232.0.0.0 0.255.255.255\naccess-list 10 permit any\ninterface GigabitEthernet0/2\n ip multicast boundary 10` },
-              { label: 'Check RPF and the mroute', code:
-`show ip rpf 10.1.1.1\nshow ip mroute\nshow ip pim interface` }
-            ],
-            traps: [
-              'RPF forwards only from the **source-facing interface**; anything else is dropped.',
-              'RPF uses the **unicast RIB**, so asymmetric unicast breaks it.',
-              'Boundaries are **TTL threshold** and **group ACL**, applied per interface.',
-              '**239.0.0.0/8** is administratively scoped and stays in the domain.',
-              'An RPF failure is a **silent drop**, which is why it fools troubleshooters.',
-              'MBGP, static RPF routes or tunnels repair an asymmetric RPF path.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['RPF', 'Source-facing check'],
-                ['Loop prevention', 'Guaranteed by RPF'],
-                ['Failure', 'Silent drop'],
-                ['Basis', 'Unicast RIB'],
-                ['TTL boundary', 'ip multicast ttl-threshold'],
-                ['Group boundary', 'ip multicast boundary with an ACL'],
-                ['Admin scope', '239/8'],
-                ['Fix asymmetry', 'MBGP, static route or tunnel']
-              ]
-            },
-            related: [
-              { t: '05. Multicast Routing', d: 'RPF in forwarding' },
-              { t: '04. PIM Sparse', d: 'Loop prevention in the tree' }
-            ],
-            glossary: ['Reverse Path Forwarding', 'ACL', 'PIM', 'Multicast', 'IPv4 Multicast']
-          },
-          {
-            id: 't09', num: '09', group: 'control', title: 'PIM DR & Assert',
-            blurb: 'Who speaks for the LAN, and who forwards a duplicated stream',
-            overview: 'On a multi-access LAN with several PIM routers, the **[[PIM DR|Designated Router]]** speaks for the hosts: it handles IGMP joins and, in sparse mode, registers the source. When two routers both forward the same **(S,G)** onto the LAN, **PIM Assert** picks a single forwarder.',
-            keyIdea: 'DR is chosen by priority then highest IP. Assert is won by the lower metric to the source, then the higher IP.',
-            sections: [
-              { kind: 'table', h: 'Why both mechanisms exist', cols: ['Problem', 'Solution'], rows: [
-                ['Several routers on one LAN', 'Elect a **DR** to act for hosts'],
-                ['Duplicate (S,G) on the LAN', '**Assert** picks one forwarder']
-              ]},
-              { kind: 'table', h: 'DR election', cols: ['Factor', 'Rule'], rows: [
-                ['**Priority**', 'Highest PIM DR priority wins, default 1'],
-                ['**Tie-break**', 'Highest IP address wins'],
-                ['**Sparse mode**', 'DR sends IGMP and PIM joins and registers the source'],
-                ['**Command**', 'ip pim dr-priority']
-              ]},
-              { kind: 'table', h: 'DR role in PIM-SM', cols: ['Task', 'Who'], rows: [
-                ['Send joins and IGMP on the LAN', 'DR'],
-                ['Register source traffic', 'FHR, the DR on the source LAN'],
-                ['Receive the register at the RP', 'RP'],
-                ['Join the SPT as last hop', 'DR acting as LHR']
-              ]},
-              { kind: 'table', h: 'PIM Assert', cols: ['Item', 'Detail'], rows: [
-                ['Trigger', 'Two routers forwarding the same (S,G) on a LAN'],
-                ['Purpose', 'Prune the duplicate forwarder'],
-                ['Winner', 'Best assert metric'],
-                ['Loser', 'Prunes (S,G) on that interface']
-              ]},
-              { kind: 'table', h: 'Assert metric criteria', cols: ['Factor', 'Winner'], rows: [
-                ['Route preference', 'Lower administrative distance'],
-                ['Metric to source', '**Lower metric wins**'],
-                ['Tie', '**Highest IP address wins**']
-              ]},
-              { kind: 'code', h: 'Configuration and verification', code:
-`  interface GigabitEthernet0/1
-   ip pim sparse-mode
-   ip pim dr-priority 200
-  !
-  show ip pim interface
-  show ip pim neighbor
-  show ip pim assert
-  show ip mroute` }
-            ],
-            commands: [
-              { label: 'Raise the DR priority', code:
-`interface GigabitEthernet0/1\n ip pim sparse-mode\n ip pim dr-priority 200` },
-              { label: 'Verify the DR and neighbours', code:
-`show ip pim interface\nshow ip pim neighbor` },
-              { label: 'Verify assert winners', code:
-`show ip pim assert\nshow ip mroute` }
-            ],
-            traps: [
-              'DR election uses **priority first, then highest IP**.',
-              'The DR handles **IGMP, joins and register** on behalf of the LAN.',
-              'Assert resolves a **duplicated (S,G)** on the same LAN.',
-              'The assert winner has the **lower metric to the source**.',
-              'On a tie, the **higher IP address** wins the assert.',
-              'DR is about who speaks for hosts; assert is about who forwards the stream.'
-            ],
-            table: {
-              cols: ['Item', 'DR and Assert'],
-              rows: [
-                ['DR election', 'Priority, then highest IP'],
-                ['DR role', 'IGMP, joins, register'],
-                ['Assert trigger', 'Duplicate (S,G)'],
-                ['Assert winner', 'Lower metric, then higher IP'],
-                ['Config', 'ip pim dr-priority'],
-                ['Verify', 'show ip pim assert'],
-                ['Purpose', 'Avoid duplication'],
-                ['Tie', 'Higher IP wins']
-              ]
-            },
-            related: [
-              { t: '04. PIM Sparse', d: 'Where the DR registers' },
-              { t: '03. PIM Dense', d: 'DR and assert behaviour' },
-              { t: '05. Multicast Routing', d: 'Designated router forwarding' }
-            ],
-            glossary: ['PIM DR', 'PIM', 'PIM-SM', 'IGMP', 'DR BDR', 'Multicast']
-          }
-        ];
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "membership",
+    "title": "IGMP",
+    "blurb": "Versions, the querier election, and the membership workflow",
+    "overview": "**[[IGMP]]** is the **host-to-router** protocol that manages multicast group membership on a LAN segment. Routers use it to learn which groups hosts want; without members, the router stops forwarding group traffic. **IGMPv2** is the common default and **IGMPv3** adds source filtering.",
+    "keyIdea": "IGMP is host to router. v3 source filtering enables SSM, and the lowest IP wins the querier election.",
+    "sections": [
+      {
+        "h": "Multicast",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">MULTICAST</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">One-to-many, IGMP, PIM</text></g></svg>",
+        "caption": "Efficient group communication."
+      },
+      {
+        "kind": "table",
+        "h": "IGMP versions",
+        "cols": [
+          "Version",
+          "Reports",
+          "Leaves",
+          "SSM"
+        ],
+        "rows": [
+          [
+            "**v1**",
+            "General query only",
+            "Slow, about 2 minutes",
+            "No"
+          ],
+          [
+            "**v2**",
+            "Fastest leaver",
+            "Leave group message",
+            "No"
+          ],
+          [
+            "**v3**",
+            "Source-specific",
+            "Source filtering",
+            "**Yes**"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Roles on the segment",
+        "cols": [
+          "Role",
+          "Who",
+          "Job"
+        ],
+        "rows": [
+          [
+            "**Querier**",
+            "Elected router",
+            "Sends general queries"
+          ],
+          [
+            "**Member**",
+            "Host",
+            "Sends a report"
+          ],
+          [
+            "**Non-member**",
+            "Host",
+            "Stays silent"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Membership workflow",
+        "cols": [
+          "Step",
+          "Packet",
+          "Destination"
+        ],
+        "rows": [
+          [
+            "1",
+            "General query",
+            "**224.0.0.1**"
+          ],
+          [
+            "2",
+            "Report",
+            "The group address"
+          ],
+          [
+            "3",
+            "Leave, IGMPv2",
+            "**224.0.0.2**"
+          ],
+          [
+            "4",
+            "Group-specific query",
+            "The group address"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Enable IGMP and PIM",
+        "code": "  ip multicast-routing\n  !\n  interface GigabitEthernet0/1\n   ip pim sparse-mode\n   ip igmp version 3\n  !\n  interface Loopback0\n   ip igmp join-group 239.1.1.1"
+      },
+      {
+        "kind": "para",
+        "h": "Querier election",
+        "p": "One router per LAN acts as querier, and the **lowest IP address wins**. A host stays a member only while it keeps reporting, so **no report means timeout** and the group is pruned."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable multicast and PIM on an interface",
+        "code": "ip multicast-routing\ninterface GigabitEthernet0/1\n ip pim sparse-mode"
+      },
+      {
+        "label": "Force IGMPv3 and join a group for testing",
+        "code": "interface GigabitEthernet0/1\n ip igmp version 3\ninterface Loopback0\n ip igmp join-group 239.1.1.1"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip igmp groups\nshow ip igmp interface\nshow ip mroute"
+      }
+    ],
+    "traps": [
+      "IGMP is **host to router** membership, LAN side only.",
+      "**IGMPv3** adds source filtering, which is what enables SSM.",
+      "**%%ip pim sparse-mode%%** enables both PIM and IGMP on the interface.",
+      "IGMP snooping is a **switch** feature, not a router protocol.",
+      "Fast leave is an **IGMPv2** behaviour.",
+      "The querier is the **lowest IP** on the segment."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "IGMP"
+      ],
+      "rows": [
+        [
+          "Scope",
+          "Host to router"
+        ],
+        [
+          "v1",
+          "Basic queries"
+        ],
+        [
+          "v2",
+          "Fast leave"
+        ],
+        [
+          "v3",
+          "Source filtering and SSM"
+        ],
+        [
+          "Querier",
+          "Lowest IP wins"
+        ],
+        [
+          "Reports",
+          "Sent to the group"
+        ],
+        [
+          "Enable",
+          "ip pim sparse-mode"
+        ],
+        [
+          "Verify",
+          "show ip igmp groups"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. IGMP Snooping",
+        "d": "The switch-side view"
+      },
+      {
+        "t": "03. PIM Sparse",
+        "d": "Routing after membership"
+      }
+    ],
+    "glossary": [
+      "IGMP",
+      "IGMP Snooping",
+      "PIM",
+      "PIM-SM",
+      "Source-Specific Multicast",
+      "IPv4 Multicast",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "membership",
+    "title": "IGMP Snooping",
+    "blurb": "Member and mrouter ports, and snooping versus proxying",
+    "overview": "**[[IGMP Snooping|IGMP snooping]]** is a switch feature that inspects **[[IGMP]]** membership messages and builds forwarding tables so multicast goes only to ports that have members, instead of flooding the whole VLAN.",
+    "keyIdea": "Switch feature, on by default. Forward out member ports plus the mrouter port; snooping passes queries, proxying regenerates them.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Why snooping exists",
+        "cols": [
+          "Problem",
+          "Without snooping"
+        ],
+        "rows": [
+          [
+            "Flooding",
+            "Group traffic flooded to every port"
+          ],
+          [
+            "Waste",
+            "Hosts process traffic they never asked for"
+          ],
+          [
+            "Isolation",
+            "No host-level filtering"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "How snooping works",
+        "cols": [
+          "Step",
+          "Action"
+        ],
+        "rows": [
+          [
+            "1",
+            "Host sends an IGMP report"
+          ],
+          [
+            "2",
+            "Switch inspects the report"
+          ],
+          [
+            "3",
+            "Switch records the port as a member"
+          ],
+          [
+            "4",
+            "Switch forwards group traffic only to member ports"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Key terms",
+        "cols": [
+          "Term",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**Mrouter port**",
+            "Port facing the multicast router or querier"
+          ],
+          [
+            "**Member port**",
+            "Port facing a host that reported the group"
+          ],
+          [
+            "**Querier**",
+            "Router sending IGMP queries"
+          ],
+          [
+            "**Static mrouter**",
+            "Manually defined router port"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Snooping versus proxying",
+        "cols": [
+          "Feature",
+          "Snooping",
+          "Proxying"
+        ],
+        "rows": [
+          [
+            "Level",
+            "Switch inspects reports",
+            "Switch acts as proxy"
+          ],
+          [
+            "Forwarding",
+            "Per-port tables",
+            "Summarises membership"
+          ],
+          [
+            "Queries",
+            "**Passed through**",
+            "**Terminated and regenerated**"
+          ],
+          [
+            "State",
+            "Layer 2 tables",
+            "Layer 3-like state"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip igmp snooping\n  ip igmp snooping vlan 10\n  ip igmp snooping querier\n  ip igmp snooping mrouter learn pim\n  !\n  show ip igmp snooping\n  show ip igmp snooping groups vlan 10\n  show ip igmp snooping mrouter"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable snooping globally and per VLAN",
+        "code": "ip igmp snooping\nip igmp snooping vlan 10"
+      },
+      {
+        "label": "Run a switch querier and learn mrouter ports",
+        "code": "ip igmp snooping querier\nip igmp snooping mrouter learn pim"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip igmp snooping\nshow ip igmp snooping groups vlan 10\nshow ip igmp snooping mrouter"
+      }
+    ],
+    "traps": [
+      "IGMP snooping is a **Layer 2 switch** feature; IGMP itself is host to router.",
+      "Snooping **passes queries through**; proxying terminates and regenerates them.",
+      "Traffic is forwarded out **member ports plus the mrouter port**.",
+      "Snooping is **on by default** on most Cisco switches.",
+      "The **switch querier** covers a VLAN with no multicast router.",
+      "Snooping state is **per VLAN**, not global."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "IGMP Snooping"
+      ],
+      "rows": [
+        [
+          "Level",
+          "Layer 2, switch"
+        ],
+        [
+          "Job",
+          "Limit flooding"
+        ],
+        [
+          "Listens to",
+          "IGMP reports"
+        ],
+        [
+          "Member",
+          "Tracked per port"
+        ],
+        [
+          "Mrouter",
+          "Router-facing port"
+        ],
+        [
+          "Querier",
+          "Optional switch"
+        ],
+        [
+          "Default",
+          "On"
+        ],
+        [
+          "Verify",
+          "show ip igmp snooping groups"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. IGMP",
+        "d": "The protocol being snooped"
+      },
+      {
+        "t": "08. Multicast Boundaries & RPF",
+        "d": "Other forwarding controls"
+      }
+    ],
+    "glossary": [
+      "IGMP Snooping",
+      "IGMP",
+      "Multicast",
+      "VLAN",
+      "PIM"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "routing",
+    "title": "PIM Dense",
+    "blurb": "Flood, prune and graft with a source-based (S,G) tree and no RP",
+    "overview": "**[[PIM-DM]]** assumes almost every LAN has a receiver. It floods multicast into the network, then prunes branches with no members, building a **source-based (S,G)** shortest-path tree. It needs no RP, but it is inefficient for sparse groups.",
+    "keyIdea": "Flood first, prune later. (S,G) only, no RP, and a graft restores a pruned branch.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Flood and prune",
+        "cols": [
+          "Step",
+          "Action"
+        ],
+        "rows": [
+          [
+            "1",
+            "Source starts sending"
+          ],
+          [
+            "2",
+            "Traffic floods to all PIM neighbours"
+          ],
+          [
+            "3",
+            "Leaf routers without members prune"
+          ],
+          [
+            "4",
+            "Prune state times out and flooding repeats, about every 3 minutes"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "State model",
+        "cols": [
+          "State",
+          "Entry",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**(S,G)**",
+            "Source and group",
+            "Per-source tree"
+          ],
+          [
+            "%%(*,G)%%",
+            "Any source",
+            "Not used in dense mode"
+          ],
+          [
+            "**Prune**",
+            "Branch cut",
+            "No receivers below"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Traffic direction",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Flood**",
+            "Pushes traffic toward everyone"
+          ],
+          [
+            "**Prune**",
+            "Cuts branches with no members"
+          ],
+          [
+            "**Graft**",
+            "Restores a pruned branch quickly"
+          ],
+          [
+            "**Source**",
+            "Starts the flow"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip multicast-routing\n  !\n  interface GigabitEthernet0/1\n   ip pim dense-mode\n  !\n  show ip mroute\n  show ip pim interface\n  show ip pim neighbor"
+      },
+      {
+        "kind": "table",
+        "h": "Dense versus sparse",
+        "cols": [
+          "Aspect",
+          "Dense",
+          "Sparse"
+        ],
+        "rows": [
+          [
+            "Assumption",
+            "Members everywhere",
+            "Members are sparse"
+          ],
+          [
+            "Flow",
+            "**Push, flood**",
+            "**Pull, join**"
+          ],
+          [
+            "State",
+            "(S,G) only",
+            "%%(*,G)%% plus (S,G)"
+          ],
+          [
+            "RP",
+            "**Not needed**",
+            "Required"
+          ],
+          [
+            "Default",
+            "No",
+            "**Yes**"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable dense mode",
+        "code": "ip multicast-routing\ninterface GigabitEthernet0/1\n ip pim dense-mode"
+      },
+      {
+        "label": "Verify neighbours and state",
+        "code": "show ip pim interface\nshow ip pim neighbor\nshow ip mroute"
+      },
+      {
+        "label": "Debug the flood and prune behaviour",
+        "code": "debug ip pim"
+      }
+    ],
+    "traps": [
+      "PIM-DM is **flood and prune**, with a source-based **(S,G)** tree.",
+      "**No RP** is required in dense mode.",
+      "The %%(*,G)%% entry is not used by dense mode.",
+      "A **graft** restores a branch after a new receiver appears.",
+      "PIM-SM is the **production default**; dense is a lab and legacy topic.",
+      "**%%ip pim dense-mode%%** is configured per interface."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "PIM-DM"
+      ],
+      "rows": [
+        [
+          "Model",
+          "Push and flood"
+        ],
+        [
+          "State",
+          "(S,G)"
+        ],
+        [
+          "RP",
+          "Not needed"
+        ],
+        [
+          "Tree",
+          "SPT from the source"
+        ],
+        [
+          "Prune",
+          "Automatic when no members"
+        ],
+        [
+          "Graft",
+          "Restores a branch"
+        ],
+        [
+          "Default",
+          "No"
+        ],
+        [
+          "Use",
+          "Dense LAN groups"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. PIM Sparse",
+        "d": "The production default"
+      },
+      {
+        "t": "05. Multicast Routing",
+        "d": "RPF and forwarding"
+      }
+    ],
+    "glossary": [
+      "PIM-DM",
+      "PIM",
+      "PIM-SM",
+      "Reverse Path Forwarding",
+      "Multicast",
+      "IPv4 Multicast"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "routing",
+    "title": "PIM Sparse",
+    "blurb": "Join through the RP, then switch from the shared tree to the SPT",
+    "overview": "**[[PIM-SM]]** is the production default for IP multicast. It assumes receivers are sparse, so nobody gets traffic until they explicitly join. Joins go through a **[[Rendezvous Point]]**, which builds a shared %%(*,G)%% tree; after the threshold the last-hop router may switch to a source-based **(S,G)** shortest-path tree.",
+    "keyIdea": "Pull, not push. Join %%(*,G)%% toward the RP, then switch to (S,G) with spt-threshold 0.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The pull model",
+        "cols": [
+          "Step",
+          "Who",
+          "Action"
+        ],
+        "rows": [
+          [
+            "1",
+            "Receiver",
+            "Sends an IGMP report"
+          ],
+          [
+            "2",
+            "Designated Router",
+            "Joins %%(*,G)%% toward the RP"
+          ],
+          [
+            "3",
+            "RP",
+            "Builds the shared tree"
+          ],
+          [
+            "4",
+            "Source",
+            "Registers with the RP"
+          ],
+          [
+            "5",
+            "Last-hop router",
+            "Switches over to the SPT"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Tree types",
+        "cols": [
+          "Tree",
+          "Entry",
+          "Path",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Shared**",
+            "%%(*,G)%%",
+            "Via the RP",
+            "Initial state"
+          ],
+          [
+            "**Shortest path**",
+            "(S,G)",
+            "Direct from source",
+            "After switchover"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Key roles",
+        "cols": [
+          "Role",
+          "Who"
+        ],
+        "rows": [
+          [
+            "**RP**",
+            "Core of the shared tree"
+          ],
+          [
+            "**DR**",
+            "First hop for the source, last hop for the receiver"
+          ],
+          [
+            "**FHR**",
+            "The source designated router"
+          ],
+          [
+            "**LHR**",
+            "The receiver designated router"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip multicast-routing\n  ip pim rp-address 192.168.10.10\n  !\n  interface GigabitEthernet0/1\n   ip pim sparse-mode\n  !\n  ip pim spt-threshold 0"
+      },
+      {
+        "kind": "table",
+        "h": "The register process",
+        "cols": [
+          "Step",
+          "Packet",
+          "Destination"
+        ],
+        "rows": [
+          [
+            "1",
+            "Source to FHR",
+            "Multicast"
+          ],
+          [
+            "2",
+            "FHR to RP",
+            "**Register, unicast**"
+          ],
+          [
+            "3",
+            "RP to FHR",
+            "Register-stop"
+          ],
+          [
+            "4",
+            "RP forwarding",
+            "Down the shared tree"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable sparse mode with a static RP",
+        "code": "ip multicast-routing\nip pim rp-address 192.168.10.10\ninterface GigabitEthernet0/1\n ip pim sparse-mode"
+      },
+      {
+        "label": "Switch immediately to the SPT",
+        "code": "ip pim spt-threshold 0"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip mroute\nshow ip pim rp mapping\nshow ip pim neighbor"
+      }
+    ],
+    "traps": [
+      "PIM-SM is a **pull and join** model that requires an **RP**.",
+      "The shared tree is %%(*,G)%%; the shortest-path tree is **(S,G)**.",
+      "The **register** message carries the first packet unicast to the RP.",
+      "**%%ip pim spt-threshold 0%%** means immediate SPT switchover.",
+      "**%%ip pim sparse-mode%%** is configured per interface.",
+      "Without a reachable RP there is no shared tree and no PIM-SM."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "PIM-SM"
+      ],
+      "rows": [
+        [
+          "Model",
+          "Pull and join"
+        ],
+        [
+          "RP",
+          "Required"
+        ],
+        [
+          "Shared tree",
+          "%%(*,G)%%"
+        ],
+        [
+          "SPT",
+          "(S,G)"
+        ],
+        [
+          "Register",
+          "Unicast to the RP"
+        ],
+        [
+          "Threshold",
+          "0 means immediate switchover"
+        ],
+        [
+          "Default",
+          "Yes"
+        ],
+        [
+          "Config",
+          "rp-address plus sparse-mode"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. PIM Dense",
+        "d": "The contrasting mode"
+      },
+      {
+        "t": "05. Rendezvous Point",
+        "d": "Core of sparse mode"
+      },
+      {
+        "t": "07. Source-Specific Multicast",
+        "d": "No RP at all"
+      }
+    ],
+    "glossary": [
+      "PIM-SM",
+      "PIM",
+      "Rendezvous Point",
+      "Source-Specific Multicast",
+      "IGMP",
+      "PIM DR",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "routing",
+    "title": "Rendezvous Point",
+    "blurb": "Static, Auto-RP and BSR mapping, plus anycast redundancy",
+    "overview": "The **[[Rendezvous Point|RP]]** is where receivers join their %%(*,G)%% tree and the source registers its traffic. It is the hub of **[[PIM-SM]]**, and every PIM-SM router must know the group-to-RP mapping.",
+    "keyIdea": "Every router needs the group-to-RP mapping: static, Auto-RP or BSR. Anycast RP plus MSDP gives redundancy.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "What the RP does",
+        "cols": [
+          "Task",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Join target",
+            "Receivers join %%(*,G)%% toward the RP"
+          ],
+          [
+            "Register target",
+            "The source FHR registers with the RP"
+          ],
+          [
+            "Forwarding",
+            "Shared-tree traffic flows through the RP"
+          ],
+          [
+            "Mapping",
+            "Every router needs group to RP"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RP discovery methods",
+        "cols": [
+          "Method",
+          "Mechanism",
+          "Trade-off"
+        ],
+        "rows": [
+          [
+            "**Static**",
+            "Manual rp-address",
+            "Simple, manual per site"
+          ],
+          [
+            "**Auto-RP**",
+            "Cisco proprietary",
+            "Dynamic, legacy"
+          ],
+          [
+            "**BSR**",
+            "PIM draft standard",
+            "Dynamic, vendor neutral"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Auto-RP roles",
+        "cols": [
+          "Role",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**RP-announce**",
+            "Candidate RPs announce themselves"
+          ],
+          [
+            "**RP-discovery**",
+            "Maps groups to RPs and distributes"
+          ],
+          [
+            "**Mapping agent**",
+            "Picks the winning RP"
+          ],
+          [
+            "**Groups**",
+            "**224.0.1.39** and **224.0.1.40**"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "BSR roles",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**BSR**",
+            "Elected bootstrap router"
+          ],
+          [
+            "**Candidate RP**",
+            "Announces RP capability"
+          ],
+          [
+            "**Mapping**",
+            "BSR floods the mapping to all PIM routers"
+          ],
+          [
+            "**Election**",
+            "Highest priority, then IP"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ! Static RP\n  ip pim rp-address 192.168.10.10\n  !\n  ! Auto-RP on the RP\n  ip pim send-rp-announce Loopback0 scope 32\n  ip pim send-rp-discovery Loopback0 scope 32\n  !\n  ! BSR candidate\n  ip pim bsr-candidate Loopback0 0\n  ip pim rp-candidate Loopback0"
+      },
+      {
+        "kind": "table",
+        "h": "Placement and redundancy",
+        "cols": [
+          "Strategy",
+          "Benefit"
+        ],
+        "rows": [
+          [
+            "**Central RP**",
+            "Simple, but a single point of failure"
+          ],
+          [
+            "**Anycast RP**",
+            "Redundancy and shared load via MSDP"
+          ],
+          [
+            "**Per-group RP**",
+            "Scales the mapping domain"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Static RP mapping",
+        "code": "ip pim rp-address 192.168.10.10"
+      },
+      {
+        "label": "Auto-RP announce and discovery",
+        "code": "ip pim send-rp-announce Loopback0 scope 32\nip pim send-rp-discovery Loopback0 scope 32"
+      },
+      {
+        "label": "BSR candidate and verification",
+        "code": "ip pim bsr-candidate Loopback0 0\nip pim rp-candidate Loopback0\nshow ip pim rp mapping"
+      }
+    ],
+    "traps": [
+      "Every PIM-SM router needs the **group-to-RP mapping**.",
+      "Know all three methods: **static, Auto-RP and BSR**.",
+      "Auto-RP uses **224.0.1.39 and 224.0.1.40** and is Cisco proprietary.",
+      "BSR is the **PIM draft standard**, not Cisco proprietary.",
+      "**Anycast RP** uses a shared loopback address plus **MSDP**.",
+      "No RP means **no shared tree** and no PIM-SM operation."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "RP"
+      ],
+      "rows": [
+        [
+          "Role",
+          "PIM-SM hub"
+        ],
+        [
+          "Static",
+          "ip pim rp-address"
+        ],
+        [
+          "Auto-RP",
+          "Cisco, 224.0.1.39 and 224.0.1.40"
+        ],
+        [
+          "BSR",
+          "PIM standard"
+        ],
+        [
+          "No RP",
+          "No PIM-SM"
+        ],
+        [
+          "Redundancy",
+          "Anycast RP"
+        ],
+        [
+          "MSDP",
+          "Connects anycast RPs"
+        ],
+        [
+          "Verify",
+          "show ip pim rp mapping"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. PIM Sparse",
+        "d": "The mode it serves"
+      },
+      {
+        "t": "05. Multicast Routing",
+        "d": "Shared-tree forwarding"
+      }
+    ],
+    "glossary": [
+      "Rendezvous Point",
+      "PIM-SM",
+      "PIM",
+      "Anycast",
+      "Loopback Address",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "routing",
+    "title": "Multicast Routing",
+    "blurb": "RPF, mroute entries, MBGP and inter-domain delivery",
+    "overview": "Multicast routing forwards copies of a packet away from the source along a tree, and the core rule is **[[Reverse Path Forwarding|RPF]]**. A packet is forwarded only if it arrived on the interface the unicast table would use toward the source. Forwarding is source-driven and RPF-checked, with MBGP for inter-domain paths.",
+    "keyIdea": "Forward only from the RPF interface, and that interface comes from the unicast RIB. %%(*,G)%% is shared, (S,G) is source-specific.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The RPF check",
+        "cols": [
+          "Rule",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Accept**",
+            "Packet arrived on the RPF interface"
+          ],
+          [
+            "**Drop**",
+            "Packet arrived on any other interface"
+          ],
+          [
+            "**Basis**",
+            "Unicast route toward the source"
+          ],
+          [
+            "**Result**",
+            "A loop-free distribution tree"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Why multicast uses unicast routing",
+        "cols": [
+          "Aspect",
+          "Unicast",
+          "Multicast"
+        ],
+        "rows": [
+          [
+            "Destination",
+            "Host address",
+            "Group address"
+          ],
+          [
+            "Decision",
+            "Toward the destination",
+            "**Away from the source**"
+          ],
+          [
+            "Routing basis",
+            "Destination",
+            "**RPF, the source**"
+          ],
+          [
+            "Protocol",
+            "Unicast IGP",
+            "PIM plus the unicast RIB"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "mroute entries",
+        "cols": [
+          "Entry",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "%%(*,G)%%",
+            "Any source, shared tree"
+          ],
+          [
+            "**(S,G)**",
+            "Specific source, shortest-path tree"
+          ],
+          [
+            "**OIL**",
+            "Outgoing interface list"
+          ],
+          [
+            "**Flags**",
+            "RPF check result"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "MBGP",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "What",
+            "BGP carrying multicast NLRIs"
+          ],
+          [
+            "SAFI",
+            "1 is unicast, **2 is multicast**"
+          ],
+          [
+            "Use",
+            "A separate RPF path for multicast"
+          ],
+          [
+            "Benefit",
+            "RPF may differ from the unicast path"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Inter-domain tools",
+        "cols": [
+          "Tool",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**MBGP**",
+            "Multicast reachability"
+          ],
+          [
+            "**MSDP**",
+            "RP peering and source discovery"
+          ],
+          [
+            "**PIM**",
+            "Forwarding between domains"
+          ],
+          [
+            "**SSM**",
+            "Simplifies inter-domain with IGMPv3"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip mroute\n  show ip mroute count\n  show ip rpf 10.1.1.1\n  show ip pim interface\n  debug ip mpacket"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Inspect the multicast routing table",
+        "code": "show ip mroute\nshow ip mroute count"
+      },
+      {
+        "label": "Check the RPF interface for a source",
+        "code": "show ip rpf 10.1.1.1"
+      },
+      {
+        "label": "Check PIM interfaces and live forwarding",
+        "code": "show ip pim interface\ndebug ip mpacket"
+      }
+    ],
+    "traps": [
+      "The **RPF check** forwards only from the source-facing interface.",
+      "RPF uses the **unicast RIB**; there is no separate multicast topology.",
+      "**MBGP** carries multicast NLRI with **SAFI 2**.",
+      "%%(*,G)%% is the shared tree and **(S,G)** is the source tree.",
+      "SSM removes the RP and register model for source-specific delivery.",
+      "A wrong return path silently breaks forwarding as an **RPF failure**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Multicast Routing"
+      ],
+      "rows": [
+        [
+          "Core rule",
+          "RPF check"
+        ],
+        [
+          "Basis",
+          "Unicast RIB"
+        ],
+        [
+          "Entries",
+          "%%(*,G)%% and (S,G)"
+        ],
+        [
+          "PIM",
+          "Builds the tree"
+        ],
+        [
+          "MBGP",
+          "Multicast NLRI, SAFI 2"
+        ],
+        [
+          "MSDP",
+          "RP peering and discovery"
+        ],
+        [
+          "SSM",
+          "Source-driven"
+        ],
+        [
+          "Verify",
+          "show ip mroute"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. PIM Sparse",
+        "d": "The routing protocol"
+      },
+      {
+        "t": "08. Multicast Boundaries & RPF",
+        "d": "RPF failure and boundaries"
+      },
+      {
+        "t": "01. IGMP",
+        "d": "Membership feeding the tree"
+      }
+    ],
+    "glossary": [
+      "Multicast",
+      "PIM",
+      "Reverse Path Forwarding",
+      "RIB",
+      "IGMP",
+      "Rendezvous Point",
+      "BGP"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "routing",
+    "title": "Source-Specific Multicast",
+    "blurb": "(S,G) joins in 232/8 with no RP, no shared tree and no register",
+    "overview": "**[[Source-Specific Multicast|Source-Specific Multicast (SSM)]]** builds distribution trees directly from a specific source **(S,G)**. There is no RP, no shared tree and no register process. Receivers use **IGMPv3** to join the source explicitly, and PIM builds a shortest-path tree from that source.",
+    "keyIdea": "(S,G) only, no RP, IGMPv3 on the receiver LAN, and the 232.0.0.0/8 group range.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "SSM versus ASM",
+        "cols": [
+          "Aspect",
+          "ASM, PIM-SM",
+          "SSM"
+        ],
+        "rows": [
+          [
+            "Model",
+            "Any source %%(*,G)%%",
+            "**Source-specific (S,G)**"
+          ],
+          [
+            "RP",
+            "Required",
+            "**None**"
+          ],
+          [
+            "Shared tree",
+            "Yes, then SPT",
+            "**Never**"
+          ],
+          [
+            "Register",
+            "Source to RP",
+            "**None**"
+          ],
+          [
+            "Join",
+            "IGMPv2 %%(*,G)%%",
+            "**IGMPv3 (S,G)**"
+          ],
+          [
+            "Address range",
+            "224/4",
+            "**232.0.0.0/8**"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The SSM address range",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Range",
+            "**232.0.0.0/8**"
+          ],
+          [
+            "Standard",
+            "RFC 4607"
+          ],
+          [
+            "Outside the range",
+            "Standard ASM behaviour applies"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "How an SSM join works",
+        "code": "  Receiver --IGMPv3 (S,G) report--> DR\n  DR --PIM (S,G) join--> toward the source\n  Source --(S,G) shortest-path tree--> receiver\n  No RP, no shared tree, no register"
+      },
+      {
+        "kind": "table",
+        "h": "IGMPv3 requirement",
+        "cols": [
+          "Version",
+          "Supports SSM"
+        ],
+        "rows": [
+          [
+            "IGMPv1",
+            "No, only %%(*,G)%%"
+          ],
+          [
+            "IGMPv2",
+            "No, only %%(*,G)%%"
+          ],
+          [
+            "**IGMPv3**",
+            "**Yes, include and exclude source lists**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip multicast-routing\n  ip pim ssm default\n  !\n  ! Optional custom range\n  ip pim ssm range SSM-POOL\n  access-list 10 permit 232.0.0.0 0.255.255.255\n  !\n  interface GigabitEthernet0/1\n   ip pim sparse-mode\n   ip igmp version 3"
+      },
+      {
+        "kind": "table",
+        "h": "Why SSM is simpler",
+        "cols": [
+          "Benefit",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "No RP",
+            "No mapping to distribute"
+          ],
+          [
+            "No shared tree",
+            "Immediate shortest path"
+          ],
+          [
+            "No register",
+            "Less control-plane overhead"
+          ],
+          [
+            "Inter-domain",
+            "No MSDP needed"
+          ],
+          [
+            "Security",
+            "Only a known source is accepted"
+          ],
+          [
+            "Latency",
+            "Best path from the first packet"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable SSM for 232/8",
+        "code": "ip multicast-routing\nip pim ssm default"
+      },
+      {
+        "label": "Use a custom SSM range",
+        "code": "ip pim ssm range SSM-POOL\naccess-list 10 permit 232.0.0.0 0.255.255.255"
+      },
+      {
+        "label": "Require IGMPv3 on the access link",
+        "code": "interface GigabitEthernet0/1\n ip pim sparse-mode\n ip igmp version 3\n!\nshow ip mroute ssm"
+      }
+    ],
+    "traps": [
+      "SSM is **source-specific (S,G)** with **no RP, no shared tree and no register**.",
+      "SSM uses **232.0.0.0/8**, defined in RFC 4607.",
+      "**IGMPv3** is required on the receiver segment.",
+      "Enable with **%%ip pim ssm default%%**.",
+      "SSM makes inter-domain multicast simple, with **no MSDP**.",
+      "A host running IGMPv2 cannot signal a source-specific join."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "SSM"
+      ],
+      "rows": [
+        [
+          "Model",
+          "(S,G) only"
+        ],
+        [
+          "RP",
+          "None"
+        ],
+        [
+          "Tree",
+          "SPT direct from source"
+        ],
+        [
+          "Group range",
+          "232/8"
+        ],
+        [
+          "IGMP",
+          "v3"
+        ],
+        [
+          "Register",
+          "None"
+        ],
+        [
+          "Inter-domain",
+          "Simple"
+        ],
+        [
+          "Config",
+          "ip pim ssm default"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. PIM Sparse",
+        "d": "ASM counterpart"
+      },
+      {
+        "t": "05. Rendezvous Point",
+        "d": "Not used in SSM"
+      }
+    ],
+    "glossary": [
+      "Source-Specific Multicast",
+      "PIM",
+      "IGMP",
+      "PIM-SM",
+      "Rendezvous Point",
+      "Multicast"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "control",
+    "title": "Multicast Boundaries & RPF",
+    "blurb": "TTL and group scoping, plus RPF failures on asymmetric paths",
+    "overview": "Two controls keep multicast correct and confined. **Multicast boundaries** restrict where traffic may propagate, using a TTL threshold or a group ACL. The **[[Reverse Path Forwarding|RPF]]** check guarantees a loop-free, source-rooted tree by accepting traffic only on the interface the unicast table uses toward the source.",
+    "keyIdea": "RPF decides whether to forward, boundaries decide how far. RPF failure is a silent drop.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The RPF rule",
+        "cols": [
+          "Rule",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Forward**",
+            "Packet arrived on the RPF interface"
+          ],
+          [
+            "**Drop**",
+            "Packet arrived anywhere else"
+          ],
+          [
+            "**RPF interface**",
+            "What the unicast RIB points at toward the source"
+          ],
+          [
+            "**Result**",
+            "Loop-free, source-rooted tree"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Why RPF matters",
+        "cols": [
+          "Benefit",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Loop prevention",
+            "A packet never returns toward the source"
+          ],
+          [
+            "Tree correctness",
+            "Only the source-facing interface forwards"
+          ],
+          [
+            "Failure type",
+            "**Silent drop**, no ICMP"
+          ],
+          [
+            "Debug tool",
+            "show ip rpf"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RPF and asymmetric unicast",
+        "cols": [
+          "Case",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "Symmetric backbone",
+            "RPF works normally"
+          ],
+          [
+            "**Asymmetric routing**",
+            "**RPF failure**, packet arrives on the wrong interface"
+          ],
+          [
+            "Fix",
+            "MBGP alternate path, static RPF route or tunnel"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Boundary tools",
+        "cols": [
+          "Tool",
+          "Mechanism"
+        ],
+        "rows": [
+          [
+            "**TTL boundary**",
+            "ip multicast ttl-threshold on the interface"
+          ],
+          [
+            "**Group boundary**",
+            "ip multicast boundary with an ACL"
+          ],
+          [
+            "**Admin scoping**",
+            "239.0.0.0/8 stays inside the domain"
+          ],
+          [
+            "**Auto-RP scope**",
+            "Limits 224.0.1.39 and 224.0.1.40 propagation"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration examples",
+        "code": "  ! TTL boundary\n  interface GigabitEthernet0/1\n   ip multicast ttl-threshold 16\n  !\n  ! Group boundary\n  access-list 10 deny 232.0.0.0 0.255.255.255\n  access-list 10 permit any\n  interface GigabitEthernet0/2\n   ip multicast boundary 10\n  !\n  ! Administratively scoped range\n  ip access-list standard SSM-LOCAL\n   permit 239.0.0.0 0.255.255.255"
+      },
+      {
+        "kind": "para",
+        "h": "Administrative scoping",
+        "p": "**239.0.0.0/8** is reserved for administratively scoped multicast. It is never forwarded beyond the local domain, which makes it the safe range for internal applications."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Set a TTL boundary",
+        "code": "interface GigabitEthernet0/1\n ip multicast ttl-threshold 16"
+      },
+      {
+        "label": "Set a group boundary with an ACL",
+        "code": "access-list 10 deny 232.0.0.0 0.255.255.255\naccess-list 10 permit any\ninterface GigabitEthernet0/2\n ip multicast boundary 10"
+      },
+      {
+        "label": "Check RPF and the mroute",
+        "code": "show ip rpf 10.1.1.1\nshow ip mroute\nshow ip pim interface"
+      }
+    ],
+    "traps": [
+      "RPF forwards only from the **source-facing interface**; anything else is dropped.",
+      "RPF uses the **unicast RIB**, so asymmetric unicast breaks it.",
+      "Boundaries are **TTL threshold** and **group ACL**, applied per interface.",
+      "**239.0.0.0/8** is administratively scoped and stays in the domain.",
+      "An RPF failure is a **silent drop**, which is why it fools troubleshooters.",
+      "MBGP, static RPF routes or tunnels repair an asymmetric RPF path."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "RPF",
+          "Source-facing check"
+        ],
+        [
+          "Loop prevention",
+          "Guaranteed by RPF"
+        ],
+        [
+          "Failure",
+          "Silent drop"
+        ],
+        [
+          "Basis",
+          "Unicast RIB"
+        ],
+        [
+          "TTL boundary",
+          "ip multicast ttl-threshold"
+        ],
+        [
+          "Group boundary",
+          "ip multicast boundary with an ACL"
+        ],
+        [
+          "Admin scope",
+          "239/8"
+        ],
+        [
+          "Fix asymmetry",
+          "MBGP, static route or tunnel"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Multicast Routing",
+        "d": "RPF in forwarding"
+      },
+      {
+        "t": "04. PIM Sparse",
+        "d": "Loop prevention in the tree"
+      }
+    ],
+    "glossary": [
+      "Reverse Path Forwarding",
+      "ACL",
+      "PIM",
+      "Multicast",
+      "IPv4 Multicast"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "control",
+    "title": "PIM DR & Assert",
+    "blurb": "Who speaks for the LAN, and who forwards a duplicated stream",
+    "overview": "On a multi-access LAN with several PIM routers, the **[[PIM DR|Designated Router]]** speaks for the hosts: it handles IGMP joins and, in sparse mode, registers the source. When two routers both forward the same **(S,G)** onto the LAN, **PIM Assert** picks a single forwarder.",
+    "keyIdea": "DR is chosen by priority then highest IP. Assert is won by the lower metric to the source, then the higher IP.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Why both mechanisms exist",
+        "cols": [
+          "Problem",
+          "Solution"
+        ],
+        "rows": [
+          [
+            "Several routers on one LAN",
+            "Elect a **DR** to act for hosts"
+          ],
+          [
+            "Duplicate (S,G) on the LAN",
+            "**Assert** picks one forwarder"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DR election",
+        "cols": [
+          "Factor",
+          "Rule"
+        ],
+        "rows": [
+          [
+            "**Priority**",
+            "Highest PIM DR priority wins, default 1"
+          ],
+          [
+            "**Tie-break**",
+            "Highest IP address wins"
+          ],
+          [
+            "**Sparse mode**",
+            "DR sends IGMP and PIM joins and registers the source"
+          ],
+          [
+            "**Command**",
+            "ip pim dr-priority"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DR role in PIM-SM",
+        "cols": [
+          "Task",
+          "Who"
+        ],
+        "rows": [
+          [
+            "Send joins and IGMP on the LAN",
+            "DR"
+          ],
+          [
+            "Register source traffic",
+            "FHR, the DR on the source LAN"
+          ],
+          [
+            "Receive the register at the RP",
+            "RP"
+          ],
+          [
+            "Join the SPT as last hop",
+            "DR acting as LHR"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "PIM Assert",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Trigger",
+            "Two routers forwarding the same (S,G) on a LAN"
+          ],
+          [
+            "Purpose",
+            "Prune the duplicate forwarder"
+          ],
+          [
+            "Winner",
+            "Best assert metric"
+          ],
+          [
+            "Loser",
+            "Prunes (S,G) on that interface"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Assert metric criteria",
+        "cols": [
+          "Factor",
+          "Winner"
+        ],
+        "rows": [
+          [
+            "Route preference",
+            "Lower administrative distance"
+          ],
+          [
+            "Metric to source",
+            "**Lower metric wins**"
+          ],
+          [
+            "Tie",
+            "**Highest IP address wins**"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration and verification",
+        "code": "  interface GigabitEthernet0/1\n   ip pim sparse-mode\n   ip pim dr-priority 200\n  !\n  show ip pim interface\n  show ip pim neighbor\n  show ip pim assert\n  show ip mroute"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Raise the DR priority",
+        "code": "interface GigabitEthernet0/1\n ip pim sparse-mode\n ip pim dr-priority 200"
+      },
+      {
+        "label": "Verify the DR and neighbours",
+        "code": "show ip pim interface\nshow ip pim neighbor"
+      },
+      {
+        "label": "Verify assert winners",
+        "code": "show ip pim assert\nshow ip mroute"
+      }
+    ],
+    "traps": [
+      "DR election uses **priority first, then highest IP**.",
+      "The DR handles **IGMP, joins and register** on behalf of the LAN.",
+      "Assert resolves a **duplicated (S,G)** on the same LAN.",
+      "The assert winner has the **lower metric to the source**.",
+      "On a tie, the **higher IP address** wins the assert.",
+      "DR is about who speaks for hosts; assert is about who forwards the stream."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "DR and Assert"
+      ],
+      "rows": [
+        [
+          "DR election",
+          "Priority, then highest IP"
+        ],
+        [
+          "DR role",
+          "IGMP, joins, register"
+        ],
+        [
+          "Assert trigger",
+          "Duplicate (S,G)"
+        ],
+        [
+          "Assert winner",
+          "Lower metric, then higher IP"
+        ],
+        [
+          "Config",
+          "ip pim dr-priority"
+        ],
+        [
+          "Verify",
+          "show ip pim assert"
+        ],
+        [
+          "Purpose",
+          "Avoid duplication"
+        ],
+        [
+          "Tie",
+          "Higher IP wins"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. PIM Sparse",
+        "d": "Where the DR registers"
+      },
+      {
+        "t": "03. PIM Dense",
+        "d": "DR and assert behaviour"
+      },
+      {
+        "t": "05. Multicast Routing",
+        "d": "Designated router forwarding"
+      }
+    ],
+    "glossary": [
+      "PIM DR",
+      "PIM",
+      "PIM-SM",
+      "IGMP",
+      "DR BDR",
+      "Multicast"
+    ]
+  }
+];
 
         const GROUPS = [
           { key: 'membership', label: 'Group Management', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
@@ -1450,6 +2681,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

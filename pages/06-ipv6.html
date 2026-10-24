@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,1192 +600,2913 @@
         const heroIntro = `[[IPv6]] replaces 32-bit addressing with **128 bits**, removes broadcast entirely, and makes every host **[[Link Local]]** capable out of the box. This level covers the address types, the two ways a host gets an address ([[SLAAC]] and [[DHCPv6]]), the control messages that make it work ([[Neighbor Discovery]] and [[ICMPv6]]), and how the three routing protocols carry IPv6.`;
 
         const topics = [
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "addr",
+    "title": "IPv6 Addressing",
+    "blurb": "The 128-bit address, shortening rules, address types and subnetting units",
+    "overview": "[[IPv6]] uses **128-bit** addresses — roughly 3.4 x 10^38 of them. The address is written as eight groups of four hexadecimal digits, it has **no broadcast**, every interface gets a mandatory [[Link Local]] address automatically, and a **/64** is the standard LAN subnet.",
+    "keyIdea": "Eight hextets, one double colon, no broadcast, and a /64 per LAN. Everything else follows from those four facts.",
+    "sections": [
+      {
+        "h": "IPv6 header",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">IPv6 HEADER</text><rect x=\"60\" y=\"80\" width=\"780\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><text x=\"450\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Version | Traffic Class | Flow Label</text><rect x=\"60\" y=\"140\" width=\"520\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"600\" y=\"140\" width=\"240\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><text x=\"320\" y=\"165\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Payload Length | Next Header | Hop Limit</text><text x=\"720\" y=\"165\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\"></text><rect x=\"60\" y=\"200\" width=\"780\" height=\"40\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><text x=\"450\" y=\"225\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Source Address (128 bits)</text><rect x=\"60\" y=\"260\" width=\"780\" height=\"40\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"450\" y=\"285\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Destination Address (128 bits)</text></g></svg>",
+        "caption": "Simpler header, no checksum."
+      },
+      {
+        "kind": "para",
+        "h": "The 128-bit format",
+        "p": "An IPv6 address is eight **hextets** of 16 bits each, written in hexadecimal. Eight groups of four hex digits give the full 128 bits, which is why IPv6 addresses are 32 hex characters long rather than the four octets of IPv4."
+      },
+      {
+        "kind": "code",
+        "h": "A full 128-bit address",
+        "code": "  2001:0db8:85a3:0000:0000:8a2e:0370:7334\n   |    |    |    |    |    |    |    |\n   16   16   16   16   16   16   16   16  bits  = 128 bits\n\n  IPv4   32 bits   ~4.3 billion addresses\n  IPv6  128 bits   ~3.4 x 10^38 addresses"
+      },
+      {
+        "kind": "para",
+        "h": "Shortening rules",
+        "p": "IPv6 notation has **three simplification rules**, and every exam question about the format is really a question about one of them."
+      },
+      {
+        "kind": "table",
+        "h": "The three shortening rules",
+        "cols": [
+          "Rule",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Drop leading zeros in a hextet",
+            "0db8 becomes db8, 0000 becomes 0"
+          ],
+          [
+            "Use double colon for the longest run of zero hextets",
+            "2001:0db8:85a3:0000:0000:8a2e:0370:7334 becomes 2001:db8:85a3::8a2e:370:7334"
+          ],
+          [
+            "The double colon may appear only once",
+            "Two of them is an invalid address"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Shortening worked through",
+        "code": "  Full    2001:0db8:85a3:0000:0000:8a2e:0370:7334\n  Step 1  2001:db8:85a3:0:0:8a2e:370:7334     (leading zeros dropped)\n  Step 2  2001:db8:85a3::8a2e:370:7334        (longest zero run collapsed)\n\n  The double colon stands for at least one zero hextet.\n  It can never appear twice in the same address."
+      },
+      {
+        "kind": "table",
+        "h": "Address types by prefix",
+        "cols": [
+          "Type",
+          "Prefix",
+          "Example"
+        ],
+        "rows": [
+          [
+            "Global Unicast (GUA)",
+            "2000::/3",
+            "2001:db8:1:10::1"
+          ],
+          [
+            "Link-local",
+            "fe80::/10",
+            "fe80::1"
+          ],
+          [
+            "Unique Local (ULA)",
+            "fc00::/7",
+            "fd12:3456:789a::1"
+          ],
+          [
+            "Multicast",
+            "ff00::/8",
+            "ff02::1"
+          ],
+          [
+            "Loopback",
+            "::1",
+            "::1"
+          ],
+          [
+            "Unspecified",
+            "::",
+            "::"
+          ],
+          [
+            "IPv4-mapped",
+            "::ffff:0:0/96",
+            "::ffff:192.168.1.1"
+          ],
+          [
+            "Anycast",
+            "No prefix of its own",
+            "Any global unicast address"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "IPv6 has no broadcast",
+        "p": "Broadcast is gone. Every job it used to do is done by **multicast** instead — ff02::1 reaches all nodes on the link, and neighbour discovery uses a solicited-node multicast address rather than a broadcast. IPv6 also drops the ARP request/reply pair in favour of [[Neighbor Discovery]]."
+      },
+      {
+        "kind": "list",
+        "h": "What IPv6 removed and what replaced it",
+        "items": [
           {
-            id: 't01', num: '01', group: 'addr', title: 'IPv6 Addressing',
-            blurb: 'The 128-bit address, shortening rules, address types and subnetting units',
-            overview: '[[IPv6]] uses **128-bit** addresses — roughly 3.4 x 10^38 of them. The address is written as eight groups of four hexadecimal digits, it has **no broadcast**, every interface gets a mandatory [[Link Local]] address automatically, and a **/64** is the standard LAN subnet.',
-            keyIdea: 'Eight hextets, one double colon, no broadcast, and a /64 per LAN. Everything else follows from those four facts.',
-            sections: [
-              { kind: 'para', h: 'The 128-bit format', p: 'An IPv6 address is eight **hextets** of 16 bits each, written in hexadecimal. Eight groups of four hex digits give the full 128 bits, which is why IPv6 addresses are 32 hex characters long rather than the four octets of IPv4.' },
-              { kind: 'code', h: 'A full 128-bit address', code:
-`  2001:0db8:85a3:0000:0000:8a2e:0370:7334
-   |    |    |    |    |    |    |    |
-   16   16   16   16   16   16   16   16  bits  = 128 bits
-
-  IPv4   32 bits   ~4.3 billion addresses
-  IPv6  128 bits   ~3.4 x 10^38 addresses` },
-              { kind: 'para', h: 'Shortening rules', p: 'IPv6 notation has **three simplification rules**, and every exam question about the format is really a question about one of them.' },
-              { kind: 'table', h: 'The three shortening rules', cols: ['Rule', 'Example'], rows: [
-                ['Drop leading zeros in a hextet', '0db8 becomes db8, 0000 becomes 0'],
-                ['Use double colon for the longest run of zero hextets', '2001:0db8:85a3:0000:0000:8a2e:0370:7334 becomes 2001:db8:85a3::8a2e:370:7334'],
-                ['The double colon may appear only once', 'Two of them is an invalid address']
-              ]},
-              { kind: 'code', h: 'Shortening worked through', code:
-`  Full    2001:0db8:85a3:0000:0000:8a2e:0370:7334
-  Step 1  2001:db8:85a3:0:0:8a2e:370:7334     (leading zeros dropped)
-  Step 2  2001:db8:85a3::8a2e:370:7334        (longest zero run collapsed)
-
-  The double colon stands for at least one zero hextet.
-  It can never appear twice in the same address.` },
-              { kind: 'table', h: 'Address types by prefix', cols: ['Type', 'Prefix', 'Example'], rows: [
-                ['Global Unicast (GUA)', '2000::/3', '2001:db8:1:10::1'],
-                ['Link-local', 'fe80::/10', 'fe80::1'],
-                ['Unique Local (ULA)', 'fc00::/7', 'fd12:3456:789a::1'],
-                ['Multicast', 'ff00::/8', 'ff02::1'],
-                ['Loopback', '::1', '::1'],
-                ['Unspecified', '::', '::'],
-                ['IPv4-mapped', '::ffff:0:0/96', '::ffff:192.168.1.1'],
-                ['Anycast', 'No prefix of its own', 'Any global unicast address']
-              ]},
-              { kind: 'para', h: 'IPv6 has no broadcast', p: 'Broadcast is gone. Every job it used to do is done by **multicast** instead — ff02::1 reaches all nodes on the link, and neighbour discovery uses a solicited-node multicast address rather than a broadcast. IPv6 also drops the ARP request/reply pair in favour of [[Neighbor Discovery]].' },
-              { kind: 'list', h: 'What IPv6 removed and what replaced it', items: [
-                { t: 'Broadcast', d: 'Replaced by link-local multicast groups such as ff02::1 for all nodes and ff02::2 for all routers.' },
-                { t: 'ARP', d: 'Replaced by [[Neighbor Discovery]] using ICMPv6 messages instead of an Ethernet broadcast.' },
-                { t: 'Router fragmentation', d: 'Replaced by path MTU discovery — the sender reacts to a Packet Too Big message rather than routers splitting packets.' }
-              ]},
-              { kind: 'para', h: 'Subnetting units', p: 'A **/64** is one LAN subnet and it is effectively mandatory, because [[SLAAC]] needs exactly 64 host bits to fill. A provider commonly hands a site a **/48** or **/56**, which is then split into **/64** subnets, one per VLAN.' },
-              { kind: 'code', h: 'The usual IPv6 subnetting plan', code:
-`  Provider gives the site a /56
-  2001:db8:1234:5a00::/56
-
-  /64 subnets inside it:
-    2001:db8:1234:5a00::/64    VLAN 10
-    2001:db8:1234:5a01::/64    VLAN 20
-    2001:db8:1234:5a02::/64    VLAN 30
-
-  A /48 gives 65,536 usable /64 subnets.
-  A /64 gives 18 quintillion addresses on one LAN.` }
-            ],
-            commands: [
-              { label: 'Host — show the IPv6 addresses on the machine', code:
-`ip -6 addr show` },
-              { label: 'Host — ping over IPv6', code:
-`ping6 2001:db8::1` },
-              { label: 'Cisco IOS — configure a static global address', code:
-`interface GigabitEthernet0/1
- ipv6 address 2001:db8:1:10::1/64
- ipv6 enable` },
-              { label: 'Cisco IOS — verify', code:
-`show ipv6 interface GigabitEthernet0/1
-show ipv6 route` }
-            ],
-            traps: [
-              'The double colon may appear only once in an address. Two of them is invalid.',
-              '2001:db8::/32 is the documentation prefix. It is never deployed in production.',
-              'fe80::/10 is always present on every IPv6 interface. It is not something you configure by choice.',
-              'A /64 is required for [[SLAAC]]. A /127 or a /128 breaks autoconfiguration.',
-              'There is no IPv6 broadcast address. A question asking for one is a trap.',
-              'IPv6 addresses are eight groups of four hex digits — 32 hex characters, not four octets.',
-              'The unspecified address :: and the loopback ::1 are IPv6 concepts with no IPv4 equivalent that behaves the same way.',
-              'A double colon stands for one or more zero hextets, never for a fixed number of them.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Size', '128 bits, 8 hextets of 16 bits'],
-                ['Notation', 'Hexadecimal, double colon compresses zero runs'],
-                ['GUA', '2000::/3'],
-                ['Link-local', 'fe80::/10, always present'],
-                ['ULA', 'fc00::/7, fd00::/8 in practice'],
-                ['Multicast', 'ff00::/8'],
-                ['Loopback', '::1'],
-                ['Broadcast', 'None — multicast replaces it'],
-                ['LAN subnet', '/64'],
-                ['Allocation', '/48 site, /64 per LAN']
-              ]
-            },
-            related: [
-              { t: '02. Global Unicast', d: 'the public address type' },
-              { t: '03. Link Local', d: 'the address that is always there' },
-              { t: '11. ICMPv6', d: 'the control protocol underneath' }
-            ],
-            glossary: ['IPv6', 'IPv4', 'Global Unicast', 'Link Local', 'Unique Local', 'IPv6 Multicast', 'Anycast', 'Neighbor Discovery', 'SLAAC']
+            "t": "Broadcast",
+            "d": "Replaced by link-local multicast groups such as ff02::1 for all nodes and ff02::2 for all routers."
           },
           {
-            id: 't02', num: '02', group: 'addr', title: 'Global Unicast',
-            blurb: '2000::/3, the prefix / subnet / interface ID split, and how a host gets one',
-            overview: '[[Global Unicast]] addresses are IPv6 public addresses, and they live in **2000::/3**. The format is a three-part split — a global routing prefix, a subnet ID, and a 64-bit interface ID — and the /64 per LAN comes from the third part being 64 bits wide.',
-            keyIdea: 'Global unicast is the Internet-routable address. Link-local is the one that is guaranteed; a global address is something you have to arrange.',
-            sections: [
-              { kind: 'code', h: 'The three-part structure', code:
-`  |  global routing prefix  |   subnet ID   |  interface ID  |
-  |  /48 from the ISP       |  site-chosen |  last 64 bits  |
-  |  2001:db8:1234:         |  5a00        |  ::1          |
-
-  Full address: 2001:db8:1234:5a00::1/64` },
-              { kind: 'para', h: 'The /64 rule', p: 'Every LAN gets a **/64**. The reason is structural: the interface ID is the bottom 64 bits, so a /64 prefix leaves exactly the right amount of room for a host to build its own address. It also means you can subdivide a site allocation down to /64 but no further.' },
-              { kind: 'table', h: 'What a provider typically hands you', cols: ['Allocation', 'Number of /64 subnets', 'Typical use'], rows: [
-                ['/48', '65,536', 'Large enterprise or data centre'],
-                ['/56', '256', 'Medium enterprise, delegateable to a CPE'],
-                ['/60', '16', 'Small branch'],
-                ['/64', '1', 'A single LAN']
-              ]},
-              { kind: 'table', h: 'Four ways a host gets a global address', cols: ['Method', 'Where it comes from'], rows: [
-                ['SLAAC', 'The router advertises a prefix in a Router Advertisement and the host combines it with its own interface ID.'],
-                ['DHCPv6', 'A stateful server assigns the address and tracks the lease.'],
-                ['DHCPv6-PD', 'The site router delegates a prefix to a customer edge device.'],
-                ['Static', 'Configured by hand on the interface.']
-              ]},
-              { kind: 'para', h: 'The reachability story that gets asked about', p: 'A host can have a global address and still not be reachable from the Internet, and it can have no global address and still reach its neighbours. The exam question "can two IPv6 hosts on the same segment ping without a global address" has the answer **yes** — they use their link-local addresses. Multi-hop routing is where the global address matters, because link-local never crosses a router.' },
-              { kind: 'list', h: 'Global versus link-local reachability', items: [
-                { t: 'Same segment, no global address', d: 'Works. Both hosts use their fe80 addresses and the zone identifier of the interface.' },
-                { t: 'Different segments, no global address', d: 'Does not work. Link-local addresses are never routed.' },
-                { t: 'Internet access', d: 'Requires a global address, a default route from the Router Advertisement, and a working upstream path.' }
-              ]},
-              { kind: 'para', h: 'The interface ID', p: 'The bottom 64 bits can be derived from the MAC address in **EUI-64** form, or generated randomly. Privacy extensions (RFC 4941) rotate the temporary address so a host cannot be tracked across the network, and modern hosts normally use a **random interface ID** for that reason.' },
-              { kind: 'code', h: 'EUI-64 from a MAC address', code:
-`  MAC   00:1a:2b:3c:4d:5e
-
-  1. drop the colons and insert fffe in the middle
-     001a2b3c4d5e  ->  001a2b3c fffe 4d5e
-  2. flip the U/L bit (the leftmost bit of the first byte)
-     00 -> 02
-  3. insert colons every four hex digits
-     021a:2b3f:fffe:4d5e
-
-  The result is the bottom 64 bits of the address.` },
-              { kind: 'para', h: 'Addressing practice', p: 'Real designs track the prefix from the provider rather than hard-coding it, keep a /64 per VLAN, and number the subnets sequentially so the plan is readable. Privacy extensions are worth enabling on user-facing segments so a single host cannot be profiled from its interface ID.' }
-            ],
-            commands: [
-              { label: 'Configure a static global unicast address', code:
-`interface GigabitEthernet0/1
- ipv6 address 2001:db8:1:10::1/64` },
-              { label: 'Advertise the prefix for autoconfiguration', code:
-`interface GigabitEthernet0/1
- ipv6 nd prefix 2001:db8:1:10::/64` },
-              { label: 'Verify the prefix and the address', code:
-`show ipv6 interface GigabitEthernet0/1 | include prefix
-show ipv6 route 2001:db8:1:10::/64` }
-            ],
-            traps: [
-              '2001:db8::/32 is the documentation prefix. Never deployed, always used in exam answers.',
-              'A global unicast address is not automatic. The link-local address is the one that is always there.',
-              'A host with only a link-local address has no path off the local segment.',
-              'IPv6 does not need NAT for address shortage. Prefix translation exists but it is not the default design.',
-              'EUI-64 flips the U/L bit and inserts fffe in the middle of the MAC. Both steps are easy to miss.',
-              'Privacy extensions rotate the interface ID, so do not assume a permanent EUI-64 address.',
-              'The interface ID is the bottom 64 bits, which is exactly why the LAN prefix is /64.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Prefix', '2000::/3'],
-                ['Structure', 'Global routing prefix + subnet ID + 64-bit interface ID'],
-                ['/64', 'The per-LAN standard'],
-                ['Acquisition', 'SLAAC, DHCPv6, prefix delegation, or static'],
-                ['Interface ID', 'EUI-64 from the MAC, or random for privacy'],
-                ['NAT', 'Not required — addresses are plentiful'],
-                ['Default gateway', 'Learned from the Router Advertisement, not from DHCP']
-              ]
-            },
-            related: [
-              { t: '01. IPv6 Addressing', d: 'the format and the address types' },
-              { t: '03. Link Local', d: 'the guaranteed address' },
-              { t: '07. SLAAC', d: 'how the address usually arrives' }
-            ],
-            glossary: ['Global Unicast', 'IPv6', 'Link Local', 'SLAAC', 'DHCPv6', 'Anycast', 'NAT64']
+            "t": "ARP",
+            "d": "Replaced by [[Neighbor Discovery]] using ICMPv6 messages instead of an Ethernet broadcast."
           },
           {
-            id: 't03', num: '03', group: 'addr', title: 'Link Local',
-            blurb: 'fe80::/10, automatic generation, zone identifiers and routing adjacencies',
-            overview: '[[Link Local]] addresses in **fe80::/10** are configured automatically on every IPv6 interface. They are never routed, they exist so that the protocol works before anything else is configured, and they are the basis of neighbour discovery, SLAAC signalling and routing protocol adjacencies.',
-            keyIdea: 'Link-local is a normal, deliberate part of IPv6 — not the IPv4 fallback mistake. It is how the protocol bootstraps itself.',
-            sections: [
-              { kind: 'para', h: 'Always present, never routed', p: 'The moment an interface is enabled for IPv6 it has a **link-local address**. It is derived from the MAC address in EUI-64 form or generated as a stable random value under RFC 7217, and it is unique per interface. Routers **never forward** it, so it never appears in a global routing table.' },
-              { kind: 'code', h: 'What an interface looks like after ipv6 enable', code:
-`  GigabitEthernet0/1 is up, line protocol is up
-    IPv6 is enabled, link-local address(es):
-    FE80::214:5FF:FE23:4567, subnetmask FE80::/64
-    Global unicast address(es):
-    2001:db8:1:10::1, subnetmask /64` },
-              { kind: 'para', h: 'The zone identifier', p: 'Because fe80:: means the same thing on every host on the segment, you have to say **which link** you mean. Operating systems express that with a zone or scope identifier after a percent sign.' },
-              { kind: 'code', h: 'Pinging a link-local address', code:
-`  Linux / macOS
-    ping6 fe80::1%eth0
-    ping6 fe80::1%0          interface index on some systems
-
-  Windows
-    ping fe80::1%5           %5 is the interface index` },
-              { kind: 'table', h: 'Where link-local actually does the work', cols: ['Use', 'Why'], rows: [
-                ['Neighbour discovery', 'Every NS and NA is sent from a link-local source address.'],
-                ['Router solicitation and advertisement', 'The RS goes to ff02::2 and the RA is sent from a link-local address.'],
-                ['SLAAC unicast', 'A router uses its link-local address as the next hop for the prefix it advertises.'],
-                ['Routing adjacencies', 'OSPFv3 and EIGRP for IPv6 form adjacencies over link-local and use it as the next hop.'],
-                ['Default gateway', 'A host learns the Router Advertisement sender link-local address as its default route.'],
-                ['Management access', 'Only IT on the connected segment can reach the device over its link-local address.']
-              ]},
-              { kind: 'para', h: 'Several addresses on one interface', p: 'An IPv6 interface normally carries more than one address, and each has a different lifetime. This is the table that explains why a host shows a link-local, a global, and often a temporary address at the same time.' },
-              { kind: 'table', h: 'Address types on a single interface', cols: ['Type', 'Purpose', 'Lifetime'], rows: [
-                ['Link-local (fe80)', 'Local protocol operation', 'Never removed'],
-                ['Global unicast or ULA', 'Routed reachability', 'Prefix lifetime, or renewed by the server'],
-                ['Temporary (privacy)', 'Outbound source address', 'Rotated every few days']
-              ]},
-              { kind: 'para', h: 'The contrast with IPv4', p: 'In IPv4 a self-assigned address means something went wrong — DHCP failed and the host fell back to 169.254. In IPv6 the self-assigned address is how the protocol starts. That difference is the single most common trap in this topic.' }
-            ],
-            commands: [
-              { label: 'Enable IPv6 on an interface (creates the link-local automatically)', code:
-`interface GigabitEthernet0/1
- ipv6 enable` },
-              { label: 'Set a deterministic link-local address', code:
-`interface GigabitEthernet0/1
- ipv6 address fe80::1 link-local` },
-              { label: 'Verify the link-local address', code:
-`show ipv6 interface GigabitEthernet0/1 | include Link|fe80` },
-              { label: 'Ping a link-local neighbour from the router itself', code:
-`ping6 fe80::1%0` }
-            ],
-            traps: [
-              'fe80::/10 is not a broken or temporary address. It is mandatory and permanent.',
-              'Link-local addresses are never routed. Pinging one across a router always fails.',
-              'The zone identifier after the percent sign is required when you ping a link-local address.',
-              'A routing table may show a link-local next hop on a transit link. That is normal and is not an error.',
-              'Link-local is not the IPv6 equivalent of APIPA. IPv6 has no failure fallback — it has a mandatory starting point.',
-              'Each interface gets its own link-local address. They are not shared across the device.',
-              'The manually configured link-local form is used when you want a stable address for a routing protocol next hop.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Prefix', 'fe80::/10'],
-                ['Configuration', 'Automatic on ipv6 enable'],
-                ['Scope', 'One link, never routed'],
-                ['Generation', 'EUI-64 from the MAC, or stable random under RFC 7217'],
-                ['Zone identifier', 'Percent sign plus the interface, required for ping'],
-                ['Powers', 'ND, SLAAC signalling, routing adjacencies'],
-                ['Default gateway', 'The link-local address of the Router Advertisement sender'],
-                ['Uniqueness', 'Per interface, per link']
-              ]
-            },
-            related: [
-              { t: '09. Neighbor Discovery', d: 'what runs over link-local' },
-              { t: '07. SLAAC', d: 'uses link-local for the handshake' },
-              { t: '04. Unique Local', d: 'the other internal-only scope' }
-            ],
-            glossary: ['Link Local', 'IPv6', 'Neighbor Discovery', 'SLAAC', 'OSPFv3', 'EIGRP for IPv6', 'Default Route']
-          },
-          {
-            id: 't04', num: '04', group: 'addr', title: 'Unique Local',
-            blurb: 'fc00::/7, the fc versus fd trap, and where ULAs are used',
-            overview: '[[Unique Local]] addresses are the IPv6 counterpart to RFC 1918 private space. The prefix is **fc00::/7**, but only **fd00::/8** is actually used, because the L bit marks a locally assigned address. They are routed inside the organisation and never advertised to the Internet.',
-            keyIdea: 'The range is fc00::/7. The part you deploy from is fd00::/8. ULA is routed inside the site; link-local is not.',
-            sections: [
-              { kind: 'para', h: 'The /7 and its two halves', p: 'RFC 4193 reserves fc00::/7 for unique local addresses. The first eight bits split into **fc00::/8**, which is reserved for future centrally defined semantics, and **fd00::/8**, where the L bit is set to mark a locally assigned address. Every real ULA comes from fd00::/8.' },
-              { kind: 'code', h: 'The fc and fd boundary', code:
-`  fc00::/7   covers  fc00:...  through  fdff:...
-                       ^^^^^^^
-  fc00::/8   reserved, centrally defined semantics
-  fd00::/8   L bit set, locally assigned  <-- this is what you deploy
-
-  ULA example: fd12:3456:789a::1` },
-              { kind: 'code', h: 'The structure of a ULA', code:
-`  | 7 bits | L | 40-bit global ID | 16-bit subnet | 64-bit interface ID |
-
-  fc        1  1234:5678:9abc     0001           ::1
-
-  Prefix    fd12:3456:789a::/48
-  Subnet    fd12:3456:789a:0001::/64` },
-              { kind: 'para', h: 'The global ID should be random', p: 'The 40-bit global ID is meant to be generated randomly so that two organisations that independently choose a ULA are unlikely to collide. A predictable identifier — a site name encoded as hex, for instance — defeats the whole point and causes real conflicts the moment the two sites are connected.' },
-              { kind: 'table', h: 'ULA versus link-local', cols: ['', 'ULA (fd00::/8)', 'Link-local (fe80::/10)'], rows: [
-                ['Scope', 'Site-wide', 'One link'],
-                ['Routed internally', 'Yes', 'No'],
-                ['Purpose', 'Stable internal services', 'Protocol operation'],
-                ['Visible off site', 'No — filtered at the edge', 'Never'],
-                ['Privacy', 'Stable and planned', 'Per interface']
-              ]},
-              { kind: 'table', h: 'When to use a ULA', cols: ['Scenario', 'Use'], rows: [
-                ['Internal DNS, print and management services', 'ULA — stable, and independent of the ISP prefix'],
-                ['Internet-facing services', 'Global unicast'],
-                ['Dual-stack lab with no real provider prefix', 'ULA'],
-                ['Merging two sites', 'ULA with random global IDs, to avoid collisions'],
-                ['Migration, where global space is still growing', 'ULA for internal, global in parallel']
-              ]},
-              { kind: 'para', h: 'Filtering at the edge', p: 'A ULA must never be advertised to the Internet. Every edge that speaks BGP or receives a prefix from an upstream must filter out fd00::/8 and fe80::/10 from what it accepts and what it sends. And unlike IPv4 private space, ULAs do not need NAT — they are simply routed inside the organisation.' }
-            ],
-            commands: [
-              { label: 'Configure a ULA on an interface', code:
-`interface GigabitEthernet0/1
- ipv6 address fd12:3456:789a:1::1/64` },
-              { label: 'Verify the ULA', code:
-`show ipv6 interface GigabitEthernet0/1 | include fd` },
-              { label: 'Verify the route to the ULA prefix', code:
-`show ipv6 route fd12:3456:789a::/48` }
-            ],
-            traps: [
-              'Only fd00::/8 is locally assigned. fc00::/8 is reserved for the future. The fc versus fd trap is a favourite.',
-              'The range of ULA space is fc00::/7, and both fc and fd fall inside it.',
-              'A ULA is routed inside the organisation. A link-local address is not.',
-              'You do not normally NAT a ULA. It is routed internally like any other prefix.',
-              'The 40-bit global ID should be random. Predictable identifiers cause collisions.',
-              'A ULA never leaves the enterprise. Edge prefix filtering must exclude fd00::/8.',
-              'ULA is not the IPv6 equivalent of a NAT workaround. IPv6 has enough addresses to avoid NAT entirely.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['RFC', '4193'],
-                ['Prefix', 'fc00::/7'],
-                ['Deployed from', 'fd00::/8, the L bit set'],
-                ['Structure', '/48 site + /16 subnet + 64-bit interface ID'],
-                ['Global ID', '40 bits, generated randomly'],
-                ['Scope', 'Routed within the site'],
-                ['Internet', 'Filtered, never advertised'],
-                ['IPv4 analogue', 'RFC 1918 private space'],
-                ['NAT', 'Not required']
-              ]
-            },
-            related: [
-              { t: '03. Link Local', d: 'the other internal scope' },
-              { t: '02. Global Unicast', d: 'the public counterpart' },
-              { t: '13. BGP IPv6', d: 'where the edge filtering happens' }
-            ],
-            glossary: ['Unique Local', 'IPv6', 'Global Unicast', 'Link Local', 'Private IP']
-          },
-          {
-            id: 't05', num: '05', group: 'addr', title: 'Anycast',
-            blurb: 'One address on many devices, nearest delivery, and where you meet it',
-            overview: '[[Anycast]] means the **same unicast address is assigned to several devices**, and the network delivers the packet to the **nearest** one. IPv6 made it a first-class part of the protocol — the address looks like ordinary global unicast — and it underpins DNS, cloud services and content delivery networks.',
-            keyIdea: 'Anycast delivers to one of many: the nearest. Multicast delivers to all of the members. Unicast delivers to one unique host.',
-            sections: [
-              { kind: 'para', h: 'How it works', p: 'Every member of the group holds the same address and advertises the same prefix. Routing then works out the best path to that prefix, and because the members are in different places, the best path leads to the closest one. There is no protocol mechanism involved at all — it is a consequence of ordinary routing.' },
-              { kind: 'code', h: 'One address, three locations', code:
-`            +---- R1 ----+
-            | 2001:db8:100::10 |   loopback
-            +-----+------+
-                  |
-   client -------+------- link
-                  |
-            +-----+------+
-            | 2001:db8:100::10 |   loopback
-            +---- R2 ----+
-
-  The client sends to 2001:db8:100::10.
-  The routing table picks the shortest path, so R1 answers.` },
-              { kind: 'table', h: 'The delivery trio', cols: ['', 'Unicast', 'Anycast', 'Multicast'], rows: [
-                ['Destination address', 'Unique to one host', 'Shared by many hosts', 'Identifies a group'],
-                ['Who receives', 'One host', 'One host — the nearest', 'Every member of the group'],
-                ['Purpose', 'One to one', 'One to nearest of many', 'One to many'],
-                ['IPv6 form', 'Global unicast', 'An ordinary global unicast', 'ff00::/8'],
-                ['Example', 'SSH to a server', 'DNS root and resolver servers', 'A video conference']
-              ]},
-              { kind: 'para', h: 'There is no special anycast prefix', p: 'IPv6 has no anycast block. An address becomes anycast by deployment, not by notation, which is why the question "which of these addresses is anycast" is unanswerable from the address alone. The exception is **subnet anycast** (RFC 2526), where a reserved pattern in the address identifies all the routers on a subnet.' },
-              { kind: 'code', h: 'Subnet anycast', code:
-`  A reserved /7 field in the address identifies the subnet routers.
-
-  Interface address   2001:db8:1:10::1
-  Subnet anycast      2001:db8:1:10:0:0:0:0    <- every router in the subnet
-
-  Packets sent to the subnet anycast go to the nearest router
-  on that subnet.` },
-              { kind: 'table', h: 'Where anycast turns up', cols: ['Deployment', 'How it is built'], rows: [
-                ['DNS root servers', 'The same address on hundreds of nodes worldwide'],
-                ['Public DNS resolvers', 'The same address on anycast points of presence'],
-                ['Cloud load balancing', 'One address per region, so traffic lands on the nearest region'],
-                ['Content delivery networks', 'Edge caches share an address and serve the nearest users'],
-                ['VXLAN fabric gateways', 'The same gateway address on every leaf, so traffic lands on the nearest leaf']
-              ]},
-              { kind: 'para', h: 'The caveats', p: 'An anycast address can only be a **destination**, never a source — a host cannot originate traffic from an address it does not uniquely own. And because the address can move, stateful flows break on failover: a TCP session to a node that dies does not transparently resume on another member, unless the state is shared.' },
-              { kind: 'list', h: 'What breaks with anycast', items: [
-                { t: 'Source address', d: 'Not allowed. A host cannot originate from an address shared with other devices.' },
-                { t: 'Stateful sessions', d: 'A failover to another member drops the session. Stateless protocols such as HTTP are unaffected.' },
-                { t: 'Return path', d: 'Asymmetric routing is normal with anycast, which breaks strict ingress filtering designs.' },
-                { t: 'Policy', d: 'Route maps and filters have to treat the anycast prefix on purpose, because it looks like ordinary unicast.' }
-              ]}
-            ],
-            commands: [
-              { label: 'Put the same anycast address on several routers', code:
-`interface Loopback0
- ipv6 address 2001:db8:100::10/128` },
-              { label: 'Advertise the anycast prefix so the closest member wins', code:
-`router ospfv3 1
- address-family ipv6 unicast
-  network 2001:db8:100::10/128 area 0` },
-              { label: 'Confirm the prefix is installed on each router', code:
-`show ipv6 route 2001:db8:100::10/128` }
-            ],
-            traps: [
-              'Anycast delivers to the nearest member, not to all of them. Delivering to all members is multicast.',
-              'An anycast address is indistinguishable from an ordinary unicast address. You cannot tell from the address alone.',
-              'An anycast address cannot be used as a source address.',
-              'A stateful session breaks when the member serving it fails. Stateless traffic is fine.',
-              'Anycast depends on topology. The nearest member by routing metric is the one that answers.',
-              'Subnet anycast is the one case with a reserved pattern in the address. Ordinary anycast has none.',
-              'IPv6 anycast is just global unicast that happens to be deployed on several devices.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Definition', 'Many devices holding the same unicast address'],
-                ['Delivery', 'Nearest member, chosen by the routing table'],
-                ['IPv6 form', 'An ordinary global unicast address'],
-                ['Examples', 'DNS, CDNs, cloud load balancing, VXLAN gateways'],
-                ['As a source', 'Not allowed'],
-                ['State', 'Sessions break on failover unless state is shared'],
-                ['Against multicast', 'Multicast reaches every member, anycast reaches one']
-              ]
-            },
-            related: [
-              { t: '06. Multicast', d: 'the other many-receiver model' },
-              { t: '13. BGP IPv6', d: 'how the same prefix is advertised from many sites' },
-              { t: '02. Global Unicast', d: 'the prefix anycast borrows' }
-            ],
-            glossary: ['Anycast', 'IPv6', 'Global Unicast', 'IPv6 Multicast', 'Neighbor Discovery']
-          },
-          {
-            id: 't06', num: '06', group: 'addr', title: 'Multicast',
-            blurb: 'ff00::/8, scopes, the well-known groups and MLD',
-            overview: '[[IPv6 Multicast]] uses **ff00::/8** and carries a scope and flags field that IPv4 multicast does not have. It replaces broadcast entirely: all-nodes, all-routers, neighbour discovery and DHCPv6 are all just multicast groups with a scope that says how far they may travel.',
-            keyIdea: 'The scope nibble in the address decides the routing boundary. ff02 is link-local and never leaves the segment; ff0e is global.',
-            sections: [
-              { kind: 'code', h: 'The address layout', code:
-`  | 8 bits | 4 bits | 4 bits | 112 bits |
-  |  ff   | flags  | scope  | group ID |
-             T/P/R    1 I, 2 link, 5 site, 8 org, E global` },
-              { kind: 'table', h: 'The scope values', cols: ['Value', 'Scope', 'Meaning'], rows: [
-                ['1', 'Interface-local', 'Reaches only the local interface'],
-                ['2', 'Link-local', 'Reaches the local segment, never forwarded'],
-                ['5', 'Site-local', 'Reaches the site'],
-                ['8', 'Organization-local', 'Reaches the organisation'],
-                ['E', 'Global', 'Reaches anywhere routable'],
-                ['F', 'Reserved', 'Not used']
-              ]},
-              { kind: 'table', h: 'The well-known groups', cols: ['Group', 'Meaning'], rows: [
-                ['ff02::1', 'All nodes on the link — takes over the role of IPv4 broadcast'],
-                ['ff02::2', 'All routers on the link — the destination of a Router Solicitation'],
-                ['ff02::5', 'OSPFv3 all routers'],
-                ['ff02::6', 'OSPFv3 designated and backup designated routers'],
-                ['ff02::A', 'EIGRP routers'],
-                ['ff02::1:2', 'All DHCPv6 clients and servers'],
-                ['ff02::1:3', 'Link-local name resolution'],
-                ['ff02::16', 'MLDv2 reports'],
-                ['ff02::FB', 'Multicast DNS']
-              ]},
-              { kind: 'para', h: 'How multicast replaces broadcast', p: 'There is **no IPv6 broadcast address**, so every function that used one is now a group with a scope. Neighbour discovery uses the **solicited-node multicast** address, DHCPv6 uses ff02::1:2, and a node that wants to reach everyone on the link uses ff02::1. Because link-local multicast has a hop limit of one, it can never leak off the segment.' },
-              { kind: 'code', h: 'Solicited-node multicast', code:
-`  For target address 2001:db8:1:10::1:
-
-    take the bottom 32 bits of the address
-    00000001 00000000 00000000 00000001
-    ff02::1:ff  +  00:00:00:01
-
-    solicited-node address = ff02::1:ff00:0001
-
-  Prefix      ff02::1:ff00:0/104
-  Only about 1 in 65,536 of the link hears the request,
-  instead of everybody.` },
-              { kind: 'para', h: 'MLD is the membership protocol', p: 'MLD is the IPv6 answer to [[IGMP]]. **MLDv1** behaves like IGMPv2. **MLDv2** supports source-specific multicast, where a receiver names both the group and the source it wants, and that is what enables SSM in IPv6 exactly as IGMPv3 does in IPv4. Switches use **MLD snooping** to build a multicast forwarding table so that group traffic only leaves ports that asked for it.' },
-              { kind: 'table', h: 'MLD versions', cols: ['Version', 'Join type', 'Equivalent in IPv4'], rows: [
-                ['MLDv1', 'Group only', 'IGMPv2'],
-                ['MLDv2', 'Group and source (S,G)', 'IGMPv3, enables SSM']
-              ]},
-              { kind: 'list', h: 'Multicast in IPv6 versus IPv4', items: [
-                { t: 'Scope is embedded', d: 'IPv6 puts the scope in the address itself, so a router can decide from the address alone whether to forward it.' },
-                { t: 'No broadcast', d: 'Every broadcast function is a multicast group with a scope.' },
-                { t: 'Hop limit', d: 'Link-local multicast is sent with a hop limit of one, so it is confined to the segment.' },
-                { t: 'Solicited-node', d: 'Neighbour discovery targets one small multicast group instead of the whole link.' }
-              ]}
-            ],
-            commands: [
-              { label: 'Enable multicast routing for IPv6', code:
-`ipv6 multicast routing` },
-              { label: 'Configure PIM in sparse mode on an interface', code:
-`interface GigabitEthernet0/1
- ipv6 pim sparse-mode` },
-              { label: 'Set the MLD version', code:
-`interface GigabitEthernet0/1
- ipv6 mld version 2` },
-              { label: 'Verify multicast state', code:
-`show ipv6 mroute
-show ipv6 mld groups` }
-            ],
-            traps: [
-              'The scope nibble is part of the address. ff02 is link-local, ff05 is site-local, ff0e is global.',
-              'There is no IPv6 broadcast address. ff02::1 is a multicast group that plays the all-nodes role.',
-              'MLD is the IPv6 membership protocol, the counterpart of IGMP.',
-              'MLDv2 is what enables source-specific multicast with (S,G) joins.',
-              'Solicited-node multicast is ff02::1:ff00:0/104, not ff02::1.',
-              'Link-local multicast uses a hop limit of one, so it never leaves the link.',
-              'Well-known group numbers are hexadecimal: ff02::A is EIGRP, not ff02::10.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Prefix', 'ff00::/8'],
-                ['Layout', 'ff, 4 flag bits, 4 scope bits, 112-bit group ID'],
-                ['Scopes', '1 interface, 2 link, 5 site, 8 organisation, E global'],
-                ['ff02::1', 'All nodes on the link'],
-                ['ff02::2', 'All routers on the link'],
-                ['ff02::5 and ff02::6', 'OSPFv3 all routers, and designated routers'],
-                ['ff02::A', 'EIGRP routers'],
-                ['ff02::1:2', 'All DHCPv6 servers and clients'],
-                ['Solicited-node', 'ff02::1:ff00:0/104'],
-                ['Membership', 'MLDv1 and MLDv2'],
-                ['Snooping', 'MLD snooping on switches'],
-                ['Broadcast', 'None']
-              ]
-            },
-            related: [
-              { t: '09. Neighbor Discovery', d: 'the multicast messages that replace ARP' },
-              { t: '08. DHCPv6', d: 'uses ff02::1:2' },
-              { t: '10. ICMPv6', d: 'carries the multicast membership messages' }
-            ],
-            glossary: ['IPv6 Multicast', 'Multicast', 'IGMP', 'PIM', 'Neighbor Discovery', 'IPv4 Multicast']
-          },
-          {
-            id: 't07', num: '07', group: 'config', title: 'SLAAC',
-            blurb: 'How a host builds its own address from a Router Advertisement',
-            overview: '[[SLAAC]] lets a host construct its own address with no DHCP server involved. The router advertises a **/64 prefix** in a Router Advertisement, the host appends its own interface ID, and it runs duplicate address detection before using the result. It is the default IPv6 model.',
-            keyIdea: 'The router supplies the prefix, the host supplies the interface ID, and no server is involved at all. That is what "stateless" means.',
-            sections: [
-              { kind: 'para', h: 'What a host actually does', p: 'The sequence is five steps, and every one of them is a protocol message rather than a configuration step.' },
-              { kind: 'code', h: 'The SLAAC sequence', code:
-`  1. Generate a link-local address (EUI-64 or random) and assign it.
-
-  2. Send a Router Solicitation to ff02::2 (all routers).
-     Optional - routers also send RAs on a timer.
-
-  3. Receive a Router Advertisement containing:
-       - the on-link /64 prefix
-       - flags: A (autoconfig), M (managed), O (other config)
-       - router lifetime -> this becomes the default route
-
-  4. Build the address:  prefix + interface ID
-
-  5. Run duplicate address detection with a neighbour solicitation
-     to the solicited-node multicast address before using it.` },
-              { kind: 'table', h: 'The three RA flags', cols: ['Flag', 'Name', 'Meaning'], rows: [
-                ['A', 'Autoconfig', 'The host may build its own address from the advertised prefix'],
-                ['M', 'Managed', 'The host should ask a DHCPv6 server for an address'],
-                ['O', 'Other config', 'The host should ask a DHCPv6 server for other information such as DNS']
-              ]},
-              { kind: 'table', h: 'Flag combinations and what they produce', cols: ['A', 'M', 'O', 'Addressing', 'Other options'], rows: [
-                ['1', '0', '0', 'SLAAC only', 'Router Advertisement options'],
-                ['0', '1', '0', 'DHCPv6 stateful', 'DHCPv6'],
-                ['1', '1', '0', 'Both', 'Either source'],
-                ['0', '0', '1', 'None automatic', 'DHCPv6'],
-                ['1', '0', '1', 'SLAAC', 'DHCPv6 — the common production setup']
-              ]},
-              { kind: 'para', h: 'SLAAC versus DHCPv6', p: 'The choice is a policy decision rather than a technical one. SLAAC needs **no server** and scales effortlessly, but it gives limited options and weak accounting. DHCPv6 gives full options, leases and accounting, but it needs a server and it must be reachable.' },
-              { kind: 'code', h: 'The usual production hybrid', code:
-`  SLAAC for the address        (A = 1)
-  Stateless DHCPv6 for DNS     (O = 1, M = 0)
-
-  The router advertises the /64 prefix.
-  The host builds its own address.
-  The host asks DHCPv6 for the DNS server address only.` },
-              { kind: 'para', h: 'The /64 requirement and duplicate detection', p: 'The prefix advertised in the Router Advertisement must be a **/64**, because the host fills the remaining 64 bits with its own interface ID. A /127 or a /128 breaks autoconfiguration completely, and a /60 leaves the host unable to form a valid address. Duplicate address detection sends a neighbour solicitation from the tentative address; if any neighbour answers with an advertisement, the address is a duplicate and is discarded.' },
-              { kind: 'list', h: 'What SLAAC still needs', items: [
-                { t: 'A router', d: 'Without a router on the segment there is no Router Advertisement, so the host gets only a link-local address and no global one.' },
-                { t: 'A /64 prefix', d: 'The prefix length is not negotiable — SLAAC builds a 64-bit interface ID.' },
-                { t: 'A default route', d: 'The Router Advertisement sender link-local address becomes the host default gateway.' },
-                { t: 'DNS from somewhere', d: 'The Router Advertisement can carry it, or a stateless DHCPv6 server can.' }
-              ]}
-            ],
-            commands: [
-              { label: 'Router — advertise a prefix and enable router advertisements', code:
-`interface GigabitEthernet0/1
- no ipv6 nd suppress-ra
- ipv6 nd ra-interval 30
- ipv6 nd prefix 2001:db8:1:10::/64` },
-              { label: 'Router — also push a DNS server in the advertisement', code:
-`interface GigabitEthernet0/1
- ipv6 nd ra dns 2001:db8:53::1` },
-              { label: 'Host — verify the address and the default route', code:
-`ip -6 addr show
-ip -6 route show default` }
-            ],
-            traps: [
-              'SLAAC needs no server. The word "stateless" means exactly that.',
-              'The A flag only covers addressing. DNS still needs a Router Advertisement option or DHCPv6.',
-              'The prefix must be /64. A /60 or a /127 breaks autoconfiguration.',
-              'A segment with no IPv6 router gives the host only a link-local address, never a global one.',
-              'Router Solicitation and Router Advertisement are ICMPv6 types 133 and 134. Duplicate detection uses 135 and 136.',
-              'Duplicate address detection happens before the address is used, not afterwards.',
-              'The default gateway comes from the Router Advertisement even when DHCPv6 is in use.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Full name', 'Stateless Address Autoconfiguration'],
-                ['Feed', 'Router Advertisement, ICMPv6 type 134'],
-                ['Request', 'Router Solicitation, type 133, to ff02::2'],
-                ['Builds', 'Advertised prefix plus interface ID'],
-                ['Default route', 'The link-local address of the advertisement sender'],
-                ['Prefix length', '/64, mandatory'],
-                ['DNS', 'Router Advertisement option, or DHCPv6'],
-                ['Duplicate check', 'Neighbour solicitation and advertisement'],
-                ['Server', 'None required'],
-                ['Flags', 'A for autoconfig, M for managed, O for other config']
-              ]
-            },
-            related: [
-              { t: '08. DHCPv6', d: 'the stateful alternative' },
-              { t: '09. Neighbor Discovery', d: 'the messages SLAAC runs on' },
-              { t: '02. Global Unicast', d: 'the address that gets built' }
-            ],
-            glossary: ['SLAAC', 'IPv6', 'Global Unicast', 'Link Local', 'DHCPv6', 'Neighbor Discovery']
-          },
-          {
-            id: 't08', num: '08', group: 'config', title: 'DHCPv6',
-            blurb: 'Stateful addressing, the message flow, IA types and prefix delegation',
-            overview: '[[DHCPv6]] is the stateful counterpart to [[SLAAC]]. The server assigns addresses and tracks leases the way DHCPv4 does, and it delivers options such as DNS and domain name. The Solicit goes out as multicast to ff02::1:2 because IPv6 has no broadcast.',
-            keyIdea: 'Stateful or stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.',
-            sections: [
-              { kind: 'code', h: 'The message flow', code:
-`  client --- SOLICIT -------------------> ff02::1:2 (all DHCPv6 servers)
-  server --- ADVERTISE -----------------> client (unicast)
-  client --- REQUEST -------------------> server
-  server --- REPLY --------------------> client (address, options, lifetimes)
-
-  Lease maintenance: CONFIRM, RENEW, REBIND, RELEASE` },
-              { kind: 'para', h: 'Why Solicit is multicast', p: 'IPv4 DHCP uses a broadcast because a client does not know where the servers are. An IPv6 client does know something useful: it already has a link-local address, so it can receive a unicast reply. The Solicit therefore goes to the multicast group ff02::1:2, and the Advertise comes back as unicast.' },
-              { kind: 'table', h: 'Ports and identifiers', cols: ['Item', 'Value'], rows: [
-                ['Client port', 'UDP 546'],
-                ['Server port', 'UDP 547'],
-                ['All servers group', 'ff02::1:2'],
-                ['Relay agent', 'Forwards Solicit to a server on another subnet']
-              ]},
-              { kind: 'table', h: 'What the RA flags tell DHCPv6 to do', cols: ['Mode', 'M flag', 'O flag', 'DHCPv6 behaviour'], rows: [
-                ['Stateful', '1', '—', 'Assigns addresses through an IA_NA'],
-                ['Stateless', '0', '1', 'Assigns no address, only options such as DNS'],
-                ['SLAAC only', '0', '0', 'DHCPv6 is not used at all']
-              ]},
-              { kind: 'para', h: 'Identity associations', p: 'The server does not hand out a bare address. It returns **identity associations**, each with a preferred lifetime and a valid lifetime. The preferred lifetime is how long the address is preferred and used for new outbound connections; the valid lifetime is how long the address is still recognised. An address past its preferred lifetime is deprecated but still usable for existing connections.' },
-              { kind: 'table', h: 'The three identity association types', cols: ['Type', 'Carries'], rows: [
-                ['IA_NA', 'A non-temporary address'],
-                ['IA_TA', 'A temporary address'],
-                ['IA_PD', 'A delegated prefix, for handing a /56 to a downstream router']
-              ]},
-              { kind: 'para', h: 'Relay agents and prefix delegation', p: 'When the server is not on the segment, a router acts as a relay agent and forwards the Solicit to it, inserting a Relay-Info option so the server knows which client and which subnet the request came from. Separately, **prefix delegation** lets a service provider hand a downstream router a whole prefix — commonly a /56 — which that router then splits into /64 subnets for its own customers.' },
-              { kind: 'code', h: 'A relay agent in the path', code:
-`  client --- SOLICIT ---> relay router --- unicast ---> DHCPv6 server
-                                   |
-                                   +-- inserts Relay-Info
-                                   +-- server replies to the relay
-                                   +-- relay forwards the reply` }
-            ],
-            commands: [
-              { label: 'Router — create a DHCPv6 pool', code:
-`ipv6 dhcp pool CORP
- address prefix 2001:db8:1:10::/64 lifetime 2592000 604800
- dns-server 2001:db8:53::1
- domain-name corp.example` },
-              { label: 'Router — serve the pool and set the RA flags', code:
-`interface GigabitEthernet0/1
- ipv6 address 2001:db8:1:10::1/64
- ipv6 dhcp server CORP
- ipv6 nd managed-config-flag
- ipv6 nd other-config-flag` },
-              { label: 'Client — request a delegated prefix', code:
-`interface GigabitEthernet0/1
- ipv6 dhcp client pd PD-CLIENT` },
-              { label: 'Verify', code:
-`show ipv6 dhcp binding
-show ipv6 dhcp interface` }
-            ],
-            traps: [
-              'Solicit is multicast to ff02::1:2, not a broadcast. IPv6 has no broadcast.',
-              'The client uses UDP 546 and the server uses UDP 547.',
-              'Stateful versus stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.',
-              'The default gateway still comes from the Router Advertisement, even in DHCPv6 mode. IPv4 DHCP hands out the gateway; IPv6 DHCP does not.',
-              'DNS comes from a Router Advertisement option or from DHCPv6 options, depending on the flags.',
-              'The preferred lifetime is shorter than the valid lifetime. An address past its preferred lifetime is deprecated but still valid.',
-              'Prefix delegation is what lets a provider hand a /56 to a customer edge device.'
-            ],
-            table: {
-              cols: ['Item', 'Detail'],
-              rows: [
-                ['Ports', 'Client UDP 546, server UDP 547'],
-                ['Solicit destination', 'ff02::1:2'],
-                ['Stateful', 'Assigns addresses, M flag set'],
-                ['Stateless', 'Options only, O flag set'],
-                ['Identity associations', 'IA_NA, IA_TA, IA_PD'],
-                ['Lifetimes', 'Preferred and valid, both returned by the server'],
-                ['Default gateway', 'Still comes from the Router Advertisement'],
-                ['Relay', 'Forwards to a remote server, inserts Relay-Info'],
-                ['Prefix delegation', 'A /56 delegated down to a CPE'],
-                ['Best practice', 'SLAAC for the address, stateless DHCPv6 for DNS']
-              ]
-            },
-            related: [
-              { t: '07. SLAAC', d: 'the stateless alternative' },
-              { t: '06. Multicast', d: 'the ff02::1:2 group' },
-              { t: '16. Network Services', d: 'where DHCP lives in the design' }
-            ],
-            glossary: ['DHCPv6', 'DHCP', 'DHCP Relay', 'SLAAC', 'IPv6', 'IPv6 Multicast']
-          },
-          {
-            id: 't09', num: '09', group: 'ops', title: 'Neighbor Discovery',
-            blurb: 'The five ND messages, solicited-node multicast, the cache and RA Guard',
-            overview: '[[Neighbor Discovery]] is the direct replacement for ARP, ICMP redirects and router discovery, all built on [[ICMPv6]]. It runs on every IPv6 link and does five jobs at once: address resolution, router discovery, prefix distribution, duplicate address detection, and neighbour unreachability detection.',
-            keyIdea: 'ND is not just ARP replacement. It also gives you the default gateway, the prefix, duplicate detection and reachability checking in one protocol.',
-            sections: [
-              { kind: 'table', h: 'The five ND messages', cols: ['Message', 'ICMPv6 type', 'Purpose'], rows: [
-                ['Router Solicitation', '133', 'Asks any router on the link for a Router Advertisement'],
-                ['Router Advertisement', '134', 'Carries the prefix, the flags, the router lifetime and options'],
-                ['Neighbour Solicitation', '135', 'Asks who holds an address — this is the ARP request'],
-                ['Neighbour Advertisement', '136', 'Answers with the link-layer address'],
-                ['Redirect', '137', 'Tells a host about a better next hop for a destination']
-              ]},
-              { kind: 'table', h: 'What ND replaces', cols: ['IPv4', 'IPv6'], rows: [
-                ['ARP broadcast to ff:ff:ff:ff:ff:ff', 'Neighbour solicitation to the solicited-node multicast group'],
-                ['RARP', 'Neighbour discovery'],
-                ['Static default gateway or a router list', 'Router Advertisement supplies the default route'],
-                ['Manual duplicate address check', 'Duplicate address detection'],
-                ['ICMP redirect', 'Redirect, type 137']
-              ]},
-              { kind: 'para', h: 'Solicited-node multicast', p: 'A neighbour solicitation is not broadcast. The sender builds a multicast address from the bottom 32 bits of the target address, so only the host that actually owns that address — and the router — ever sees the request. On a large link that is the difference between waking everybody and waking one device.' },
-              { kind: 'code', h: 'Building the solicited-node address', code:
-`  Target      2001:db8:1:10::1
-  bottom 32   0000:0001
-  group       ff02::1:ff00:0001
-
-  Prefix      ff02::1:ff00:0/104
-
-  Only hosts whose address ends in those 32 bits respond.` },
-              { kind: 'para', h: 'The five jobs ND does', p: 'This is the list to memorise, because "what does neighbour discovery do" is a common question and the answer is much longer than "it replaces ARP": **address resolution**, **router discovery**, **prefix distribution**, **duplicate address detection** and **neighbour unreachability detection**.' },
-              { kind: 'list', h: 'The five jobs', items: [
-                { t: 'Address resolution', d: 'Maps an IPv6 address to a MAC address, and the result is cached in the neighbour cache.' },
-                { t: 'Router discovery', d: 'The Router Advertisement tells the host which routers are available.' },
-                { t: 'Prefix distribution', d: 'The on-link prefix comes from the Router Advertisement and feeds SLAAC.' },
-                { t: 'Duplicate address detection', d: 'A tentative address is probed with a solicitation; an answer means it is a duplicate.' },
-                { t: 'Neighbour unreachability detection', d: 'Confirms that a neighbour is still reachable and detects a peer that has gone away.' }
-              ]},
-              { kind: 'para', h: 'The neighbour cache and its states', p: 'Neighbour entries move through a **state machine** as reachability is confirmed or lost. The states are the same idea as the IPv4 ARP cache states, but with an explicit confirmation step in the middle.' },
-              { kind: 'table', h: 'Neighbour reachability states', cols: ['State', 'Meaning'], rows: [
-                ['INCOMPLETE', 'A solicitation has been sent and no advertisement has come back yet'],
-                ['REACHABLE', 'Reachability has been confirmed'],
-                ['STALE', 'No recent traffic; the entry may still be valid'],
-                ['DELAY', 'Waiting to probe again'],
-                ['PROBE', 'Sending solicitations to re-confirm the neighbour']
-              ]},
-              { kind: 'para', h: 'The security exposure', p: 'Because a rogue Router Advertisement can make an attacker the default gateway, RA spoofing is a real attack and the mitigation is **RA Guard**, applied on the ports that face untrusted hosts. Neighbour advertisement spoofing is the neighbour-discovery equivalent of ARP poisoning, and it is handled by ND snooping and dynamic ARP inspection.' }
-            ],
-            commands: [
-              { label: 'Tune router advertisement behaviour on an interface', code:
-`interface GigabitEthernet0/1
- ipv6 nd ra-interval 30
- ipv6 nd ra-lifetime 1800
- ipv6 nd prefix 2001:db8:1:10::/64
- ipv6 nd managed-config-flag` },
-              { label: 'View the neighbour cache', code:
-`show ipv6 neighbors` },
-              { label: 'Check the neighbour state of an interface', code:
-`show ipv6 interface GigabitEthernet0/1 | include Neighbor` }
-            ],
-            traps: [
-              'ND is ICMPv6 based. "IPv6 uses ARP" is always wrong.',
-              'The solicitation target is the solicited-node multicast address, not an all-nodes broadcast.',
-              'Router Solicitation and Router Advertisement are types 133 and 134. Neighbour Solicitation and Advertisement are 135 and 136. Do not mix them up.',
-              'ND replaces ARP, ICMP redirects and router discovery, and it also provides duplicate detection and SLAAC.',
-              'The Router Advertisement supplies the default route even when DHCPv6 is in use.',
-              'RA Guard is the defence against a rogue router advertisement on untrusted ports.',
-              'Neighbour discovery runs on every IPv6 link whether or not you configured anything.'
-            ],
-            table: {
-              cols: ['Message', 'Type', 'Purpose'],
-              rows: [
-                ['Router Solicitation', '133', 'Find the routers'],
-                ['Router Advertisement', '134', 'Prefix, flags, gateway, options'],
-                ['Neighbour Solicitation', '135', 'Resolve an address, and duplicate detection'],
-                ['Neighbour Advertisement', '136', 'The answer, with the link-layer address'],
-                ['Redirect', '137', 'A better next hop'],
-                ['Replaces', 'ARP, ICMP redirect, router discovery', 'The IPv4 artefacts'],
-                ['Multicast tool', 'ff02::1:ffxx:xxxx', 'Solicited-node'],
-                ['Cache', 'show ipv6 neighbors', 'The neighbour table'],
-                ['Security', 'RA Guard, ND snooping', 'Against spoofing']
-              ]
-            },
-            related: [
-              { t: '10. ICMPv6', d: 'the protocol that carries ND' },
-              { t: '07. SLAAC', d: 'built on the router advertisement' },
-              { t: '03. Link Local', d: 'the source address of every ND message' }
-            ],
-            glossary: ['Neighbor Discovery', 'ICMPv6', 'IPv6', 'ARP', 'SLAAC', 'Link Local']
-          },
-          {
-            id: 't10', num: '10', group: 'ops', title: 'ICMPv6',
-            blurb: 'Error types, packet too big, path MTU discovery and what firewalls must allow',
-            overview: '[[ICMPv6]] is IPv6 control protocol number 58, and unlike ICMPv4 it is **required** for the protocol to work. It carries error reporting, echo, the whole of neighbour discovery, and multicast listener discovery. Blocking it does not merely hide ping — it breaks IPv6.',
-            keyIdea: 'ICMPv6 is a suite, not a ping function. Permit the neighbour discovery types and Packet Too Big through every firewall or IPv6 will quietly fail.',
-            sections: [
-              { kind: 'table', h: 'The four message classes', cols: ['Class', 'Types', 'Purpose'], rows: [
-                ['Error', '1 destination unreachable, 2 packet too big, 3 time exceeded, 4 parameter problem', 'Problem reporting'],
-                ['Informational', '128 echo request, 129 echo reply', 'ping6 and traceroute6'],
-                ['Neighbour discovery', '133 RS, 134 RA, 135 NS, 136 NA, 137 redirect', 'Neighbour and router operations'],
-                ['MLD', '130 query, 131 report, 132 done', 'Multicast listener management']
-              ]},
-              { kind: 'table', h: 'The error types and codes worth quoting', cols: ['Type', 'Code', 'Meaning'], rows: [
-                ['1', '0', 'No route to the destination'],
-                ['1', '1', 'Administratively prohibited — the firewall signature'],
-                ['1', '3', 'Address unreachable'],
-                ['1', '4', 'Port unreachable'],
-                ['2', '0', 'Packet too big — the fragmentation replacement'],
-                ['3', '0', 'Hop limit exceeded — what traceroute triggers'],
-                ['4', '—', 'Malformed header or option']
-              ]},
-              { kind: 'para', h: 'Path MTU discovery and the no-fragmentation rule', p: 'IPv6 routers **never fragment** a packet. When a router finds a packet larger than the next link can carry, it drops it and returns an ICMPv6 Packet Too Big message carrying the link MTU. The sender then re-sends a smaller packet. If that message is filtered, large packets vanish silently — the MTU black hole.' },
-              { kind: 'code', h: 'How IPv6 handles a too-large packet', code:
-`  IPv4                              IPv6
-  ----                              ----
-  router sees MTU 1500,             router sees MTU 1500,
-  packet is 4000 bytes:             packet is 4000 bytes:
-    fragment it into two               DROP it
-    and send both                      send ICMPv6 type 2
-                                      (Packet Too Big, MTU 1500)
-                                     sender resizes and resends
-
-  IPv6 fragmentation is sender-only, and it is discouraged.` },
-              { kind: 'para', h: 'What a firewall has to permit', p: 'This is the most practical thing on the topic. A filter that drops ICMPv6 breaks neighbour discovery, breaks path MTU discovery, breaks multicast membership, and breaks the default route learning. The safe baseline permits the neighbour discovery types, Packet Too Big, time exceeded, and the MLD types.' },
-              { kind: 'code', h: 'A workable ICMPv6 baseline in an ACL', code:
-`  ipv6 access-list PERMIT-ICMP6
-   permit icmp any any unreachable
-   permit icmp any any packet-too-big
-   permit icmp any any time-exceeded
-   permit icmp any any nd
-   permit icmp any any mld` },
-              { kind: 'table', h: 'ICMPv6 against ICMPv4', cols: ['', 'ICMPv4', 'ICMPv6'], rows: [
-                ['Router fragmentation', 'Permitted', 'Never — the sender must do it'],
-                ['Address resolution', 'Separate, ARP', 'Built into ICMPv6 as neighbour discovery'],
-                ['Multicast membership', 'IGMP', 'MLD'],
-                ['Checksum', 'Sometimes optional', 'Always required'],
-                ['Echo types', '8 and 0', '128 and 129'],
-                ['Firewall treatment', 'Often dropped', 'Must be permitted for PTB and ND']
-              ]},
-              { kind: 'para', h: 'The error message types in one line each', p: 'Type 1 means the destination could not be reached or is administratively blocked. Type 2 means the packet was too big and here is the MTU to use. Type 3 means the hop limit ran out, which is exactly how traceroute works. Type 4 means the packet was malformed.' }
-            ],
-            commands: [
-              { label: 'Ping and trace over IPv6', code:
-`ping6 2001:db8::1
-traceroute6 2001:db8:53::1` },
-              { label: 'Check the MTU on an interface', code:
-`show ipv6 mtu` },
-              { label: 'Debug ICMPv6 messages on the router', code:
-`debug ipv6 icmp` },
-              { label: 'Permit the ICMPv6 types a firewall must allow', code:
-`ipv6 access-list PERMIT-ICMP6
- permit icmp any any packet-too-big
- permit icmp any any nd` }
-            ],
-            traps: [
-              'Packet Too Big is type 2, and it is how IPv6 copes with MTU. A router never fragments an IPv6 packet.',
-              'Blocking ICMPv6 breaks IPv6. Allow neighbour discovery types 133 to 137, Packet Too Big, and MLD types 130 to 132.',
-              'Neighbour discovery is carried inside ICMPv6. "Which protocol does ND use" is always ICMPv6, never ARP.',
-              'Echo request and reply are types 128 and 129 in IPv6, not 8 and 0.',
-              'Type 1 code 1 is administratively prohibited, which is the signature of a firewall dropping the traffic.',
-              'The ICMPv6 checksum is always required, unlike IPv4 where it could be omitted on some traffic.',
-              'A filtered Packet Too Big produces an MTU black hole, where small packets work and large ones vanish.'
-            ],
-            table: {
-              cols: ['Message', 'Type', 'Use'],
-              rows: [
-                ['Destination unreachable', '1', 'No route, blocked, port or address failure'],
-                ['Packet too big', '2', 'Path MTU discovery, and the no-fragmentation rule'],
-                ['Time exceeded', '3', 'Hop limit exceeded, used by traceroute'],
-                ['Parameter problem', '4', 'Malformed header or option'],
-                ['Echo request and reply', '128 and 129', 'ping6'],
-                ['Router solicitation and advertisement', '133 and 134', 'Router discovery'],
-                ['Neighbour solicitation and advertisement', '135 and 136', 'Resolution and duplicate detection'],
-                ['Redirect', '137', 'A better next hop'],
-                ['MLD', '130 to 132', 'Multicast listeners'],
-                ['Transport protocol', '58', 'Always checksums']
-              ]
-            },
-            related: [
-              { t: '09. Neighbor Discovery', d: 'the control messages inside ICMPv6' },
-              { t: '01. IPv6 Addressing', d: 'the address space it operates in' },
-              { t: '01. Physical Layer', d: 'where MTU comes from' }
-            ],
-            glossary: ['ICMPv6', 'Neighbor Discovery', 'IPv6', 'MTU', 'IPv4 Multicast']
-          },
-          {
-            id: 't11', num: '11', group: 'routing', title: 'OSPFv3',
-            blurb: 'The OSPF redesign for IPv6, link-local neighbours and the Type 9 LSA',
-            overview: '[[OSPFv3]] is OSPF re-engineered for IPv6 under RFC 5340. The link-state machinery, areas and the neighbour state machine are unchanged, but the protocol **no longer carries addresses inside its LSAs** — the prefixes move into a separate Type 9 intra-area-prefix LSA — and neighbours are identified by link-local addresses.',
-            keyIdea: 'OSPFv3 is address-family independent. The same protocol can carry IPv4 and IPv6, so "OSPFv3 is IPv6 only" is wrong.',
-            sections: [
-              { kind: 'table', h: 'OSPFv2 against OSPFv3', cols: ['Aspect', 'OSPFv2 (IPv4)', 'OSPFv3 (IPv6)'], rows: [
-                ['Transport', 'IPv4, protocol 89', 'IPv6, protocol 89'],
-                ['Multicast groups', '224.0.0.5 and 224.0.0.6', 'ff02::5 and ff02::6'],
-                ['Neighbour identity', 'IPv4 addresses in the hello', 'Link-local addresses'],
-                ['Where addresses live', 'Inside the Type 1 and Type 2 LSAs', 'The Type 9 intra-area-prefix LSA'],
-                ['Router ID', 'Derived from an IPv4 address', 'Configured, or auto-selected'],
-                ['Address families', 'IPv4 only', 'IPv6, and IPv4 as well'],
-                ['Interface cost', 'Scales with bandwidth by default', 'Defaults to 1 on every interface']
-              ]},
-              { kind: 'para', h: 'Two configuration styles', p: 'Classic IOS puts IPv6 into an existing OSPF process. IOS-XE and later platforms prefer the address-family style, which is a separate process with an explicit address-family block, and which is also where IPv4 unicast can be carried inside the same OSPFv3 process.' },
-              { kind: 'code', h: 'The classic style', code:
-`  interface GigabitEthernet0/1
-   ipv6 enable
-   ipv6 ospf 1 area 0
-
-  router ospf 1
-   router-id 1.1.1.1` },
-              { kind: 'code', h: 'The address-family style', code:
-`  router ospfv3 1
-   router-id 1.1.1.1
-   address-family ipv6 unicast
-
-  interface GigabitEthernet0/1
-   ipv6 address 2001:db8:1:10::1/64
-   ospfv3 1 ipv6 area 0` },
-              { kind: 'table', h: 'The OSPFv3 LSA types', cols: ['Type', 'Name', 'Carries'], rows: [
-                ['1', 'Router', 'The router and its interfaces'],
-                ['2', 'Network', 'The segment behind the designated router'],
-                ['8', 'Link-Local', 'Link-local information — new in OSPFv3'],
-                ['9', 'Intra-Area-Prefix', 'The actual IPv6 prefixes of the area'],
-                ['3', 'Inter-Area-Prefix', 'Summarised prefixes between areas'],
-                ['4, 5, 7', 'ASBR, AS-External, NSSA', 'External IPv6 prefixes']
-              ]},
-              { kind: 'para', h: 'Neighbours and next hops', p: 'Neighbour entries in the OSPFv3 table are **link-local addresses**, and the next hop on a transit link is link-local as well. That is a deliberate design: link-local addresses are always present, always unique on the segment, and never need global routing to resolve. A change to the link-local address on an interface will flap the adjacency, so pin it when it matters.' },
-              { kind: 'list', h: 'Details that catch people out', items: [
-                { t: 'Cost defaults to 1', d: 'OSPFv3 does not scale the interface cost with bandwidth the way OSPFv2 does. Set it deliberately with ipv6 ospf cost.' },
-                { t: 'Router ID selection', d: 'Configured, or auto-selected from the highest IPv4 loopback. It is still a 32-bit identifier, not an IPv6 address.' },
-                { t: 'DR and BDR election', d: 'Identical to OSPFv2 — priority first, then router ID.' },
-                { t: 'Protocol number', d: 'Still 89 for both OSPFv2 and OSPFv3. Only the transport differs.' }
-              ]}
-            ],
-            commands: [
-              { label: 'Enable OSPFv3 on an interface', code:
-`interface GigabitEthernet0/1
- ipv6 address 2001:db8:1:10::1/64
- ospfv3 1 ipv6 area 0` },
-              { label: 'Configure the process and the router ID', code:
-`router ospfv3 1
- router-id 1.1.1.1
- address-family ipv6 unicast` },
-              { label: 'Verify', code:
-`show ipv6 ospf
-show ipv6 ospf neighbor
-show ipv6 ospf database
-show ospfv3 1 address-family ipv6 unicast interface GigabitEthernet0/1` }
-            ],
-            traps: [
-              'The LSAs no longer carry addresses. The Type 9 intra-area-prefix LSA holds the prefixes.',
-              'Neighbours are link-local addresses. Do not expect a global address in the neighbour list.',
-              'The multicast groups are ff02::5 and ff02::6, not 224.0.0.5 and 224.0.0.6.',
-              'The router ID is still a 32-bit value and still must be set or will be auto-selected.',
-              'The interface cost defaults to 1 and does not scale with bandwidth as it does in OSPFv2.',
-              'OSPFv3 can carry IPv4 as well. It is address-family independent, not IPv6 only.',
-              'Protocol number 89 is used by both OSPFv2 and OSPFv3.'
-            ],
-            table: {
-              cols: ['Item', 'OSPFv3'],
-              rows: [
-                ['RFC', '5340'],
-                ['Transport', 'IPv6, protocol 89'],
-                ['Multicast', 'ff02::5 and ff02::6'],
-                ['Neighbour identity', 'Link-local addresses'],
-                ['Where prefixes live', 'Type 9 intra-area-prefix LSA'],
-                ['Router ID', 'Configured, or auto-selected'],
-                ['Interface cost', 'Defaults to 1, does not scale automatically'],
-                ['Configuration styles', 'Classic process, or address-family'],
-                ['Address families', 'IPv6 and IPv4'],
-                ['Areas and DR election', 'Identical to OSPFv2']
-              ]
-            },
-            related: [
-              { t: '12. EIGRP IPv6', d: 'the other interior protocol for IPv6' },
-              { t: '13. BGP IPv6', d: 'the exterior protocol for IPv6' },
-              { t: '03. Link Local', d: 'why neighbours use it' }
-            ],
-            glossary: ['OSPFv3', 'OSPF', 'IPv6', 'Link Local', 'OSPF Router ID', 'Routing Table']
-          },
-          {
-            id: 't12', num: '12', group: 'routing', title: 'EIGRP IPv6',
-            blurb: 'The same DUAL engine over IPv6, named mode, and link-local neighbours',
-            overview: '[[EIGRP for IPv6]] runs the identical DUAL algorithm, the identical composite metric and the identical timers as IPv4 EIGRP. What changes is the plumbing: no network statements in the classic form, link-local neighbours and next hops, and the multicast group ff02::A. It is normally deployed in **named mode**.',
-            keyIdea: 'It is not a new protocol. The algorithm, metrics and convergence behaviour are identical — only the addressing and the configuration scaffolding differ.',
-            sections: [
-              { kind: 'table', h: 'EIGRP IPv4 against EIGRP IPv6', cols: ['Aspect', 'EIGRP IPv4', 'EIGRP IPv6'], rows: [
-                ['Multicast group', '224.0.0.10', 'ff02::A'],
-                ['Neighbour identity', 'IPv4 addresses', 'Link-local addresses'],
-                ['Network statement', 'Required', 'None in classic mode — the address family and the interface enable it'],
-                ['Address family', 'Implicit', 'address-family ipv6 unicast'],
-                ['Router ID', 'Required', 'Required, auto-selected if not set'],
-                ['Metric', 'Composite, K values', 'Identical composite metric'],
-                ['Convergence', 'DUAL', 'DUAL — the same algorithm']
-              ]},
-              { kind: 'para', h: 'Named mode is the way to do it now', p: 'Named mode gives each address family its own configuration block inside one process, which is what lets IPv4 and IPv6 coexist in a single EIGRP instance. The classic form still exists and still works, but it is the older style and new designs use named mode.' },
-              { kind: 'code', h: 'The classic form', code:
-`  interface GigabitEthernet0/1
-   ipv6 eigrp 100
-
-  router eigrp 100
-   address-family ipv6 unicast
-    router-id 1.1.1.1` },
-              { kind: 'code', h: 'The named mode form', code:
-`  router eigrp ENTERPRISE
-   address-family ipv6 unicast
-    router-id 1.1.1.1
-    network 2001:db8:1:10::/64
-
-  interface GigabitEthernet0/1
-   ipv6 address 2001:db8:1:10::1/64
-
-  Named mode is the only form in which a network
-  statement is used for an address family.` },
-              { kind: 'list', h: 'What carries over unchanged', items: [
-                { t: 'The composite metric', d: 'Bandwidth and delay by default, with the same K values and the same rules for changing them.' },
-                { t: 'DUAL', d: 'Successor, feasible successor, and the same fast convergence behaviour.' },
-                { t: 'Timers', d: 'Hello every 5 seconds, dead at three times the hello interval.' },
-                { t: 'Authentication', d: 'Key chain based, with MD5 and HMAC-SHA256 available exactly as in IPv4.' },
-                { t: 'Redistribution rules', d: 'Seed metrics and the same constraints when redistributing between protocols.' }
-              ]},
-              { kind: 'para', h: 'Summarisation and the default route', p: 'Summarisation is per interface, using the ipv6 summary-address eigrp form, and a default route can be injected into the address family in the same way as IPv4. The practical reason to inject one is a stub site that has no other path out.' },
-              { kind: 'code', h: 'Summarisation and a default route', code:
-`  interface GigabitEthernet0/1
-   ipv6 summary-address eigrp 10 2001:db8:1:10::/48
-
-  router eigrp ENTERPRISE
-   address-family ipv6 unicast
-    network 2001:db8:1:10::/64
-    eigrp stub connected summary` }
-            ],
-            commands: [
-              { label: 'Configure EIGRP for IPv6 in named mode', code:
-`router eigrp ENTERPRISE
- address-family ipv6 unicast
-  router-id 1.1.1.1
-  network 2001:db8:1:10::/64` },
-              { label: 'Enable the address family on the interface', code:
-`interface GigabitEthernet0/1
- ipv6 address 2001:db8:1:10::1/64` },
-              { label: 'Verify', code:
-`show ipv6 eigrp neighbors
-show ipv6 route eigrp
-show ipv6 protocols` }
-            ],
-            traps: [
-              'Classic EIGRP IPv6 has no network statements. The interface and the address family enable it. Named mode is the exception.',
-              'Neighbours are listed as link-local addresses. Trying to ping them over a global address does not work.',
-              'EIGRP IPv6 still needs a router ID. If it is not set, one is auto-selected and you get a warning.',
-              'The metric weights and the composite metric carry over unchanged. Do not adjust them lightly.',
-              'The multicast group is ff02::A, not 224.0.0.10.',
-              'The timers are the same five second hello and three times dead interval.',
-              'Named mode lets one EIGRP process carry both IPv4 and IPv6 address families.'
-            ],
-            table: {
-              cols: ['Item', 'EIGRP IPv6'],
-              rows: [
-                ['Multicast group', 'ff02::A'],
-                ['Neighbour identity', 'Link-local addresses'],
-                ['Network statement', 'None in classic mode, allowed in named mode'],
-                ['Address family', 'address-family ipv6 unicast'],
-                ['Named mode', 'router eigrp NAME with an address family block'],
-                ['Metric', 'The same composite metric'],
-                ['Convergence', 'DUAL, unchanged'],
-                ['Router ID', 'Required'],
-                ['Summarisation', 'Per interface summary address'],
-                ['Authentication', 'Key chain, MD5 or HMAC-SHA256'],
-                ['Best practice', 'Named mode for both address families']
-              ]
-            },
-            related: [
-              { t: '11. OSPFv3', d: 'the other interior protocol for IPv6' },
-              { t: '13. BGP IPv6', d: 'the exterior protocol' },
-              { t: '03. Link Local', d: 'the neighbour identity' }
-            ],
-            glossary: ['EIGRP for IPv6', 'EIGRP', 'Named Mode EIGRP', 'IPv6', 'Link Local']
-          },
-          {
-            id: 't13', num: '13', group: 'routing', title: 'BGP IPv6',
-            blurb: 'MP-BGP, address families, the activate requirement and next hop handling',
-            overview: '[[BGP]] carries IPv6 routes through **MP-BGP**, the multiprotocol extension that adds the MP_REACH and MP_UNREACH attributes. The transport between the peers is a separate question: an IPv4 session can perfectly well exchange IPv6 prefixes, as long as the neighbour is activated in the IPv6 address family.',
-            keyIdea: 'Transport and payload are independent. An IPv4 neighbour session can carry IPv6 routes, but only if the neighbour is activated under address-family ipv6 unicast.',
-            sections: [
-              { kind: 'table', h: 'The multiprotocol attributes', cols: ['Attribute', 'Carries'], rows: [
-                ['MP_REACH_NLRI', 'The address family, the next hop, and the reachable prefixes'],
-                ['MP_UNREACH_NLRI', 'Withdrawals for a given address family']
-              ]},
-              { kind: 'para', h: 'The address family', p: 'IPv6 unicast is identified by the pair AFI 2 and SAFI 1. Inside that address family, the neighbour, the routes to originate and the policy to apply are all configured separately from the IPv4 unicast family, even though both live in the same BGP process.' },
-              { kind: 'code', h: 'An IPv6 session with an IPv6 transport', code:
-`  router bgp 65001
-   bgp router-id 1.1.1.1
-   neighbor 2001:db8:1::1 remote-as 65002
-
-   address-family ipv6 unicast
-    neighbor 2001:db8:1::1 activate
-    neighbor 2001:db8:1::1 route-map V6IN in
-    network 2001:db8:1:10::/64` },
-              { kind: 'code', h: 'An IPv6 session over an IPv4 transport', code:
-`  router bgp 65001
-   neighbor 10.0.0.1 remote-as 65002
-
-   address-family ipv6 unicast
-    neighbor 10.0.0.1 activate
-    network 2001:db8:1:10::/64
-
-  The TCP session runs over IPv4.
-  The prefixes carried inside it are IPv6.` },
-              { kind: 'table', h: 'Transport against payload', cols: ['Mode', 'Session runs over', 'Prefixes carried'], rows: [
-                ['IPv6 peer', 'IPv6', 'IPv6'],
-                ['IPv4 transport', 'IPv4', 'IPv6'],
-                ['IPv4 peer', 'IPv4', 'IPv4']
-              ]},
-              { kind: 'para', h: 'The next hop and path selection', p: 'For an internal BGP session the next hop must usually be rewritten with **next-hop-self**, because the external peer cannot advertise an address that is reachable from the internal receivers. The path selection algorithm itself is exactly the IPv4 one — AS path, local preference, MED, communities — and no IPv6-specific rule exists.' },
-              { kind: 'list', h: 'BGP IPv6 details worth knowing', items: [
-                { t: 'The activate requirement', d: 'A neighbour that is not activated in the IPv6 address family carries nothing. The session can be up and the table can still be empty.' },
-                { t: 'next-hop-self', d: 'Needed on internal sessions so the next hop is reachable from the internal peers.' },
-                { t: 'ipv6 prefix-list', d: 'The IPv6 filter list, used for filtering and for policy routes.' },
-                { t: 'aggregate-address', d: 'Summarises IPv6 prefixes exactly as it does IPv4.' },
-                { t: 'Path attributes', d: 'AS path, local preference, MED and communities all behave identically to IPv4.' }
-              ]},
-              { kind: 'para', h: 'Where BGP IPv6 is used', p: 'The most common deployment is an ISP edge, where a GUA prefix is advertised to upstream peers and customer /48 blocks are accepted. Inside the enterprise it appears in dual-stack peering, in MPLS VPNv6, and in EVPN, where the same multiprotocol machinery carries both address families and the Ethernet VPN routes in one session.' },
-              { kind: 'code', h: 'A filter for an IPv6 prefix', code:
-`  ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48
-
-  router bgp 65001
-   address-family ipv6 unicast
-    neighbor 2001:db8:1::1 activate
-    neighbor 2001:db8:1::1 prefix-list V6 in` }
-            ],
-            commands: [
-              { label: 'Configure an IPv6 BGP neighbour', code:
-`router bgp 65001
- bgp router-id 1.1.1.1
- neighbor 2001:db8:1::1 remote-as 65002
- address-family ipv6 unicast
-  neighbor 2001:db8:1::1 activate` },
-              { label: 'Verify the address family state', code:
-`show bgp ipv6 unicast summary
-show bgp ipv6 unicast neighbors 2001:db8:1::1
-show bgp ipv6 unicast` },
-              { label: 'Filter IPv6 prefixes', code:
-`ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48` }
-            ],
-            traps: [
-              'A neighbour must be activated in the IPv6 address family. Without it the session can be up and carry nothing.',
-              'Transport and payload are independent. An IPv4 session can carry IPv6 routes.',
-              'The IPv6 next hop is carried inside MP_REACH, not in the ordinary NEXT_HOP attribute.',
-              'Path selection is identical to IPv4. There is no IPv6-specific best path rule.',
-              'The network statement under the address family advertises your own prefix. Aggregates use aggregate-address.',
-              'Internal BGP sessions still need next-hop-self so the next hop is reachable.',
-              'IPv6 prefix filters use ipv6 prefix-list, not the IPv4 prefix-list command.'
-            ],
-            table: {
-              cols: ['Item', 'BGP IPv6'],
-              rows: [
-                ['Mechanism', 'MP-BGP with MP_REACH and MP_UNREACH'],
-                ['Address family', 'IPv6 unicast, AFI 2 and SAFI 1'],
-                ['Transport', 'IPv6 or IPv4, independently'],
-                ['Activate', 'Required in the address family'],
-                ['Next hop', 'Carried in MP_REACH'],
-                ['Path attributes', 'Identical to IPv4'],
-                ['Filter list', 'ipv6 prefix-list'],
-                ['Aggregate', 'aggregate-address'],
-                ['Internal sessions', 'Need next-hop-self'],
-                ['Uses', 'ISP edge, dual-stack peering, MPLS VPNv6, EVPN']
-              ]
-            },
-            related: [
-              { t: '11. OSPFv3', d: 'the interior counterpart' },
-              { t: '12. EIGRP IPv6', d: 'the other interior protocol' },
-              { t: '04. Unique Local', d: 'the prefixes an edge must filter out' }
-            ],
-            glossary: ['BGP', 'MP-BGP', 'eBGP', 'iBGP', 'IPv6', 'Global Unicast']
+            "t": "Router fragmentation",
+            "d": "Replaced by path MTU discovery — the sender reacts to a Packet Too Big message rather than routers splitting packets."
           }
-        ];
-
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Subnetting units",
+        "p": "A **/64** is one LAN subnet and it is effectively mandatory, because [[SLAAC]] needs exactly 64 host bits to fill. A provider commonly hands a site a **/48** or **/56**, which is then split into **/64** subnets, one per VLAN."
+      },
+      {
+        "kind": "code",
+        "h": "The usual IPv6 subnetting plan",
+        "code": "  Provider gives the site a /56\n  2001:db8:1234:5a00::/56\n\n  /64 subnets inside it:\n    2001:db8:1234:5a00::/64    VLAN 10\n    2001:db8:1234:5a01::/64    VLAN 20\n    2001:db8:1234:5a02::/64    VLAN 30\n\n  A /48 gives 65,536 usable /64 subnets.\n  A /64 gives 18 quintillion addresses on one LAN."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Host — show the IPv6 addresses on the machine",
+        "code": "ip -6 addr show"
+      },
+      {
+        "label": "Host — ping over IPv6",
+        "code": "ping6 2001:db8::1"
+      },
+      {
+        "label": "Cisco IOS — configure a static global address",
+        "code": "interface GigabitEthernet0/1\n ipv6 address 2001:db8:1:10::1/64\n ipv6 enable"
+      },
+      {
+        "label": "Cisco IOS — verify",
+        "code": "show ipv6 interface GigabitEthernet0/1\nshow ipv6 route"
+      }
+    ],
+    "traps": [
+      "The double colon may appear only once in an address. Two of them is invalid.",
+      "2001:db8::/32 is the documentation prefix. It is never deployed in production.",
+      "fe80::/10 is always present on every IPv6 interface. It is not something you configure by choice.",
+      "A /64 is required for [[SLAAC]]. A /127 or a /128 breaks autoconfiguration.",
+      "There is no IPv6 broadcast address. A question asking for one is a trap.",
+      "IPv6 addresses are eight groups of four hex digits — 32 hex characters, not four octets.",
+      "The unspecified address :: and the loopback ::1 are IPv6 concepts with no IPv4 equivalent that behaves the same way.",
+      "A double colon stands for one or more zero hextets, never for a fixed number of them."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Size",
+          "128 bits, 8 hextets of 16 bits"
+        ],
+        [
+          "Notation",
+          "Hexadecimal, double colon compresses zero runs"
+        ],
+        [
+          "GUA",
+          "2000::/3"
+        ],
+        [
+          "Link-local",
+          "fe80::/10, always present"
+        ],
+        [
+          "ULA",
+          "fc00::/7, fd00::/8 in practice"
+        ],
+        [
+          "Multicast",
+          "ff00::/8"
+        ],
+        [
+          "Loopback",
+          "::1"
+        ],
+        [
+          "Broadcast",
+          "None — multicast replaces it"
+        ],
+        [
+          "LAN subnet",
+          "/64"
+        ],
+        [
+          "Allocation",
+          "/48 site, /64 per LAN"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Global Unicast",
+        "d": "the public address type"
+      },
+      {
+        "t": "03. Link Local",
+        "d": "the address that is always there"
+      },
+      {
+        "t": "11. ICMPv6",
+        "d": "the control protocol underneath"
+      }
+    ],
+    "glossary": [
+      "IPv6",
+      "IPv4",
+      "Global Unicast",
+      "Link Local",
+      "Unique Local",
+      "IPv6 Multicast",
+      "Anycast",
+      "Neighbor Discovery",
+      "SLAAC"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "addr",
+    "title": "Global Unicast",
+    "blurb": "2000::/3, the prefix / subnet / interface ID split, and how a host gets one",
+    "overview": "[[Global Unicast]] addresses are IPv6 public addresses, and they live in **2000::/3**. The format is a three-part split — a global routing prefix, a subnet ID, and a 64-bit interface ID — and the /64 per LAN comes from the third part being 64 bits wide.",
+    "keyIdea": "Global unicast is the Internet-routable address. Link-local is the one that is guaranteed; a global address is something you have to arrange.",
+    "sections": [
+      {
+        "h": "NDP",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">NDP</text><rect x=\"60\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"320\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"580\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><text x=\"160\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">NS/NA</text><text x=\"420\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">RS/RA</text><text x=\"680\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Redirect</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">Replaces ARP with ICMPv6</text></g></svg>",
+        "caption": "Neighbour discovery replaces ARP."
+      },
+      {
+        "kind": "code",
+        "h": "The three-part structure",
+        "code": "  |  global routing prefix  |   subnet ID   |  interface ID  |\n  |  /48 from the ISP       |  site-chosen |  last 64 bits  |\n  |  2001:db8:1234:         |  5a00        |  ::1          |\n\n  Full address: 2001:db8:1234:5a00::1/64"
+      },
+      {
+        "kind": "para",
+        "h": "The /64 rule",
+        "p": "Every LAN gets a **/64**. The reason is structural: the interface ID is the bottom 64 bits, so a /64 prefix leaves exactly the right amount of room for a host to build its own address. It also means you can subdivide a site allocation down to /64 but no further."
+      },
+      {
+        "kind": "table",
+        "h": "What a provider typically hands you",
+        "cols": [
+          "Allocation",
+          "Number of /64 subnets",
+          "Typical use"
+        ],
+        "rows": [
+          [
+            "/48",
+            "65,536",
+            "Large enterprise or data centre"
+          ],
+          [
+            "/56",
+            "256",
+            "Medium enterprise, delegateable to a CPE"
+          ],
+          [
+            "/60",
+            "16",
+            "Small branch"
+          ],
+          [
+            "/64",
+            "1",
+            "A single LAN"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Four ways a host gets a global address",
+        "cols": [
+          "Method",
+          "Where it comes from"
+        ],
+        "rows": [
+          [
+            "SLAAC",
+            "The router advertises a prefix in a Router Advertisement and the host combines it with its own interface ID."
+          ],
+          [
+            "DHCPv6",
+            "A stateful server assigns the address and tracks the lease."
+          ],
+          [
+            "DHCPv6-PD",
+            "The site router delegates a prefix to a customer edge device."
+          ],
+          [
+            "Static",
+            "Configured by hand on the interface."
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The reachability story that gets asked about",
+        "p": "A host can have a global address and still not be reachable from the Internet, and it can have no global address and still reach its neighbours. The exam question \"can two IPv6 hosts on the same segment ping without a global address\" has the answer **yes** — they use their link-local addresses. Multi-hop routing is where the global address matters, because link-local never crosses a router."
+      },
+      {
+        "kind": "list",
+        "h": "Global versus link-local reachability",
+        "items": [
+          {
+            "t": "Same segment, no global address",
+            "d": "Works. Both hosts use their fe80 addresses and the zone identifier of the interface."
+          },
+          {
+            "t": "Different segments, no global address",
+            "d": "Does not work. Link-local addresses are never routed."
+          },
+          {
+            "t": "Internet access",
+            "d": "Requires a global address, a default route from the Router Advertisement, and a working upstream path."
+          }
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The interface ID",
+        "p": "The bottom 64 bits can be derived from the MAC address in **EUI-64** form, or generated randomly. Privacy extensions (RFC 4941) rotate the temporary address so a host cannot be tracked across the network, and modern hosts normally use a **random interface ID** for that reason."
+      },
+      {
+        "kind": "code",
+        "h": "EUI-64 from a MAC address",
+        "code": "  MAC   00:1a:2b:3c:4d:5e\n\n  1. drop the colons and insert fffe in the middle\n     001a2b3c4d5e  ->  001a2b3c fffe 4d5e\n  2. flip the U/L bit (the leftmost bit of the first byte)\n     00 -> 02\n  3. insert colons every four hex digits\n     021a:2b3f:fffe:4d5e\n\n  The result is the bottom 64 bits of the address."
+      },
+      {
+        "kind": "para",
+        "h": "Addressing practice",
+        "p": "Real designs track the prefix from the provider rather than hard-coding it, keep a /64 per VLAN, and number the subnets sequentially so the plan is readable. Privacy extensions are worth enabling on user-facing segments so a single host cannot be profiled from its interface ID."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure a static global unicast address",
+        "code": "interface GigabitEthernet0/1\n ipv6 address 2001:db8:1:10::1/64"
+      },
+      {
+        "label": "Advertise the prefix for autoconfiguration",
+        "code": "interface GigabitEthernet0/1\n ipv6 nd prefix 2001:db8:1:10::/64"
+      },
+      {
+        "label": "Verify the prefix and the address",
+        "code": "show ipv6 interface GigabitEthernet0/1 | include prefix\nshow ipv6 route 2001:db8:1:10::/64"
+      }
+    ],
+    "traps": [
+      "2001:db8::/32 is the documentation prefix. Never deployed, always used in exam answers.",
+      "A global unicast address is not automatic. The link-local address is the one that is always there.",
+      "A host with only a link-local address has no path off the local segment.",
+      "IPv6 does not need NAT for address shortage. Prefix translation exists but it is not the default design.",
+      "EUI-64 flips the U/L bit and inserts fffe in the middle of the MAC. Both steps are easy to miss.",
+      "Privacy extensions rotate the interface ID, so do not assume a permanent EUI-64 address.",
+      "The interface ID is the bottom 64 bits, which is exactly why the LAN prefix is /64."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Prefix",
+          "2000::/3"
+        ],
+        [
+          "Structure",
+          "Global routing prefix + subnet ID + 64-bit interface ID"
+        ],
+        [
+          "/64",
+          "The per-LAN standard"
+        ],
+        [
+          "Acquisition",
+          "SLAAC, DHCPv6, prefix delegation, or static"
+        ],
+        [
+          "Interface ID",
+          "EUI-64 from the MAC, or random for privacy"
+        ],
+        [
+          "NAT",
+          "Not required — addresses are plentiful"
+        ],
+        [
+          "Default gateway",
+          "Learned from the Router Advertisement, not from DHCP"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. IPv6 Addressing",
+        "d": "the format and the address types"
+      },
+      {
+        "t": "03. Link Local",
+        "d": "the guaranteed address"
+      },
+      {
+        "t": "07. SLAAC",
+        "d": "how the address usually arrives"
+      }
+    ],
+    "glossary": [
+      "Global Unicast",
+      "IPv6",
+      "Link Local",
+      "SLAAC",
+      "DHCPv6",
+      "Anycast",
+      "NAT64"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "addr",
+    "title": "Link Local",
+    "blurb": "fe80::/10, automatic generation, zone identifiers and routing adjacencies",
+    "overview": "[[Link Local]] addresses in **fe80::/10** are configured automatically on every IPv6 interface. They are never routed, they exist so that the protocol works before anything else is configured, and they are the basis of neighbour discovery, SLAAC signalling and routing protocol adjacencies.",
+    "keyIdea": "Link-local is a normal, deliberate part of IPv6 — not the IPv4 fallback mistake. It is how the protocol bootstraps itself.",
+    "sections": [
+      {
+        "h": "SLAAC",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">SLAAC</text><rect x=\"60\" y=\"80\" width=\"780\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><text x=\"450\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Router sends RA → host builds address from prefix + interface ID</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">Stateless autoconfiguration</text></g></svg>",
+        "caption": "Stateless address autoconfiguration."
+      },
+      {
+        "kind": "para",
+        "h": "Always present, never routed",
+        "p": "The moment an interface is enabled for IPv6 it has a **link-local address**. It is derived from the MAC address in EUI-64 form or generated as a stable random value under RFC 7217, and it is unique per interface. Routers **never forward** it, so it never appears in a global routing table."
+      },
+      {
+        "kind": "code",
+        "h": "What an interface looks like after ipv6 enable",
+        "code": "  GigabitEthernet0/1 is up, line protocol is up\n    IPv6 is enabled, link-local address(es):\n    FE80::214:5FF:FE23:4567, subnetmask FE80::/64\n    Global unicast address(es):\n    2001:db8:1:10::1, subnetmask /64"
+      },
+      {
+        "kind": "para",
+        "h": "The zone identifier",
+        "p": "Because fe80:: means the same thing on every host on the segment, you have to say **which link** you mean. Operating systems express that with a zone or scope identifier after a percent sign."
+      },
+      {
+        "kind": "code",
+        "h": "Pinging a link-local address",
+        "code": "  Linux / macOS\n    ping6 fe80::1%eth0\n    ping6 fe80::1%0          interface index on some systems\n\n  Windows\n    ping fe80::1%5           %5 is the interface index"
+      },
+      {
+        "kind": "table",
+        "h": "Where link-local actually does the work",
+        "cols": [
+          "Use",
+          "Why"
+        ],
+        "rows": [
+          [
+            "Neighbour discovery",
+            "Every NS and NA is sent from a link-local source address."
+          ],
+          [
+            "Router solicitation and advertisement",
+            "The RS goes to ff02::2 and the RA is sent from a link-local address."
+          ],
+          [
+            "SLAAC unicast",
+            "A router uses its link-local address as the next hop for the prefix it advertises."
+          ],
+          [
+            "Routing adjacencies",
+            "OSPFv3 and EIGRP for IPv6 form adjacencies over link-local and use it as the next hop."
+          ],
+          [
+            "Default gateway",
+            "A host learns the Router Advertisement sender link-local address as its default route."
+          ],
+          [
+            "Management access",
+            "Only IT on the connected segment can reach the device over its link-local address."
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Several addresses on one interface",
+        "p": "An IPv6 interface normally carries more than one address, and each has a different lifetime. This is the table that explains why a host shows a link-local, a global, and often a temporary address at the same time."
+      },
+      {
+        "kind": "table",
+        "h": "Address types on a single interface",
+        "cols": [
+          "Type",
+          "Purpose",
+          "Lifetime"
+        ],
+        "rows": [
+          [
+            "Link-local (fe80)",
+            "Local protocol operation",
+            "Never removed"
+          ],
+          [
+            "Global unicast or ULA",
+            "Routed reachability",
+            "Prefix lifetime, or renewed by the server"
+          ],
+          [
+            "Temporary (privacy)",
+            "Outbound source address",
+            "Rotated every few days"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The contrast with IPv4",
+        "p": "In IPv4 a self-assigned address means something went wrong — DHCP failed and the host fell back to 169.254. In IPv6 the self-assigned address is how the protocol starts. That difference is the single most common trap in this topic."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable IPv6 on an interface (creates the link-local automatically)",
+        "code": "interface GigabitEthernet0/1\n ipv6 enable"
+      },
+      {
+        "label": "Set a deterministic link-local address",
+        "code": "interface GigabitEthernet0/1\n ipv6 address fe80::1 link-local"
+      },
+      {
+        "label": "Verify the link-local address",
+        "code": "show ipv6 interface GigabitEthernet0/1 | include Link|fe80"
+      },
+      {
+        "label": "Ping a link-local neighbour from the router itself",
+        "code": "ping6 fe80::1%0"
+      }
+    ],
+    "traps": [
+      "fe80::/10 is not a broken or temporary address. It is mandatory and permanent.",
+      "Link-local addresses are never routed. Pinging one across a router always fails.",
+      "The zone identifier after the percent sign is required when you ping a link-local address.",
+      "A routing table may show a link-local next hop on a transit link. That is normal and is not an error.",
+      "Link-local is not the IPv6 equivalent of APIPA. IPv6 has no failure fallback — it has a mandatory starting point.",
+      "Each interface gets its own link-local address. They are not shared across the device.",
+      "The manually configured link-local form is used when you want a stable address for a routing protocol next hop."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Prefix",
+          "fe80::/10"
+        ],
+        [
+          "Configuration",
+          "Automatic on ipv6 enable"
+        ],
+        [
+          "Scope",
+          "One link, never routed"
+        ],
+        [
+          "Generation",
+          "EUI-64 from the MAC, or stable random under RFC 7217"
+        ],
+        [
+          "Zone identifier",
+          "Percent sign plus the interface, required for ping"
+        ],
+        [
+          "Powers",
+          "ND, SLAAC signalling, routing adjacencies"
+        ],
+        [
+          "Default gateway",
+          "The link-local address of the Router Advertisement sender"
+        ],
+        [
+          "Uniqueness",
+          "Per interface, per link"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. Neighbor Discovery",
+        "d": "what runs over link-local"
+      },
+      {
+        "t": "07. SLAAC",
+        "d": "uses link-local for the handshake"
+      },
+      {
+        "t": "04. Unique Local",
+        "d": "the other internal-only scope"
+      }
+    ],
+    "glossary": [
+      "Link Local",
+      "IPv6",
+      "Neighbor Discovery",
+      "SLAAC",
+      "OSPFv3",
+      "EIGRP for IPv6",
+      "Default Route"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "addr",
+    "title": "Unique Local",
+    "blurb": "fc00::/7, the fc versus fd trap, and where ULAs are used",
+    "overview": "[[Unique Local]] addresses are the IPv6 counterpart to RFC 1918 private space. The prefix is **fc00::/7**, but only **fd00::/8** is actually used, because the L bit marks a locally assigned address. They are routed inside the organisation and never advertised to the Internet.",
+    "keyIdea": "The range is fc00::/7. The part you deploy from is fd00::/8. ULA is routed inside the site; link-local is not.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "The /7 and its two halves",
+        "p": "RFC 4193 reserves fc00::/7 for unique local addresses. The first eight bits split into **fc00::/8**, which is reserved for future centrally defined semantics, and **fd00::/8**, where the L bit is set to mark a locally assigned address. Every real ULA comes from fd00::/8."
+      },
+      {
+        "kind": "code",
+        "h": "The fc and fd boundary",
+        "code": "  fc00::/7   covers  fc00:...  through  fdff:...\n                       ^^^^^^^\n  fc00::/8   reserved, centrally defined semantics\n  fd00::/8   L bit set, locally assigned  <-- this is what you deploy\n\n  ULA example: fd12:3456:789a::1"
+      },
+      {
+        "kind": "code",
+        "h": "The structure of a ULA",
+        "code": "  | 7 bits | L | 40-bit global ID | 16-bit subnet | 64-bit interface ID |\n\n  fc        1  1234:5678:9abc     0001           ::1\n\n  Prefix    fd12:3456:789a::/48\n  Subnet    fd12:3456:789a:0001::/64"
+      },
+      {
+        "kind": "para",
+        "h": "The global ID should be random",
+        "p": "The 40-bit global ID is meant to be generated randomly so that two organisations that independently choose a ULA are unlikely to collide. A predictable identifier — a site name encoded as hex, for instance — defeats the whole point and causes real conflicts the moment the two sites are connected."
+      },
+      {
+        "kind": "table",
+        "h": "ULA versus link-local",
+        "cols": [
+          "",
+          "ULA (fd00::/8)",
+          "Link-local (fe80::/10)"
+        ],
+        "rows": [
+          [
+            "Scope",
+            "Site-wide",
+            "One link"
+          ],
+          [
+            "Routed internally",
+            "Yes",
+            "No"
+          ],
+          [
+            "Purpose",
+            "Stable internal services",
+            "Protocol operation"
+          ],
+          [
+            "Visible off site",
+            "No — filtered at the edge",
+            "Never"
+          ],
+          [
+            "Privacy",
+            "Stable and planned",
+            "Per interface"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "When to use a ULA",
+        "cols": [
+          "Scenario",
+          "Use"
+        ],
+        "rows": [
+          [
+            "Internal DNS, print and management services",
+            "ULA — stable, and independent of the ISP prefix"
+          ],
+          [
+            "Internet-facing services",
+            "Global unicast"
+          ],
+          [
+            "Dual-stack lab with no real provider prefix",
+            "ULA"
+          ],
+          [
+            "Merging two sites",
+            "ULA with random global IDs, to avoid collisions"
+          ],
+          [
+            "Migration, where global space is still growing",
+            "ULA for internal, global in parallel"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Filtering at the edge",
+        "p": "A ULA must never be advertised to the Internet. Every edge that speaks BGP or receives a prefix from an upstream must filter out fd00::/8 and fe80::/10 from what it accepts and what it sends. And unlike IPv4 private space, ULAs do not need NAT — they are simply routed inside the organisation."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure a ULA on an interface",
+        "code": "interface GigabitEthernet0/1\n ipv6 address fd12:3456:789a:1::1/64"
+      },
+      {
+        "label": "Verify the ULA",
+        "code": "show ipv6 interface GigabitEthernet0/1 | include fd"
+      },
+      {
+        "label": "Verify the route to the ULA prefix",
+        "code": "show ipv6 route fd12:3456:789a::/48"
+      }
+    ],
+    "traps": [
+      "Only fd00::/8 is locally assigned. fc00::/8 is reserved for the future. The fc versus fd trap is a favourite.",
+      "The range of ULA space is fc00::/7, and both fc and fd fall inside it.",
+      "A ULA is routed inside the organisation. A link-local address is not.",
+      "You do not normally NAT a ULA. It is routed internally like any other prefix.",
+      "The 40-bit global ID should be random. Predictable identifiers cause collisions.",
+      "A ULA never leaves the enterprise. Edge prefix filtering must exclude fd00::/8.",
+      "ULA is not the IPv6 equivalent of a NAT workaround. IPv6 has enough addresses to avoid NAT entirely."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "RFC",
+          "4193"
+        ],
+        [
+          "Prefix",
+          "fc00::/7"
+        ],
+        [
+          "Deployed from",
+          "fd00::/8, the L bit set"
+        ],
+        [
+          "Structure",
+          "/48 site + /16 subnet + 64-bit interface ID"
+        ],
+        [
+          "Global ID",
+          "40 bits, generated randomly"
+        ],
+        [
+          "Scope",
+          "Routed within the site"
+        ],
+        [
+          "Internet",
+          "Filtered, never advertised"
+        ],
+        [
+          "IPv4 analogue",
+          "RFC 1918 private space"
+        ],
+        [
+          "NAT",
+          "Not required"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Link Local",
+        "d": "the other internal scope"
+      },
+      {
+        "t": "02. Global Unicast",
+        "d": "the public counterpart"
+      },
+      {
+        "t": "13. BGP IPv6",
+        "d": "where the edge filtering happens"
+      }
+    ],
+    "glossary": [
+      "Unique Local",
+      "IPv6",
+      "Global Unicast",
+      "Link Local",
+      "Private IP"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "addr",
+    "title": "Anycast",
+    "blurb": "One address on many devices, nearest delivery, and where you meet it",
+    "overview": "[[Anycast]] means the **same unicast address is assigned to several devices**, and the network delivers the packet to the **nearest** one. IPv6 made it a first-class part of the protocol — the address looks like ordinary global unicast — and it underpins DNS, cloud services and content delivery networks.",
+    "keyIdea": "Anycast delivers to one of many: the nearest. Multicast delivers to all of the members. Unicast delivers to one unique host.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "How it works",
+        "p": "Every member of the group holds the same address and advertises the same prefix. Routing then works out the best path to that prefix, and because the members are in different places, the best path leads to the closest one. There is no protocol mechanism involved at all — it is a consequence of ordinary routing."
+      },
+      {
+        "kind": "code",
+        "h": "One address, three locations",
+        "code": "            +---- R1 ----+\n            | 2001:db8:100::10 |   loopback\n            +-----+------+\n                  |\n   client -------+------- link\n                  |\n            +-----+------+\n            | 2001:db8:100::10 |   loopback\n            +---- R2 ----+\n\n  The client sends to 2001:db8:100::10.\n  The routing table picks the shortest path, so R1 answers."
+      },
+      {
+        "kind": "table",
+        "h": "The delivery trio",
+        "cols": [
+          "",
+          "Unicast",
+          "Anycast",
+          "Multicast"
+        ],
+        "rows": [
+          [
+            "Destination address",
+            "Unique to one host",
+            "Shared by many hosts",
+            "Identifies a group"
+          ],
+          [
+            "Who receives",
+            "One host",
+            "One host — the nearest",
+            "Every member of the group"
+          ],
+          [
+            "Purpose",
+            "One to one",
+            "One to nearest of many",
+            "One to many"
+          ],
+          [
+            "IPv6 form",
+            "Global unicast",
+            "An ordinary global unicast",
+            "ff00::/8"
+          ],
+          [
+            "Example",
+            "SSH to a server",
+            "DNS root and resolver servers",
+            "A video conference"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "There is no special anycast prefix",
+        "p": "IPv6 has no anycast block. An address becomes anycast by deployment, not by notation, which is why the question \"which of these addresses is anycast\" is unanswerable from the address alone. The exception is **subnet anycast** (RFC 2526), where a reserved pattern in the address identifies all the routers on a subnet."
+      },
+      {
+        "kind": "code",
+        "h": "Subnet anycast",
+        "code": "  A reserved /7 field in the address identifies the subnet routers.\n\n  Interface address   2001:db8:1:10::1\n  Subnet anycast      2001:db8:1:10:0:0:0:0    <- every router in the subnet\n\n  Packets sent to the subnet anycast go to the nearest router\n  on that subnet."
+      },
+      {
+        "kind": "table",
+        "h": "Where anycast turns up",
+        "cols": [
+          "Deployment",
+          "How it is built"
+        ],
+        "rows": [
+          [
+            "DNS root servers",
+            "The same address on hundreds of nodes worldwide"
+          ],
+          [
+            "Public DNS resolvers",
+            "The same address on anycast points of presence"
+          ],
+          [
+            "Cloud load balancing",
+            "One address per region, so traffic lands on the nearest region"
+          ],
+          [
+            "Content delivery networks",
+            "Edge caches share an address and serve the nearest users"
+          ],
+          [
+            "VXLAN fabric gateways",
+            "The same gateway address on every leaf, so traffic lands on the nearest leaf"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The caveats",
+        "p": "An anycast address can only be a **destination**, never a source — a host cannot originate traffic from an address it does not uniquely own. And because the address can move, stateful flows break on failover: a TCP session to a node that dies does not transparently resume on another member, unless the state is shared."
+      },
+      {
+        "kind": "list",
+        "h": "What breaks with anycast",
+        "items": [
+          {
+            "t": "Source address",
+            "d": "Not allowed. A host cannot originate from an address shared with other devices."
+          },
+          {
+            "t": "Stateful sessions",
+            "d": "A failover to another member drops the session. Stateless protocols such as HTTP are unaffected."
+          },
+          {
+            "t": "Return path",
+            "d": "Asymmetric routing is normal with anycast, which breaks strict ingress filtering designs."
+          },
+          {
+            "t": "Policy",
+            "d": "Route maps and filters have to treat the anycast prefix on purpose, because it looks like ordinary unicast."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Put the same anycast address on several routers",
+        "code": "interface Loopback0\n ipv6 address 2001:db8:100::10/128"
+      },
+      {
+        "label": "Advertise the anycast prefix so the closest member wins",
+        "code": "router ospfv3 1\n address-family ipv6 unicast\n  network 2001:db8:100::10/128 area 0"
+      },
+      {
+        "label": "Confirm the prefix is installed on each router",
+        "code": "show ipv6 route 2001:db8:100::10/128"
+      }
+    ],
+    "traps": [
+      "Anycast delivers to the nearest member, not to all of them. Delivering to all members is multicast.",
+      "An anycast address is indistinguishable from an ordinary unicast address. You cannot tell from the address alone.",
+      "An anycast address cannot be used as a source address.",
+      "A stateful session breaks when the member serving it fails. Stateless traffic is fine.",
+      "Anycast depends on topology. The nearest member by routing metric is the one that answers.",
+      "Subnet anycast is the one case with a reserved pattern in the address. Ordinary anycast has none.",
+      "IPv6 anycast is just global unicast that happens to be deployed on several devices."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Definition",
+          "Many devices holding the same unicast address"
+        ],
+        [
+          "Delivery",
+          "Nearest member, chosen by the routing table"
+        ],
+        [
+          "IPv6 form",
+          "An ordinary global unicast address"
+        ],
+        [
+          "Examples",
+          "DNS, CDNs, cloud load balancing, VXLAN gateways"
+        ],
+        [
+          "As a source",
+          "Not allowed"
+        ],
+        [
+          "State",
+          "Sessions break on failover unless state is shared"
+        ],
+        [
+          "Against multicast",
+          "Multicast reaches every member, anycast reaches one"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Multicast",
+        "d": "the other many-receiver model"
+      },
+      {
+        "t": "13. BGP IPv6",
+        "d": "how the same prefix is advertised from many sites"
+      },
+      {
+        "t": "02. Global Unicast",
+        "d": "the prefix anycast borrows"
+      }
+    ],
+    "glossary": [
+      "Anycast",
+      "IPv6",
+      "Global Unicast",
+      "IPv6 Multicast",
+      "Neighbor Discovery"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "addr",
+    "title": "Multicast",
+    "blurb": "ff00::/8, scopes, the well-known groups and MLD",
+    "overview": "[[IPv6 Multicast]] uses **ff00::/8** and carries a scope and flags field that IPv4 multicast does not have. It replaces broadcast entirely: all-nodes, all-routers, neighbour discovery and DHCPv6 are all just multicast groups with a scope that says how far they may travel.",
+    "keyIdea": "The scope nibble in the address decides the routing boundary. ff02 is link-local and never leaves the segment; ff0e is global.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The address layout",
+        "code": "  | 8 bits | 4 bits | 4 bits | 112 bits |\n  |  ff   | flags  | scope  | group ID |\n             T/P/R    1 I, 2 link, 5 site, 8 org, E global"
+      },
+      {
+        "kind": "table",
+        "h": "The scope values",
+        "cols": [
+          "Value",
+          "Scope",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "1",
+            "Interface-local",
+            "Reaches only the local interface"
+          ],
+          [
+            "2",
+            "Link-local",
+            "Reaches the local segment, never forwarded"
+          ],
+          [
+            "5",
+            "Site-local",
+            "Reaches the site"
+          ],
+          [
+            "8",
+            "Organization-local",
+            "Reaches the organisation"
+          ],
+          [
+            "E",
+            "Global",
+            "Reaches anywhere routable"
+          ],
+          [
+            "F",
+            "Reserved",
+            "Not used"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The well-known groups",
+        "cols": [
+          "Group",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "ff02::1",
+            "All nodes on the link — takes over the role of IPv4 broadcast"
+          ],
+          [
+            "ff02::2",
+            "All routers on the link — the destination of a Router Solicitation"
+          ],
+          [
+            "ff02::5",
+            "OSPFv3 all routers"
+          ],
+          [
+            "ff02::6",
+            "OSPFv3 designated and backup designated routers"
+          ],
+          [
+            "ff02::A",
+            "EIGRP routers"
+          ],
+          [
+            "ff02::1:2",
+            "All DHCPv6 clients and servers"
+          ],
+          [
+            "ff02::1:3",
+            "Link-local name resolution"
+          ],
+          [
+            "ff02::16",
+            "MLDv2 reports"
+          ],
+          [
+            "ff02::FB",
+            "Multicast DNS"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "How multicast replaces broadcast",
+        "p": "There is **no IPv6 broadcast address**, so every function that used one is now a group with a scope. Neighbour discovery uses the **solicited-node multicast** address, DHCPv6 uses ff02::1:2, and a node that wants to reach everyone on the link uses ff02::1. Because link-local multicast has a hop limit of one, it can never leak off the segment."
+      },
+      {
+        "kind": "code",
+        "h": "Solicited-node multicast",
+        "code": "  For target address 2001:db8:1:10::1:\n\n    take the bottom 32 bits of the address\n    00000001 00000000 00000000 00000001\n    ff02::1:ff  +  00:00:00:01\n\n    solicited-node address = ff02::1:ff00:0001\n\n  Prefix      ff02::1:ff00:0/104\n  Only about 1 in 65,536 of the link hears the request,\n  instead of everybody."
+      },
+      {
+        "kind": "para",
+        "h": "MLD is the membership protocol",
+        "p": "MLD is the IPv6 answer to [[IGMP]]. **MLDv1** behaves like IGMPv2. **MLDv2** supports source-specific multicast, where a receiver names both the group and the source it wants, and that is what enables SSM in IPv6 exactly as IGMPv3 does in IPv4. Switches use **MLD snooping** to build a multicast forwarding table so that group traffic only leaves ports that asked for it."
+      },
+      {
+        "kind": "table",
+        "h": "MLD versions",
+        "cols": [
+          "Version",
+          "Join type",
+          "Equivalent in IPv4"
+        ],
+        "rows": [
+          [
+            "MLDv1",
+            "Group only",
+            "IGMPv2"
+          ],
+          [
+            "MLDv2",
+            "Group and source (S,G)",
+            "IGMPv3, enables SSM"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Multicast in IPv6 versus IPv4",
+        "items": [
+          {
+            "t": "Scope is embedded",
+            "d": "IPv6 puts the scope in the address itself, so a router can decide from the address alone whether to forward it."
+          },
+          {
+            "t": "No broadcast",
+            "d": "Every broadcast function is a multicast group with a scope."
+          },
+          {
+            "t": "Hop limit",
+            "d": "Link-local multicast is sent with a hop limit of one, so it is confined to the segment."
+          },
+          {
+            "t": "Solicited-node",
+            "d": "Neighbour discovery targets one small multicast group instead of the whole link."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable multicast routing for IPv6",
+        "code": "ipv6 multicast routing"
+      },
+      {
+        "label": "Configure PIM in sparse mode on an interface",
+        "code": "interface GigabitEthernet0/1\n ipv6 pim sparse-mode"
+      },
+      {
+        "label": "Set the MLD version",
+        "code": "interface GigabitEthernet0/1\n ipv6 mld version 2"
+      },
+      {
+        "label": "Verify multicast state",
+        "code": "show ipv6 mroute\nshow ipv6 mld groups"
+      }
+    ],
+    "traps": [
+      "The scope nibble is part of the address. ff02 is link-local, ff05 is site-local, ff0e is global.",
+      "There is no IPv6 broadcast address. ff02::1 is a multicast group that plays the all-nodes role.",
+      "MLD is the IPv6 membership protocol, the counterpart of IGMP.",
+      "MLDv2 is what enables source-specific multicast with (S,G) joins.",
+      "Solicited-node multicast is ff02::1:ff00:0/104, not ff02::1.",
+      "Link-local multicast uses a hop limit of one, so it never leaves the link.",
+      "Well-known group numbers are hexadecimal: ff02::A is EIGRP, not ff02::10."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Prefix",
+          "ff00::/8"
+        ],
+        [
+          "Layout",
+          "ff, 4 flag bits, 4 scope bits, 112-bit group ID"
+        ],
+        [
+          "Scopes",
+          "1 interface, 2 link, 5 site, 8 organisation, E global"
+        ],
+        [
+          "ff02::1",
+          "All nodes on the link"
+        ],
+        [
+          "ff02::2",
+          "All routers on the link"
+        ],
+        [
+          "ff02::5 and ff02::6",
+          "OSPFv3 all routers, and designated routers"
+        ],
+        [
+          "ff02::A",
+          "EIGRP routers"
+        ],
+        [
+          "ff02::1:2",
+          "All DHCPv6 servers and clients"
+        ],
+        [
+          "Solicited-node",
+          "ff02::1:ff00:0/104"
+        ],
+        [
+          "Membership",
+          "MLDv1 and MLDv2"
+        ],
+        [
+          "Snooping",
+          "MLD snooping on switches"
+        ],
+        [
+          "Broadcast",
+          "None"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. Neighbor Discovery",
+        "d": "the multicast messages that replace ARP"
+      },
+      {
+        "t": "08. DHCPv6",
+        "d": "uses ff02::1:2"
+      },
+      {
+        "t": "10. ICMPv6",
+        "d": "carries the multicast membership messages"
+      }
+    ],
+    "glossary": [
+      "IPv6 Multicast",
+      "Multicast",
+      "IGMP",
+      "PIM",
+      "Neighbor Discovery",
+      "IPv4 Multicast"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "config",
+    "title": "SLAAC",
+    "blurb": "How a host builds its own address from a Router Advertisement",
+    "overview": "[[SLAAC]] lets a host construct its own address with no DHCP server involved. The router advertises a **/64 prefix** in a Router Advertisement, the host appends its own interface ID, and it runs duplicate address detection before using the result. It is the default IPv6 model.",
+    "keyIdea": "The router supplies the prefix, the host supplies the interface ID, and no server is involved at all. That is what \"stateless\" means.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "What a host actually does",
+        "p": "The sequence is five steps, and every one of them is a protocol message rather than a configuration step."
+      },
+      {
+        "kind": "code",
+        "h": "The SLAAC sequence",
+        "code": "  1. Generate a link-local address (EUI-64 or random) and assign it.\n\n  2. Send a Router Solicitation to ff02::2 (all routers).\n     Optional - routers also send RAs on a timer.\n\n  3. Receive a Router Advertisement containing:\n       - the on-link /64 prefix\n       - flags: A (autoconfig), M (managed), O (other config)\n       - router lifetime -> this becomes the default route\n\n  4. Build the address:  prefix + interface ID\n\n  5. Run duplicate address detection with a neighbour solicitation\n     to the solicited-node multicast address before using it."
+      },
+      {
+        "kind": "table",
+        "h": "The three RA flags",
+        "cols": [
+          "Flag",
+          "Name",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "A",
+            "Autoconfig",
+            "The host may build its own address from the advertised prefix"
+          ],
+          [
+            "M",
+            "Managed",
+            "The host should ask a DHCPv6 server for an address"
+          ],
+          [
+            "O",
+            "Other config",
+            "The host should ask a DHCPv6 server for other information such as DNS"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Flag combinations and what they produce",
+        "cols": [
+          "A",
+          "M",
+          "O",
+          "Addressing",
+          "Other options"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "0",
+            "SLAAC only",
+            "Router Advertisement options"
+          ],
+          [
+            "0",
+            "1",
+            "0",
+            "DHCPv6 stateful",
+            "DHCPv6"
+          ],
+          [
+            "1",
+            "1",
+            "0",
+            "Both",
+            "Either source"
+          ],
+          [
+            "0",
+            "0",
+            "1",
+            "None automatic",
+            "DHCPv6"
+          ],
+          [
+            "1",
+            "0",
+            "1",
+            "SLAAC",
+            "DHCPv6 — the common production setup"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "SLAAC versus DHCPv6",
+        "p": "The choice is a policy decision rather than a technical one. SLAAC needs **no server** and scales effortlessly, but it gives limited options and weak accounting. DHCPv6 gives full options, leases and accounting, but it needs a server and it must be reachable."
+      },
+      {
+        "kind": "code",
+        "h": "The usual production hybrid",
+        "code": "  SLAAC for the address        (A = 1)\n  Stateless DHCPv6 for DNS     (O = 1, M = 0)\n\n  The router advertises the /64 prefix.\n  The host builds its own address.\n  The host asks DHCPv6 for the DNS server address only."
+      },
+      {
+        "kind": "para",
+        "h": "The /64 requirement and duplicate detection",
+        "p": "The prefix advertised in the Router Advertisement must be a **/64**, because the host fills the remaining 64 bits with its own interface ID. A /127 or a /128 breaks autoconfiguration completely, and a /60 leaves the host unable to form a valid address. Duplicate address detection sends a neighbour solicitation from the tentative address; if any neighbour answers with an advertisement, the address is a duplicate and is discarded."
+      },
+      {
+        "kind": "list",
+        "h": "What SLAAC still needs",
+        "items": [
+          {
+            "t": "A router",
+            "d": "Without a router on the segment there is no Router Advertisement, so the host gets only a link-local address and no global one."
+          },
+          {
+            "t": "A /64 prefix",
+            "d": "The prefix length is not negotiable — SLAAC builds a 64-bit interface ID."
+          },
+          {
+            "t": "A default route",
+            "d": "The Router Advertisement sender link-local address becomes the host default gateway."
+          },
+          {
+            "t": "DNS from somewhere",
+            "d": "The Router Advertisement can carry it, or a stateless DHCPv6 server can."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Router — advertise a prefix and enable router advertisements",
+        "code": "interface GigabitEthernet0/1\n no ipv6 nd suppress-ra\n ipv6 nd ra-interval 30\n ipv6 nd prefix 2001:db8:1:10::/64"
+      },
+      {
+        "label": "Router — also push a DNS server in the advertisement",
+        "code": "interface GigabitEthernet0/1\n ipv6 nd ra dns 2001:db8:53::1"
+      },
+      {
+        "label": "Host — verify the address and the default route",
+        "code": "ip -6 addr show\nip -6 route show default"
+      }
+    ],
+    "traps": [
+      "SLAAC needs no server. The word \"stateless\" means exactly that.",
+      "The A flag only covers addressing. DNS still needs a Router Advertisement option or DHCPv6.",
+      "The prefix must be /64. A /60 or a /127 breaks autoconfiguration.",
+      "A segment with no IPv6 router gives the host only a link-local address, never a global one.",
+      "Router Solicitation and Router Advertisement are ICMPv6 types 133 and 134. Duplicate detection uses 135 and 136.",
+      "Duplicate address detection happens before the address is used, not afterwards.",
+      "The default gateway comes from the Router Advertisement even when DHCPv6 is in use."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "Stateless Address Autoconfiguration"
+        ],
+        [
+          "Feed",
+          "Router Advertisement, ICMPv6 type 134"
+        ],
+        [
+          "Request",
+          "Router Solicitation, type 133, to ff02::2"
+        ],
+        [
+          "Builds",
+          "Advertised prefix plus interface ID"
+        ],
+        [
+          "Default route",
+          "The link-local address of the advertisement sender"
+        ],
+        [
+          "Prefix length",
+          "/64, mandatory"
+        ],
+        [
+          "DNS",
+          "Router Advertisement option, or DHCPv6"
+        ],
+        [
+          "Duplicate check",
+          "Neighbour solicitation and advertisement"
+        ],
+        [
+          "Server",
+          "None required"
+        ],
+        [
+          "Flags",
+          "A for autoconfig, M for managed, O for other config"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. DHCPv6",
+        "d": "the stateful alternative"
+      },
+      {
+        "t": "09. Neighbor Discovery",
+        "d": "the messages SLAAC runs on"
+      },
+      {
+        "t": "02. Global Unicast",
+        "d": "the address that gets built"
+      }
+    ],
+    "glossary": [
+      "SLAAC",
+      "IPv6",
+      "Global Unicast",
+      "Link Local",
+      "DHCPv6",
+      "Neighbor Discovery"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "config",
+    "title": "DHCPv6",
+    "blurb": "Stateful addressing, the message flow, IA types and prefix delegation",
+    "overview": "[[DHCPv6]] is the stateful counterpart to [[SLAAC]]. The server assigns addresses and tracks leases the way DHCPv4 does, and it delivers options such as DNS and domain name. The Solicit goes out as multicast to ff02::1:2 because IPv6 has no broadcast.",
+    "keyIdea": "Stateful or stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The message flow",
+        "code": "  client --- SOLICIT -------------------> ff02::1:2 (all DHCPv6 servers)\n  server --- ADVERTISE -----------------> client (unicast)\n  client --- REQUEST -------------------> server\n  server --- REPLY --------------------> client (address, options, lifetimes)\n\n  Lease maintenance: CONFIRM, RENEW, REBIND, RELEASE"
+      },
+      {
+        "kind": "para",
+        "h": "Why Solicit is multicast",
+        "p": "IPv4 DHCP uses a broadcast because a client does not know where the servers are. An IPv6 client does know something useful: it already has a link-local address, so it can receive a unicast reply. The Solicit therefore goes to the multicast group ff02::1:2, and the Advertise comes back as unicast."
+      },
+      {
+        "kind": "table",
+        "h": "Ports and identifiers",
+        "cols": [
+          "Item",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Client port",
+            "UDP 546"
+          ],
+          [
+            "Server port",
+            "UDP 547"
+          ],
+          [
+            "All servers group",
+            "ff02::1:2"
+          ],
+          [
+            "Relay agent",
+            "Forwards Solicit to a server on another subnet"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "What the RA flags tell DHCPv6 to do",
+        "cols": [
+          "Mode",
+          "M flag",
+          "O flag",
+          "DHCPv6 behaviour"
+        ],
+        "rows": [
+          [
+            "Stateful",
+            "1",
+            "—",
+            "Assigns addresses through an IA_NA"
+          ],
+          [
+            "Stateless",
+            "0",
+            "1",
+            "Assigns no address, only options such as DNS"
+          ],
+          [
+            "SLAAC only",
+            "0",
+            "0",
+            "DHCPv6 is not used at all"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Identity associations",
+        "p": "The server does not hand out a bare address. It returns **identity associations**, each with a preferred lifetime and a valid lifetime. The preferred lifetime is how long the address is preferred and used for new outbound connections; the valid lifetime is how long the address is still recognised. An address past its preferred lifetime is deprecated but still usable for existing connections."
+      },
+      {
+        "kind": "table",
+        "h": "The three identity association types",
+        "cols": [
+          "Type",
+          "Carries"
+        ],
+        "rows": [
+          [
+            "IA_NA",
+            "A non-temporary address"
+          ],
+          [
+            "IA_TA",
+            "A temporary address"
+          ],
+          [
+            "IA_PD",
+            "A delegated prefix, for handing a /56 to a downstream router"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Relay agents and prefix delegation",
+        "p": "When the server is not on the segment, a router acts as a relay agent and forwards the Solicit to it, inserting a Relay-Info option so the server knows which client and which subnet the request came from. Separately, **prefix delegation** lets a service provider hand a downstream router a whole prefix — commonly a /56 — which that router then splits into /64 subnets for its own customers."
+      },
+      {
+        "kind": "code",
+        "h": "A relay agent in the path",
+        "code": "  client --- SOLICIT ---> relay router --- unicast ---> DHCPv6 server\n                                   |\n                                   +-- inserts Relay-Info\n                                   +-- server replies to the relay\n                                   +-- relay forwards the reply"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Router — create a DHCPv6 pool",
+        "code": "ipv6 dhcp pool CORP\n address prefix 2001:db8:1:10::/64 lifetime 2592000 604800\n dns-server 2001:db8:53::1\n domain-name corp.example"
+      },
+      {
+        "label": "Router — serve the pool and set the RA flags",
+        "code": "interface GigabitEthernet0/1\n ipv6 address 2001:db8:1:10::1/64\n ipv6 dhcp server CORP\n ipv6 nd managed-config-flag\n ipv6 nd other-config-flag"
+      },
+      {
+        "label": "Client — request a delegated prefix",
+        "code": "interface GigabitEthernet0/1\n ipv6 dhcp client pd PD-CLIENT"
+      },
+      {
+        "label": "Verify",
+        "code": "show ipv6 dhcp binding\nshow ipv6 dhcp interface"
+      }
+    ],
+    "traps": [
+      "Solicit is multicast to ff02::1:2, not a broadcast. IPv6 has no broadcast.",
+      "The client uses UDP 546 and the server uses UDP 547.",
+      "Stateful versus stateless is decided by the M and O flags in the Router Advertisement, not by DHCPv6 itself.",
+      "The default gateway still comes from the Router Advertisement, even in DHCPv6 mode. IPv4 DHCP hands out the gateway; IPv6 DHCP does not.",
+      "DNS comes from a Router Advertisement option or from DHCPv6 options, depending on the flags.",
+      "The preferred lifetime is shorter than the valid lifetime. An address past its preferred lifetime is deprecated but still valid.",
+      "Prefix delegation is what lets a provider hand a /56 to a customer edge device."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Detail"
+      ],
+      "rows": [
+        [
+          "Ports",
+          "Client UDP 546, server UDP 547"
+        ],
+        [
+          "Solicit destination",
+          "ff02::1:2"
+        ],
+        [
+          "Stateful",
+          "Assigns addresses, M flag set"
+        ],
+        [
+          "Stateless",
+          "Options only, O flag set"
+        ],
+        [
+          "Identity associations",
+          "IA_NA, IA_TA, IA_PD"
+        ],
+        [
+          "Lifetimes",
+          "Preferred and valid, both returned by the server"
+        ],
+        [
+          "Default gateway",
+          "Still comes from the Router Advertisement"
+        ],
+        [
+          "Relay",
+          "Forwards to a remote server, inserts Relay-Info"
+        ],
+        [
+          "Prefix delegation",
+          "A /56 delegated down to a CPE"
+        ],
+        [
+          "Best practice",
+          "SLAAC for the address, stateless DHCPv6 for DNS"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. SLAAC",
+        "d": "the stateless alternative"
+      },
+      {
+        "t": "06. Multicast",
+        "d": "the ff02::1:2 group"
+      },
+      {
+        "t": "16. Network Services",
+        "d": "where DHCP lives in the design"
+      }
+    ],
+    "glossary": [
+      "DHCPv6",
+      "DHCP",
+      "DHCP Relay",
+      "SLAAC",
+      "IPv6",
+      "IPv6 Multicast"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "ops",
+    "title": "Neighbor Discovery",
+    "blurb": "The five ND messages, solicited-node multicast, the cache and RA Guard",
+    "overview": "[[Neighbor Discovery]] is the direct replacement for ARP, ICMP redirects and router discovery, all built on [[ICMPv6]]. It runs on every IPv6 link and does five jobs at once: address resolution, router discovery, prefix distribution, duplicate address detection, and neighbour unreachability detection.",
+    "keyIdea": "ND is not just ARP replacement. It also gives you the default gateway, the prefix, duplicate detection and reachability checking in one protocol.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The five ND messages",
+        "cols": [
+          "Message",
+          "ICMPv6 type",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Router Solicitation",
+            "133",
+            "Asks any router on the link for a Router Advertisement"
+          ],
+          [
+            "Router Advertisement",
+            "134",
+            "Carries the prefix, the flags, the router lifetime and options"
+          ],
+          [
+            "Neighbour Solicitation",
+            "135",
+            "Asks who holds an address — this is the ARP request"
+          ],
+          [
+            "Neighbour Advertisement",
+            "136",
+            "Answers with the link-layer address"
+          ],
+          [
+            "Redirect",
+            "137",
+            "Tells a host about a better next hop for a destination"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "What ND replaces",
+        "cols": [
+          "IPv4",
+          "IPv6"
+        ],
+        "rows": [
+          [
+            "ARP broadcast to ff:ff:ff:ff:ff:ff",
+            "Neighbour solicitation to the solicited-node multicast group"
+          ],
+          [
+            "RARP",
+            "Neighbour discovery"
+          ],
+          [
+            "Static default gateway or a router list",
+            "Router Advertisement supplies the default route"
+          ],
+          [
+            "Manual duplicate address check",
+            "Duplicate address detection"
+          ],
+          [
+            "ICMP redirect",
+            "Redirect, type 137"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Solicited-node multicast",
+        "p": "A neighbour solicitation is not broadcast. The sender builds a multicast address from the bottom 32 bits of the target address, so only the host that actually owns that address — and the router — ever sees the request. On a large link that is the difference between waking everybody and waking one device."
+      },
+      {
+        "kind": "code",
+        "h": "Building the solicited-node address",
+        "code": "  Target      2001:db8:1:10::1\n  bottom 32   0000:0001\n  group       ff02::1:ff00:0001\n\n  Prefix      ff02::1:ff00:0/104\n\n  Only hosts whose address ends in those 32 bits respond."
+      },
+      {
+        "kind": "para",
+        "h": "The five jobs ND does",
+        "p": "This is the list to memorise, because \"what does neighbour discovery do\" is a common question and the answer is much longer than \"it replaces ARP\": **address resolution**, **router discovery**, **prefix distribution**, **duplicate address detection** and **neighbour unreachability detection**."
+      },
+      {
+        "kind": "list",
+        "h": "The five jobs",
+        "items": [
+          {
+            "t": "Address resolution",
+            "d": "Maps an IPv6 address to a MAC address, and the result is cached in the neighbour cache."
+          },
+          {
+            "t": "Router discovery",
+            "d": "The Router Advertisement tells the host which routers are available."
+          },
+          {
+            "t": "Prefix distribution",
+            "d": "The on-link prefix comes from the Router Advertisement and feeds SLAAC."
+          },
+          {
+            "t": "Duplicate address detection",
+            "d": "A tentative address is probed with a solicitation; an answer means it is a duplicate."
+          },
+          {
+            "t": "Neighbour unreachability detection",
+            "d": "Confirms that a neighbour is still reachable and detects a peer that has gone away."
+          }
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The neighbour cache and its states",
+        "p": "Neighbour entries move through a **state machine** as reachability is confirmed or lost. The states are the same idea as the IPv4 ARP cache states, but with an explicit confirmation step in the middle."
+      },
+      {
+        "kind": "table",
+        "h": "Neighbour reachability states",
+        "cols": [
+          "State",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "INCOMPLETE",
+            "A solicitation has been sent and no advertisement has come back yet"
+          ],
+          [
+            "REACHABLE",
+            "Reachability has been confirmed"
+          ],
+          [
+            "STALE",
+            "No recent traffic; the entry may still be valid"
+          ],
+          [
+            "DELAY",
+            "Waiting to probe again"
+          ],
+          [
+            "PROBE",
+            "Sending solicitations to re-confirm the neighbour"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The security exposure",
+        "p": "Because a rogue Router Advertisement can make an attacker the default gateway, RA spoofing is a real attack and the mitigation is **RA Guard**, applied on the ports that face untrusted hosts. Neighbour advertisement spoofing is the neighbour-discovery equivalent of ARP poisoning, and it is handled by ND snooping and dynamic ARP inspection."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Tune router advertisement behaviour on an interface",
+        "code": "interface GigabitEthernet0/1\n ipv6 nd ra-interval 30\n ipv6 nd ra-lifetime 1800\n ipv6 nd prefix 2001:db8:1:10::/64\n ipv6 nd managed-config-flag"
+      },
+      {
+        "label": "View the neighbour cache",
+        "code": "show ipv6 neighbors"
+      },
+      {
+        "label": "Check the neighbour state of an interface",
+        "code": "show ipv6 interface GigabitEthernet0/1 | include Neighbor"
+      }
+    ],
+    "traps": [
+      "ND is ICMPv6 based. \"IPv6 uses ARP\" is always wrong.",
+      "The solicitation target is the solicited-node multicast address, not an all-nodes broadcast.",
+      "Router Solicitation and Router Advertisement are types 133 and 134. Neighbour Solicitation and Advertisement are 135 and 136. Do not mix them up.",
+      "ND replaces ARP, ICMP redirects and router discovery, and it also provides duplicate detection and SLAAC.",
+      "The Router Advertisement supplies the default route even when DHCPv6 is in use.",
+      "RA Guard is the defence against a rogue router advertisement on untrusted ports.",
+      "Neighbour discovery runs on every IPv6 link whether or not you configured anything."
+    ],
+    "table": {
+      "cols": [
+        "Message",
+        "Type",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Router Solicitation",
+          "133",
+          "Find the routers"
+        ],
+        [
+          "Router Advertisement",
+          "134",
+          "Prefix, flags, gateway, options"
+        ],
+        [
+          "Neighbour Solicitation",
+          "135",
+          "Resolve an address, and duplicate detection"
+        ],
+        [
+          "Neighbour Advertisement",
+          "136",
+          "The answer, with the link-layer address"
+        ],
+        [
+          "Redirect",
+          "137",
+          "A better next hop"
+        ],
+        [
+          "Replaces",
+          "ARP, ICMP redirect, router discovery",
+          "The IPv4 artefacts"
+        ],
+        [
+          "Multicast tool",
+          "ff02::1:ffxx:xxxx",
+          "Solicited-node"
+        ],
+        [
+          "Cache",
+          "show ipv6 neighbors",
+          "The neighbour table"
+        ],
+        [
+          "Security",
+          "RA Guard, ND snooping",
+          "Against spoofing"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. ICMPv6",
+        "d": "the protocol that carries ND"
+      },
+      {
+        "t": "07. SLAAC",
+        "d": "built on the router advertisement"
+      },
+      {
+        "t": "03. Link Local",
+        "d": "the source address of every ND message"
+      }
+    ],
+    "glossary": [
+      "Neighbor Discovery",
+      "ICMPv6",
+      "IPv6",
+      "ARP",
+      "SLAAC",
+      "Link Local"
+    ]
+  },
+  {
+    "id": "t10",
+    "num": "10",
+    "group": "ops",
+    "title": "ICMPv6",
+    "blurb": "Error types, packet too big, path MTU discovery and what firewalls must allow",
+    "overview": "[[ICMPv6]] is IPv6 control protocol number 58, and unlike ICMPv4 it is **required** for the protocol to work. It carries error reporting, echo, the whole of neighbour discovery, and multicast listener discovery. Blocking it does not merely hide ping — it breaks IPv6.",
+    "keyIdea": "ICMPv6 is a suite, not a ping function. Permit the neighbour discovery types and Packet Too Big through every firewall or IPv6 will quietly fail.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The four message classes",
+        "cols": [
+          "Class",
+          "Types",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "Error",
+            "1 destination unreachable, 2 packet too big, 3 time exceeded, 4 parameter problem",
+            "Problem reporting"
+          ],
+          [
+            "Informational",
+            "128 echo request, 129 echo reply",
+            "ping6 and traceroute6"
+          ],
+          [
+            "Neighbour discovery",
+            "133 RS, 134 RA, 135 NS, 136 NA, 137 redirect",
+            "Neighbour and router operations"
+          ],
+          [
+            "MLD",
+            "130 query, 131 report, 132 done",
+            "Multicast listener management"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The error types and codes worth quoting",
+        "cols": [
+          "Type",
+          "Code",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "1",
+            "0",
+            "No route to the destination"
+          ],
+          [
+            "1",
+            "1",
+            "Administratively prohibited — the firewall signature"
+          ],
+          [
+            "1",
+            "3",
+            "Address unreachable"
+          ],
+          [
+            "1",
+            "4",
+            "Port unreachable"
+          ],
+          [
+            "2",
+            "0",
+            "Packet too big — the fragmentation replacement"
+          ],
+          [
+            "3",
+            "0",
+            "Hop limit exceeded — what traceroute triggers"
+          ],
+          [
+            "4",
+            "—",
+            "Malformed header or option"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Path MTU discovery and the no-fragmentation rule",
+        "p": "IPv6 routers **never fragment** a packet. When a router finds a packet larger than the next link can carry, it drops it and returns an ICMPv6 Packet Too Big message carrying the link MTU. The sender then re-sends a smaller packet. If that message is filtered, large packets vanish silently — the MTU black hole."
+      },
+      {
+        "kind": "code",
+        "h": "How IPv6 handles a too-large packet",
+        "code": "  IPv4                              IPv6\n  ----                              ----\n  router sees MTU 1500,             router sees MTU 1500,\n  packet is 4000 bytes:             packet is 4000 bytes:\n    fragment it into two               DROP it\n    and send both                      send ICMPv6 type 2\n                                      (Packet Too Big, MTU 1500)\n                                     sender resizes and resends\n\n  IPv6 fragmentation is sender-only, and it is discouraged."
+      },
+      {
+        "kind": "para",
+        "h": "What a firewall has to permit",
+        "p": "This is the most practical thing on the topic. A filter that drops ICMPv6 breaks neighbour discovery, breaks path MTU discovery, breaks multicast membership, and breaks the default route learning. The safe baseline permits the neighbour discovery types, Packet Too Big, time exceeded, and the MLD types."
+      },
+      {
+        "kind": "code",
+        "h": "A workable ICMPv6 baseline in an ACL",
+        "code": "  ipv6 access-list PERMIT-ICMP6\n   permit icmp any any unreachable\n   permit icmp any any packet-too-big\n   permit icmp any any time-exceeded\n   permit icmp any any nd\n   permit icmp any any mld"
+      },
+      {
+        "kind": "table",
+        "h": "ICMPv6 against ICMPv4",
+        "cols": [
+          "",
+          "ICMPv4",
+          "ICMPv6"
+        ],
+        "rows": [
+          [
+            "Router fragmentation",
+            "Permitted",
+            "Never — the sender must do it"
+          ],
+          [
+            "Address resolution",
+            "Separate, ARP",
+            "Built into ICMPv6 as neighbour discovery"
+          ],
+          [
+            "Multicast membership",
+            "IGMP",
+            "MLD"
+          ],
+          [
+            "Checksum",
+            "Sometimes optional",
+            "Always required"
+          ],
+          [
+            "Echo types",
+            "8 and 0",
+            "128 and 129"
+          ],
+          [
+            "Firewall treatment",
+            "Often dropped",
+            "Must be permitted for PTB and ND"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The error message types in one line each",
+        "p": "Type 1 means the destination could not be reached or is administratively blocked. Type 2 means the packet was too big and here is the MTU to use. Type 3 means the hop limit ran out, which is exactly how traceroute works. Type 4 means the packet was malformed."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Ping and trace over IPv6",
+        "code": "ping6 2001:db8::1\ntraceroute6 2001:db8:53::1"
+      },
+      {
+        "label": "Check the MTU on an interface",
+        "code": "show ipv6 mtu"
+      },
+      {
+        "label": "Debug ICMPv6 messages on the router",
+        "code": "debug ipv6 icmp"
+      },
+      {
+        "label": "Permit the ICMPv6 types a firewall must allow",
+        "code": "ipv6 access-list PERMIT-ICMP6\n permit icmp any any packet-too-big\n permit icmp any any nd"
+      }
+    ],
+    "traps": [
+      "Packet Too Big is type 2, and it is how IPv6 copes with MTU. A router never fragments an IPv6 packet.",
+      "Blocking ICMPv6 breaks IPv6. Allow neighbour discovery types 133 to 137, Packet Too Big, and MLD types 130 to 132.",
+      "Neighbour discovery is carried inside ICMPv6. \"Which protocol does ND use\" is always ICMPv6, never ARP.",
+      "Echo request and reply are types 128 and 129 in IPv6, not 8 and 0.",
+      "Type 1 code 1 is administratively prohibited, which is the signature of a firewall dropping the traffic.",
+      "The ICMPv6 checksum is always required, unlike IPv4 where it could be omitted on some traffic.",
+      "A filtered Packet Too Big produces an MTU black hole, where small packets work and large ones vanish."
+    ],
+    "table": {
+      "cols": [
+        "Message",
+        "Type",
+        "Use"
+      ],
+      "rows": [
+        [
+          "Destination unreachable",
+          "1",
+          "No route, blocked, port or address failure"
+        ],
+        [
+          "Packet too big",
+          "2",
+          "Path MTU discovery, and the no-fragmentation rule"
+        ],
+        [
+          "Time exceeded",
+          "3",
+          "Hop limit exceeded, used by traceroute"
+        ],
+        [
+          "Parameter problem",
+          "4",
+          "Malformed header or option"
+        ],
+        [
+          "Echo request and reply",
+          "128 and 129",
+          "ping6"
+        ],
+        [
+          "Router solicitation and advertisement",
+          "133 and 134",
+          "Router discovery"
+        ],
+        [
+          "Neighbour solicitation and advertisement",
+          "135 and 136",
+          "Resolution and duplicate detection"
+        ],
+        [
+          "Redirect",
+          "137",
+          "A better next hop"
+        ],
+        [
+          "MLD",
+          "130 to 132",
+          "Multicast listeners"
+        ],
+        [
+          "Transport protocol",
+          "58",
+          "Always checksums"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. Neighbor Discovery",
+        "d": "the control messages inside ICMPv6"
+      },
+      {
+        "t": "01. IPv6 Addressing",
+        "d": "the address space it operates in"
+      },
+      {
+        "t": "01. Physical Layer",
+        "d": "where MTU comes from"
+      }
+    ],
+    "glossary": [
+      "ICMPv6",
+      "Neighbor Discovery",
+      "IPv6",
+      "MTU",
+      "IPv4 Multicast"
+    ]
+  },
+  {
+    "id": "t11",
+    "num": "11",
+    "group": "routing",
+    "title": "OSPFv3",
+    "blurb": "The OSPF redesign for IPv6, link-local neighbours and the Type 9 LSA",
+    "overview": "[[OSPFv3]] is OSPF re-engineered for IPv6 under RFC 5340. The link-state machinery, areas and the neighbour state machine are unchanged, but the protocol **no longer carries addresses inside its LSAs** — the prefixes move into a separate Type 9 intra-area-prefix LSA — and neighbours are identified by link-local addresses.",
+    "keyIdea": "OSPFv3 is address-family independent. The same protocol can carry IPv4 and IPv6, so \"OSPFv3 is IPv6 only\" is wrong.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "OSPFv2 against OSPFv3",
+        "cols": [
+          "Aspect",
+          "OSPFv2 (IPv4)",
+          "OSPFv3 (IPv6)"
+        ],
+        "rows": [
+          [
+            "Transport",
+            "IPv4, protocol 89",
+            "IPv6, protocol 89"
+          ],
+          [
+            "Multicast groups",
+            "224.0.0.5 and 224.0.0.6",
+            "ff02::5 and ff02::6"
+          ],
+          [
+            "Neighbour identity",
+            "IPv4 addresses in the hello",
+            "Link-local addresses"
+          ],
+          [
+            "Where addresses live",
+            "Inside the Type 1 and Type 2 LSAs",
+            "The Type 9 intra-area-prefix LSA"
+          ],
+          [
+            "Router ID",
+            "Derived from an IPv4 address",
+            "Configured, or auto-selected"
+          ],
+          [
+            "Address families",
+            "IPv4 only",
+            "IPv6, and IPv4 as well"
+          ],
+          [
+            "Interface cost",
+            "Scales with bandwidth by default",
+            "Defaults to 1 on every interface"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Two configuration styles",
+        "p": "Classic IOS puts IPv6 into an existing OSPF process. IOS-XE and later platforms prefer the address-family style, which is a separate process with an explicit address-family block, and which is also where IPv4 unicast can be carried inside the same OSPFv3 process."
+      },
+      {
+        "kind": "code",
+        "h": "The classic style",
+        "code": "  interface GigabitEthernet0/1\n   ipv6 enable\n   ipv6 ospf 1 area 0\n\n  router ospf 1\n   router-id 1.1.1.1"
+      },
+      {
+        "kind": "code",
+        "h": "The address-family style",
+        "code": "  router ospfv3 1\n   router-id 1.1.1.1\n   address-family ipv6 unicast\n\n  interface GigabitEthernet0/1\n   ipv6 address 2001:db8:1:10::1/64\n   ospfv3 1 ipv6 area 0"
+      },
+      {
+        "kind": "table",
+        "h": "The OSPFv3 LSA types",
+        "cols": [
+          "Type",
+          "Name",
+          "Carries"
+        ],
+        "rows": [
+          [
+            "1",
+            "Router",
+            "The router and its interfaces"
+          ],
+          [
+            "2",
+            "Network",
+            "The segment behind the designated router"
+          ],
+          [
+            "8",
+            "Link-Local",
+            "Link-local information — new in OSPFv3"
+          ],
+          [
+            "9",
+            "Intra-Area-Prefix",
+            "The actual IPv6 prefixes of the area"
+          ],
+          [
+            "3",
+            "Inter-Area-Prefix",
+            "Summarised prefixes between areas"
+          ],
+          [
+            "4, 5, 7",
+            "ASBR, AS-External, NSSA",
+            "External IPv6 prefixes"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Neighbours and next hops",
+        "p": "Neighbour entries in the OSPFv3 table are **link-local addresses**, and the next hop on a transit link is link-local as well. That is a deliberate design: link-local addresses are always present, always unique on the segment, and never need global routing to resolve. A change to the link-local address on an interface will flap the adjacency, so pin it when it matters."
+      },
+      {
+        "kind": "list",
+        "h": "Details that catch people out",
+        "items": [
+          {
+            "t": "Cost defaults to 1",
+            "d": "OSPFv3 does not scale the interface cost with bandwidth the way OSPFv2 does. Set it deliberately with ipv6 ospf cost."
+          },
+          {
+            "t": "Router ID selection",
+            "d": "Configured, or auto-selected from the highest IPv4 loopback. It is still a 32-bit identifier, not an IPv6 address."
+          },
+          {
+            "t": "DR and BDR election",
+            "d": "Identical to OSPFv2 — priority first, then router ID."
+          },
+          {
+            "t": "Protocol number",
+            "d": "Still 89 for both OSPFv2 and OSPFv3. Only the transport differs."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable OSPFv3 on an interface",
+        "code": "interface GigabitEthernet0/1\n ipv6 address 2001:db8:1:10::1/64\n ospfv3 1 ipv6 area 0"
+      },
+      {
+        "label": "Configure the process and the router ID",
+        "code": "router ospfv3 1\n router-id 1.1.1.1\n address-family ipv6 unicast"
+      },
+      {
+        "label": "Verify",
+        "code": "show ipv6 ospf\nshow ipv6 ospf neighbor\nshow ipv6 ospf database\nshow ospfv3 1 address-family ipv6 unicast interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "The LSAs no longer carry addresses. The Type 9 intra-area-prefix LSA holds the prefixes.",
+      "Neighbours are link-local addresses. Do not expect a global address in the neighbour list.",
+      "The multicast groups are ff02::5 and ff02::6, not 224.0.0.5 and 224.0.0.6.",
+      "The router ID is still a 32-bit value and still must be set or will be auto-selected.",
+      "The interface cost defaults to 1 and does not scale with bandwidth as it does in OSPFv2.",
+      "OSPFv3 can carry IPv4 as well. It is address-family independent, not IPv6 only.",
+      "Protocol number 89 is used by both OSPFv2 and OSPFv3."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "OSPFv3"
+      ],
+      "rows": [
+        [
+          "RFC",
+          "5340"
+        ],
+        [
+          "Transport",
+          "IPv6, protocol 89"
+        ],
+        [
+          "Multicast",
+          "ff02::5 and ff02::6"
+        ],
+        [
+          "Neighbour identity",
+          "Link-local addresses"
+        ],
+        [
+          "Where prefixes live",
+          "Type 9 intra-area-prefix LSA"
+        ],
+        [
+          "Router ID",
+          "Configured, or auto-selected"
+        ],
+        [
+          "Interface cost",
+          "Defaults to 1, does not scale automatically"
+        ],
+        [
+          "Configuration styles",
+          "Classic process, or address-family"
+        ],
+        [
+          "Address families",
+          "IPv6 and IPv4"
+        ],
+        [
+          "Areas and DR election",
+          "Identical to OSPFv2"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "12. EIGRP IPv6",
+        "d": "the other interior protocol for IPv6"
+      },
+      {
+        "t": "13. BGP IPv6",
+        "d": "the exterior protocol for IPv6"
+      },
+      {
+        "t": "03. Link Local",
+        "d": "why neighbours use it"
+      }
+    ],
+    "glossary": [
+      "OSPFv3",
+      "OSPF",
+      "IPv6",
+      "Link Local",
+      "OSPF Router ID",
+      "Routing Table"
+    ]
+  },
+  {
+    "id": "t12",
+    "num": "12",
+    "group": "routing",
+    "title": "EIGRP IPv6",
+    "blurb": "The same DUAL engine over IPv6, named mode, and link-local neighbours",
+    "overview": "[[EIGRP for IPv6]] runs the identical DUAL algorithm, the identical composite metric and the identical timers as IPv4 EIGRP. What changes is the plumbing: no network statements in the classic form, link-local neighbours and next hops, and the multicast group ff02::A. It is normally deployed in **named mode**.",
+    "keyIdea": "It is not a new protocol. The algorithm, metrics and convergence behaviour are identical — only the addressing and the configuration scaffolding differ.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "EIGRP IPv4 against EIGRP IPv6",
+        "cols": [
+          "Aspect",
+          "EIGRP IPv4",
+          "EIGRP IPv6"
+        ],
+        "rows": [
+          [
+            "Multicast group",
+            "224.0.0.10",
+            "ff02::A"
+          ],
+          [
+            "Neighbour identity",
+            "IPv4 addresses",
+            "Link-local addresses"
+          ],
+          [
+            "Network statement",
+            "Required",
+            "None in classic mode — the address family and the interface enable it"
+          ],
+          [
+            "Address family",
+            "Implicit",
+            "address-family ipv6 unicast"
+          ],
+          [
+            "Router ID",
+            "Required",
+            "Required, auto-selected if not set"
+          ],
+          [
+            "Metric",
+            "Composite, K values",
+            "Identical composite metric"
+          ],
+          [
+            "Convergence",
+            "DUAL",
+            "DUAL — the same algorithm"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Named mode is the way to do it now",
+        "p": "Named mode gives each address family its own configuration block inside one process, which is what lets IPv4 and IPv6 coexist in a single EIGRP instance. The classic form still exists and still works, but it is the older style and new designs use named mode."
+      },
+      {
+        "kind": "code",
+        "h": "The classic form",
+        "code": "  interface GigabitEthernet0/1\n   ipv6 eigrp 100\n\n  router eigrp 100\n   address-family ipv6 unicast\n    router-id 1.1.1.1"
+      },
+      {
+        "kind": "code",
+        "h": "The named mode form",
+        "code": "  router eigrp ENTERPRISE\n   address-family ipv6 unicast\n    router-id 1.1.1.1\n    network 2001:db8:1:10::/64\n\n  interface GigabitEthernet0/1\n   ipv6 address 2001:db8:1:10::1/64\n\n  Named mode is the only form in which a network\n  statement is used for an address family."
+      },
+      {
+        "kind": "list",
+        "h": "What carries over unchanged",
+        "items": [
+          {
+            "t": "The composite metric",
+            "d": "Bandwidth and delay by default, with the same K values and the same rules for changing them."
+          },
+          {
+            "t": "DUAL",
+            "d": "Successor, feasible successor, and the same fast convergence behaviour."
+          },
+          {
+            "t": "Timers",
+            "d": "Hello every 5 seconds, dead at three times the hello interval."
+          },
+          {
+            "t": "Authentication",
+            "d": "Key chain based, with MD5 and HMAC-SHA256 available exactly as in IPv4."
+          },
+          {
+            "t": "Redistribution rules",
+            "d": "Seed metrics and the same constraints when redistributing between protocols."
+          }
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Summarisation and the default route",
+        "p": "Summarisation is per interface, using the ipv6 summary-address eigrp form, and a default route can be injected into the address family in the same way as IPv4. The practical reason to inject one is a stub site that has no other path out."
+      },
+      {
+        "kind": "code",
+        "h": "Summarisation and a default route",
+        "code": "  interface GigabitEthernet0/1\n   ipv6 summary-address eigrp 10 2001:db8:1:10::/48\n\n  router eigrp ENTERPRISE\n   address-family ipv6 unicast\n    network 2001:db8:1:10::/64\n    eigrp stub connected summary"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure EIGRP for IPv6 in named mode",
+        "code": "router eigrp ENTERPRISE\n address-family ipv6 unicast\n  router-id 1.1.1.1\n  network 2001:db8:1:10::/64"
+      },
+      {
+        "label": "Enable the address family on the interface",
+        "code": "interface GigabitEthernet0/1\n ipv6 address 2001:db8:1:10::1/64"
+      },
+      {
+        "label": "Verify",
+        "code": "show ipv6 eigrp neighbors\nshow ipv6 route eigrp\nshow ipv6 protocols"
+      }
+    ],
+    "traps": [
+      "Classic EIGRP IPv6 has no network statements. The interface and the address family enable it. Named mode is the exception.",
+      "Neighbours are listed as link-local addresses. Trying to ping them over a global address does not work.",
+      "EIGRP IPv6 still needs a router ID. If it is not set, one is auto-selected and you get a warning.",
+      "The metric weights and the composite metric carry over unchanged. Do not adjust them lightly.",
+      "The multicast group is ff02::A, not 224.0.0.10.",
+      "The timers are the same five second hello and three times dead interval.",
+      "Named mode lets one EIGRP process carry both IPv4 and IPv6 address families."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "EIGRP IPv6"
+      ],
+      "rows": [
+        [
+          "Multicast group",
+          "ff02::A"
+        ],
+        [
+          "Neighbour identity",
+          "Link-local addresses"
+        ],
+        [
+          "Network statement",
+          "None in classic mode, allowed in named mode"
+        ],
+        [
+          "Address family",
+          "address-family ipv6 unicast"
+        ],
+        [
+          "Named mode",
+          "router eigrp NAME with an address family block"
+        ],
+        [
+          "Metric",
+          "The same composite metric"
+        ],
+        [
+          "Convergence",
+          "DUAL, unchanged"
+        ],
+        [
+          "Router ID",
+          "Required"
+        ],
+        [
+          "Summarisation",
+          "Per interface summary address"
+        ],
+        [
+          "Authentication",
+          "Key chain, MD5 or HMAC-SHA256"
+        ],
+        [
+          "Best practice",
+          "Named mode for both address families"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "11. OSPFv3",
+        "d": "the other interior protocol for IPv6"
+      },
+      {
+        "t": "13. BGP IPv6",
+        "d": "the exterior protocol"
+      },
+      {
+        "t": "03. Link Local",
+        "d": "the neighbour identity"
+      }
+    ],
+    "glossary": [
+      "EIGRP for IPv6",
+      "EIGRP",
+      "Named Mode EIGRP",
+      "IPv6",
+      "Link Local"
+    ]
+  },
+  {
+    "id": "t13",
+    "num": "13",
+    "group": "routing",
+    "title": "BGP IPv6",
+    "blurb": "MP-BGP, address families, the activate requirement and next hop handling",
+    "overview": "[[BGP]] carries IPv6 routes through **MP-BGP**, the multiprotocol extension that adds the MP_REACH and MP_UNREACH attributes. The transport between the peers is a separate question: an IPv4 session can perfectly well exchange IPv6 prefixes, as long as the neighbour is activated in the IPv6 address family.",
+    "keyIdea": "Transport and payload are independent. An IPv4 neighbour session can carry IPv6 routes, but only if the neighbour is activated under address-family ipv6 unicast.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The multiprotocol attributes",
+        "cols": [
+          "Attribute",
+          "Carries"
+        ],
+        "rows": [
+          [
+            "MP_REACH_NLRI",
+            "The address family, the next hop, and the reachable prefixes"
+          ],
+          [
+            "MP_UNREACH_NLRI",
+            "Withdrawals for a given address family"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The address family",
+        "p": "IPv6 unicast is identified by the pair AFI 2 and SAFI 1. Inside that address family, the neighbour, the routes to originate and the policy to apply are all configured separately from the IPv4 unicast family, even though both live in the same BGP process."
+      },
+      {
+        "kind": "code",
+        "h": "An IPv6 session with an IPv6 transport",
+        "code": "  router bgp 65001\n   bgp router-id 1.1.1.1\n   neighbor 2001:db8:1::1 remote-as 65002\n\n   address-family ipv6 unicast\n    neighbor 2001:db8:1::1 activate\n    neighbor 2001:db8:1::1 route-map V6IN in\n    network 2001:db8:1:10::/64"
+      },
+      {
+        "kind": "code",
+        "h": "An IPv6 session over an IPv4 transport",
+        "code": "  router bgp 65001\n   neighbor 10.0.0.1 remote-as 65002\n\n   address-family ipv6 unicast\n    neighbor 10.0.0.1 activate\n    network 2001:db8:1:10::/64\n\n  The TCP session runs over IPv4.\n  The prefixes carried inside it are IPv6."
+      },
+      {
+        "kind": "table",
+        "h": "Transport against payload",
+        "cols": [
+          "Mode",
+          "Session runs over",
+          "Prefixes carried"
+        ],
+        "rows": [
+          [
+            "IPv6 peer",
+            "IPv6",
+            "IPv6"
+          ],
+          [
+            "IPv4 transport",
+            "IPv4",
+            "IPv6"
+          ],
+          [
+            "IPv4 peer",
+            "IPv4",
+            "IPv4"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The next hop and path selection",
+        "p": "For an internal BGP session the next hop must usually be rewritten with **next-hop-self**, because the external peer cannot advertise an address that is reachable from the internal receivers. The path selection algorithm itself is exactly the IPv4 one — AS path, local preference, MED, communities — and no IPv6-specific rule exists."
+      },
+      {
+        "kind": "list",
+        "h": "BGP IPv6 details worth knowing",
+        "items": [
+          {
+            "t": "The activate requirement",
+            "d": "A neighbour that is not activated in the IPv6 address family carries nothing. The session can be up and the table can still be empty."
+          },
+          {
+            "t": "next-hop-self",
+            "d": "Needed on internal sessions so the next hop is reachable from the internal peers."
+          },
+          {
+            "t": "ipv6 prefix-list",
+            "d": "The IPv6 filter list, used for filtering and for policy routes."
+          },
+          {
+            "t": "aggregate-address",
+            "d": "Summarises IPv6 prefixes exactly as it does IPv4."
+          },
+          {
+            "t": "Path attributes",
+            "d": "AS path, local preference, MED and communities all behave identically to IPv4."
+          }
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Where BGP IPv6 is used",
+        "p": "The most common deployment is an ISP edge, where a GUA prefix is advertised to upstream peers and customer /48 blocks are accepted. Inside the enterprise it appears in dual-stack peering, in MPLS VPNv6, and in EVPN, where the same multiprotocol machinery carries both address families and the Ethernet VPN routes in one session."
+      },
+      {
+        "kind": "code",
+        "h": "A filter for an IPv6 prefix",
+        "code": "  ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48\n\n  router bgp 65001\n   address-family ipv6 unicast\n    neighbor 2001:db8:1::1 activate\n    neighbor 2001:db8:1::1 prefix-list V6 in"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure an IPv6 BGP neighbour",
+        "code": "router bgp 65001\n bgp router-id 1.1.1.1\n neighbor 2001:db8:1::1 remote-as 65002\n address-family ipv6 unicast\n  neighbor 2001:db8:1::1 activate"
+      },
+      {
+        "label": "Verify the address family state",
+        "code": "show bgp ipv6 unicast summary\nshow bgp ipv6 unicast neighbors 2001:db8:1::1\nshow bgp ipv6 unicast"
+      },
+      {
+        "label": "Filter IPv6 prefixes",
+        "code": "ipv6 prefix-list V6 permit 2001:db8:1:10::/64 le 48"
+      }
+    ],
+    "traps": [
+      "A neighbour must be activated in the IPv6 address family. Without it the session can be up and carry nothing.",
+      "Transport and payload are independent. An IPv4 session can carry IPv6 routes.",
+      "The IPv6 next hop is carried inside MP_REACH, not in the ordinary NEXT_HOP attribute.",
+      "Path selection is identical to IPv4. There is no IPv6-specific best path rule.",
+      "The network statement under the address family advertises your own prefix. Aggregates use aggregate-address.",
+      "Internal BGP sessions still need next-hop-self so the next hop is reachable.",
+      "IPv6 prefix filters use ipv6 prefix-list, not the IPv4 prefix-list command."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "BGP IPv6"
+      ],
+      "rows": [
+        [
+          "Mechanism",
+          "MP-BGP with MP_REACH and MP_UNREACH"
+        ],
+        [
+          "Address family",
+          "IPv6 unicast, AFI 2 and SAFI 1"
+        ],
+        [
+          "Transport",
+          "IPv6 or IPv4, independently"
+        ],
+        [
+          "Activate",
+          "Required in the address family"
+        ],
+        [
+          "Next hop",
+          "Carried in MP_REACH"
+        ],
+        [
+          "Path attributes",
+          "Identical to IPv4"
+        ],
+        [
+          "Filter list",
+          "ipv6 prefix-list"
+        ],
+        [
+          "Aggregate",
+          "aggregate-address"
+        ],
+        [
+          "Internal sessions",
+          "Need next-hop-self"
+        ],
+        [
+          "Uses",
+          "ISP edge, dual-stack peering, MPLS VPNv6, EVPN"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "11. OSPFv3",
+        "d": "the interior counterpart"
+      },
+      {
+        "t": "12. EIGRP IPv6",
+        "d": "the other interior protocol"
+      },
+      {
+        "t": "04. Unique Local",
+        "d": "the prefixes an edge must filter out"
+      }
+    ],
+    "glossary": [
+      "BGP",
+      "MP-BGP",
+      "eBGP",
+      "iBGP",
+      "IPv6",
+      "Global Unicast"
+    ]
+  }
+];
         const GROUPS = [
           { key: 'addr', label: 'Addressing', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
           { key: 'config', label: 'Configuration', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
@@ -2127,6 +3855,7 @@ show bgp ipv6 unicast` },
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

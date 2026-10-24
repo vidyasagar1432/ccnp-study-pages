@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,2715 +600,1088 @@
         const heroIntro = "**[[SNMP]]** polls devices and receives traps, while **[[NetFlow]]** and **[[Flexible NetFlow]]** account for traffic. **[[SPAN]]** and **[[ERSPAN]]** mirror packets, **[[IP SLA]]** sends synthetic probes, and **[[Syslog]]** centralises events. Modern **[[Telemetry]]** streams state continuously, and **[[Wireshark]]** is still the packet-level truth.";
 
         const topics = [
- {
-  "num": "01",
-  "id": "t01",
-  "group": "device",
-  "title": "SNMP",
-  "blurb": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps).",
-  "overview": "**[[SNMP]]** monitors and configures network devices over **UDP 161 (poll) / 162 (traps)**. Data lives in the **MIB** and is addressed by **OIDs**; **v2c (community)** and **v3 (security)** are the versions that matter. The exam tests versions, the SNMP model, and configuration.",
-  "keyIdea": "SNMP = **UDP 161 poll / 162 traps**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "SNMP model",
-    "cols": [
-     "Component",
-     "Role"
+  {
+    "num": "01",
+    "id": "t01",
+    "group": "device",
+    "title": "SNMP",
+    "blurb": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps).",
+    "overview": "**[[SNMP]]** monitors and configures network devices over **UDP 161 (poll) / 162 (traps)**. Data lives in the **MIB** and is addressed by **OIDs**; **v2c (community)** and **v3 (security)** are the versions that matter. The exam tests versions, the SNMP model, and configuration.",
+    "keyIdea": "SNMP = **UDP 161 poll / 162 traps**.",
+    "sections": [
+      {
+        "h": "Monitoring & Telemetry",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">MONITORING</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">SNMP, NetFlow, Syslog, Streaming Telemetry</text></g></svg>",
+        "caption": "Observe network health."
+      },
+      {
+        "kind": "para",
+        "h": "Polling and notifications",
+        "p": "SNMP lets a manager read or write variables on an agent. Each variable is identified by an OID in a MIB, and the manager usually polls UDP 161. The agent can also send an unsolicited trap or inform to UDP 162 when an event occurs. SNMPv3 adds authentication and encryption, while v1 and v2c rely on a community string."
+      },
+      {
+        "kind": "table",
+        "h": "SNMP versions",
+        "cols": [
+          "Version",
+          "Security",
+          "Typical use"
+        ],
+        "rows": [
+          [
+            "v1",
+            "Community string, no encryption",
+            "Legacy devices only"
+          ],
+          [
+            "v2c",
+            "Community string, no encryption",
+            "Simple polling and traps"
+          ],
+          [
+            "v3",
+            "User-based authentication and optional privacy",
+            "Current production deployments"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Operations and operations checks",
+        "items": [
+          {
+            "t": "GET",
+            "d": "Reads one or more OIDs from the agent."
+          },
+          {
+            "t": "GETNEXT / GETBULK",
+            "d": "Walks a MIB tree; GETBULK is more efficient in v2c and v3."
+          },
+          {
+            "t": "SET",
+            "d": "Writes a value; restrict this with views and write access."
+          },
+          {
+            "t": "Trap versus inform",
+            "d": "A trap is fire-and-forget; an inform is acknowledged by the manager."
+          },
+          {
+            "t": "Common traps",
+            "d": "Wrong community, ACL blocking UDP 161/162, missing MIB or a v3 user with the wrong auth/priv settings."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Manager (NMS)",
-      "polls/collects"
-     ],
-     [
-      "Agent",
-      "runs on device"
-     ],
-     [
-      "MIB",
-      "data tree"
-     ],
-     [
-      "OID",
-      "address of data"
-     ],
-     [
-      "Community/security",
-      "access"
-     ]
+    "commands": [
+      {
+        "label": "SNMPv2c configuration",
+        "code": "snmp-server community public RO\nsnmp-server location HQ\nsnmp-server contact netops@example.com\nsnmp-server host 192.0.2.50 version 2c public"
+      },
+      {
+        "label": "SNMPv3 authPriv configuration",
+        "code": "snmp-server group MONITOR v3 priv\nsnmp-server user monitor MONITOR v3 auth sha AUTHKEY priv aes 128 PRIVKEY\nsnmp-server host 192.0.2.50 version 3 priv monitor"
+      },
+      {
+        "label": "Verification",
+        "code": "show snmp\nshow snmp user\nshow snmp group\nsnmpget -v3 -u monitor -l authPriv -a SHA -A AUTHKEY -x AES -X PRIVKEY 192.0.2.1 1.3.6.1.2.1.1.1.0"
+      }
+    ],
+    "traps": [
+      "SNMP = **UDP 161 poll / 162 traps**.",
+      "**v2c = community (weak); v3 = auth+encryption**.",
+      "GET/SET/TRAP/INFORM — know the verbs.",
+      "Data via **MIB + OID**.",
+      "%%snmp-server community%% and %%host%% are the config core."
+    ],
+    "table": {
+      "cols": [
+        "Operation",
+        "Transport",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "GET",
+          "UDP 161",
+          "Read a specific OID"
+        ],
+        [
+          "GETBULK",
+          "UDP 161",
+          "Walk many OIDs efficiently"
+        ],
+        [
+          "SET",
+          "UDP 161",
+          "Write a value"
+        ],
+        [
+          "Trap",
+          "UDP 162",
+          "Unacknowledged event notification"
+        ],
+        [
+          "Inform",
+          "UDP 162",
+          "Acknowledged event notification"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. NetFlow",
+        "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
+      },
+      {
+        "t": "03. Flexible NetFlow",
+        "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+      }
+    ],
+    "glossary": [
+      "SNMP"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Operations",
-    "cols": [
-     "Operation",
-     "Direction",
-     "Use"
-    ],
-    "rows": [
-     [
-      "GET",
-      "M→A",
-      "read one OID"
-     ],
-     [
-      "GETNEXT",
-      "M→A",
-      "walk MIB"
-     ],
-     [
-      "SET",
-      "M→A",
-      "change value"
-     ],
-     [
-      "TRAP",
-      "A→M",
-      "alert"
-     ],
-     [
-      "INFORM",
-      "A→M",
-      "acknowledged alert"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Versions",
-    "cols": [
-     "Version",
-     "Security"
-    ],
-    "rows": [
-     [
-      "v1",
-      "community, clear"
-     ],
-     [
-      "v2c",
-      "community, clear"
-     ],
-     [
-      "v3",
-      "auth + encryption"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "MIB/OID",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "MIB",
-      "device database"
-     ],
-     [
-      "OID",
-      "dotted address"
-     ],
-     [
-      "Example",
-      "1.3.6.1.2.1.1.1 (sysDescr)"
-     ],
-     [
-      "Walk",
-      "GETNEXT through tree"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Configuration",
-    "code": "snmp-server community public RO\nsnmp-server community secret RW\nsnmp-server host 192.0.2.10 version 3 authpriv NMS\nsnmp-server group GRP v3 priv\nsnmp-server user admin GRP v3 auth sha Pass1 priv aes 128 Pass2"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%community%%",
-      "v1/v2c access"
-     ],
-     [
-      "%%host%%",
-      "trap destination"
-     ],
-     [
-      "%%group/user%%",
-      "v3 security"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Configuration",
-      "d": "**v3** needs user/group with auth+privacy."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "v2c vs v3",
-    "cols": [
-     "Aspect",
-     "v2c",
-     "v3"
-    ],
-    "rows": [
-     [
-      "Community",
-      "yes",
-      "no"
-     ],
-     [
-      "Auth",
-      "none",
-      "SHA/MD5"
-     ],
-     [
-      "Encryption",
-      "none",
-      "AES/DES"
-     ],
-     [
-      "Use",
-      "legacy/lab",
-      "production"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No response",
-      "community",
-      "show snmp"
-     ],
-     [
-      "No traps",
-      "host/port",
-      "show snmp host"
-     ],
-     [
-      "v3 fail",
-      "auth",
-      "user/group"
-     ],
-     [
-      "Timeout",
-      "UDP 161",
-      "ACL"
-     ],
-     [
-      "Wrong OID",
-      "MIB",
-      "snmpwalk"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "SNMPv2c configuration",
-    "code": "snmp-server community public RO\nsnmp-server location HQ\nsnmp-server contact netops@example.com\nsnmp-server host 192.0.2.50 version 2c public"
-   },
-   {
-    "label": "SNMPv3 authPriv configuration",
-    "code": "snmp-server group MONITOR v3 priv\nsnmp-server user monitor MONITOR v3 auth sha AUTHKEY priv aes 128 PRIVKEY\nsnmp-server host 192.0.2.50 version 3 priv monitor"
-   },
-   {
-    "label": "Verification",
-    "code": "show snmp\nshow snmp user\nshow snmp group\nsnmpget -v3 -u monitor -l authPriv -a SHA -A AUTHKEY -x AES -X PRIVKEY 192.0.2.1 1.3.6.1.2.1.1.1.0"
-   }
-  ],
-  "traps": [
-   "SNMP = **UDP 161 poll / 162 traps**.",
-   "**v2c = community (weak); v3 = auth+encryption**.",
-   "GET/SET/TRAP/INFORM — know the verbs.",
-   "Data via **MIB + OID**.",
-   "%%snmp-server community%% and %%host%% are the config core."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "SNMP"
-   ],
-   "rows": [
-    [
-     "Poll",
-     "UDP 161"
-    ],
-    [
-     "Traps",
-     "UDP 162"
-    ],
-    [
-     "v2c",
-     "community"
-    ],
-    [
-     "v3",
-     "auth+priv"
-    ],
-    [
-     "Data",
-     "MIB/OID"
-    ],
-    [
-     "GET",
-     "read"
-    ],
-    [
-     "SET",
-     "write"
-    ],
-    [
-     "TRAP",
-     "alert"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. NetFlow",
-    "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
-   },
-   {
-    "t": "03. Flexible NetFlow",
-    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
-   }
-  ],
-  "glossary": [
-   "SNMP"
-  ]
- },
- {
-  "num": "02",
-  "id": "t02",
-  "group": "traffic",
-  "title": "NetFlow",
-  "blurb": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector.",
-  "overview": "**[[NetFlow]]** exports **flow records** (per-conversation metadata — not packets) to a collector. Flows are **bidirectional** (forward + reverse direction) and identified by the **7-tuple**. Versions matter: **v5 (fixed records)** and **v9 (templates)**. The exam tests flow fields, versions, and basic config.",
-  "keyIdea": "Flows are **bidirectional**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What NetFlow exports",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "02",
+    "id": "t02",
+    "group": "traffic",
+    "title": "NetFlow",
+    "blurb": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector.",
+    "overview": "**[[NetFlow]]** exports **flow records** (per-conversation metadata — not packets) to a collector. Flows are **bidirectional** (forward + reverse direction) and identified by the **7-tuple**. Versions matter: **v5 (fixed records)** and **v9 (templates)**. The exam tests flow fields, versions, and basic config.",
+    "keyIdea": "Flows are **bidirectional**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Flow metadata instead of full packets",
+        "p": "NetFlow summarizes traffic as flows. A flow cache entry records the addresses, ports, protocol, interfaces and counters for a conversation. When the flow ages out or becomes inactive, the device exports a record to a collector. This gives visibility into who talked to whom and how much traffic passed, with far less overhead than capturing every packet."
+      },
+      {
+        "kind": "table",
+        "h": "Common flow fields",
+        "cols": [
+          "Field",
+          "Why it matters"
+        ],
+        "rows": [
+          [
+            "Source and destination IP",
+            "Identifies the endpoints"
+          ],
+          [
+            "Source and destination port",
+            "Identifies the application"
+          ],
+          [
+            "IP protocol",
+            "TCP, UDP, ICMP or another protocol"
+          ],
+          [
+            "Input and output interface",
+            "Shows the path through the device"
+          ],
+          [
+            "Packet and byte count",
+            "Measures volume"
+          ],
+          [
+            "Timestamps",
+            "Shows when the flow started and ended"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Pipeline and traps",
+        "items": [
+          {
+            "t": "Cache",
+            "d": "The device maintains active flows and ages them with active and inactive timers."
+          },
+          {
+            "t": "Export",
+            "d": "Records go to a collector, usually over UDP 2055, using NetFlow v9 or IPFIX."
+          },
+          {
+            "t": "Sampling",
+            "d": "Sampled flow estimates traffic volume; it is not a complete packet capture."
+          },
+          {
+            "t": "Direction",
+            "d": "Ingress and egress flows can produce different counts, especially with multicast or asymmetric routing."
+          },
+          {
+            "t": "Template",
+            "d": "v9 and IPFIX use templates to describe the record format; the collector must receive them."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Flow",
-      "conversation"
-     ],
-     [
-      "Direction",
-      "forward + reverse"
-     ],
-     [
-      "Fields",
-      "tuple + bytes"
-     ],
-     [
-      "Collector",
-      "receiver"
-     ],
-     [
-      "Export",
-      "UDP port"
-     ],
-     [
-      "Sampling",
-      "optional"
-     ]
+    "commands": [
+      {
+        "label": "Commands",
+        "code": "flow record FR1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n match ip protocol\n collect counter bytes\n collect counter packets\nflow exporter EXP1\n destination 192.0.2.10\n transport udp 2055\nflow monitor FM1\n record FR1\n exporter EXP1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor FM1 input"
+      }
+    ],
+    "traps": [
+      "Flows are **bidirectional**.",
+      "**7-tuple** defines a flow.",
+      "**v5 = fixed; v9/IPFIX = templates**.",
+      "Export usually **UDP 2055**.",
+      "NetFlow = **metadata, not packets**."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "Flow cache",
+          "Holds active flow records on the device"
+        ],
+        [
+          "Exporter",
+          "Sends records to a collector"
+        ],
+        [
+          "Collector",
+          "Stores and analyses flow records"
+        ],
+        [
+          "Active timeout",
+          "Exports a long-lived flow periodically"
+        ],
+        [
+          "Inactive timeout",
+          "Exports a flow after it stops receiving packets"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. SNMP",
+        "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
+      },
+      {
+        "t": "03. Flexible NetFlow",
+        "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+      }
+    ],
+    "glossary": [
+      "NetFlow"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "The 7-tuple",
-    "cols": [
-     "Field",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Src IP",
-      "source"
-     ],
-     [
-      "Dst IP",
-      "destination"
-     ],
-     [
-      "Src port",
-      "layer 4"
-     ],
-     [
-      "Dst port",
-      "layer 4"
-     ],
-     [
-      "Protocol",
-      "IP proto"
-     ],
-     [
-      "TOS",
-      "class"
-     ],
-     [
-      "Interface",
-      "in/out"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Versions",
-    "cols": [
-     "Version",
-     "Format"
-    ],
-    "rows": [
-     [
-      "v1",
-      "fixed fields"
-     ],
-     [
-      "v5",
-      "fixed, most famous"
-     ],
-     [
-      "v9",
-      "template-based (flexible)"
-     ],
-     [
-      "IPFIX",
-      "template-based (standard)"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Flow direction",
-    "cols": [
-     "Direction",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Forward",
-      "initiator → responder"
-     ],
-     [
-      "Reverse",
-      "responder → initiator"
-     ],
-     [
-      "Biflow",
-      "both in one record"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Flow direction",
-      "d": "The router **caches both directions**."
-     },
-     {
-      "t": "Flow direction",
-      "d": "Good agility: **v9 sends rich, extensible records**."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Export",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Port",
-      "UDP 2055 common"
-     ],
-     [
-      "Collectors",
-      "NMS"
-     ],
-     [
-      "Aggregation",
-      "on collector"
-     ],
-     [
-      "Cache",
-      "on device"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "The exam focus",
-    "cols": [
-     "Topic",
-     "Know"
-    ],
-    "rows": [
-     [
-      "Fields",
-      "7-tuple"
-     ],
-     [
-      "Versions",
-      "v5/v9/IPFIX"
-     ],
-     [
-      "Direction",
-      "biflow"
-     ],
-     [
-      "Export",
-      "collector"
-     ],
-     [
-      "Use",
-      "analysis"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No flows",
-      "record",
-      "show flow monitor"
-     ],
-     [
-      "No export",
-      "collector",
-      "show flow exporter"
-     ],
-     [
-      "UDP blocked",
-      "ACL/firewall",
-      "port 2055"
-     ],
-     [
-      "Wrong fields",
-      "record",
-      "match commands"
-     ],
-     [
-      "Direction",
-      "interface",
-      "input/output"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Commands",
-    "code": "flow record FR1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n match ip protocol\n collect counter bytes\n collect counter packets\nflow exporter EXP1\n destination 192.0.2.10\n transport udp 2055\nflow monitor FM1\n record FR1\n exporter EXP1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor FM1 input"
-   }
-  ],
-  "traps": [
-   "Flows are **bidirectional**.",
-   "**7-tuple** defines a flow.",
-   "**v5 = fixed; v9/IPFIX = templates**.",
-   "Export usually **UDP 2055**.",
-   "NetFlow = **metadata, not packets**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "NetFlow"
-   ],
-   "rows": [
-    [
-     "Records",
-     "metadata"
-    ],
-    [
-     "7-tuple",
-     "conversation"
-    ],
-    [
-     "v5",
-     "fixed"
-    ],
-    [
-     "v9",
-     "templates"
-    ],
-    [
-     "Export",
-     "UDP 2055"
-    ],
-    [
-     "Direction",
-     "biflow"
-    ],
-    [
-     "Cache",
-     "on device"
-    ],
-    [
-     "Use",
-     "analysis"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "01. SNMP",
-    "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
-   },
-   {
-    "t": "03. Flexible NetFlow",
-    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
-   }
-  ],
-  "glossary": [
-   "NetFlow"
-  ]
- },
- {
-  "num": "03",
-  "id": "t03",
-  "group": "traffic",
-  "title": "Flexible NetFlow",
-  "blurb": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %",
-  "overview": "**[[Flexible NetFlow|Flexible NetFlow (FNF)]]** is the modern [[NetFlow|NetFlow]] engine: you **define your own records** (%%match%% = key, %%collect%% = non-key fields) via **record → exporter → monitor**. It uses **NetFlow v9/IPFIX** export and improves on fixed-format v5. The exam tests the record constructs and the configuration flow.",
-  "keyIdea": "FNF = **custom records** (match/collect).",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Flow record anatomy",
-    "cols": [
-     "Part",
-     "Meaning",
-     "Keyword"
+  {
+    "num": "03",
+    "id": "t03",
+    "group": "traffic",
+    "title": "Flexible NetFlow",
+    "blurb": "Flexible NetFlow lets you define custom flow records, exporters and monitors.",
+    "overview": "**[[Flexible NetFlow|Flexible NetFlow (FNF)]]** is the modern [[NetFlow|NetFlow]] engine: you **define your own records** (%%match%% = key, %%collect%% = non-key fields) via **record → exporter → monitor**. It uses **NetFlow v9/IPFIX** export and improves on fixed-format v5. The exam tests the record constructs and the configuration flow.",
+    "keyIdea": "FNF = **custom records** (match/collect).",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Build the record you need",
+        "p": "Flexible NetFlow lets you define which fields are keys and which are collected as counters. A record is referenced by an exporter, and a flow monitor ties the record and exporter together before it is applied to an interface. This is more flexible than fixed NetFlow v5 because you decide what identifies a flow."
+      },
+      {
+        "kind": "list",
+        "h": "Configuration order",
+        "items": [
+          {
+            "t": "Record",
+            "d": "Create the match and collect fields, for example source/destination address and transport ports."
+          },
+          {
+            "t": "Exporter",
+            "d": "Set the collector address, source interface and export protocol."
+          },
+          {
+            "t": "Monitor",
+            "d": "Bind the record and exporter, then optionally tune the cache timers."
+          },
+          {
+            "t": "Interface",
+            "d": "Apply the monitor with `ip flow monitor NAME input` or `output`."
+          },
+          {
+            "t": "Verify",
+            "d": "Use `show flow monitor`, `show flow exporter` and `show flow record` to confirm state and counters."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "match",
-      "key fields",
-      "%%match%%"
-     ],
-     [
-      "collect",
-      "extra fields",
-      "%%collect%%"
-     ],
-     [
-      "exporter",
-      "collector",
-      "%%flow exporter%%"
-     ],
-     [
-      "monitor",
-      "bind",
-      "%%flow monitor%%"
-     ]
+    "commands": [
+      {
+        "label": "Commands",
+        "code": "flow record R1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n collect counter bytes\n collect counter packets\nflow exporter E1\n destination 192.0.2.10\n transport udp 2055\nflow monitor M1\n record R1\n exporter E1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor M1 input"
+      }
+    ],
+    "traps": [
+      "FNF = **custom records** (match/collect).",
+      "Structure: **record → exporter → monitor**.",
+      "Export uses **v9/IPFIX templates**.",
+      "%%collect%% = non-key; %%match%% = key.",
+      "Interfaces: %%ip flow monitor ... input%%."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "Record",
+          "Match keys and collected fields"
+        ],
+        [
+          "Exporter",
+          "Destination and export format"
+        ],
+        [
+          "Monitor",
+          "Binds record and exporter"
+        ],
+        [
+          "Cache",
+          "Stores active flows"
+        ],
+        [
+          "Interface",
+          "Applies the monitor in a direction"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. NetFlow",
+        "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
+      },
+      {
+        "t": "04. SPAN",
+        "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
+      }
+    ],
+    "glossary": [
+      "Flexible NetFlow",
+      "NetFlow"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Record examples",
-    "cols": [
-     "Purpose",
-     "Keys",
-     "Collects"
-    ],
-    "rows": [
-     [
-      "traffic analysis",
-      "IPs/ports",
-      "bytes/start"
-     ],
-     [
-      "top talkers",
-      "src/vlan",
-      "bytes/flows"
-     ],
-     [
-      "interface stats",
-      "ifindex",
-      "bytes"
-     ],
-     [
-      "custom",
-      "anything",
-      "anything"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Exporter details",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Destination",
-      "collector IP"
-     ],
-     [
-      "Transport",
-      "UDP (2055)"
-     ],
-     [
-      "Version",
-      "v9/IPFIX"
-     ],
-     [
-      "Options",
-      "templates"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Monitor + cache",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Monitor",
-      "record + exporter"
-     ],
-     [
-      "Cache",
-      "resident flows"
-     ],
-     [
-      "Services",
-      "independent"
-     ],
-     [
-      "Interface",
-      "enable input/output"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Why FNF over v5",
-    "cols": [
-     "Aspect",
-     "v5",
-     "FNF"
-    ],
-    "rows": [
-     [
-      "Fields",
-      "fixed",
-      "custom"
-     ],
-     [
-      "Templates",
-      "none",
-      "yes"
-     ],
-     [
-      "Applications",
-      "limited",
-      "rich"
-     ],
-     [
-      "Scale",
-      "capped",
-      "flexible"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Integration",
-    "cols": [
-     "Feature",
-     "Use"
-    ],
-    "rows": [
-     [
-      "NBAR",
-      "app classification"
-     ],
-     [
-      "sampling",
-      "high rate"
-     ],
-     [
-      "multicast",
-      "flows"
-     ],
-     [
-      "aggregation",
-      "top-N"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No records",
-      "match",
-      "show flow record"
-     ],
-     [
-      "No export",
-      "exporter",
-      "show flow exporter"
-     ],
-     [
-      "Zero cache",
-      "interface",
-      "show flow monitor cache"
-     ],
-     [
-      "v9 fail",
-      "collector",
-      "compatibility"
-     ],
-     [
-      "MBPS issue",
-      "timeout",
-      "cache active"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Commands",
-    "code": "flow record R1\n match ipv4 source address\n match ipv4 destination address\n match transport source-port\n match transport destination-port\n collect counter bytes\n collect counter packets\nflow exporter E1\n destination 192.0.2.10\n transport udp 2055\nflow monitor M1\n record R1\n exporter E1\n cache timeout active 300\ninterface GigabitEthernet0/1\n ip flow monitor M1 input"
-   }
-  ],
-  "traps": [
-   "FNF = **custom records** (match/collect).",
-   "Structure: **record → exporter → monitor**.",
-   "Export uses **v9/IPFIX templates**.",
-   "%%collect%% = non-key; %%match%% = key.",
-   "Interfaces: %%ip flow monitor ... input%%."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "FNF"
-   ],
-   "rows": [
-    [
-     "Records",
-     "custom"
-    ],
-    [
-     "match",
-     "keys"
-    ],
-    [
-     "collect",
-     "fields"
-    ],
-    [
-     "Export",
-     "v9/IPFIX"
-    ],
-    [
-     "Monitor",
-     "bind"
-    ],
-    [
-     "Cache",
-     "resident"
-    ],
-    [
-     "Use",
-     "flexible"
-    ],
-    [
-     "vs v5",
-     "templates"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. NetFlow",
-    "d": "NetFlow exports flow records (per-conversation metadata — not packets) to a collector."
-   },
-   {
-    "t": "04. SPAN",
-    "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
-   }
-  ],
-  "glossary": [
-   "Flexible NetFlow",
-   "NetFlow"
-  ]
- },
- {
-  "num": "04",
-  "id": "t04",
-  "group": "traffic",
-  "title": "SPAN",
-  "blurb": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po",
-  "overview": "**[[SPAN|SPAN (Switched Port Analyzer)]]** mirrors **traffic** from one or more source interfaces to a destination port for analysis. It's local (same switch) and is **one-way**; vlan-level mirroring is also possible. The exam tests the config and the **limits on destinations**.",
-  "keyIdea": "SPAN = **local port mirroring**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "SPAN basics",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "04",
+    "id": "t04",
+    "group": "traffic",
+    "title": "SPAN",
+    "blurb": "SPAN copies traffic from source interfaces to a local destination port for analysis.",
+    "overview": "**[[SPAN|SPAN (Switched Port Analyzer)]]** mirrors **traffic** from one or more source interfaces to a destination port for analysis. It's local (same switch) and is **one-way**; vlan-level mirroring is also possible. The exam tests the config and the **limits on destinations**.",
+    "keyIdea": "SPAN = **local port mirroring**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Copy traffic to an analyzer",
+        "p": "Switched Port Analyzer copies traffic from a source port, VLAN or EtherChannel to a destination port where a capture device is connected. A local SPAN session keeps the copy on the same switch. RSPAN carries it over a dedicated Layer 2 VLAN to another switch, and ERSPAN routes it over an IP network using GRE."
+      },
+      {
+        "kind": "list",
+        "h": "Design and traps",
+        "items": [
+          {
+            "t": "Destination port",
+            "d": "It carries only the mirrored copy; do not use it as a normal user or uplink port."
+          },
+          {
+            "t": "Directions",
+            "d": "You can mirror ingress, egress or both; the direction changes what the analyzer sees."
+          },
+          {
+            "t": "Filters",
+            "d": "VLAN and ACL filters reduce the copied volume but can hide the traffic you need."
+          },
+          {
+            "t": "Oversubscription",
+            "d": "A busy source can overwhelm the destination link and drop mirrored packets."
+          },
+          {
+            "t": "Loops",
+            "d": "Never connect the destination port back into the same Layer 2 domain without a design that prevents a loop."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Source",
-      "interface/vlan"
-     ],
-     [
-      "Destination",
-      "analyzer port"
-     ],
-     [
-      "Direction",
-      "rx/tx/both"
-     ],
-     [
-      "Scope",
-      "local switch"
-     ],
-     [
-      "Use",
-      "capture/analyze"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination interface GigabitEthernet0/2"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show monitor session 1\nshow monitor"
+      }
+    ],
+    "traps": [
+      "SPAN = **local port mirroring**.",
+      "Sessions: **source + destination**.",
+      "Directive keywords: **rx / tx / both**.",
+      "**SPAN ≠ RSPAN/ERSPAN** (remote needs separation).",
+      "Destinations are **not routable** like a port."
+    ],
+    "table": {
+      "cols": [
+        "Variant",
+        "Transport",
+        "Scope"
+      ],
+      "rows": [
+        [
+          "Local SPAN",
+          "Internal port copy",
+          "One switch"
+        ],
+        [
+          "RSPAN",
+          "Layer 2 VLAN",
+          "Layer 2 domain"
+        ],
+        [
+          "ERSPAN",
+          "GRE over IP",
+          "Routed network"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Flexible NetFlow",
+        "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
+      },
+      {
+        "t": "05. ERSPAN",
+        "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
+      }
+    ],
+    "glossary": [
+      "SPAN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Source directions",
-    "cols": [
-     "Direction",
-     "Meaning"
+  },
+  {
+    "num": "05",
+    "id": "t05",
+    "group": "traffic",
+    "title": "ERSPAN",
+    "blurb": "ERSPAN carries mirrored traffic across a routed network using GRE encapsulation.",
+    "overview": "**[[ERSPAN]]** (Encapsulated Remote [[SPAN|SPAN]]) mirrors traffic across a **routed/IP network** by **encapsulating mirrored packets in IP/GRE** toward a destination on any reachable subnet. It extends SPAN beyond a single switch. The exam stresses **GRE encapsulation** and remote destinations.",
+    "keyIdea": "ERSPAN = **mirror over IP/GRE (routed)**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Mirroring across a routed network",
+        "p": "Encapsulated Remote SPAN takes the mirrored frame, adds a GRE header and sends it to a remote destination IP address. The source switch is configured as an ERSPAN source session, and the destination device is configured as an ERSPAN destination session. Because it is routed, the copied traffic can cross Layer 3 boundaries that RSPAN cannot."
+      },
+      {
+        "kind": "list",
+        "h": "Configuration and verification",
+        "items": [
+          {
+            "t": "Source session",
+            "d": "Define the source ports or VLAN, the destination IP, the ERSPAN ID and the origin IP."
+          },
+          {
+            "t": "Destination session",
+            "d": "On the analyzer or destination switch, match the session ID and accept the GRE traffic."
+          },
+          {
+            "t": "Routing",
+            "d": "The source and destination need reachable IP addresses and a path that permits GRE."
+          },
+          {
+            "t": "Verify",
+            "d": "Use `show monitor session all` and check that the destination receives packets."
+          },
+          {
+            "t": "MTU",
+            "d": "The GRE encapsulation adds overhead; ensure the path MTU can carry the mirrored frame."
+          }
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Exam traps",
+        "items": [
+          {
+            "t": "ERSPAN is not RSPAN",
+            "d": "RSPAN uses a Layer 2 VLAN; ERSPAN uses GRE over IP."
+          },
+          {
+            "t": "Session ID must match",
+            "d": "The source and destination session identifiers must agree."
+          },
+          {
+            "t": "Firewall and ACL",
+            "d": "GRE is IP protocol 47, not TCP or UDP; filtering can silently drop the mirror."
+          },
+          {
+            "t": "One direction at a time",
+            "d": "Plan whether you need ingress, egress or both; mirroring both doubles the load."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "rx",
-      "received traffic"
-     ],
-     [
-      "tx",
-      "transmitted traffic"
-     ],
-     [
-      "both",
-      "both directions"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Destination",
-    "cols": [
-     "Item",
-     "Detail"
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "monitor session 1 type erspan-source\n source interface GigabitEthernet0/1 both\n destination\n  erspan-id 100\n  ip address 192.0.2.10\n  origin ip address 198.51.100.1"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show monitor session 1"
+      }
     ],
-    "rows": [
-     [
-      "Port",
-      "analyzer/IDS"
-     ],
-     [
-      "RSPAN",
-      "remote vlan"
-     ],
-     [
+    "traps": [
+      "ERSPAN = **mirror over IP/GRE (routed)**.",
+      "Uses %%type erspan-source/destination%%.",
+      "Needs **%%erspan id%% + %%erspan ip-address%%**.",
+      "RSPAN = **L2 vlan remote**, ERSPAN = **L3 routed remote**.",
+      "MTU+GRE overhead matters."
+    ],
+    "table": {
+      "cols": [
+        "Field",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Session ID",
+          "Matches source and destination sessions"
+        ],
+        [
+          "Origin IP",
+          "Source address of the GRE packets"
+        ],
+        [
+          "Destination IP",
+          "Collector or destination switch"
+        ],
+        [
+          "Source",
+          "Port, VLAN or EtherChannel being mirrored"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. SPAN",
+        "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
+      },
+      {
+        "t": "06. IP SLA",
+        "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
+      }
+    ],
+    "glossary": [
       "ERSPAN",
-      "routed/IP"
-     ],
-     [
-      "Limits",
-      "one-ish per session"
-     ]
+      "SPAN"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%monitor session N source Gi x/y rx%%",
-      "source"
-     ],
-     [
-      "%%monitor session N destination Gi a/b%%",
-      "analyzer"
-     ],
-     [
-      "%%monitor session N vlan X%%",
-      "vlan source"
-     ],
-     [
-      "%%no monitor session N%%",
-      "remove"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Limitations",
-    "cols": [
-     "Limit",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Local only",
-      "no routing"
-     ],
-     [
-      "Resources",
-      "TCAM/session"
-     ],
-     [
-      "Loops",
-      "danger on vlan"
-     ],
-     [
-      "Overload",
-      "mirror all = loss"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "SPAN vs RSPAN vs ERSPAN",
-    "cols": [
-     "Type",
-     "Scope"
-    ],
-    "rows": [
-     [
-      "SPAN",
-      "local same switch"
-     ],
-     [
-      "RSPAN",
-      "remote via vlan"
-     ],
-     [
-      "ERSPAN",
-      "remote via IP/GRE"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Empty capture",
-      "direction",
-      "rx/tx"
-     ],
-     [
-      "Nothing at dest",
-      "session",
-      "show monitor"
-     ],
-     [
-      "Traffic loss",
-      "overload",
-      "rate"
-     ],
-     [
-      "Wrong vlan",
-      "scope",
-      "vlan source"
-     ],
-     [
-      "Loop",
-      "mixing",
-      "STP watch"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination interface GigabitEthernet0/2"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show monitor session 1\nshow monitor"
-   }
-  ],
-  "traps": [
-   "SPAN = **local port mirroring**.",
-   "Sessions: **source + destination**.",
-   "Directive keywords: **rx / tx / both**.",
-   "**SPAN ≠ RSPAN/ERSPAN** (remote needs separation).",
-   "Destinations are **not routable** like a port."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "SPAN"
-   ],
-   "rows": [
-    [
-     "Scope",
-     "local"
-    ],
-    [
-     "Source",
-     "port/vlan"
-    ],
-    [
-     "Dest",
-     "analyzer"
-    ],
-    [
-     "Direction",
-     "rx/tx/both"
-    ],
-    [
-     "Session",
-     "monitor"
-    ],
-    [
-     "Remote",
-     "RSPAN/ERSPAN"
-    ],
-    [
-     "Routing",
-     "none"
-    ],
-    [
-     "Use",
-     "capture"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. Flexible NetFlow",
-    "d": "Flexible NetFlow (FNF) is the modern NetFlow engine: you define your own records (%%match%% = key, %"
-   },
-   {
-    "t": "05. ERSPAN",
-    "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
-   }
-  ],
-  "glossary": [
-   "SPAN"
-  ]
- },
- {
-  "num": "05",
-  "id": "t05",
-  "group": "traffic",
-  "title": "ERSPAN",
-  "blurb": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror",
-  "overview": "**[[ERSPAN]]** (Encapsulated Remote [[SPAN|SPAN]]) mirrors traffic across a **routed/IP network** by **encapsulating mirrored packets in IP/GRE** toward a destination on any reachable subnet. It extends SPAN beyond a single switch. The exam stresses **GRE encapsulation** and remote destinations.",
-  "keyIdea": "ERSPAN = **mirror over IP/GRE (routed)**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "ERSPAN basics",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "06",
+    "id": "t06",
+    "group": "device",
+    "title": "IP SLA",
+    "blurb": "IP SLA generates synthetic probes to measure reachability, latency, jitter and loss.",
+    "overview": "**[[IP SLA]]** generates **synthetic probes** between routers to measure **latency, jitter, loss, and availability** along a path. Results can **react** (track) for routing or config decisions, and are reported via **SNMP/syslog**. It's the classic **SLA testing** tool on Cisco devices.",
+    "keyIdea": "IP SLA = **synthetic probes** (not passive).",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Synthetic probes for path quality",
+        "p": "IP SLA generates test traffic and measures whether a path is reachable and how well it performs. An operation defines the probe type and target, a schedule controls when it runs, and a track object lets routing or failover react to the result. It is more informative than a one-off ping because it can measure latency, jitter, packet loss and application response time."
+      },
+      {
+        "kind": "table",
+        "h": "Common probe types",
+        "cols": [
+          "Probe",
+          "What it measures"
+        ],
+        "rows": [
+          [
+            "ICMP echo",
+            "Reachability and round-trip time"
+          ],
+          [
+            "UDP jitter",
+            "Latency, jitter and packet loss"
+          ],
+          [
+            "TCP connect",
+            "Whether an application port accepts a connection"
+          ],
+          [
+            "HTTP",
+            "Web response time and status"
+          ],
+          [
+            "DNS",
+            "Name resolution behaviour"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Define",
+            "d": "Create the operation with a target and the required probe parameters."
+          },
+          {
+            "t": "Schedule",
+            "d": "Start the operation and set the frequency and timeout."
+          },
+          {
+            "t": "Track",
+            "d": "Bind a track object to the operation so a route or interface can react."
+          },
+          {
+            "t": "Verify",
+            "d": "Use `show ip sla statistics` and `show track` to confirm results and state."
+          },
+          {
+            "t": "Not a passive monitor",
+            "d": "IP SLA adds test traffic; it does not measure every production flow."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Source",
-      "local port/vlan"
-     ],
-     [
-      "Destination",
-      "remote IP/GRE"
-     ],
-     [
-      "Transport",
-      "IP + GRE"
-     ],
-     [
-      "Scope",
-      "routed network"
-     ],
-     [
-      "Use",
-      "remote analyzer"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "ip sla 10\n icmp-echo 192.0.2.5\n frequency 60\n timeout 1000\nip sla schedule 10 life forever start-time now\ntrack 1 ip sla 10 reachability"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show ip sla statistics\nshow ip sla configuration\nshow track 1"
+      }
+    ],
+    "traps": [
+      "IP SLA = **synthetic probes** (not passive).",
+      "Common metric focus: **latency, jitter, loss**.",
+      "%%ip sla%% + %%frequency%% + %%schedule%% is the config pattern.",
+      "**Track** links results to routing reactions.",
+      "UDP jitter = **voice quality (MOS)**."
+    ],
+    "table": {
+      "cols": [
+        "Probe",
+        "Use"
+      ],
+      "rows": [
+        [
+          "ICMP echo",
+          "Basic reachability and RTT"
+        ],
+        [
+          "UDP jitter",
+          "Voice and real-time path quality"
+        ],
+        [
+          "TCP connect",
+          "Application port availability"
+        ],
+        [
+          "HTTP",
+          "Web service response"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. ERSPAN",
+        "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
+      },
+      {
+        "t": "07. Syslog",
+        "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
+      }
+    ],
+    "glossary": [
+      "IP SLA"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Encapsulation",
-    "cols": [
-     "Field",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Outer IP",
-      "router-to-router"
-     ],
-     [
-      "GRE",
-      "tunnels to dest"
-     ],
-     [
-      "Original",
-      "mirrored frame"
-     ],
-     [
-      "Type",
-      "routable"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "ERSPAN vs SPAN vs RSPAN",
-    "cols": [
-     "Type",
-     "Scope"
-    ],
-    "rows": [
-     [
-      "SPAN",
-      "local"
-     ],
-     [
-      "RSPAN",
-      "remote via vlan"
-     ],
-     [
-      "ERSPAN",
-      "remote via IP/GRE"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%monitor session N type erspan-source%%",
-      "source side"
-     ],
-     [
-      "%%... source interface Gi x/y%%",
-      "what to mirror"
-     ],
-     [
-      "%%... destination%%",
-      "remote config"
-     ],
-     [
-      "%%erspan id 100%%",
-      "session key"
-     ],
-     [
-      "%%erspan ip-address ...%%",
-      "destination IP"
-     ],
-     [
-      "%%erspan origin-ip ...%%",
-      "sender IP"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Requirements",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "IP route",
-      "both ends"
-     ],
-     [
-      "GRE support",
-      "platforms"
-     ],
-     [
-      "ACL",
-      "permit GRE"
-     ],
-     [
-      "Overhead",
-      "+50 bytes"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Caveats",
-    "cols": [
-     "Caveat",
-     "Note"
-    ],
-    "rows": [
-     [
-      "MTU",
-      "raise or fragment"
-     ],
-     [
-      "CPU",
-      "extra processing"
-     ],
-     [
-      "Overload",
-      "plan rate"
-     ],
-     [
-      "Only IP",
-      "no raw L2"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Nothing received",
-      "route",
-      "ping dest"
-     ],
-     [
-      "No mirror",
-      "origin IP",
-      "show monitor"
-     ],
-     [
-      "Fragments",
-      "MTU",
-      "raise size"
-     ],
-     [
-      "ACL drop",
-      "GRE",
-      "permit"
-     ],
-     [
-      "Session mismatch",
-      "id",
-      "both sides"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "monitor session 1 type erspan-source\n monitor session 1 source interface GigabitEthernet0/1 both\nmonitor session 1 destination\n erspan id 100\n erspan ip-address 192.0.2.10\n erspan origin-ip 198.51.100.1"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show monitor session 1"
-   }
-  ],
-  "traps": [
-   "ERSPAN = **mirror over IP/GRE (routed)**.",
-   "Uses %%type erspan-source/destination%%.",
-   "Needs **%%erspan id%% + %%erspan ip-address%%**.",
-   "RSPAN = **L2 vlan remote**, ERSPAN = **L3 routed remote**.",
-   "MTU+GRE overhead matters."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "ERSPAN"
-   ],
-   "rows": [
-    [
-     "Scope",
-     "routed"
-    ],
-    [
-     "Transport",
-     "IP/GRE"
-    ],
-    [
-     "Session type",
-     "erspan-source"
-    ],
-    [
-     "Fields",
-     "id/ip/address"
-    ],
-    [
-     "vs SPAN",
-     "remote"
-    ],
-    [
-     "vs RSPAN",
-     "L3 vs L2"
-    ],
-    [
-     "Overhead",
-     "+50 bytes"
-    ],
-    [
-     "Use",
-     "remote mirror"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. SPAN",
-    "d": "SPAN (Switched Port Analyzer) mirrors traffic from one or more source interfaces to a destination po"
-   },
-   {
-    "t": "06. IP SLA",
-    "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
-   }
-  ],
-  "glossary": [
-   "ERSPAN",
-   "SPAN"
-  ]
- },
- {
-  "num": "06",
-  "id": "t06",
-  "group": "device",
-  "title": "IP SLA",
-  "blurb": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability",
-  "overview": "**[[IP SLA]]** generates **synthetic probes** between routers to measure **latency, jitter, loss, and availability** along a path. Results can **react** (track) for routing or config decisions, and are reported via **SNMP/syslog**. It's the classic **SLA testing** tool on Cisco devices.",
-  "keyIdea": "IP SLA = **synthetic probes** (not passive).",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What IP SLA measures",
-    "cols": [
-     "Metric",
-     "Meaning"
+  {
+    "num": "07",
+    "id": "t07",
+    "group": "device",
+    "title": "Syslog",
+    "blurb": "Syslog sends device log messages to a central syslog server (UDP 514).",
+    "overview": "**[[Syslog]]** sends device log messages to a central **syslog server (UDP 514)**. Entries carry **facility + severity** (0–7) and timestamps. Only **one severity is stored on device** (%%logging buffered%%); consoles can differ. The exam tests facilities, severities, and the config commands.",
+    "keyIdea": "Severity numeric: **0 = most severe**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Severity levels and destinations",
+        "p": "Syslog messages carry a facility and a severity from 0 to 7. Lower numbers are more severe: 0 is emergency and 7 is debug. A device can log to its console, an internal buffer, a terminal line or a remote collector. Remote logging is usually UDP 514, while TLS-based logging commonly uses TCP 6514."
+      },
+      {
+        "kind": "table",
+        "h": "Syslog severity levels",
+        "cols": [
+          "Level",
+          "Name",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "0",
+            "Emergency",
+            "System is unusable"
+          ],
+          [
+            "1",
+            "Alert",
+            "Immediate action required"
+          ],
+          [
+            "2",
+            "Critical",
+            "Critical condition"
+          ],
+          [
+            "3",
+            "Error",
+            "Error condition"
+          ],
+          [
+            "4",
+            "Warning",
+            "Warning condition"
+          ],
+          [
+            "5",
+            "Notice",
+            "Normal but significant event"
+          ],
+          [
+            "6",
+            "Informational",
+            "Informational message"
+          ],
+          [
+            "7",
+            "Debug",
+            "Debug-level detail"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Configuration and traps",
+        "items": [
+          {
+            "t": "Remote host",
+            "d": "`logging host <ip>` sends messages to a collector; a source interface makes the source stable."
+          },
+          {
+            "t": "Level",
+            "d": "`logging trap <level>` controls which severities are sent; setting a low level sends more messages."
+          },
+          {
+            "t": "Local buffer",
+            "d": "`logging buffered <level>` keeps recent messages on the device for troubleshooting."
+          },
+          {
+            "t": "Timestamp",
+            "d": "Configure a consistent clock and time zone, or correlated events will be out of order."
+          },
+          {
+            "t": "Rate limiting",
+            "d": "A flood of debug messages can hide the event you need; use `logging rate-limit` carefully."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Latency",
-      "RTT time"
-     ],
-     [
-      "Jitter",
-      "delay variation"
-     ],
-     [
-      "Loss",
-      "packet loss %"
-     ],
-     [
-      "Availability",
-      "reachability"
-     ],
-     [
-      "MOS",
-      "voice quality"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "logging host 192.0.2.10\nlogging trap informational\nterminal monitor"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show logging\nshow logging | include 192"
+      }
+    ],
+    "traps": [
+      "Severity numeric: **0 = most severe**.",
+      "%%logging trap%% = **server level** (differs from console).",
+      "Syslog default **UDP 514** (reliable option TCP 6514).",
+      "**Buffered is on-box**, separate from server.",
+      "Facility + severity identify the message."
+    ],
+    "table": {
+      "cols": [
+        "Destination",
+        "Typical transport"
+      ],
+      "rows": [
+        [
+          "Console",
+          "Local terminal"
+        ],
+        [
+          "Internal buffer",
+          "Device memory"
+        ],
+        [
+          "Remote collector",
+          "UDP 514"
+        ],
+        [
+          "Secure collector",
+          "TCP 6514 with TLS"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. IP SLA",
+        "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
+      },
+      {
+        "t": "08. Telemetry",
+        "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
+      }
+    ],
+    "glossary": [
+      "Syslog"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Operation types",
-    "cols": [
-     "Type",
-     "Use"
-    ],
-    "rows": [
-     [
-      "ICMP echo",
-      "reachability"
-     ],
-     [
-      "UDP jitter",
-      "voice quality"
-     ],
-     [
-      "TCP connect",
-      "app checks"
-     ],
-     [
-      "HTTP",
-      "web availability"
-     ],
-     [
-      "UDP echo",
-      "protocol"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Schedule + tracking",
-    "cols": [
-     "Part",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Create",
-      "probe config"
-     ],
-     [
-      "Schedule",
-      "frequency/start"
-     ],
-     [
-      "Track",
-      "reacts to state"
-     ],
-     [
-      "Reaction",
-      "thresholds/events"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Schedule + tracking",
-      "d": "Schedule runs it; **track** ties it to routing/reactions."
-     },
-     {
-      "t": "Schedule + tracking",
-      "d": "The router sends probes at **set intervals**."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Configuration",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip sla 10%%",
-      "create operation"
-     ],
-     [
-      "%%icmp-echo 192.0.2.5%%",
-      "type/target"
-     ],
-     [
-      "%%frequency 60%%",
-      "every 60 s"
-     ],
-     [
-      "%%timeout 1000%%",
-      "wait"
-     ],
-     [
-      "%%ip sla schedule 10 life forever start-time now%%",
-      "run"
-     ],
-     [
-      "%%track 1 ip sla 10 reachability%%",
-      "track"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Integration",
-    "cols": [
-     "Feature",
-     "Use"
-    ],
-    "rows": [
-     [
-      "Route tracking",
-      "adjust routing"
-     ],
-     [
-      "EEM",
-      "events"
-     ],
-     [
-      "SNMP",
-      "report"
-     ],
-     [
-      "Syslog",
-      "logs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "ICP vs ICMP",
-    "cols": [
-     "Aspect",
-     "IP SLA",
-     "plain ping"
-    ],
-    "rows": [
-     [
-      "Metrics",
-      "jitter/loss/MOS",
-      "reachability"
-     ],
-     [
-      "Schedule",
-      "repeat",
-      "manual"
-     ],
-     [
-      "Integration",
-      "track/SNMP",
-      "none"
-     ],
-     [
-      "Use",
-      "SLA stats",
-      "quick check"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No results",
-      "schedule",
-      "show ip sla config"
-     ],
-     [
-      "Timeouts",
-      "path",
-      "probe type"
-     ],
-     [
-      "No track",
-      "id",
-      "track command"
-     ],
-     [
-      "Noise",
-      "ACL",
-      "permit"
-     ],
-     [
-      "High jitter",
-      "QoS",
-      "metrics"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "ip sla 10\n icmp-echo 192.0.2.5\n frequency 60\n timeout 1000\nip sla schedule 10 life forever start-time now\ntrack 1 ip sla 10 reachability"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show ip sla statistics\nshow ip sla config\nshow track 1"
-   }
-  ],
-  "traps": [
-   "IP SLA = **synthetic probes** (not passive).",
-   "Common metric focus: **latency, jitter, loss**.",
-   "%%ip sla%% + %%frequency%% + %%schedule%% is the config pattern.",
-   "**Track** links results to routing reactions.",
-   "UDP jitter = **voice quality (MOS)**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "IP SLA"
-   ],
-   "rows": [
-    [
-     "Probes",
-     "synthetic"
-    ],
-    [
-     "Metrics",
-     "latency/jitter"
-    ],
-    [
-     "Types",
-     "ICMP/UDP/TCP"
-    ],
-    [
-     "Schedule",
-     "frequency"
-    ],
-    [
-     "Track",
-     "reactions"
-    ],
-    [
-     "Report",
-     "SNMP"
-    ],
-    [
-     "Voice",
-     "MOS"
-    ],
-    [
-     "vs ping",
-     "richer"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "05. ERSPAN",
-    "d": "ERSPAN (Encapsulated Remote SPAN) mirrors traffic across a routed/IP network by encapsulating mirror"
-   },
-   {
-    "t": "07. Syslog",
-    "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
-   }
-  ],
-  "glossary": [
-   "IP SLA"
-  ]
- },
- {
-  "num": "07",
-  "id": "t07",
-  "group": "device",
-  "title": "Syslog",
-  "blurb": "Syslog sends device log messages to a central syslog server (UDP 514).",
-  "overview": "**[[Syslog]]** sends device log messages to a central **syslog server (UDP 514)**. Entries carry **facility + severity** (0–7) and timestamps. Only **one severity is stored on device** (%%logging buffered%%); consoles can differ. The exam tests facilities, severities, and the config commands.",
-  "keyIdea": "Severity numeric: **0 = most severe**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Syslog model",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "08",
+    "id": "t08",
+    "group": "device",
+    "title": "Telemetry",
+    "blurb": "Model-driven telemetry pushes structured device data to collectors at a chosen interval.",
+    "overview": "**[[Telemetry|Streaming telemetry]]** pushes **subscriptions of device data** continuously to collectors using **push** (vs [[SNMP]]'s pull), encoded as **protobuf/JSON** and transported over **gRPC/gNMI/NETCONF**. It's the modern, scalable replacement for polling. The exam focuses on **push vs pull** and the protocols.",
+    "keyIdea": "Telemetry = **push**; SNMP = poll.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "The device pushes data to a collector",
+        "p": "Model-driven telemetry changes monitoring from polling to streaming. The device sends data for selected YANG paths on a schedule or when a value changes. A subscription defines the paths, interval and encoding; gRPC with gNMI or a UDP/TCP collector carries the data. The collector stores and analyses the stream, so the device does not have to answer repeated SNMP polls."
+      },
+      {
+        "kind": "table",
+        "h": "Pull versus push",
+        "cols": [
+          "Aspect",
+          "SNMP polling",
+          "Model-driven telemetry"
+        ],
+        "rows": [
+          [
+            "Direction",
+            "Manager requests data",
+            "Device pushes data"
+          ],
+          [
+            "Interval",
+            "Poll cycle",
+            "Subscription interval or on-change"
+          ],
+          [
+            "Data model",
+            "MIB and OID",
+            "YANG paths"
+          ],
+          [
+            "Scale",
+            "Polling overhead grows with devices and OIDs",
+            "Efficient high-frequency streams"
+          ],
+          [
+            "Transport",
+            "UDP 161",
+            "gRPC, gNMI, UDP or TCP depending on platform"
+          ]
+        ]
+      },
+      {
+        "kind": "list",
+        "h": "Stack and design",
+        "items": [
+          {
+            "t": "Model",
+            "d": "Choose the YANG module and path for the data you need."
+          },
+          {
+            "t": "Encoding",
+            "d": "Compact protobuf is common; JSON is easier to read but larger."
+          },
+          {
+            "t": "Transport",
+            "d": "gRPC over TLS is common for dial-out telemetry; confirm what the platform supports."
+          },
+          {
+            "t": "Subscription",
+            "d": "Decide between periodic and on-change, and set an interval that matches the operational need."
+          },
+          {
+            "t": "Traps",
+            "d": "High-frequency streams can overwhelm the collector; tune intervals, filters and retention."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Message",
-      "event/text"
-     ],
-     [
-      "Facility",
-      "source of event"
-     ],
-     [
-      "Severity",
-      "importance"
-     ],
-     [
-      "Timestamp",
-      "time of event"
-     ],
-     [
-      "Destinations",
-      "console/buffer/server"
-     ]
+    "commands": [
+      {
+        "label": "Commands",
+        "code": "telemetry ietf subscription 10\n encoding encode-kvgpb\n filter xpath /interfaces/interface/statistics\n stream yang-push\n update-policy periodic 30000\n receiver ip address 192.0.2.11 57500 protocol grpc-tcp"
+      }
+    ],
+    "traps": [
+      "Telemetry = **push**; SNMP = poll.",
+      "**gNMI/gRPC** is the modern transport.",
+      "Data defined by **YANG models/paths**.",
+      "On-change vs **periodic** subscriptions.",
+      "**Model-driven telemetry** is the Cisco term."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "YANG path",
+          "Selects the data to stream"
+        ],
+        [
+          "Subscription",
+          "Defines paths, interval and encoding"
+        ],
+        [
+          "Transport",
+          "Carries data to the collector"
+        ],
+        [
+          "Collector",
+          "Stores and analyses the stream"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. Syslog",
+        "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
+      },
+      {
+        "t": "09. Wireshark",
+        "d": "Wireshark is the industry-standard packet analyzer: capture, decode, and filter traffic for troubles"
+      }
+    ],
+    "glossary": [
+      "Telemetry",
+      "SNMP"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Severity levels",
-    "cols": [
-     "Level",
-     "Keyword",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "0",
-      "emergencies",
-      "system down"
-     ],
-     [
-      "1",
-      "alerts",
-      "immediate action"
-     ],
-     [
-      "2",
-      "critical",
-      "critical cond"
-     ],
-     [
-      "3",
-      "errors",
-      "error events"
-     ],
-     [
-      "4",
-      "warnings",
-      "warning"
-     ],
-     [
-      "5",
-      "notification",
-      "normal but notable"
-     ],
-     [
-      "6",
-      "informational",
-      "normal info"
-     ],
-     [
-      "7",
-      "debugging",
-      "debug output"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Destinations",
-    "cols": [
-     "Destination",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Console",
-      "%%logging console%%"
-     ],
-     [
-      "Buffer",
-      "%%logging buffered%%"
-     ],
-     [
-      "Server",
-      "%%logging host%%"
-     ],
-     [
-      "Trap/SNMP",
-      "via NMS"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Config examples",
-    "code": "logging host 192.0.2.10\nlogging trap informational\nlogging console errors\nlogging buffered 8192\nlogging source-interface Loopback0\nlogging timestamp datetime"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%logging host%%",
-      "UDP server"
-     ],
-     [
-      "%%logging trap%%",
-      "server level"
-     ],
-     [
-      "%%logging buffered%%",
-      "on-box ring"
-     ],
-     [
-      "%%logging source-interface%%",
-      "sender IP"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Config examples",
-      "d": "**%%logging trap%% controls what goes to the server.**"
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Syslog vs SNMP traps",
-    "cols": [
-     "Aspect",
-     "Syslog",
-     "SNMP trap"
-    ],
-    "rows": [
-     [
-      "Format",
-      "text",
-      "structured"
-     ],
-     [
-      "Port",
-      "514",
-      "162"
-     ],
-     [
-      "Severity",
-      "numeric",
-      "OID"
-     ],
-     [
-      "Use",
-      "logs",
-      "alerts"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No server logs",
-      "trap level",
-      "show logging"
-     ],
-     [
-      "Buffer zero",
-      "buffered",
-      "config"
-     ],
-     [
-      "Time wrong",
-      "timestamp",
-      "clock"
-     ],
-     [
-      "No UDP",
-      "firewall",
-      "514"
-     ],
-     [
-      "Console spam",
-      "level",
-      "level"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "logging host 192.0.2.10\nlogging trap informational\nterminal monitor"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show logging\nshow logging | include 192"
-   }
-  ],
-  "traps": [
-   "Severity numeric: **0 = most severe**.",
-   "%%logging trap%% = **server level** (differs from console).",
-   "Syslog default **UDP 514** (reliable option TCP 6514).",
-   "**Buffered is on-box**, separate from server.",
-   "Facility + severity identify the message."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Syslog"
-   ],
-   "rows": [
-    [
-     "Port",
-     "UDP 514"
-    ],
-    [
-     "Severity",
-     "0–7"
-    ],
-    [
-     "Lowest #",
-     "most severe"
-    ],
-    [
-     "Buffer",
-     "on-box"
-    ],
-    [
-     "Server",
-     "logging host"
-    ],
-    [
-     "Console",
-     "logging console"
-    ],
-    [
-     "Format",
-     "text"
-    ],
-    [
-     "Trap",
-     "SNMP 162"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. IP SLA",
-    "d": "IP SLA generates synthetic probes between routers to measure latency, jitter, loss, and availability"
-   },
-   {
-    "t": "08. Telemetry",
-    "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
-   }
-  ],
-  "glossary": [
-   "Syslog"
-  ]
- },
- {
-  "num": "08",
-  "id": "t08",
-  "group": "device",
-  "title": "Telemetry",
-  "blurb": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN",
-  "overview": "**[[Telemetry|Streaming telemetry]]** pushes **subscriptions of device data** continuously to collectors using **push** (vs [[SNMP]]'s pull), encoded as **protobuf/JSON** and transported over **gRPC/gNMI/NETCONF**. It's the modern, scalable replacement for polling. The exam focuses on **push vs pull** and the protocols.",
-  "keyIdea": "Telemetry = **push**; SNMP = poll.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Push vs pull",
-    "cols": [
-     "Model",
-     "Direction",
-     "Style"
+  {
+    "num": "09",
+    "id": "t09",
+    "group": "traffic",
+    "title": "Wireshark",
+    "blurb": "Wireshark captures and decodes packets, with capture filters and display filters.",
+    "overview": "**[[Wireshark]]** is the industry-standard **packet analyzer**: capture, decode, and filter traffic for troubleshooting. It reads **pcap/pcapng**, uses **BPF filters**, and visualizes **conversations, flows, and handshakes**. The exam tests capture filters, decoding, and how to analyze common problems.",
+    "keyIdea": "**BPF = capture filter** (syntax); display filters differ.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Capture packets, then filter the view",
+        "p": "Wireshark analyses packet captures in pcap or pcapng format. A capture filter uses BPF syntax and decides what is recorded. A display filter uses Wireshark field syntax and decides what is shown from an existing capture. Keeping those two filter languages separate prevents a lot of confusion."
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Capture at the right point",
+            "d": "Use a SPAN or ERSPAN session so the traffic actually reaches the capture interface."
+          },
+          {
+            "t": "Narrow the capture",
+            "d": "A capture filter reduces file size, but an overly narrow filter can hide the problem."
+          },
+          {
+            "t": "Follow a stream",
+            "d": "Use Follow TCP Stream to reconstruct an application conversation."
+          },
+          {
+            "t": "Expert information",
+            "d": "Check retransmissions, resets, zero-window and malformed packets before blaming the application."
+          },
+          {
+            "t": "Encryption",
+            "d": "TLS protects payloads; without keys you can still analyse handshakes, timing and endpoint behaviour."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "SNMP/poll",
-      "collector asks",
-      "pull"
-     ],
-     [
-      "Streaming",
-      "device sends",
-      "push"
-     ],
-     [
-      "NetFlow",
-      "device exports",
-      "push"
-     ],
-     [
-      "Speed",
-      "on change/interval",
-      "sustained"
-     ]
+    "commands": [
+      {
+        "label": "Capture on the router",
+        "code": "monitor capture CAP interface GigabitEthernet1/0/1 both\nmonitor capture CAP match any protocol ip\nmonitor capture CAP buffer size 10240\nmonitor capture CAP start"
+      },
+      {
+        "label": "Analyze offline",
+        "code": "tshark -i eth0 -f \"tcp port 443\"\ntshark -r capture.pcap -Y \"tls.handshake.type == 1\"\nwireshark capture.pcap"
+      }
+    ],
+    "traps": [
+      "**BPF = capture filter** (syntax); display filters differ.",
+      "Follow TCP stream for **conversation** analysis.",
+      "Use **statistics** for conversations/protocol hierarchy.",
+      "On-box: %%monitor capture%% on IOS-XE.",
+      "pcap/pcapng portability matters."
+    ],
+    "table": {
+      "cols": [
+        "Filter type",
+        "Applied",
+        "Example"
+      ],
+      "rows": [
+        [
+          "Capture",
+          "Before recording",
+          "`tcp port 443`"
+        ],
+        [
+          "Display",
+          "After recording",
+          "`tcp.port == 443`"
+        ],
+        [
+          "Host",
+          "Either, with syntax rules",
+          "`host 10.0.0.1`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Telemetry",
+        "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
+      },
+      {
+        "t": "01. SNMP",
+        "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
+      }
+    ],
+    "glossary": [
+      "Wireshark"
     ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Device pushes on change or interval",
-      "d": "no polling overhead."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Telemetry protocol stack",
-    "cols": [
-     "Layer",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Encoding",
-      "protobuf/JSON"
-     ],
-     [
-      "Transport",
-      "gRPC (best)"
-     ],
-     [
-      "Model",
-      "gNMI/NETCONF"
-     ],
-     [
-      "YANG",
-      "data models"
-     ],
-     [
-      "Subscription",
-      "path/interval"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Models of interest",
-    "cols": [
-     "Model",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "gNMI",
-      "standard network mgmt/telemetry"
-     ],
-     [
-      "gRPC",
-      "high-perf transport"
-     ],
-     [
-      "NETCONF",
-      "config+telemetry"
-     ],
-     [
-      "Cisco",
-      "model-driven on IOS-XE/XR"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Model-driven telemetry (MDT)",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Subscription",
-      "on-change / interval"
-     ],
-     [
-      "Path",
-      "YANG data path"
-     ],
-     [
-      "Collector",
-      "streaming receiver"
-     ],
-     [
-      "Darwin",
-      "cadence"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "vs SNMP/NetFlow",
-    "cols": [
-     "Aspect",
-     "SNMP",
-     "NetFlow",
-     "Telemetry"
-    ],
-    "rows": [
-     [
-      "Mode",
-      "pull",
-      "push",
-      "push"
-     ],
-     [
-      "Richness",
-      "limited",
-      "flows",
-      "full model"
-     ],
-     [
-      "Latency",
-      "poll cycle",
-      "per flow",
-      "on change"
-     ],
-     [
-      "Scale",
-      "poor",
-      "good",
-      "best"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Considerations",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "CPU",
-      "push overhead"
-     ],
-     [
-      "Bandwidth",
-      "continuous"
-     ],
-     [
-      "Security",
-      "TLS"
-     ],
-     [
-      "Collector",
-      "must scale"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No stream",
-      "subscription",
-      "show telemetry"
-     ],
-     [
-      "No data",
-      "xpath",
-      "filter"
-     ],
-     [
-      "gRPC down",
-      "port",
-      "receiver"
-     ],
-     [
-      "Cadence",
-      "update-policy",
-      "interval"
-     ],
-     [
-      "Encoding",
-      "collector",
-      "kvgpb"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Telemetry transports",
-    "cols": [
-     "Transport / model",
-     "How it works",
-     "Typical use"
-    ],
-    "rows": [
-     [
-      "**gRPC / gNMI**",
-      "Open streaming RPC model with encoded payloads",
-      "Model-driven device telemetry"
-     ],
-     [
-      "**JSON-RPC**",
-      "Request/response over HTTPS",
-      "API-style on-demand state"
-     ],
-     [
-      "**Kafka or HTTP receivers**",
-      "Push data to an external collector",
-      "Analytics and data platforms"
-     ],
-     [
-      "**SNMP poll**",
-      "Manager requests data on a schedule",
-      "Legacy monitoring"
-     ],
-     [
-      "**NetFlow export**",
-      "Device exports sampled or full flow records",
-      "Traffic accounting"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "Telemetry design checklist",
-    "items": [
-     {
-      "t": "Choose the model",
-      "d": "Subscribe to the YANG paths you need instead of polling everything."
-     },
-     {
-      "t": "Choose the encoding",
-      "d": "Protobuf is compact; JSON is easier to debug but larger."
-     },
-     {
-      "t": "Choose the interval",
-      "d": "Sub-second streaming is expensive; periodic updates suit most operational metrics."
-     },
-     {
-      "t": "Secure the channel",
-      "d": "Use TLS or an IPsec tunnel when telemetry crosses an untrusted network."
-     },
-     {
-      "t": "Correlate with logs",
-      "d": "Telemetry shows state change; syslog and NetFlow explain traffic and events."
-     }
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Commands",
-    "code": "telemetry ietf subscription 10\n encoding encode-kvgpb\n filter xpath /interfaces/interface/statistics\n stream yang-push\n update-policy periodic 30000\n receiver ip address 192.0.2.11 port 57500 protocol grpc-tcp"
-   }
-  ],
-  "traps": [
-   "Telemetry = **push**; SNMP = poll.",
-   "**gNMI/gRPC** is the modern transport.",
-   "Data defined by **YANG models/paths**.",
-   "On-change vs **periodic** subscriptions.",
-   "**Model-driven telemetry** is the Cisco term."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Telemetry"
-   ],
-   "rows": [
-    [
-     "Mode",
-     "push"
-    ],
-    [
-     "Transport",
-     "gRPC/gNMI"
-    ],
-    [
-     "Data",
-     "YANG"
-    ],
-    [
-     "Subscription",
-     "on-change/periodic"
-    ],
-    [
-     "Encoding",
-     "protobuf/JSON"
-    ],
-    [
-     "vs SNMP",
-     "no polling"
-    ],
-    [
-     "Scale",
-     "best"
-    ],
-    [
-     "Use",
-     "modern"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "07. Syslog",
-    "d": "Syslog sends device log messages to a central syslog server (UDP 514)."
-   },
-   {
-    "t": "09. Wireshark",
-    "d": "Wireshark is the industry-standard packet analyzer: capture, decode, and filter traffic for troubles"
-   }
-  ],
-  "glossary": [
-   "Telemetry",
-   "SNMP"
-  ]
- },
- {
-  "num": "09",
-  "id": "t09",
-  "group": "traffic",
-  "title": "Wireshark",
-  "blurb": "Wireshark is the industry-standard packet analyzer: capture, decode, and filter traffic for troubles",
-  "overview": "**[[Wireshark]]** is the industry-standard **packet analyzer**: capture, decode, and filter traffic for troubleshooting. It reads **pcap/pcapng**, uses **BPF filters**, and visualizes **conversations, flows, and handshakes**. The exam tests capture filters, decoding, and how to analyze common problems.",
-  "keyIdea": "**BPF = capture filter** (syntax); display filters differ.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What Wireshark does",
-    "cols": [
-     "Feature",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Capture",
-      "live interface"
-     ],
-     [
-      "Decode",
-      "protocol tree"
-     ],
-     [
-      "Filter",
-      "BPF + display"
-     ],
-     [
-      "Follow",
-      "TCP stream"
-     ],
-     [
-      "Export",
-      "pcap/pcapng"
-     ],
-     [
-      "Analysis",
-      "experts/statistics"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Capture vs display filters",
-    "cols": [
-     "Filter",
-     "Format",
-     "Example"
-    ],
-    "rows": [
-     [
-      "Capture (BPF)",
-      "before capture",
-      "%%tcp port 443%%"
-     ],
-     [
-      "Display",
-      "after capture",
-      "%%tcp.stream eq 0%%"
-     ],
-     [
-      "Capture",
-      "pcap syntax",
-      "%%host 1.2.3.4%%"
-     ],
-     [
-      "Display",
-      "rich fields",
-      "%%http.request%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common display filters",
-    "cols": [
-     "Filter",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%ip.addr == X%%",
-      "host traffic"
-     ],
-     [
-      "%%tcp.port == 443%%",
-      "specific port"
-     ],
-     [
-      "%%http.request%%",
-      "requests"
-     ],
-     [
-      "%%tcp.stream eq 0%%",
-      "one TCP session"
-     ],
-     [
-      "%%icmp%%",
-      "ping traffic"
-     ],
-     [
-      "%%dns.qry.name%%",
-      "DNS queries"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Protocol decode",
-    "cols": [
-     "Layer",
-     "Useful ops"
-    ],
-    "rows": [
-     [
-      "L2",
-      "ARP, MAC"
-     ],
-     [
-      "L3",
-      "ICMP, fragmentation"
-     ],
-     [
-      "L4",
-      "TCP handshake/retrans"
-     ],
-     [
-      "L7",
-      "HTTP, TLS, DNS"
-     ],
-     [
-      "Expert",
-      "malformed/fail"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Analysis workflows",
-    "cols": [
-     "Problem",
-     "Look for"
-    ],
-    "rows": [
-     [
-      "Slow",
-      "retransmissions"
-     ],
-     [
-      "Unreachable",
-      "ICMP errors"
-     ],
-     [
-      "Auth fail",
-      "401/403"
-     ],
-     [
-      "DNS issue",
-      "NXDOMAIN"
-     ],
-     [
-      "Latency",
-      "RTT graph"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Capture points",
-    "cols": [
-     "Point",
-     "Why"
-    ],
-    "rows": [
-     [
-      "Source host",
-      "egress view"
-     ],
-     [
-      "Server",
-      "ingress view"
-     ],
-     [
-      "SPAN/ERSPAN",
-      "mixed view"
-     ],
-     [
-      "Tap",
-      "full view"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Nothing",
-      "interface",
-      "capture point"
-     ],
-     [
-      "Too much",
-      "no filter",
-      "BPF"
-     ],
-     [
-      "Wrong view",
-      "display filter",
-      "refine"
-     ],
-     [
-      "Truncated",
-      "buffer limit",
-      "size"
-     ],
-     [
-      "Cannot parse",
-      "capture",
-      "tool version"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Capture on the router",
-    "code": "monitor capture CAP interface GigabitEthernet1/0/1 both\nmonitor capture CAP match any protocol ip\nmonitor capture CAP buffer size 10240\nmonitor capture CAP start"
-   },
-   {
-    "label": "Analyze offline",
-    "code": "tshark -i eth0 -f \"tcp port 443\"\ntshark -r capture.pcap -Y \"tls.handshake.type == 1\"\nwireshark capture.pcap"
-   }
-  ],
-  "traps": [
-   "**BPF = capture filter** (syntax); display filters differ.",
-   "Follow TCP stream for **conversation** analysis.",
-   "Use **statistics** for conversations/protocol hierarchy.",
-   "On-box: %%monitor capture%% on IOS-XE.",
-   "pcap/pcapng portability matters."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Wireshark"
-   ],
-   "rows": [
-    [
-     "Role",
-     "packet analyzer"
-    ],
-    [
-     "Format",
-     "pcap/pcapng"
-    ],
-    [
-     "Capture filter",
-     "BPF"
-    ],
-    [
-     "Display filter",
-     "fields"
-    ],
-    [
-     "Follow",
-     "TCP stream"
-    ],
-    [
-     "On-box",
-     "monitor capture"
-    ],
-    [
-     "Export",
-     "pcap"
-    ],
-    [
-     "Use",
-     "troubleshooting"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "08. Telemetry",
-    "d": "Streaming telemetry pushes subscriptions of device data continuously to collectors using push (vs SN"
-   },
-   {
-    "t": "01. SNMP",
-    "d": "SNMP monitors and configures network devices over UDP 161 (poll) / 162 (traps)."
-   }
-  ],
-  "glossary": [
-   "Wireshark"
-  ]
- }
+  }
 ];
 
         const GROUPS = [{"key":"device","label":"Device & Performance","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"traffic","label":"Traffic Monitoring","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"}];
@@ -3358,320 +1738,133 @@
   "q": "Which SNMPv3 security level provides both authentication and encryption?",
   "options": [
    "noAuthNoPriv",
-   "authPriv",
    "authNoPriv",
-   "read-only"
-  ],
-  "answer": 1,
-  "why": "authPriv combines authentication (SHA) and privacy (AES). authNoPriv only authenticates; noAuthNoPriv sends clear text."
- },
- {
-  "q": "A NetFlow record is typically identified by which key fields?",
-  "options": [
-   "The 7-tuple: source/destination IP, ports, protocol, ToS and interfaces",
-   "Only the source MAC address",
-   "The VLAN ID and VNI only",
-   "The BGP AS path only"
-  ],
-  "answer": 0,
-  "why": "A standard NetFlow key uses source and destination IP, source and destination port, IP protocol, IP ToS and ingress/egress interfaces."
- },
- {
-  "q": "What must a SPAN destination port not do?",
-  "options": [
-   "Be on the same switch as the source",
-   "Receive mirrored traffic",
-   "Be a physical interface",
-   "Carry normal production traffic"
-  ],
-  "answer": 3,
-  "why": "A SPAN destination is a dedicated mirror port. If production traffic uses it, the capture and the network are both compromised."
- },
- {
-  "q": "Which technology carries mirrored traffic to a remote collector over IP?",
-  "options": [
-   "Local SPAN",
-   "RSPAN over a native VLAN only",
-   "ERSPAN",
-   "SNMP traps"
+   "authPriv",
+   "community-only"
   ],
   "answer": 2,
-  "why": "ERSPAN encapsulates mirrored packets in GRE so the collector can be off-box. RSPAN uses a special VLAN, not IP."
+  "why": "authPriv authenticates the user and encrypts the payload. authNoPriv authenticates but does not encrypt."
  },
  {
-  "q": "Which syslog severity level is the most severe?",
+  "q": "Which ports are normally used for SNMP polling and notifications?",
   "options": [
-   "7, debugging",
-   "0, emergencies",
-   "3, errors",
-   "6, informational"
-  ],
-  "answer": 1,
-  "why": "Lower severity numbers are more severe. 0 is emergencies and 7 is debugging."
- },
- {
-  "q": "How does model-driven telemetry differ from SNMP polling?",
-  "options": [
-   "The device pushes subscribed data to a receiver",
-   "The manager polls every object continuously",
-   "It uses only UDP port 161",
-   "It requires NetFlow exporters"
+   "UDP 161 for polling and UDP 162 for notifications",
+   "TCP 161 for both",
+   "UDP 514 for both",
+   "TCP 830 for polling"
   ],
   "answer": 0,
-  "why": "MDT subscribes to YANG paths and streams updates. SNMP is a pull model where the manager polls the device."
+  "why": "SNMP managers poll UDP 161. Agents send traps or informs to UDP 162."
  },
  {
-  "q": "Which SNMP message is sent by an agent without the manager asking for it?",
+  "q": "What does NetFlow provide that a packet capture does not?",
   "options": [
-   "Get",
-   "GetNext",
-   "Set",
-   "Trap or inform"
-  ],
-  "answer": 3,
-  "why": "Traps and informs are unsolicited notifications. Get, GetNext and Set are manager-initiated operations."
- },
- {
-  "q": "Why is NetFlow preferred over SNMP interface counters for application traffic accounting?",
-  "options": [
-   "It replaces routing protocols",
-   "It encrypts traffic",
-   "It records flow details such as addresses, ports and protocol",
-   "It only measures CPU usage"
-  ],
-  "answer": 2,
-  "why": "NetFlow describes conversations, not just interface totals. SNMP counters show aggregate bytes and packets per interface."
- },
- {
-  "q": "What is an IP SLA tracking object used for?",
-  "options": [
-   "To assign an IP address to a probe",
-   "To tie a probe result to a route or gateway decision",
-   "To encrypt the probe payload",
-   "To replace Syslog"
+   "The full payload of every packet",
+   "Summarized conversation metadata and volume",
+   "Encrypted traffic decryption",
+   "A replacement for routing"
   ],
   "answer": 1,
-  "why": "A track object watches an IP SLA operation and can withdraw a static route or change HSRP priority when the probe fails."
+  "why": "NetFlow records flow keys and counters, not every payload byte. It is useful for visibility and volume analysis."
  },
  {
-  "q": "Which Wireshark display filter shows only DNS queries?",
+  "q": "In Flexible NetFlow, which object defines the destination and export format?",
   "options": [
-   "dns.flags.response == 0",
-   "tcp.port == 53",
-   "ip.addr == 10.0.0.1",
-   "udp.length > 100"
-  ],
-  "answer": 0,
-  "why": "The DNS response flag distinguishes queries from responses. A capture filter such as `port 53` would capture both directions."
- },
- {
-  "q": "What does a SPAN source direction of `both` capture?",
-  "options": [
-   "Only broadcast traffic",
-   "Only egress traffic",
-   "Only traffic destined to the CPU",
-   "Ingress and egress traffic on the source interface"
-  ],
-  "answer": 3,
-  "why": "SPAN can copy ingress, egress or both directions from the source interface to the destination port."
- },
- {
-  "q": "In SNMP — SNMP model, which value matches \"Manager (NMS)\"?",
-  "options": [
-   "runs on device",
-   "data tree",
-   "polls/collects",
-   "address of data"
-  ],
-  "answer": 2,
-  "why": "SNMP model in SNMP pairs \"Manager (NMS)\" with \"polls/collects\"."
- },
- {
-  "q": "In SNMP — SNMP model, which value matches \"Agent\"?",
-  "options": [
-   "polls/collects",
-   "runs on device",
-   "data tree",
-   "address of data"
+   "The flow record",
+   "The flow exporter",
+   "The flow monitor",
+   "The interface ACL"
   ],
   "answer": 1,
-  "why": "SNMP model in SNMP pairs \"Agent\" with \"runs on device\"."
+  "why": "The record defines match and collect fields; the exporter defines where and how records are sent."
  },
  {
-  "q": "In NetFlow — What NetFlow exports, which value matches \"Flow\"?",
+  "q": "Why should a SPAN destination port not carry normal production traffic?",
   "options": [
-   "conversation",
-   "forward + reverse",
-   "tuple + bytes",
-   "receiver"
-  ],
-  "answer": 0,
-  "why": "What NetFlow exports in NetFlow pairs \"Flow\" with \"conversation\"."
- },
- {
-  "q": "In NetFlow — What NetFlow exports, which value matches \"Direction\"?",
-  "options": [
-   "conversation",
-   "tuple + bytes",
-   "receiver",
-   "forward + reverse"
-  ],
-  "answer": 3,
-  "why": "What NetFlow exports in NetFlow pairs \"Direction\" with \"forward + reverse\"."
- },
- {
-  "q": "In Flexible NetFlow — Flow record anatomy, which value matches \"collect\"?",
-  "options": [
-   "key fields",
-   "collector",
-   "extra fields",
-   "bind"
-  ],
-  "answer": 2,
-  "why": "Flow record anatomy in Flexible NetFlow pairs \"collect\" with \"extra fields\"."
- },
- {
-  "q": "In Flexible NetFlow — Flow record anatomy, which value matches \"exporter\"?",
-  "options": [
-   "key fields",
-   "collector",
-   "extra fields",
-   "bind"
+   "It can only receive multicast",
+   "It is reserved for the mirrored copy and can corrupt the capture",
+   "It disables STP globally",
+   "It cannot be a physical port"
   ],
   "answer": 1,
-  "why": "Flow record anatomy in Flexible NetFlow pairs \"exporter\" with \"collector\"."
+  "why": "The destination is a dedicated mirror port. Mixing production traffic with the copy compromises both the capture and the network."
  },
  {
-  "q": "In SPAN — SPAN basics, which value matches \"Source\"?",
+  "q": "Which statement correctly compares RSPAN and ERSPAN?",
   "options": [
-   "interface/vlan",
-   "analyzer port",
-   "rx/tx/both",
-   "local switch"
-  ],
-  "answer": 0,
-  "why": "SPAN basics in SPAN pairs \"Source\" with \"interface/vlan\"."
- },
- {
-  "q": "In SPAN — SPAN basics, which value matches \"Destination\"?",
-  "options": [
-   "interface/vlan",
-   "rx/tx/both",
-   "local switch",
-   "analyzer port"
-  ],
-  "answer": 3,
-  "why": "SPAN basics in SPAN pairs \"Destination\" with \"analyzer port\"."
- },
- {
-  "q": "In ERSPAN — ERSPAN basics, which value matches \"Source\"?",
-  "options": [
-   "remote IP/GRE",
-   "IP + GRE",
-   "local port/vlan",
-   "routed network"
-  ],
-  "answer": 2,
-  "why": "ERSPAN basics in ERSPAN pairs \"Source\" with \"local port/vlan\"."
- },
- {
-  "q": "In ERSPAN — ERSPAN basics, which value matches \"Destination\"?",
-  "options": [
-   "local port/vlan",
-   "remote IP/GRE",
-   "IP + GRE",
-   "routed network"
+   "RSPAN uses GRE over IP; ERSPAN uses a Layer 2 VLAN",
+   "RSPAN uses a Layer 2 VLAN; ERSPAN uses GRE over IP",
+   "Both use only local ports",
+   "Both require MPLS"
   ],
   "answer": 1,
-  "why": "ERSPAN basics in ERSPAN pairs \"Destination\" with \"remote IP/GRE\"."
+  "why": "RSPAN carries mirrored traffic over a dedicated Layer 2 VLAN. ERSPAN encapsulates it in GRE over a routed IP network."
  },
  {
-  "q": "In IP SLA — What IP SLA measures, which value matches \"Latency\"?",
+  "q": "What does an IP SLA track object allow the device to do?",
   "options": [
-   "RTT time",
-   "delay variation",
-   "packet loss %",
-   "reachability"
-  ],
-  "answer": 0,
-  "why": "What IP SLA measures in IP SLA pairs \"Latency\" with \"RTT time\"."
- },
- {
-  "q": "In IP SLA — What IP SLA measures, which value matches \"Jitter\"?",
-  "options": [
-   "RTT time",
-   "packet loss %",
-   "reachability",
-   "delay variation"
-  ],
-  "answer": 3,
-  "why": "What IP SLA measures in IP SLA pairs \"Jitter\" with \"delay variation\"."
- },
- {
-  "q": "In Syslog — Syslog model, which value matches \"Message\"?",
-  "options": [
-   "source of event",
-   "importance",
-   "event/text",
-   "time of event"
-  ],
-  "answer": 2,
-  "why": "Syslog model in Syslog pairs \"Message\" with \"event/text\"."
- },
- {
-  "q": "In Syslog — Syslog model, which value matches \"Facility\"?",
-  "options": [
-   "event/text",
-   "source of event",
-   "importance",
-   "time of event"
+   "Compress the probe payload",
+   "React to the probe result, such as changing a route",
+   "Encrypt the probe",
+   "Replace SNMP entirely"
   ],
   "answer": 1,
-  "why": "Syslog model in Syslog pairs \"Facility\" with \"source of event\"."
+  "why": "A track object links the IP SLA result to a action, such as withdrawing a static route or changing a gateway priority."
  },
  {
-  "q": "In Telemetry — Push vs pull, which value matches \"SNMP/poll\"?",
+  "q": "In syslog, which severity is more severe?",
   "options": [
-   "collector asks",
-   "device sends",
-   "device exports",
-   "on change/interval"
-  ],
-  "answer": 0,
-  "why": "Push vs pull in Telemetry pairs \"SNMP/poll\" with \"collector asks\"."
- },
- {
-  "q": "In Telemetry — Push vs pull, which value matches \"Streaming\"?",
-  "options": [
-   "collector asks",
-   "device exports",
-   "on change/interval",
-   "device sends"
-  ],
-  "answer": 3,
-  "why": "Push vs pull in Telemetry pairs \"Streaming\" with \"device sends\"."
- },
- {
-  "q": "In Wireshark — What Wireshark does, which value matches \"Capture\"?",
-  "options": [
-   "protocol tree",
-   "BPF + display",
-   "live interface",
-   "TCP stream"
+   "Level 7",
+   "Level 5",
+   "Level 2",
+   "Level 0 is the least severe"
   ],
   "answer": 2,
-  "why": "What Wireshark does in Wireshark pairs \"Capture\" with \"live interface\"."
+  "why": "Lower numbers are more severe. Level 0 is emergency and level 7 is debug."
  },
  {
-  "q": "In Wireshark — What Wireshark does, which value matches \"Decode\"?",
+  "q": "What is the main difference between SNMP polling and model-driven telemetry?",
   "options": [
-   "live interface",
-   "protocol tree",
-   "BPF + display",
-   "TCP stream"
+   "Telemetry uses MIBs; SNMP uses YANG",
+   "Telemetry pushes data; SNMP is normally polled",
+   "SNMP cannot use UDP",
+   "Telemetry only works on switches"
   ],
   "answer": 1,
-  "why": "What Wireshark does in Wireshark pairs \"Decode\" with \"protocol tree\"."
+  "why": "Telemetry is a push model using subscriptions and YANG paths. SNMP is traditionally a pull model."
+ },
+ {
+  "q": "Which Wireshark filter is applied before packets are recorded?",
+  "options": [
+   "A display filter",
+   "A capture filter",
+   "A coloring rule",
+   "A protocol dissector"
+  ],
+  "answer": 1,
+  "why": "A capture filter uses BPF syntax and decides what is recorded. A display filter only hides packets after capture."
+ },
+ {
+  "q": "What does NetFlow sampling do?",
+  "options": [
+   "Captures every packet",
+   "Estimates traffic from a subset of packets",
+   "Encrypts flow records",
+   "Replaces the flow cache"
+  ],
+  "answer": 1,
+  "why": "Sampling examines a subset of packets to estimate volume. It is not a complete packet capture."
+ },
+ {
+  "q": "A SPAN source is a 10 Gbps link but the destination is 1 Gbps. What is the likely result?",
+  "options": [
+   "The source link is throttled to 1 Gbps",
+   "Mirrored packets can be dropped",
+   "STP blocks the source",
+   "The capture becomes encrypted"
+  ],
+  "answer": 1,
+  "why": "A SPAN session does not slow the source. If the copy exceeds the destination capacity, mirrored packets are dropped."
  }
 ];
 
@@ -3759,6 +1952,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

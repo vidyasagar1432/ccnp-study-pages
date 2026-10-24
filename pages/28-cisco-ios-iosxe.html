@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,3302 +600,1089 @@
         const heroIntro = "**[[Cisco IOS]]** starts with the **CLI** and its configuration modes, then **[[Cisco Licensing]]** and **[[Smart Licensing]]** decide what the image may run. The **[[IOS File System]]**, **[[IOS Upgrade]]**, **[[Configuration Archive]]** and **[[ROMMON]]** recovery keep the device bootable, while **[[IOS XE]]**, **[[YANG]]**, **[[RESTCONF]]**, **[[NETCONF]]** and **[[Device Hardening]]** cover the modern platform.";
 
         const topics = [
- {
-  "num": "01",
-  "id": "t01",
-  "group": "cli",
-  "title": "CLI",
-  "blurb": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur",
-  "overview": "The **[[Cisco IOS|Cisco CLI]]** is the primary configuration interface: **exec commands** run in privileged mode, **configure commands** in config mode. Built-in help, **tab completion**, and %%do%% let you verify from anywhere. The exam tests mode navigation, shortcuts, and help features.",
-  "keyIdea": "**Config mode vs EXEC mode** — where each command lives.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Two command classes",
-    "cols": [
-     "Class",
-     "Mode",
-     "Examples"
+  {
+    "num": "01",
+    "id": "t01",
+    "group": "cli",
+    "title": "CLI",
+    "blurb": "The Cisco CLI uses modal exec and configuration levels to inspect and change a device.",
+    "overview": "The **[[Cisco IOS|Cisco CLI]]** is the primary configuration interface: **exec commands** run in privileged mode, **configure commands** in config mode. Built-in help, **tab completion**, and %%do%% let you verify from anywhere. The exam tests mode navigation, shortcuts, and help features.",
+    "keyIdea": "**Config mode vs EXEC mode** — where each command lives.",
+    "sections": [
+      {
+        "h": "IOS/IOS-XE",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">IOS / IOS-XE</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Configuration, IOS XE architecture</text></g></svg>",
+        "caption": "Cisco operating systems."
+      },
+      {
+        "kind": "para",
+        "h": "Modes, context and help",
+        "p": "The Cisco CLI is modal. User EXEC mode allows basic monitoring, privileged EXEC mode allows show and debug plus entry to configuration, and global configuration mode changes the device. Interface, router, line and ACL modes are sub-modes with their own context. The prompt tells you where you are, and `?` shows the commands or keywords valid at that point."
+      },
+      {
+        "kind": "list",
+        "h": "Navigation and traps",
+        "items": [
+          {
+            "t": "Move down",
+            "d": "`enable` enters privileged EXEC; `configure terminal` enters global configuration."
+          },
+          {
+            "t": "Move up",
+            "d": "`exit` leaves one level; `end` or Ctrl-Z returns to privileged EXEC."
+          },
+          {
+            "t": "Run show in config",
+            "d": "Prefix the command with `do`, for example `do show ip interface brief`."
+          },
+          {
+            "t": "Abbreviation",
+            "d": "The CLI accepts unique abbreviations, but scripts should use full commands for clarity."
+          },
+          {
+            "t": "Context matters",
+            "d": "A command that works in global mode may be invalid in interface mode."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "EXEC",
-      "user/privileged",
-      "show, ping"
-     ],
-     [
-      "Configure",
-      "config mode",
-      "interface, router"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "enable\nconfigure terminal\ninterface GigabitEthernet0/1\n ip address 10.0.0.1 255.255.255.0\n no shutdown\nend"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show running-config | include ip address"
+      }
+    ],
+    "traps": [
+      "**Config mode vs EXEC mode** — where each command lives.",
+      "%%?%% vs %%?%% after word — **no-space = completion**.",
+      "%%do%% allows **EXEC inside config**.",
+      "Ctrl+Z / %%end%% = **exit config mode**.",
+      "Abbreviation ok but must be **unambiguous**."
+    ],
+    "table": {
+      "cols": [
+        "Mode",
+        "Prompt",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "User EXEC",
+          "Router>",
+          "Basic monitoring"
+        ],
+        [
+          "Privileged EXEC",
+          "Router#",
+          "Show, debug and file operations"
+        ],
+        [
+          "Global config",
+          "Router(config)#",
+          "Device-wide configuration"
+        ],
+        [
+          "Interface config",
+          "Router(config-if)#",
+          "Interface-specific configuration"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Configuration Modes",
+        "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
+      },
+      {
+        "t": "03. Licensing",
+        "d": "Licensing controls feature entitlements on IOS XE."
+      }
+    ],
+    "glossary": [
+      "Cisco IOS"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Help features",
-    "cols": [
-     "Feature",
-     "Command",
-     "Result"
-    ],
-    "rows": [
-     [
-      "%%?%%",
-      "%%?%%",
-      "all commands"
-     ],
-     [
-      "%%show ?%%",
-      "partial",
-      "subcommands"
-     ],
-     [
-      "%%show x?%%",
-      "no space",
-      "completions"
-     ],
-     [
-      "%%show co?%%",
-      "word",
-      "candidates"
-     ],
-     [
-      "Error",
-      "%%% Invalid input%%",
-      "wrong syntax"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Shortcuts",
-    "cols": [
-     "Shortcut",
-     "Action"
-    ],
-    "rows": [
-     [
-      "Tab",
-      "complete word"
-     ],
-     [
-      "Up arrow",
-      "history"
-     ],
-     [
-      "Ctrl+Z",
-      "exit config"
-     ],
-     [
-      "Ctrl+C",
-      "abort"
-     ],
-     [
-      "Ctrl+Shift+6",
-      "interrupt"
-     ],
-     [
-      "%%do%%",
-      "run EXEC in config"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Privilege levels",
-    "cols": [
-     "Level",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "0",
-      "minimal"
-     ],
-     [
-      "1",
-      "user mode"
-     ],
-     [
-      "15",
-      "privileged"
-     ],
-     [
-      "custom",
-      "via %%privilege%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verification style",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show running-config%%",
-      "live"
-     ],
-     [
-      "%%show startup-config%%",
-      "saved"
-     ],
-     [
-      "%%show version%%",
-      "image/uptime"
-     ],
-     [
-      "%%show interfaces%%",
-      "status"
-     ],
-     [
-      "%%terminal length 0%%",
-      "no paging"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Output modifiers",
-    "cols": [
-     "Modifier",
-     "Use"
-    ],
-    "rows": [
-     [
-      "`",
-      "include X`"
-     ],
-     [
-      "`",
-      "exclude X`"
-     ],
-     [
-      "`",
-      "section X`"
-     ],
-     [
-      "`",
-      "begin X`"
-     ],
-     [
-      "`",
-      "redirect tftp:`"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Bad command",
-      "wrong mode",
-      "mode prompt"
-     ],
-     [
-      "%%% Ambiguous%%",
-      "abbreviation",
-      "type more"
-     ],
-     [
-      "No permission",
-      "privilege",
-      "level"
-     ],
-     [
-      "Can't configure",
-      "no %%configure%%",
-      "privilege 15"
-     ],
-     [
-      "Output too long",
-      "paging",
-      "length 0"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "enable\nconfigure terminal\ninterface GigabitEthernet0/1\n ip address 10.0.0.1 255.255.255.0\n no shutdown\nend"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show running-config | include ip address"
-   }
-  ],
-  "traps": [
-   "**Config mode vs EXEC mode** — where each command lives.",
-   "%%?%% vs %%?%% after word — **no-space = completion**.",
-   "%%do%% allows **EXEC inside config**.",
-   "Ctrl+Z / %%end%% = **exit config mode**.",
-   "Abbreviation ok but must be **unambiguous**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "CLI"
-   ],
-   "rows": [
-    [
-     "EXEC",
-     "show"
-    ],
-    [
-     "Config",
-     "interface"
-    ],
-    [
-     "Help",
-     "?"
-    ],
-    [
-     "Complete",
-     "Tab"
-    ],
-    [
-     "Exit",
-     "end/Ctrl+Z"
-    ],
-    [
-     "In config",
-     "do"
-    ],
-    [
-     "Privilege",
-     "15"
-    ],
-    [
-     "Filter",
-     "\\"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Configuration Modes",
-    "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
-   },
-   {
-    "t": "03. Licensing",
-    "d": "Licensing controls feature entitlements on IOS XE."
-   }
-  ],
-  "glossary": [
-   "Cisco IOS"
-  ]
- },
- {
-  "num": "02",
-  "id": "t02",
-  "group": "cli",
-  "title": "Configuration Modes",
-  "blurb": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g.",
-  "overview": "[[Cisco IOS|IOS]] organizes configuration into **hierarchical modes**: **global → interface/line/router → submode (e.g. under an interface)**. Each mode's prompt reflects the context, and commands apply to that scope only. The exam tests entering, exiting, and nesting modes.",
-  "keyIdea": "**Prompt reveals the mode** — read it.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Mode hierarchy",
-    "cols": [
-     "Mode",
-     "Prompt",
-     "Scope"
+  {
+    "num": "02",
+    "id": "t02",
+    "group": "cli",
+    "title": "Configuration Modes",
+    "blurb": "IOS organizes configuration into global, interface, line, router and other sub-modes.",
+    "overview": "[[Cisco IOS|IOS]] organizes configuration into **hierarchical modes**: **global → interface/line/router → submode (e.g. under an interface)**. Each mode's prompt reflects the context, and commands apply to that scope only. The exam tests entering, exiting, and nesting modes.",
+    "keyIdea": "**Prompt reveals the mode** — read it.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Running, startup and sub-modes",
+        "p": "IOS XE keeps the active configuration in running-config and the saved configuration in startup-config. Changes take effect immediately in running-config, but a reload restores startup-config. Sub-modes such as interface, router and line exist to scope commands to one object or process. Leaving a sub-mode does not undo the change; it only changes where the next command applies."
+      },
+      {
+        "kind": "list",
+        "h": "Apply and verify",
+        "items": [
+          {
+            "t": "Save",
+            "d": "`copy running-config startup-config` or `write memory` persists the running configuration."
+          },
+          {
+            "t": "Inspect",
+            "d": "`show running-config` and `show startup-config` show what is active and what will survive a reload."
+          },
+          {
+            "t": "Compare",
+            "d": "If the platform supports it, use `show archive config differences` or a configuration replace workflow."
+          },
+          {
+            "t": "Trap",
+            "d": "A successful command in running-config is not saved until you copy it to startup-config."
+          },
+          {
+            "t": "Trap",
+            "d": "`no` removes or negates a setting, but the exact syntax depends on the mode and command."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Privileged EXEC",
-      "%%#%%",
-      "all EXEC"
-     ],
-     [
-      "Global config",
-      "%%(config)#%%",
-      "device-wide"
-     ],
-     [
-      "Interface",
-      "%%(config-if)#%%",
-      "one interface"
-     ],
-     [
-      "Line",
-      "%%(config-line)#%%",
-      "console/vty"
-     ],
-     [
-      "Router",
-      "%%(config-router)#%%",
-      "routing protocol"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "configure terminal\n hostname R1\n interface GigabitEthernet0/1\n  ip address 10.0.0.1 255.255.255.0\n  no shutdown\n  exit\n line vty 0 4\n  password cisco\n  exit\n end"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show running-config"
+      }
+    ],
+    "traps": [
+      "**Prompt reveals the mode** — read it.",
+      "%%exit%% = one level; **%%end%%/Ctrl+Z = to EXEC**.",
+      "Interface commands are **interface-scoped**.",
+      "%%do%% runs EXEC **inside config**.",
+      "Global config first; **submodes nest under it**."
+    ],
+    "table": {
+      "cols": [
+        "Mode",
+        "Prompt",
+        "Scope"
+      ],
+      "rows": [
+        [
+          "Global",
+          "`(config)#`",
+          "Whole device"
+        ],
+        [
+          "Interface",
+          "`(config-if)#`",
+          "One interface"
+        ],
+        [
+          "Router",
+          "`(config-router)#`",
+          "One routing process"
+        ],
+        [
+          "Line",
+          "`(config-line)#`",
+          "Console or VTY lines"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. CLI",
+        "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
+      },
+      {
+        "t": "03. Licensing",
+        "d": "Licensing controls feature entitlements on IOS XE."
+      }
+    ],
+    "glossary": [
+      "Cisco IOS"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Entering modes",
-    "cols": [
-     "Command",
-     "From",
-     "To"
-    ],
-    "rows": [
-     [
-      "%%configure terminal%%",
-      "exec",
-      "global"
-     ],
-     [
-      "%%interface Gi0/1%%",
-      "global",
-      "interface"
-     ],
-     [
-      "%%line console 0%%",
-      "global",
-      "line"
-     ],
-     [
-      "%%router ospf 1%%",
-      "global",
-      "router"
-     ],
-     [
-      "%%access-list 100%%",
-      "global",
-      "still global"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Exiting modes",
-    "cols": [
-     "Command",
-     "Action"
-    ],
-    "rows": [
-     [
-      "%%exit%%",
-      "up one level"
-     ],
-     [
-      "%%end%%",
-      "back to EXEC"
-     ],
-     [
-      "Ctrl+Z",
-      "same as end"
-     ],
-     [
-      "%%interface Gi0/2%%",
-      "switch context"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Common global commands",
-    "cols": [
-     "Command",
-     "Scope"
-    ],
-    "rows": [
-     [
-      "%%hostname%%",
-      "device"
-     ],
-     [
-      "%%ip route%%",
-      "routing"
-     ],
-     [
-      "%%access-list%%",
-      "ACLs"
-     ],
-     [
-      "%%snmp-server%%",
-      "NMS"
-     ],
-     [
-      "%%logging%%",
-      "syslog"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Interface submode commands",
-    "cols": [
-     "Command",
-     "Scope"
-    ],
-    "rows": [
-     [
-      "%%ip address%%",
-      "that interface"
-     ],
-     [
-      "%%no shutdown%%",
-      "admin up"
-     ],
-     [
-      "%%description%%",
-      "label"
-     ],
-     [
-      "%%speed%%/%%duplex%%",
-      "L1"
-     ],
-     [
-      "%%channel-group%%",
-      "bundle"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "`do` inside config",
-    "cols": [
-     "Feature",
-     "Use"
-    ],
-    "rows": [
-     [
-      "%%do show%%",
-      "EXEC from config"
-     ],
-     [
-      "%%do ping%%",
-      "test from config"
-     ],
-     [
-      "Saves exit",
-      "quick verify"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "%%do%% inside config",
-      "d": "**%%do%% runs EXEC without leaving config mode.**"
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Wrong prompt",
-      "mode",
-      "type %%exit%%"
-     ],
-     [
-      "Command rejected",
-      "wrong mode",
-      "prompt"
-     ],
-     [
-      "No %%do%%",
-      "IOS",
-      "version"
-     ],
-     [
-      "Nested deep",
-      "stuck",
-      "%%end%%"
-     ],
-     [
-      "Duplicate",
-      "scope",
-      "config context"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "configure terminal\n hostname R1\n interface GigabitEthernet0/1\n  ip address 10.0.0.1 255.255.255.0\n  no shutdown\n  exit\n line vty 0 4\n  password cisco\n  exit\n end"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show running-config"
-   }
-  ],
-  "traps": [
-   "**Prompt reveals the mode** — read it.",
-   "%%exit%% = one level; **%%end%%/Ctrl+Z = to EXEC**.",
-   "Interface commands are **interface-scoped**.",
-   "%%do%% runs EXEC **inside config**.",
-   "Global config first; **submodes nest under it**."
-  ],
-  "table": {
-   "cols": [
-    "Mode",
-    "Prompt"
-   ],
-   "rows": [
-    [
-     "Global",
-     "(config)#"
-    ],
-    [
-     "Interface",
-     "(config-if)#"
-    ],
-    [
-     "Line",
-     "(config-line)#"
-    ],
-    [
-     "Router",
-     "(config-router)#"
-    ],
-    [
-     "Exit",
-     "one level"
-    ],
-    [
-     "End",
-     "to EXEC"
-    ],
-    [
-     "do",
-     "EXEC in config"
-    ],
-    [
-     "Scope",
-     "context"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "01. CLI",
-    "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
-   },
-   {
-    "t": "03. Licensing",
-    "d": "Licensing controls feature entitlements on IOS XE."
-   }
-  ],
-  "glossary": [
-   "Cisco IOS"
-  ]
- },
- {
-  "num": "03",
-  "id": "t03",
-  "group": "license",
-  "title": "Licensing",
-  "blurb": "Licensing controls feature entitlements on IOS XE.",
-  "overview": "**[[Cisco Licensing|Licensing]]** controls feature entitlements on [[IOS XE|IOS XE]]. Legacy **EULA** models (classic LICENSE) are being replaced by **[[Smart Licensing]]**. Packages like **network-advantage** bundle features; images carry a %%universalk9%% and licenses gate functions. The exam tests package tiers and how licenses are evaluated.",
-  "keyIdea": "**universalK9 = one image; licenses gate features.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "License packages (classic)",
-    "cols": [
-     "Package",
-     "Features"
+  {
+    "num": "03",
+    "id": "t03",
+    "group": "license",
+    "title": "Licensing",
+    "blurb": "Licensing controls feature entitlements on IOS XE.",
+    "overview": "**[[Cisco Licensing|Licensing]]** controls feature entitlements on [[IOS XE|IOS XE]]. Legacy **EULA** models (classic LICENSE) are being replaced by **[[Smart Licensing]]**. Packages like **network-advantage** bundle features; images carry a %%universalk9%% and licenses gate functions. The exam tests package tiers and how licenses are evaluated.",
+    "keyIdea": "**universalK9 = one image; licenses gate features.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Feature entitlement on IOS XE",
+        "p": "IOS XE licensing controls which feature sets and throughput levels the device is entitled to use. Modern platforms use Smart Licensing, where the device registers with a licensing service and reports consumption instead of installing a permanent PAK file. The image may contain the code for many features, but entitlement and configuration determine what is actually enabled."
+      },
+      {
+        "kind": "list",
+        "h": "Checks and traps",
+        "items": [
+          {
+            "t": "Current state",
+            "d": "`show license` and `show license status` show registration, authorization and evaluation state."
+          },
+          {
+            "t": "Feature use",
+            "d": "`show license usage` shows what the device is consuming."
+          },
+          {
+            "t": "Evaluation expiry",
+            "d": "An expired evaluation or unauthorized state can disable features or affect support."
+          },
+          {
+            "t": "Registration",
+            "d": "Smart Licensing needs a token, a reachable service and a valid trust relationship."
+          },
+          {
+            "t": "Not the same as a config license",
+            "d": "A license enables capability; it does not configure the feature."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "ipbase",
-      "base routing"
-     ],
-     [
-      "ipservices",
-      "advanced"
-     ],
-     [
-      "Security (in newer)",
-      "security"
-     ],
-     [
-      "network-advantage",
-      "full (modern)"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "license install bootflash:license.lic\nlicense boot level network-advantage\nreload"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show license\nshow license summary\nshow license feature"
+      }
+    ],
+    "traps": [
+      "**universalK9 = one image; licenses gate features.**",
+      "Eval = **60 days** default.",
+      "%%show license summary%% = verify.",
+      "Tiers: **ipbase < ipservices/advantage**.",
+      "**Smart Licensing** is the modern licensing path."
+    ],
+    "table": {
+      "cols": [
+        "Concept",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Entitlement",
+          "Right to use a feature or capacity"
+        ],
+        [
+          "Evaluation",
+          "Temporary use before registration"
+        ],
+        [
+          "Registration",
+          "Device identity established with the licensing service"
+        ],
+        [
+          "Authorization",
+          "Service confirms the entitlement"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Configuration Modes",
+        "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
+      },
+      {
+        "t": "04. Smart Licensing",
+        "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
+      }
+    ],
+    "glossary": [
+      "Cisco Licensing",
+      "IOS XE",
+      "Smart Licensing"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "How licenses gate features",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Entitlement",
-      "feature flag"
-     ],
-     [
-      "Evaluation",
-      "60-day eval"
-     ],
-     [
-      "Permanent",
-      "installed"
-     ],
-     [
-      "Enforcement",
-      "config denied"
-     ],
-     [
-      "Product",
-      "per PID"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "License types",
-    "cols": [
-     "Type",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Eval",
-      "temporary (60 d)"
-     ],
-     [
-      "Evaluation period",
-      "grace"
-     ],
-     [
-      "Permanent",
-      "owned"
-     ],
-     [
-      "Subscription",
-      "time-based"
-     ],
-     [
-      "RTU",
-      "right-to-use"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Image packages",
-    "cols": [
-     "Image",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "universalK9",
-      "all features licensed"
-     ],
-     [
-      "Feature-based",
-      "smaller footprint"
-     ],
-     [
-      "Universal",
-      "future-proof"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Checking licenses",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show license%%",
-      "installed"
-     ],
-     [
-      "%%show license summary%%",
-      "status"
-     ],
-     [
-      "%%show license feature%%",
-      "available"
-     ],
-     [
-      "%%license install%%",
-      "activate"
-     ],
-     [
-      "%%license boot level%%",
-      "set tier"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Classic vs Smart",
-    "cols": [
-     "Aspect",
-     "Classic",
-     "Smart"
-    ],
-    "rows": [
-     [
-      "Activation",
-      "PAK/license file",
-      "portal"
-     ],
-     [
-      "Reporting",
-      "manual",
-      "automatic"
-     ],
-     [
-      "Enforcement",
-      "local",
-      "CSSM"
-     ],
-     [
-      "Model",
-      "perpetual",
-      "subscription"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Feature denied",
-      "no license",
-      "show license feature"
-     ],
-     [
-      "Eval near end",
-      "period",
-      "summary"
-     ],
-     [
-      "Wrong tier",
-      "boot level",
-      "config"
-     ],
-     [
-      "Install fail",
-      "file",
-      "path"
-     ],
-     [
-      "No entitlement",
-      "PID",
-      "correct license"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "license install bootflash:license.lic\nlicense boot level network-advantage\nreload"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show license\nshow license summary\nshow license feature"
-   }
-  ],
-  "traps": [
-   "**universalK9 = one image; licenses gate features.**",
-   "Eval = **60 days** default.",
-   "%%show license summary%% = verify.",
-   "Tiers: **ipbase < ipservices/advantage**.",
-   "**Smart Licensing** is the modern licensing path."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Licensing"
-   ],
-   "rows": [
-    [
-     "Image",
-     "universalK9"
-    ],
-    [
-     "Gate",
-     "features"
-    ],
-    [
-     "Eval",
-     "60 d"
-    ],
-    [
-     "Check",
-     "show license"
-    ],
-    [
-     "Tier",
-     "advantage"
-    ],
-    [
-     "Install",
-     "license install"
-    ],
-    [
-     "Modern",
-     "Smart"
-    ],
-    [
-     "Model",
-     "subscription"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "02. Configuration Modes",
-    "d": "IOS organizes configuration into hierarchical modes: global → interface/line/router → submode (e.g."
-   },
-   {
-    "t": "04. Smart Licensing",
-    "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
-   }
-  ],
-  "glossary": [
-   "Cisco Licensing",
-   "IOS XE",
-   "Smart Licensing"
-  ]
- },
- {
-  "num": "04",
-  "id": "t04",
-  "group": "license",
-  "title": "Smart Licensing",
-  "blurb": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev",
-  "overview": "**[[Smart Licensing]]** replaces PAK files with a **central portal (CSSM)** that manages entitlements across devices. Devices **report usage**; **Smart Licensing Using Policy (SLUP)** is the latest model with evaluation/callback behavior. The exam tests registration, call-home, and the policy model.",
-  "keyIdea": "**Smart Licensing = CSSM + registration token.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "How it works",
-    "cols": [
-     "Component",
-     "Role"
+  {
+    "num": "04",
+    "id": "t04",
+    "group": "license",
+    "title": "Smart Licensing",
+    "blurb": "Smart Licensing uses a central portal to register devices and track feature entitlements.",
+    "overview": "**[[Smart Licensing]]** replaces PAK files with a **central portal (CSSM)** that manages entitlements across devices. Devices **report usage**; **Smart Licensing Using Policy (SLUP)** is the latest model with evaluation/callback behavior. The exam tests registration, call-home, and the policy model.",
+    "keyIdea": "**Smart Licensing = CSSM + registration token.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Register once, report usage continuously",
+        "p": "Smart Licensing uses a smart agent on the device, a token from the licensing portal and a trust relationship with a licensing service. The service can be Cisco Smart Software Manager in the cloud or an on-premises satellite. The device registers, becomes authorized and periodically reports usage. Some deployments use a proxy or offline file exchange instead of direct Internet access."
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Register",
+            "d": "Use `license smart register idtoken <token>` after configuring the transport."
+          },
+          {
+            "t": "Authorize",
+            "d": "Confirm the device reaches the authorized state, not just registered."
+          },
+          {
+            "t": "Report",
+            "d": "The device sends usage periodically; `license smart save usage` supports offline reporting."
+          },
+          {
+            "t": "Transport",
+            "d": "Call-home, a proxy or CSLU may be required when direct Internet access is not available."
+          },
+          {
+            "t": "Clock and trust",
+            "d": "An incorrect clock or expired certificate breaks the trust relationship."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "CSSM",
-      "portal entitlement"
-     ],
-     [
-      "Registration",
-      "token from portal"
-     ],
-     [
-      "Report",
-      "usage to portal"
-     ],
-     [
-      "Call-home",
-      "transport"
-     ],
-     [
-      "Enforcement",
-      "policy"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "license smart register idtoken TOKEN\nlicense smart deregister\nlicense smart reservation request local"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show license status\nshow license summary\nshow call-home"
+      }
+    ],
+    "traps": [
+      "**Smart Licensing = CSSM + registration token.**",
+      "Transport = **call-home / HTTPS**.",
+      "**SLUP = policy-based, 90-day eval**.",
+      "Tiers: **essentials vs advantage**.",
+      "%%license smart register idtoken%% = enable."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Role"
+      ],
+      "rows": [
+        [
+          "CSSM",
+          "Cloud licensing portal"
+        ],
+        [
+          "Satellite",
+          "On-premises licensing service"
+        ],
+        [
+          "Smart agent",
+          "Device-side registration and reporting"
+        ],
+        [
+          "Token",
+          "Credential used to register"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Licensing",
+        "d": "Licensing controls feature entitlements on IOS XE."
+      },
+      {
+        "t": "05. File Systems",
+        "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
+      }
+    ],
+    "glossary": [
+      "Smart Licensing"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Communication",
-    "cols": [
-     "Channel",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "Call-home",
-      "device → Cisco"
-     ],
-     [
-      "Smart transport",
-      "HTTPS"
-     ],
-     [
-      "Offline",
-      "via file"
-     ],
-     [
-      "Proxy",
-      "HTTPS proxy"
-     ],
-     [
-      "Direct",
-      "internet"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Smart Licensing Using Policy (SLUP)",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Default",
-      "policy-based"
-     ],
-     [
-      "Evaluation",
-      "90 days"
-     ],
-     [
-      "Tags",
-      "license types"
-     ],
-     [
-      "Enrollment",
-      "via CSSM"
-     ],
-     [
-      "Enforcement",
-      "after eval"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "License tiers (network)",
-    "cols": [
-     "Tier",
-     "Features"
-    ],
-    "rows": [
-     [
-      "network-essentials",
-      "base"
-     ],
-     [
-      "network-advantage",
-      "full"
-     ],
-     [
-      "dna-essentials/advantage",
-      "DNA"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Registration flow",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "get token"
-     ],
-     [
-      "2",
-      "%%license smart register idtoken <t>%%"
-     ],
-     [
-      "3",
-      "device registers"
-     ],
-     [
-      "4",
-      "entitlements match"
-     ],
-     [
-      "5",
-      "usage reported"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Auth fail",
-      "token"
-     ],
-     [
-      "No report",
-      "call-home"
-     ],
-     [
-      "Eval expiry",
-      "period"
-     ],
-     [
-      "Offline",
-      "manual file"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Not registered",
-      "token",
-      "status"
-     ],
-     [
-      "No entitlements",
-      "portal",
-      "summary"
-     ],
-     [
-      "No report",
-      "call-home",
-      "config"
-     ],
-     [
-      "Eval running",
-      "period",
-      "policy"
-     ],
-     [
-      "Offline",
-      "transport",
-      "reservation"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "license smart register idtoken TOKEN\nlicense smart deregister\nlicense smart reservation request local"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show license status\nshow license summary\nshow call-home"
-   }
-  ],
-  "traps": [
-   "**Smart Licensing = CSSM + registration token.**",
-   "Transport = **call-home / HTTPS**.",
-   "**SLUP = policy-based, 90-day eval**.",
-   "Tiers: **essentials vs advantage**.",
-   "%%license smart register idtoken%% = enable."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Smart Licensing"
-   ],
-   "rows": [
-    [
-     "Portal",
-     "CSSM"
-    ],
-    [
-     "Token",
-     "register"
-    ],
-    [
-     "Transport",
-     "call-home"
-    ],
-    [
-     "Model",
-     "policy"
-    ],
-    [
-     "Eval",
-     "90 d"
-    ],
-    [
-     "Tiers",
-     "essentials/advantage"
-    ],
-    [
-     "Check",
-     "show license status"
-    ],
-    [
-     "vs PAK",
-     "no files"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "03. Licensing",
-    "d": "Licensing controls feature entitlements on IOS XE."
-   },
-   {
-    "t": "05. File Systems",
-    "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
-   }
-  ],
-  "glossary": [
-   "Smart Licensing"
-  ]
- },
- {
-  "num": "05",
-  "id": "t05",
-  "group": "files",
-  "title": "File Systems",
-  "blurb": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p",
-  "overview": "[[Cisco IOS|IOS]] uses a **[[IOS File System|virtual file system]]** with prefixes like **flash:, bootflash:, system:, nvram:**, and network prefixes (**tftp:, ftp:, scp:**). %%dir%%, %%copy%%, and %%show flash%% navigate it. The exam tests prefixes, copy syntax, and where configs live.",
-  "keyIdea": "**running-config = system:; startup-config = nvram:**.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "File system prefixes",
-    "cols": [
-     "Prefix",
-     "Location"
+  {
+    "num": "05",
+    "id": "t05",
+    "group": "files",
+    "title": "File Systems",
+    "blurb": "IOS uses file-system prefixes such as bootflash:, flash:, nvram: and usbflash:.",
+    "overview": "[[Cisco IOS|IOS]] uses a **[[IOS File System|virtual file system]]** with prefixes like **flash:, bootflash:, system:, nvram:**, and network prefixes (**tftp:, ftp:, scp:**). %%dir%%, %%copy%%, and %%show flash%% navigate it. The exam tests prefixes, copy syntax, and where configs live.",
+    "keyIdea": "**running-config = system:; startup-config = nvram:**.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Where images, configs and logs live",
+        "p": "IOS XE exposes several file systems. `bootflash:` usually holds the boot image and packages, `flash:` may be a separate file system, `nvram:` stores the startup configuration on platforms that use it, and `usbflash:` or `usb0:` provides removable storage. The exact names depend on the platform, so always verify with `dir` before copying or deleting anything."
+      },
+      {
+        "kind": "list",
+        "h": "Commands and traps",
+        "items": [
+          {
+            "t": "List",
+            "d": "`dir` shows files and free space; `dir bootflash:` targets a specific file system."
+          },
+          {
+            "t": "Copy",
+            "d": "`copy source destination` moves files, for example from TFTP to bootflash."
+          },
+          {
+            "t": "Verify",
+            "d": "`verify /md5` checks an image against a published checksum."
+          },
+          {
+            "t": "Delete",
+            "d": "`delete` removes a file; on some platforms you must also `squeeze` to reclaim space."
+          },
+          {
+            "t": "Trap",
+            "d": "Filenames are case-sensitive on some file systems, and a full bootflash can break an upgrade."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "%%flash:%%",
-      "flash device"
-     ],
-     [
-      "%%bootflash:%%",
-      "boot flash (XE)"
-     ],
-     [
-      "%%nvram:%%",
-      "startup config"
-     ],
-     [
-      "%%system:%%",
-      "running config"
-     ],
-     [
-      "%%disk0:%%",
-      "removable"
-     ],
-     [
-      "%%tftp:%%",
-      "network"
-     ],
-     [
-      "%%ftp:%% / %%scp:%%",
-      "network"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "copy running-config startup-config\ncopy tftp://10.0.0.5/ios.bin bootflash:"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show file systems\ndir bootflash:\nshow flash:\nverify /md5 bootflash:ios.bin"
+      }
+    ],
+    "traps": [
+      "**running-config = system:; startup-config = nvram:**.",
+      "Prefixes: **flash:, bootflash:, tftp:**.",
+      "%%copy run start%% = save to **NVRAM**.",
+      "%%dir%% lists; %%show file systems%% shows **all prefixes**.",
+      "Image integrity via **%%verify /md5%%**."
+    ],
+    "table": {
+      "cols": [
+        "File system",
+        "Typical use"
+      ],
+      "rows": [
+        [
+          "bootflash:",
+          "Boot image and packages"
+        ],
+        [
+          "flash:",
+          "Platform file storage"
+        ],
+        [
+          "nvram:",
+          "Startup configuration"
+        ],
+        [
+          "usbflash:",
+          "External USB storage"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Smart Licensing",
+        "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
+      },
+      {
+        "t": "06. Software Upgrade",
+        "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
+      }
+    ],
+    "glossary": [
+      "Cisco IOS",
+      "IOS File System"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Where things live",
-    "cols": [
-     "Data",
-     "Location"
-    ],
-    "rows": [
-     [
-      "IOS image",
-      "flash/bootflash"
-     ],
-     [
-      "Running config",
-      "system: running-config"
-     ],
-     [
-      "Startup config",
-      "nvram:startup-config"
-     ],
-     [
-      "Config files",
-      "flash"
-     ],
-     [
-      "Crash info",
-      "flash"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Directory commands",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%dir%%",
-      "list"
-     ],
-     [
-      "%%dir flash:%%",
-      "flash"
-     ],
-     [
-      "%%show flash:%%",
-      "usage"
-     ],
-     [
-      "%%cd%% / %%pwd%%",
-      "navigate"
-     ],
-     [
-      "%%show file systems%%",
-      "all"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Copy operations",
-    "code": "copy flash: flash:\ncopy running-config startup-config\ncopy tftp: flash:\ncopy startup-config running-config"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Copy",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%copy run start%%",
-      "save"
-     ],
-     [
-      "%%copy start run%%",
-      "restore"
-     ],
-     [
-      "%%copy tftp: flash:%%",
-      "get image"
-     ],
-     [
-      "%%copy flash: tftp:%%",
-      "back up"
-     ]
-    ]
-   },
-   {
-    "kind": "list",
-    "h": "",
-    "items": [
-     {
-      "t": "Copy operations",
-      "d": "Copy = **from to**, ask for names interactively."
-     }
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "File details",
-    "cols": [
-     "Item",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Size",
-      "%%dir%%"
-     ],
-     [
-      "Free space",
-      "%%dir flash:%%"
-     ],
-     [
-      "CRC",
-      "%%verify%%"
-     ],
-     [
-      "Show all",
-      "%%show file systems%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "NVRAM vs Flash",
-    "cols": [
-     "Aspect",
-     "NVRAM",
-     "Flash"
-    ],
-    "rows": [
-     [
-      "Content",
-      "startup-config",
-      "image + files"
-     ],
-     [
-      "Volatile?",
-      "no",
-      "no"
-     ],
-     [
-      "Size",
-      "small",
-      "large"
-     ],
-     [
-      "Uses",
-      "boot config",
-      "image/backup"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No space",
-      "flash full",
-      "dir"
-     ],
-     [
-      "Copy fail",
-      "permissions",
-      "path"
-     ],
-     [
-      "Wrong file",
-      "prefix",
-      "fs list"
-     ],
-     [
-      "Image corrupt",
-      "CRC",
-      "verify"
-     ],
-     [
-      "Config lost",
-      "never saved",
-      "copy run start"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "copy running-config startup-config\ncopy tftp://10.0.0.5/ios.bin bootflash:"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show file systems\ndir bootflash:\nshow flash:\nverify /md5 bootflash:ios.bin"
-   }
-  ],
-  "traps": [
-   "**running-config = system:; startup-config = nvram:**.",
-   "Prefixes: **flash:, bootflash:, tftp:**.",
-   "%%copy run start%% = save to **NVRAM**.",
-   "%%dir%% lists; %%show file systems%% shows **all prefixes**.",
-   "Image integrity via **%%verify /md5%%**."
-  ],
-  "table": {
-   "cols": [
-    "Prefix",
-    "Holds"
-   ],
-   "rows": [
-    [
-     "flash",
-     "image/files"
-    ],
-    [
-     "bootflash",
-     "XE image"
-    ],
-    [
-     "nvram",
-     "startup config"
-    ],
-    [
-     "system",
-     "running config"
-    ],
-    [
-     "tftp",
-     "network"
-    ],
-    [
-     "Save",
-     "copy run start"
-    ],
-    [
-     "List",
-     "dir"
-    ],
-    [
-     "Integrity",
-     "verify"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "04. Smart Licensing",
-    "d": "Smart Licensing replaces PAK files with a central portal (CSSM) that manages entitlements across dev"
-   },
-   {
-    "t": "06. Software Upgrade",
-    "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
-   }
-  ],
-  "glossary": [
-   "Cisco IOS",
-   "IOS File System"
-  ]
- },
- {
-  "num": "06",
-  "id": "t06",
-  "group": "files",
-  "title": "Software Upgrade",
-  "blurb": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify.",
-  "overview": "**Upgrading [[IOS XE|IOS XE]]** = copy the new image to flash, **set it as boot**, reload, and verify. Since the image isn't run in-place, you must **point %%boot system%% at it**. Rollback uses the old image. The exam tests the sequence and verification.",
-  "keyIdea": "**%%boot system flash:%% is required** — image won't auto-boot.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Upgrade flow",
-    "cols": [
-     "Step",
-     "Action"
+  {
+    "num": "06",
+    "id": "t06",
+    "group": "files",
+    "title": "Software Upgrade",
+    "blurb": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify.",
+    "overview": "**Upgrading [[IOS XE|IOS XE]]** = copy the new image to flash, **set it as boot**, reload, and verify. Since the image isn't run in-place, you must **point %%boot system%% at it**. Rollback uses the old image. The exam tests the sequence and verification.",
+    "keyIdea": "**%%boot system flash:%% is required** — image won't auto-boot.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Bundle mode versus install mode",
+        "p": "IOS XE supports bundle mode and install mode, and the correct procedure depends on the platform and image. Bundle mode boots a single `.bin` file and is configured with a boot statement. Install mode uses packages, an install repository and `install` commands so the platform can activate and commit a new version. Both need enough bootflash space, a verified image and a rollback plan."
+      },
+      {
+        "kind": "list",
+        "h": "Upgrade workflow",
+        "items": [
+          {
+            "t": "Check",
+            "d": "Confirm free space, current version, boot variable and supported upgrade path."
+          },
+          {
+            "t": "Copy",
+            "d": "Transfer the image with TFTP, FTP, SCP or USB."
+          },
+          {
+            "t": "Verify",
+            "d": "Check the MD5 or SHA checksum before changing the boot path."
+          },
+          {
+            "t": "Activate",
+            "d": "In bundle mode set the boot statement; in install mode add, activate and commit the package."
+          },
+          {
+            "t": "Reload and verify",
+            "d": "Reload, confirm `show version`, then test routing, interfaces and the previous configuration."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "1",
-      "check space"
-     ],
-     [
-      "2",
-      "copy image"
-     ],
-     [
-      "3",
-      "verify checksum"
-     ],
-     [
-      "4",
-      "%%boot system flash:%%"
-     ],
-     [
-      "5",
-      "save config"
-     ],
-     [
-      "6",
-      "reload"
-     ],
-     [
-      "7",
-      "verify version"
-     ]
+    "commands": [
+      {
+        "label": "Copy and verify the image",
+        "code": "copy tftp://10.0.0.5/ios-xe-new.bin bootflash:\nverify /md5 bootflash:ios-xe-new.bin\nshow file systems"
+      },
+      {
+        "label": "Bundle-mode boot",
+        "code": "configure terminal\nboot system bootflash:ios-xe-new.bin\nend\ncopy running-config startup-config\nreload"
+      },
+      {
+        "label": "Install-mode upgrade",
+        "code": "install add file bootflash:cat9k_iosxe.SSA.bin activate commit\nshow install summary\ninstall rollback to committed"
+      },
+      {
+        "label": "Verify after reload",
+        "code": "show version\nshow boot\nshow install summary"
+      }
+    ],
+    "traps": [
+      "**%%boot system flash:%% is required** — image won't auto-boot.",
+      "**%%verify /md5%%** before install.",
+      "**%%show boot%% / %%show version%%** confirm load.",
+      "Copy needs **space + checksum**.",
+      "Rollback = revert **boot statement + reload**."
+    ],
+    "table": {
+      "cols": [
+        "Step",
+        "Bundle mode",
+        "Install mode"
+      ],
+      "rows": [
+        [
+          "Stage",
+          "Copy the `.bin` file",
+          "`install add file ...`"
+        ],
+        [
+          "Select",
+          "`boot system flash:...`",
+          "`install activate`"
+        ],
+        [
+          "Persist",
+          "`copy run start`",
+          "`install commit`"
+        ],
+        [
+          "Verify",
+          "`show version`",
+          "`show install summary`"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. File Systems",
+        "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
+      },
+      {
+        "t": "07. Configuration Backup",
+        "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
+      }
+    ],
+    "glossary": [
+      "IOS XE"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Getting the image",
-    "cols": [
-     "Source",
-     "Command"
-    ],
-    "rows": [
-     [
-      "TFTP",
-      "%%copy tftp: flash:%%"
-     ],
-     [
-      "FTP",
-      "%%copy ftp: flash:%%"
-     ],
-     [
-      "SCP",
-      "%%copy scp: flash:%%"
-     ],
-     [
-      "USB",
-      "%%copy usb0: flash:%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Boot statements",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%boot system flash:ios-xe.bin%%",
-      "boot file"
-     ],
-     [
-      "%%no boot system%%",
-      "clear"
-     ],
-     [
-      "%%show boot%%",
-      "verify"
-     ],
-     [
-      "%%show version%%",
-      "running image"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Verifying integrity",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%verify /md5 flash:img.bin%%",
-      "checksum"
-     ],
-     [
-      "%%dir flash:%%",
-      "size"
-     ],
-     [
-      "%%show flash:%%",
-      "usage"
-     ],
-     [
-      "%%show version%%",
-      "loaded"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Reload and rollback",
-    "cols": [
-     "Action",
-     "Command"
-    ],
-    "rows": [
-     [
-      "Save",
-      "%%copy run start%%"
-     ],
-     [
-      "Reload",
-      "%%reload%%"
-     ],
-     [
-      "Rollback",
-      "old boot statement + reload"
-     ],
-     [
-      "Validate",
-      "%%show version%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Upgrade vs SMU",
-    "cols": [
-     "Term",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "Full image",
-      "full upgrade"
-     ],
-     [
-      "SMU",
-      "patch on running image"
-     ],
-     [
-      "Patch",
-      "no full reload"
-     ],
-     [
-      "Major",
-      "version jump"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Booted old",
-      "boot statement",
-      "show boot"
-     ],
-     [
-      "Space",
-      "flash full",
-      "dir"
-     ],
-     [
-      "Corrupt",
-      "checksum",
-      "verify"
-     ],
-     [
-      "No console",
-      "reload",
-      "watchdog"
-     ],
-     [
-      "Wrong image",
-      "version",
-      "show version"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Bundle mode versus install mode",
-    "cols": [
-     "Mode",
-     "How it boots",
-     "Operational cue"
-    ],
-    "rows": [
-     [
-      "**Bundle mode**",
-      "Boots directly from a single .bin image",
-      "Simple, but packages are not individually managed"
-     ],
-     [
-      "**Install mode**",
-      "Installs packages into a package directory and boots the provisioned set",
-      "Supports add, activate, commit and rollback"
-     ],
-     [
-      "**SMU**",
-      "Installs a small package on top of the base image",
-      "Targeted fix without a full image upgrade"
-     ],
-     [
-      "**Rollback**",
-      "Returns to the previous committed package set",
-      "Requires a prior install state"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Install-mode upgrade flow",
-    "code": "install add file bootflash:cat9k_iosxe.SSA.bin activate commit\nshow install summary\ninstall rollback to committed\nreload"
-   },
-   {
-    "kind": "list",
-    "h": "Upgrade safeguards",
-    "items": [
-     {
-      "t": "Check bootflash space",
-      "d": "An install needs room for the new package and the old one during rollback."
-     },
-     {
-      "t": "Verify integrity",
-      "d": "Compare the MD5 or SHA value before changing the boot variable."
-     },
-     {
-      "t": "Save the config",
-      "d": "Back up startup-config and the current image before the maintenance window."
-     },
-     {
-      "t": "Confirm the boot variable",
-      "d": "A copied image is not used until the boot statement points to it."
-     },
-     {
-      "t": "Have a rollback",
-      "d": "Know the previous image and the console or ROMMON path before reloading."
-     }
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Copy and verify the image",
-    "code": "copy tftp://10.0.0.5/ios-xe-new.bin bootflash:\nverify /md5 bootflash:ios-xe-new.bin\nshow file systems"
-   },
-   {
-    "label": "Bundle-mode boot",
-    "code": "configure terminal\nboot system bootflash:ios-xe-new.bin\nend\ncopy running-config startup-config\nreload"
-   },
-   {
-    "label": "Install-mode upgrade",
-    "code": "install add file bootflash:cat9k_iosxe.SSA.bin activate commit\nshow install summary\ninstall rollback to committed"
-   },
-   {
-    "label": "Verify after reload",
-    "code": "show version\nshow boot\nshow install summary"
-   }
-  ],
-  "traps": [
-   "**%%boot system flash:%% is required** — image won't auto-boot.",
-   "**%%verify /md5%%** before install.",
-   "**%%show boot%% / %%show version%%** confirm load.",
-   "Copy needs **space + checksum**.",
-   "Rollback = revert **boot statement + reload**."
-  ],
-  "table": {
-   "cols": [
-    "Step",
-    "Command"
-   ],
-   "rows": [
-    [
-     "Copy",
-     "copy tftp: flash:"
-    ],
-    [
-     "Verify",
-     "verify /md5"
-    ],
-    [
-     "Boot",
-     "boot system flash:"
-    ],
-    [
-     "Save",
-     "copy run start"
-    ],
-    [
-     "Reload",
-     "reload"
-    ],
-    [
-     "Check",
-     "show version"
-    ],
-    [
-     "Rollback",
-     "old boot"
-    ],
-    [
-     "Patch",
-     "SMU"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "05. File Systems",
-    "d": "IOS uses a virtual file system with prefixes like flash:, bootflash:, system:, nvram:, and network p"
-   },
-   {
-    "t": "07. Configuration Backup",
-    "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
-   }
-  ],
-  "glossary": [
-   "IOS XE"
-  ]
- },
- {
-  "num": "07",
-  "id": "t07",
-  "group": "files",
-  "title": "Configuration Backup",
-  "blurb": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP",
-  "overview": "**[[Configuration Archive|Configuration backup]]** protects the running/startup config by copying it to external storage (**TFTP/SCP/FTP/USB**) or the **archive** feature. %%show archive%% tracks versions. The exam tests copy targets, %%archive%% config, and restore paths.",
-  "keyIdea": "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What to back up",
-    "cols": [
-     "Data",
-     "Source"
+  {
+    "num": "07",
+    "id": "t07",
+    "group": "files",
+    "title": "Configuration Backup",
+    "blurb": "Configuration backup copies the running or startup configuration to external storage.",
+    "overview": "**[[Configuration Archive|Configuration backup]]** protects the running/startup config by copying it to external storage (**TFTP/SCP/FTP/USB**) or the **archive** feature. %%show archive%% tracks versions. The exam tests copy targets, %%archive%% config, and restore paths.",
+    "keyIdea": "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Save the configuration off the device",
+        "p": "A backup is only useful if it is stored somewhere other than the device it protects. The running configuration should be copied to startup-config for persistence and to a remote server for recovery. IOS XE can also keep configuration archives with multiple versions, which is useful for comparing changes and rolling back a bad edit."
+      },
+      {
+        "kind": "list",
+        "h": "Workflow and traps",
+        "items": [
+          {
+            "t": "Timestamp",
+            "d": "Include the date and device name in the backup filename."
+          },
+          {
+            "t": "Off-box",
+            "d": "Copy the file to a server with access control and retention policy."
+          },
+          {
+            "t": "Verify",
+            "d": "Open or compare the backup; an empty or truncated file is worse than no backup."
+          },
+          {
+            "t": "Secrets",
+            "d": "A configuration may contain hashed passwords, keys and community strings; protect the backup."
+          },
+          {
+            "t": "Restore test",
+            "d": "Practice a restore on a lab device before you need it in an outage."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Running config",
-      "system:running-config"
-     ],
-     [
-      "Startup config",
-      "nvram:startup-config"
-     ],
-     [
-      "Image",
-      "flash (separate)"
-     ],
-     [
-      "Archive",
-      "auto snapshots"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "archive\n path tftp://10.0.0.5/archive\n write-memory\n maximum 14\ncopy running-config tftp://10.0.0.5/r1-run.cfg\ncopy tftp://10.0.0.5/r1-run.cfg running-config"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show archive"
+      }
+    ],
+    "traps": [
+      "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
+      "%%show archive%% = **version list**.",
+      "%%copy run start%% ≠ off-box backup (NVRAM only).",
+      "**%%configure replace%%** applies archived config.",
+      "Always **off-box** for real DR."
+    ],
+    "table": {
+      "cols": [
+        "Method",
+        "What it protects"
+      ],
+      "rows": [
+        [
+          "Startup configuration",
+          "Survives a reload"
+        ],
+        [
+          "Remote copy",
+          "Survives device loss"
+        ],
+        [
+          "Configuration archive",
+          "Provides version history"
+        ],
+        [
+          "Configure replace",
+          "Restores a known state"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Software Upgrade",
+        "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
+      },
+      {
+        "t": "08. Recovery",
+        "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
+      }
+    ],
+    "glossary": [
+      "Configuration Archive"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Copy targets",
-    "cols": [
-     "Target",
-     "Command"
-    ],
-    "rows": [
-     [
-      "TFTP",
-      "%%copy running-config tftp:%%"
-     ],
-     [
-      "SCP",
-      "%%copy running-config scp:%%"
-     ],
-     [
-      "FTP",
-      "%%copy running-config ftp:%%"
-     ],
-     [
-      "USB",
-      "%%copy running-config usb0:%%"
-     ],
-     [
-      "Flash",
-      "%%copy run flash:config.bak%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "The archive feature",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%archive%%",
-      "enter archive mode"
-     ],
-     [
-      "%%path tftp://...%%",
-      "destination"
-     ],
-     [
-      "%%write-memory%%",
-      "auto-save"
-     ],
-     [
-      "%%maximum 14%%",
-      "versions kept"
-     ],
-     [
-      "%%show archive%%",
-      "list"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Restore paths",
-    "cols": [
-     "From",
-     "Command"
-    ],
-    "rows": [
-     [
-      "TFTP",
-      "%%copy tftp: running-config%%"
-     ],
-     [
-      "Startup",
-      "%%copy start run%%"
-     ],
-     [
-      "Archive",
-      "%%configure replace file:%%"
-     ],
-     [
-      "Flash",
-      "%%copy flash: running-config%%"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Version management",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Archive max",
-      "keep N"
-     ],
-     [
-      "Increment",
-      "numbered"
-     ],
-     [
-      "Diff",
-      "%%show archive config differences%%"
-     ],
-     [
-      "Timestamp",
-      "in name"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Best practice",
-    "cols": [
-     "Step",
-     "Why"
-    ],
-    "rows": [
-     [
-      "Schedule",
-      "automation"
-     ],
-     [
-      "Off-box",
-      "survive device loss"
-     ],
-     [
-      "Verify",
-      "compare hashes"
-     ],
-     [
-      "Document",
-      "restore steps"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Copy fail",
-      "reachability",
-      "ping target"
-     ],
-     [
-      "No archive",
-      "path",
-      "show archive"
-     ],
-     [
-      "Old versions",
-      "maximum",
-      "config"
-     ],
-     [
-      "Restore bad",
-      "file",
-      "diff"
-     ],
-     [
-      "Disk full",
-      "target",
-      "free space"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "archive\n path tftp://10.0.0.5/archive\n write-memory\n maximum 14\ncopy running-config tftp://10.0.0.5/r1-run.cfg\ncopy tftp://10.0.0.5/r1-run.cfg running-config"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show archive"
-   }
-  ],
-  "traps": [
-   "**%%archive%% + %%path%% + %%write-memory%%** = auto backup.",
-   "%%show archive%% = **version list**.",
-   "%%copy run start%% ≠ off-box backup (NVRAM only).",
-   "**%%configure replace%%** applies archived config.",
-   "Always **off-box** for real DR."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Backup"
-   ],
-   "rows": [
-    [
-     "Source",
-     "running/startup"
-    ],
-    [
-     "Targets",
-     "tftp/scp/ftp"
-    ],
-    [
-     "Archive",
-     "auto versions"
-    ],
-    [
-     "Path",
-     "archive path"
-    ],
-    [
-     "Max",
-     "maximum"
-    ],
-    [
-     "List",
-     "show archive"
-    ],
-    [
-     "Restore",
-     "copy back"
-    ],
-    [
-     "Best",
-     "off-box"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "06. Software Upgrade",
-    "d": "Upgrading IOS XE = copy the new image to flash, set it as boot, reload, and verify."
-   },
-   {
-    "t": "08. Recovery",
-    "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
-   }
-  ],
-  "glossary": [
-   "Configuration Archive"
-  ]
- },
- {
-  "num": "08",
-  "id": "t08",
-  "group": "files",
-  "title": "Recovery",
-  "blurb": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots.",
-  "overview": "**[[ROMMON|Recovery]]** covers regaining access after **lost passwords, corrupt images, or failed boots**. Methods: **password recovery** (config register trick), **[[ROMMON]]** for image recovery, and **emergency-access** on modern IOS XE. The exam tests the recovery steps and the **config-register**.",
-  "keyIdea": "**0x2142 = skip startup config**; 0x2102 = normal.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Config-register",
-    "cols": [
-     "Register",
-     "Meaning"
+  {
+    "num": "08",
+    "id": "t08",
+    "group": "files",
+    "title": "Recovery",
+    "blurb": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots.",
+    "overview": "**[[ROMMON|Recovery]]** covers regaining access after **lost passwords, corrupt images, or failed boots**. Methods: **password recovery** (config register trick), **[[ROMMON]]** for image recovery, and **emergency-access** on modern IOS XE. The exam tests the recovery steps and the **config-register**.",
+    "keyIdea": "**0x2142 = skip startup config**; 0x2102 = normal.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Recover access or a bootable image",
+        "p": "Recovery usually means one of two things: regaining CLI access when the password is lost, or recovering a device that cannot boot a valid image. Password recovery commonly uses the configuration register value 0x2142, which tells the device to ignore startup-config for one boot. Image recovery may require ROMMON, a TFTP transfer or a USB image. Always restore the normal register value and the saved configuration afterward."
+      },
+      {
+        "kind": "list",
+        "h": "Password recovery outline",
+        "items": [
+          {
+            "t": "Prepare",
+            "d": "Have console access, a maintenance window and a backup if one is available."
+          },
+          {
+            "t": "Change the register",
+            "d": "Reload into ROMMON or use the platform procedure to set `confreg 0x2142`."
+          },
+          {
+            "t": "Boot and recover",
+            "d": "Boot, copy startup-config to running-config, then set a new secret."
+          },
+          {
+            "t": "Restore normal boot",
+            "d": "Set `config-register 0x2102` and save the configuration."
+          },
+          {
+            "t": "Trap",
+            "d": "Do not leave 0x2142 permanently; the next reload will ignore the saved configuration."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "0x2102",
-      "normal boot + ROM monitor"
-     ],
-     [
-      "0x2142",
-      "ignore startup-config"
-     ],
-     [
-      "0x2100",
-      "boot to ROMMON"
-     ]
+    "commands": [
+      {
+        "label": "Recovery sequence",
+        "code": "confreg 0x2142\nboot\n! after the device boots\ncopy startup-config running-config\nconfigure terminal\nenable secret NewPass\nconfig-register 0x2102\nend\ncopy running-config startup-config\nreload"
+      }
+    ],
+    "traps": [
+      "**0x2142 = skip startup config**; 0x2102 = normal.",
+      "Break = **ROMMON**.",
+      "Password recovery: **register → boot → copy start run**.",
+      "**Emergency access** on IOS XE (%%platform console virtual%%).",
+      "Restore **0x2102** before reload."
+    ],
+    "table": {
+      "cols": [
+        "Value",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "0x2102",
+          "Normal boot, use startup-config"
+        ],
+        [
+          "0x2142",
+          "Ignore startup-config for recovery"
+        ],
+        [
+          "0x2100",
+          "Enter ROMMON"
+        ],
+        [
+          "0x2101",
+          "Boot the first image on some platforms"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. Configuration Backup",
+        "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
+      },
+      {
+        "t": "09. IOS XE Architecture (Linux-based / daemons)",
+        "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
+      }
+    ],
+    "glossary": [
+      "ROMMON"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Password recovery steps",
-    "cols": [
-     "Step",
-     "Action"
-    ],
-    "rows": [
-     [
-      "1",
-      "power cycle / break"
-     ],
-     [
-      "2",
-      "set register 0x2142"
-     ],
-     [
-      "3",
-      "boot"
-     ],
-     [
-      "4",
-      "copy start run"
-     ],
-     [
-      "5",
-      "change password"
-     ],
-     [
-      "6",
-      "reset register 0x2102"
-     ],
-     [
-      "7",
-      "save + reload"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "ROMMON / ROM monitor",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "Access",
-      "break / register 0"
-     ],
-     [
-      "Purpose",
-      "boot without image"
-     ],
-     [
-      "Commands",
-      "%%boot%%, %%dir%%, %%set%%"
-     ],
-     [
-      "Image boot",
-      "%%boot flash:...%%"
-     ],
-     [
-      "XE",
-      "%%rommon%% with xmodem/usb"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Image recovery",
-    "cols": [
-     "Method",
-     "Use"
-    ],
-    "rows": [
-     [
-      "ROMMON %%boot%%",
-      "load from flash"
-     ],
-     [
-      "USB",
-      "boot device image"
-     ],
-     [
-      "Xmodem",
-      "console slow load"
-     ],
-     [
-      "TFTP in ROMMON",
-      "network"
-     ],
-     [
-      "Emergency access",
-      "XE modern"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Emergency access (IOS XE)",
-    "cols": [
-     "Command",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "%%platform console virtual%%",
-      "virtual console"
-     ],
-     [
-      "%%enable%% recovery",
-      "via emergency"
-     ],
-     [
-      "%%security password%%",
-      "set"
-     ],
-     [
-      "%%exit%%",
-      "back"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Recovery flow table",
-    "cols": [
-     "Problem",
-     "Fix"
-    ],
-    "rows": [
-     [
-      "Lost enable",
-      "0x2142 + reset"
-     ],
-     [
-      "No image",
-      "ROMMON boot/TFTP"
-     ],
-     [
-      "Corrupt image",
-      "verify + recopy"
-     ],
-     [
-      "Locked out",
-      "console break"
-     ],
-     [
-      "XE password",
-      "emergency access"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "No ROMMON",
-      "no break",
-      "timing"
-     ],
-     [
-      "Register lost",
-      "boot",
-      "config-register"
-     ],
-     [
-      "No image",
-      "flash",
-      "dir"
-     ],
-     [
-      "Xmodem slow",
-      "console",
-      "rate"
-     ],
-     [
-      "XE lock",
-      "emergency",
-      "platform console"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Commands",
-    "code": "confreg 0x2142\nboot\ncopy startup-config running-config\nenable secret NewPass\nconfig-register 0x2102\ncopy running-config startup-config\nreload"
-   }
-  ],
-  "traps": [
-   "**0x2142 = skip startup config**; 0x2102 = normal.",
-   "Break = **ROMMON**.",
-   "Password recovery: **register → boot → copy start run**.",
-   "**Emergency access** on IOS XE (%%platform console virtual%%).",
-   "Restore **0x2102** before reload."
-  ],
-  "table": {
-   "cols": [
-    "Register",
-    "Meaning"
-   ],
-   "rows": [
-    [
-     "0x2102",
-     "normal boot"
-    ],
-    [
-     "0x2142",
-     "ignore config"
-    ],
-    [
-     "0x2100",
-     "ROMMON"
-    ],
-    [
-     "Recovery",
-     "0x2142"
-    ],
-    [
-     "Reset",
-     "0x2102"
-    ],
-    [
-     "ROMMON",
-     "break"
-    ],
-    [
-     "XE",
-     "emergency"
-    ],
-    [
-     "Image",
-     "recopy/boot"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "07. Configuration Backup",
-    "d": "Configuration backup protects the running/startup config by copying it to external storage (TFTP/SCP"
-   },
-   {
-    "t": "09. IOS XE Architecture (Linux-based / daemons)",
-    "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
-   }
-  ],
-  "glossary": [
-   "ROMMON"
-  ]
- },
- {
-  "num": "09",
-  "id": "t09",
-  "group": "platform",
-  "title": "IOS XE Architecture (Linux-based / daemons)",
-  "blurb": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing",
-  "overview": "**[[IOS XE]]** is IOS re-architected to run as **applications (daemons) on top of a Linux kernel**, where a single **IOSd daemon** implements the classic [[Cisco IOS|IOS]] control plane inside a **Controller** container. This modular design gives process isolation, **in-service patching (SMU/EEM)**, sub-packaging, and cleaner software management (install mode). The exam tests the daemon/controller model and how it differs from monolithic IOS.",
-  "keyIdea": "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "The fundamental split",
-    "cols": [
-     "Component",
-     "Role"
+  {
+    "num": "09",
+    "id": "t09",
+    "group": "platform",
+    "title": "IOS XE Architecture (Linux-based / daemons)",
+    "blurb": "IOS XE runs IOS processes as daemons on top of a Linux kernel.",
+    "overview": "**[[IOS XE]]** is IOS re-architected to run as **applications (daemons) on top of a Linux kernel**, where a single **IOSd daemon** implements the classic [[Cisco IOS|IOS]] control plane inside a **Controller** container. This modular design gives process isolation, **in-service patching (SMU/EEM)**, sub-packaging, and cleaner software management (install mode). The exam tests the daemon/controller model and how it differs from monolithic IOS.",
+    "keyIdea": "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Linux underneath, IOS on top",
+        "p": "IOS XE runs on a Linux host. The IOS daemon, IOSd, provides the traditional CLI and control-plane protocols, while platform daemons manage hardware and the forwarding engine. The Quantum Flow Processor or another forwarding ASIC handles the data plane. This modular design lets individual processes restart and supports model-driven management, but it also means the control plane and data plane can fail independently."
+      },
+      {
+        "kind": "list",
+        "h": "Operational implications",
+        "items": [
+          {
+            "t": "Process restart",
+            "d": "A failed daemon may restart without rebooting the whole device, but the impact depends on the process."
+          },
+          {
+            "t": "Control versus data",
+            "d": "A busy control plane does not always mean the forwarding path is down, and vice versa."
+          },
+          {
+            "t": "Resource visibility",
+            "d": "Use `show platform resources` and `show processes cpu sorted` to separate control-plane load from forwarding load."
+          },
+          {
+            "t": "Platform differences",
+            "d": "ASIC, licensing and install behaviour vary by platform; do not assume a command works identically everywhere."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "**Linux kernel**",
-      "hosts the platform"
-     ],
-     [
-      "**IOSd daemon**",
-      "runs the classic IOS control plane"
-     ],
-     [
-      "**Controller**",
-      "container/orchestration framework"
-     ],
-     [
-      "**Manager / Protocols**",
-      "platform services, data plane"
-     ]
+    "commands": [
+      {
+        "label": "Verification & checks",
+        "code": "show version\nshow platform\nshow processes cpu\nshow processes memory\nshow platform software process cpu\nshow running-config"
+      }
+    ],
+    "traps": [
+      "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
+      "**IOSd** is the daemon running the classic IOS control plane.",
+      "SMU = **patch without full reload** (differs from classic IOS).",
+      "IOS XE adds **model-driven management (RESTCONF/NetConf) and streaming telemetry**.",
+      "For the operator, **CLI stays the same** — the architecture underneath changed."
+    ],
+    "table": {
+      "cols": [
+        "Component",
+        "Responsibility"
+      ],
+      "rows": [
+        [
+          "Linux kernel",
+          "Host and process isolation"
+        ],
+        [
+          "IOSd",
+          "Control plane and CLI"
+        ],
+        [
+          "Forwarding engine",
+          "Packet forwarding"
+        ],
+        [
+          "Platform daemons",
+          "Hardware management"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Recovery",
+        "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
+      },
+      {
+        "t": "10. YANG & RESTCONF on IOS XE",
+        "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
+      }
+    ],
+    "glossary": [
+      "IOS XE",
+      "Cisco IOS"
     ]
-   },
-   {
-    "kind": "table",
-    "h": "Key daemons / processes",
-    "cols": [
-     "Process",
-     "Function"
-    ],
-    "rows": [
-     [
-      "**IOSd**",
-      "routing/switching control plane"
-     ],
-     [
-      "**fman** / **FMAN-FP**",
-      "features and forwarding managers"
-     ],
-     [
-      "**Controller**",
-      "runs the system"
-     ],
-     [
-      "**hman**",
-      "hardware state/device management"
-     ],
-     [
-      "**Platform processes**",
-      "power, fan, line-card mgmt"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "IOS XE vs classic IOS",
-    "cols": [
-     "Aspect",
-     "Classic IOS",
-     "IOS XE"
-    ],
-    "rows": [
-     [
-      "Architecture",
-      "monolithic",
-      "modular daemons on Linux"
-     ],
-     [
-      "Process isolation",
-      "limited",
-      "strong"
-     ],
-     [
-      "Package/upgrade",
-      "boot one image",
-      "subpackages / SMU"
-     ],
-     [
-      "Patching",
-      "full reload",
-      "SMU without full reload"
-     ],
-     [
-      "Management",
-      "CLI",
-      "+ RESTCONF/NetConf, gNMI"
-     ],
-     [
-      "Dynamic behavior",
-      "static",
-      "EEM, NBAR, streaming telemetry"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Subpackages and packaging",
-    "cols": [
-     "Package",
-     "Meaning"
-    ],
-    "rows": [
-     [
-      "**RPMs / subpackages**",
-      "individual components"
-     ],
-     [
-      "**SMU**",
-      "Small Maintenance Upgrade (patch)"
-     ],
-     [
-      "**FSU**",
-      "Feature Set Upgrade"
-     ],
-     [
-      "**Composite image**",
-      "bundled install"
-     ],
-     [
-      "**Software Add-ons**",
-      "optional feature packages"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Config/persistence and reload behavior",
-    "cols": [
-     "Behavior",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "CLI config",
-      "still Cisco CLI"
-     ],
-     [
-      "Running config",
-      "in memory (Linux processes)"
-     ],
-     [
-      "Startup",
-      "NVRAM"
-     ],
-     [
-      "Non-volatile state",
-      "daemon-managed"
-     ],
-     [
-      "Atomic reload",
-      "reboot of Linux + daemons"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "Verification",
-    "code": "show version\nshow platform\nshow platform software ?\nshow processes cpu\nshow logging\nshow running-config"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%show platform software%%",
-      "software components"
-     ],
-     [
-      "%%show processes cpu%%",
-      "daemon CPU usage"
-     ],
-     [
-      "%%show version%%",
-      "IOS XE image"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Feature missing",
-      "package not installed",
-      "show version"
-     ],
-     [
-      "High CPU",
-      "daemon spike",
-      "show processes cpu"
-     ],
-     [
-      "Patch not applied",
-      "SMU issue",
-      "show package"
-     ],
-     [
-      "Reload on change",
-      "not using SMU",
-      "install mode"
-     ],
-     [
-      "Daemon crash",
-      "restart / core",
-      "show logging"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Verification & checks",
-    "code": "show version\nshow platform\nshow processes cpu\nshow processes memory\nshow platform software process cpu\nshow running-config"
-   }
-  ],
-  "traps": [
-   "**IOS XE = modular daemons on a Linux kernel**, not a single monolithic image.",
-   "**IOSd** is the daemon running the classic IOS control plane.",
-   "SMU = **patch without full reload** (differs from classic IOS).",
-   "IOS XE adds **model-driven management (RESTCONF/NetConf) and streaming telemetry**.",
-   "For the operator, **CLI stays the same** — the architecture underneath changed."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "IOS XE"
-   ],
-   "rows": [
-    [
-     "Base",
-     "Linux kernel"
-    ],
-    [
-     "IOS process",
-     "IOSd"
-    ],
-    [
-     "Model",
-     "modular daemons"
-    ],
-    [
-     "Isolation",
-     "strong"
-    ],
-    [
-     "Patch",
-     "SMU"
-    ],
-    [
-     "Management",
-     "CLI + model-driven"
-    ],
-    [
-     "Telemetry",
-     "streaming"
-    ],
-    [
-     "vs IOS",
-     "modular, not monolithic"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "08. Recovery",
-    "d": "Recovery covers regaining access after lost passwords, corrupt images, or failed boots."
-   },
-   {
-    "t": "10. YANG & RESTCONF on IOS XE",
-    "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
-   }
-  ],
-  "glossary": [
-   "IOS XE",
-   "Cisco IOS"
-  ]
- },
- {
-  "num": "10",
-  "id": "t10",
-  "group": "platform",
-  "title": "YANG & RESTCONF on IOS XE",
-  "blurb": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and",
-  "overview": "**[[YANG]]** is a **data-modeling language** that describes device configuration/state as a structured tree, and **[[RESTCONF]]** plus **[[NETCONF]]** are the model-driven protocols that read/write that model over a network. On IOS XE they enable **programmatic, model-driven configuration and telemetry** instead of screen-scraping the CLI. The exam tests YANG's purpose, RESTCONF vs NETCONF differences, and enabling them on IOS XE.",
-  "keyIdea": "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "What YANG is",
-    "cols": [
-     "Item",
-     "Detail"
+  {
+    "num": "10",
+    "id": "t10",
+    "group": "platform",
+    "title": "YANG & RESTCONF on IOS XE",
+    "blurb": "YANG models data, while NETCONF and RESTCONF provide the protocols to read and change it.",
+    "overview": "**[[YANG]]** is a **data-modeling language** that describes device configuration/state as a structured tree, and **[[RESTCONF]]** plus **[[NETCONF]]** are the model-driven protocols that read/write that model over a network. On IOS XE they enable **programmatic, model-driven configuration and telemetry** instead of screen-scraping the CLI. The exam tests YANG's purpose, RESTCONF vs NETCONF differences, and enabling them on IOS XE.",
+    "keyIdea": "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Model-driven management on the device",
+        "p": "IOS XE exposes YANG models through NETCONF and RESTCONF. NETCONF uses SSH and XML RPC; RESTCONF uses HTTPS and a REST-style data path. The native model is `Cisco-IOS-XE-native`, while standard or OpenConfig models are also available on supported releases. Enabling the services is only the first step: the client still needs a valid model path, authentication and the correct media type."
+      },
+      {
+        "kind": "list",
+        "h": "Enable and verify",
+        "items": [
+          {
+            "t": "NETCONF",
+            "d": "Enable `netconf-yang` and confirm the SSH service and model processes are running."
+          },
+          {
+            "t": "RESTCONF",
+            "d": "Enable `restconf`, `ip http secure-server` and local authentication."
+          },
+          {
+            "t": "Path",
+            "d": "Use `/restconf/data/Cisco-IOS-XE-native:native/...` for native IOS XE configuration."
+          },
+          {
+            "t": "Verify",
+            "d": "Check the running configuration for the services and use `show netconf-yang sessions` for NETCONF sessions."
+          },
+          {
+            "t": "Trap",
+            "d": "Plain HTTP is not RESTCONF; certificate trust and authorization failures are common."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "Type",
-      "data-modeling language (RFC 6020/7950)"
-     ],
-     [
-      "Purpose",
-      "describe configuration + operational state"
-     ],
-     [
-      "Form",
-      "structured tree of nodes"
-     ],
-     [
-      "Vendor",
-      "Cisco native + OpenConfig models"
-     ],
-     [
-      "Use",
-      "NETCONF/RESTCONF/gNMI"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "conf t\n restconf\n netconf-yang\n ip http secure-server\n end"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show platform software yang-management process\nshow ip http server status\nshow netconf-yang sessions\nshow netconf-yang datastores"
+      }
+    ],
+    "traps": [
+      "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
+      "**NETCONF = SSH (830) + XML + RPC**; **RESTCONF = HTTPS (443) + JSON/XML + REST**.",
+      "Enable with **%%restconf%%** and **%%netconf-yang%%**.",
+      "The **native YANG model mirrors the CLI**.",
+      "Model-driven management is the enabler for **SDN automation and telemetry**."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "NETCONF",
+        "RESTCONF"
+      ],
+      "rows": [
+        [
+          "Transport",
+          "SSH TCP 830",
+          "HTTPS TCP 443"
+        ],
+        [
+          "Payload",
+          "XML RPC",
+          "JSON or XML"
+        ],
+        [
+          "Enable",
+          "`netconf-yang`",
+          "`restconf` and HTTPS"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. IOS XE Architecture (Linux-based / daemons)",
+        "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
+      },
+      {
+        "t": "11. Device-Level Security Hardening (IOS XE)",
+        "d": "Device-level security hardening protects the management plane and platform itself — not just the dat"
+      }
+    ],
+    "glossary": [
+      "YANG",
+      "RESTCONF",
+      "NETCONF"
     ]
-   },
-   {
-    "kind": "para",
-    "h": "",
-    "p": "data."
-   },
-   {
-    "kind": "table",
-    "h": "NETCONF vs RESTCONF",
-    "cols": [
-     "Aspect",
-     "NETCONF",
-     "RESTCONF"
-    ],
-    "rows": [
-     [
-      "Transport",
-      "**SSH (port 830)**",
-      "**HTTPS (port 443)**"
-     ],
-     [
-      "Payload",
-      "XML",
-      "JSON/XML"
-     ],
-     [
-      "API style",
-      "RPC (operations)",
-      "RESTful (GET/POST/PUT/DELETE)"
-     ],
-     [
-      "Standard",
-      "RFC 6241",
-      "RFC 8040"
-     ],
-     [
-      "Push/notifications",
-      "yes (nc-notify)",
-      "less native"
-     ],
-     [
-      "Use",
-      "change mgmt, streaming",
-      "simple web apps"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "How they work on IOS XE",
-    "code": "Client --YANG model--> device\nDevice exposes config/state per YANG tree\nClient reads/writes via NETCONF (SSH 830) or RESTCONF (HTTPS 443)"
-   },
-   {
-    "kind": "code",
-    "h": "Enabling on IOS XE",
-    "code": "! enable RESTCONF\nrestconf\n!\n! enable NETCONF\nnetconf-yang\n!\n! optional\nnetconf-yang ssh port 830\nip http secure-server"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%restconf%%",
-      "enable RESTCONF (HTTPS 443)"
-     ],
-     [
-      "%%netconf-yang%%",
-      "enable NETCONF (SSH 830)"
-     ],
-     [
-      "%%ip http secure-server%%",
-      "HTTPS support for RESTCONF"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "YANG data models",
-    "cols": [
-     "Model",
-     "Source"
-    ],
-    "rows": [
-     [
-      "**Cisco-IOS-XE-native**",
-      "maps to native CLI"
-     ],
-     [
-      "OpenConfig",
-      "vendor-neutral"
-     ],
-     [
-      "IETF models",
-      "standard"
-     ],
-     [
-      "YANG modules",
-      "contain containers/lists/leafs"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Typical operations",
-    "cols": [
-     "Operation",
-     "RESTCONF",
-     "NETCONF"
-    ],
-    "rows": [
-     [
-      "Read config/state",
-      "GET",
-      "get / get-config"
-     ],
-     [
-      "Create/update",
-      "PUT/POST/PATCH",
-      "edit-config"
-     ],
-     [
-      "Delete",
-      "DELETE",
-      "edit-config (delete)"
-     ],
-     [
-      "Subscribe telemetry",
-      "—",
-      "subscribe (RFC)"
-     ],
-     [
-      "Datastore",
-      "running/candidate",
-      "running, candidate"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Can't connect",
-      "RESTCONF/NETCONF not enabled",
-      "config"
-     ],
-     [
-      "Auth fail",
-      "AAA not mapped",
-      "privilege"
-     ],
-     [
-      "Wrong port",
-      "443/830 blocked",
-      "reachability"
-     ],
-     [
-      "Bad data",
-      "model mismatch",
-      "YANG tree"
-     ],
-     [
-      "Timeout",
-      "slow / no response",
-      "telemetry"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "conf t\n restconf\n netconf-yang\n ip http secure-server\n end\n!"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show restconf\nshow netconf-yang sessions\nshow netconf-yang datastore"
-   }
-  ],
-  "traps": [
-   "**YANG is the model; NETCONF/RESTCONF are the protocols** — don't conflate them.",
-   "**NETCONF = SSH (830) + XML + RPC**; **RESTCONF = HTTPS (443) + JSON/XML + REST**.",
-   "Enable with **%%restconf%%** and **%%netconf-yang%%**.",
-   "The **native YANG model mirrors the CLI**.",
-   "Model-driven management is the enabler for **SDN automation and telemetry**."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "YANG / RESTCONF"
-   ],
-   "rows": [
-    [
-     "YANG",
-     "data model (tree)"
-    ],
-    [
-     "NETCONF",
-     "SSH 830, XML, RPC"
-    ],
-    [
-     "RESTCONF",
-     "HTTPS 443, JSON, REST"
-    ],
-    [
-     "Enable NETCONF",
-     "netconf-yang"
-    ],
-    [
-     "Enable RESTCONF",
-     "restconf"
-    ],
-    [
-     "Native model",
-     "Cisco-IOS-XE-native"
-    ],
-    [
-     "Open model",
-     "OpenConfig"
-    ],
-    [
-     "Use",
-     "automation/telemetry"
-    ]
-   ]
   },
-  "related": [
-   {
-    "t": "09. IOS XE Architecture (Linux-based / daemons)",
-    "d": "IOS XE is IOS re-architected to run as applications (daemons) on top of a Linux kernel, where a sing"
-   },
-   {
-    "t": "11. Device-Level Security Hardening (IOS XE)",
-    "d": "Device-level security hardening protects the management plane and platform itself — not just the dat"
-   }
-  ],
-  "glossary": [
-   "YANG",
-   "RESTCONF",
-   "NETCONF"
-  ]
- },
- {
-  "num": "11",
-  "id": "t11",
-  "group": "platform",
-  "title": "Device-Level Security Hardening (IOS XE)",
-  "blurb": "Device-level security hardening protects the management plane and platform itself — not just the dat",
-  "overview": "**[[Device Hardening|Device-level security hardening]]** protects the management plane and platform itself — not just the data plane. It covers **login/AAA security, role-based access, control-plane policing (CoPP), SNMP management, and out-of-band/management-plane protection**. The exam tests AAA models, usernames/roles, management-plane protection, and the principle of least privilege.",
-  "keyIdea": "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
-  "sections": [
-   {
-    "kind": "table",
-    "h": "Authentication, Authorization, Accounting (AAA)",
-    "cols": [
-     "Component",
-     "Function"
+  {
+    "num": "11",
+    "id": "t11",
+    "group": "platform",
+    "title": "Device-Level Security Hardening (IOS XE)",
+    "blurb": "Device hardening protects the management plane, credentials and control-plane access.",
+    "overview": "**[[Device Hardening|Device-level security hardening]]** protects the management plane and platform itself — not just the data plane. It covers **login/AAA security, role-based access, control-plane policing (CoPP), SNMP management, and out-of-band/management-plane protection**. The exam tests AAA models, usernames/roles, management-plane protection, and the principle of least privilege.",
+    "keyIdea": "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
+    "sections": [
+      {
+        "kind": "para",
+        "h": "Reduce the attack surface before adding features",
+        "p": "Hardening an IOS XE device means controlling who can reach it, how they authenticate, what they can run and what traffic can reach the control plane. A consistent baseline includes AAA, SSH instead of Telnet, strong secrets, VTY access restrictions, secure SNMP, accurate time and logging, and control-plane protection."
+      },
+      {
+        "kind": "list",
+        "h": "Baseline and traps",
+        "items": [
+          {
+            "t": "AAA first",
+            "d": "Configure `aaa new-model`, a server group and a local fallback before locking down VTY access."
+          },
+          {
+            "t": "Disable Telnet",
+            "d": "Use `transport input ssh` on VTY lines and generate an RSA key for SSH."
+          },
+          {
+            "t": "Least privilege",
+            "d": "Use privilege levels or role-based views instead of giving every operator privilege 15."
+          },
+          {
+            "t": "Management plane",
+            "d": "Apply an ACL to VTY lines and restrict SNMP, HTTP and NETCONF/RESTCONF exposure."
+          },
+          {
+            "t": "Trap",
+            "d": "`service password-encryption` only weakly obscures passwords; use `enable secret` and AAA."
+          }
+        ]
+      }
     ],
-    "rows": [
-     [
-      "**Authentication**",
-      "verify who (login)"
-     ],
-     [
-      "**Authorization**",
-      "what they may do"
-     ],
-     [
-      "**Accounting**",
-      "log what they did"
-     ],
-     [
-      "Server",
-      "TACACS+ or RADIUS"
-     ]
+    "commands": [
+      {
+        "label": "Configuration",
+        "code": "line vty 0 4\n transport input ssh\n login local\n!\nip ssh version 2\nusername admin privilege 15 secret StrongPass\nenable secret HashedSecret\n!\nno ip http server\nsnmp-server group MGT v3 priv\ncontrol-plane\n service-policy input COPP\n!"
+      },
+      {
+        "label": "Verification & checks",
+        "code": "show aaa servers\nshow control-plane host open-ports\nshow ip ssh"
+      }
+    ],
+    "traps": [
+      "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
+      "Use **SSH, not Telnet** — Telnet is cleartext.",
+      "**CoPP protects the control plane**; MPP protects the management plane.",
+      "**%%enable secret%% is hashed; %%enable password%%** is weak/cleartext-capable.",
+      "Enforce **least privilege** with privilege levels and roles."
+    ],
+    "table": {
+      "cols": [
+        "Control",
+        "Primary risk reduced"
+      ],
+      "rows": [
+        [
+          "AAA",
+          "Unauthorized access"
+        ],
+        [
+          "SSH only",
+          "Credential theft"
+        ],
+        [
+          "VTY ACL",
+          "Exposed management"
+        ],
+        [
+          "CoPP or MPP",
+          "Control-plane attack"
+        ],
+        [
+          "SNMPv3",
+          "Monitoring credential exposure"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "10. YANG & RESTCONF on IOS XE",
+        "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
+      },
+      {
+        "t": "01. CLI",
+        "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
+      }
+    ],
+    "glossary": [
+      "Device Hardening"
     ]
-   },
-   {
-    "kind": "para",
-    "h": "",
-    "p": "**RADIUS (UDP 1812/1813)** combines them."
-   },
-   {
-    "kind": "code",
-    "h": "AAA configuration (model)",
-    "code": "aaa new-model\naaa authentication login default group tacacs+ local\naaa authorization exec default group tacacs+ local\naaa accounting exec default start-stop group tacacs+\n!\nusername admin privilege 15 secret StrongPass\ntacacs-server host 192.168.1.10 key SecretKey"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%aaa new-model%%",
-      "enable AAA"
-     ],
-     [
-      "%%aaa authentication login%%",
-      "login method"
-     ],
-     [
-      "%%aaa authorization exec%%",
-      "privilege per session"
-     ],
-     [
-      "%%aaa accounting%%",
-      "audit trail"
-     ],
-     [
-      "%%username ... privilege%%",
-      "local user + level"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Local users, privileges & roles",
-    "cols": [
-     "Item",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "%%username admin privilege 15%%",
-      "highest level local user"
-     ],
-     [
-      "%%privilege level%% (0–15)",
-      "granular command access"
-     ],
-     [
-      "%%role%% / %%parser view%%",
-      "role-based access"
-     ],
-     [
-      "%%enable secret%%",
-      "privileged password (hashed)"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Management plane / control plane protection",
-    "cols": [
-     "Control",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "**CoPP (control-plane policing / protection)**",
-      "rate-limit control-plane traffic"
-     ],
-     [
-      "**Management-plane protection (MPP)**",
-      "restrict mgmt protocols to mgmt interfaces"
-     ],
-     [
-      "SSH vs Telnet",
-      "encrypt management sessions"
-     ],
-     [
-      "ACL on vty",
-      "limit who can reach line vty"
-     ]
-    ]
-   },
-   {
-    "kind": "code",
-    "h": "CoPP configuration",
-    "code": "class-map match-any TELNET-CP\n match protocol telnet\n!\npolicy-map COPP\n class TELNET-CP\n  police cir 8000 bc 1500\n   conform-action transmit\n   exceed-action drop\n!\ncontrol-plane\n service-policy input COPP"
-   },
-   {
-    "kind": "table",
-    "h": "",
-    "cols": [
-     "Command",
-     "Purpose"
-    ],
-    "rows": [
-     [
-      "%%control-plane%%",
-      "enter control plane"
-     ],
-     [
-      "%%service-policy input%%",
-      "apply CoPP"
-     ],
-     [
-      "%%police cir%%",
-      "limit rate"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Other hardening measures",
-    "cols": [
-     "Measure",
-     "Detail"
-    ],
-    "rows": [
-     [
-      "SSH only + %%transport input ssh%%",
-      "disable Telnet"
-     ],
-     [
-      "SNMPv3",
-      "encrypted, authenticated"
-     ],
-     [
-      "%%login block-for%%",
-      "brute-force protection"
-     ],
-     [
-      "%%no ip http server%%",
-      "disable unencrypted HTTP"
-     ],
-     [
-      "NTP authentication",
-      "prevent spoofing"
-     ],
-     [
-      "Logging / NTP / identity",
-      "visibility"
-     ]
-    ]
-   },
-   {
-    "kind": "table",
-    "h": "Troubleshooting & common failures",
-    "cols": [
-     "Symptom",
-     "Likely cause",
-     "Check"
-    ],
-    "rows": [
-     [
-      "Can't authenticate",
-      "AAA server / local",
-      "show aaa, show run aaa"
-     ],
-     [
-      "Locked out",
-      "ACL / vty",
-      "line vty access"
-     ],
-     [
-      "Management slow",
-      "CoPP too strict",
-      "show control-plane"
-     ],
-     [
-      "No SSH",
-      "transport/http",
-      "show ip ssh"
-     ],
-     [
-      "SNMP fails",
-      "v3 auth/priv",
-      "snmp config"
-     ]
-    ]
-   }
-  ],
-  "commands": [
-   {
-    "label": "Configuration",
-    "code": "line vty 0 4\n transport input ssh\n login local\n!\nip ssh version 2\nusername admin privilege 15 secret StrongPass\nenable secret HashedSecret\n!\nno ip http server\nsnmp-server group MGT v3 priv\ncontrol-plane\n service-policy input COPP\n!"
-   },
-   {
-    "label": "Verification & checks",
-    "code": "show aaa\nshow control-plane\nshow ip ssh"
-   }
-  ],
-  "traps": [
-   "**TACACS+ separates AAA and encrypts everything; RADIUS combines auth/accounting and encrypts only the password.**",
-   "Use **SSH, not Telnet** — Telnet is cleartext.",
-   "**CoPP protects the control plane**; MPP protects the management plane.",
-   "**%%enable secret%% is hashed; %%enable password%%** is weak/cleartext-capable.",
-   "Enforce **least privilege** with privilege levels and roles."
-  ],
-  "table": {
-   "cols": [
-    "Item",
-    "Hardening"
-   ],
-   "rows": [
-    [
-     "AAA",
-     "TACACS+ / RADIUS"
-    ],
-    [
-     "Local user",
-     "username + privilege"
-    ],
-    [
-     "Password",
-     "enable secret"
-    ],
-    [
-     "Remote mgmt",
-     "SSH (no Telnet)"
-    ],
-    [
-     "Control plane",
-     "CoPP"
-    ],
-    [
-     "Mgmt plane",
-     "MPP"
-    ],
-    [
-     "SNMP",
-     "v3"
-    ],
-    [
-     "Least privilege",
-     "levels/roles"
-    ]
-   ]
-  },
-  "related": [
-   {
-    "t": "10. YANG & RESTCONF on IOS XE",
-    "d": "YANG is a data-modeling language that describes device configuration/state as a structured tree, and"
-   },
-   {
-    "t": "01. CLI",
-    "d": "The Cisco CLI is the primary configuration interface: exec commands run in privileged mode, configur"
-   }
-  ],
-  "glossary": [
-   "Device Hardening"
-  ]
- }
+  }
 ];
 
         const GROUPS = [{"key":"cli","label":"CLI Operation","chip":"bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300","dot":"bg-indigo-600","bullet":"text-indigo-600 dark:text-indigo-400"},{"key":"license","label":"Licensing","chip":"bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300","dot":"bg-emerald-600","bullet":"text-emerald-600 dark:text-emerald-400"},{"key":"files","label":"File & Image Management","chip":"bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300","dot":"bg-amber-600","bullet":"text-amber-600 dark:text-amber-400"},{"key":"platform","label":"Architecture, Automation & Security","chip":"bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300","dot":"bg-violet-600","bullet":"text-violet-600 dark:text-violet-400"}];
@@ -3950,323 +1744,147 @@
 
         const quiz = [
  {
-  "q": "Which IOS XE upgrade mode supports add, activate, commit and rollback of packages?",
+  "q": "Which mode lets you run show commands and enter configuration mode?",
   "options": [
-   "Bundle mode only",
+   "User EXEC",
+   "Privileged EXEC",
+   "Interface configuration",
+   "ROMMON"
+  ],
+  "answer": 1,
+  "why": "Privileged EXEC is entered with `enable`. It allows full show and debug commands and `configure terminal`."
+ },
+ {
+  "q": "Which command persists the running configuration across a reload?",
+  "options": [
+   "`copy startup-config running-config`",
+   "`copy running-config startup-config`",
+   "`show running-config`",
+   "`reload`"
+  ],
+  "answer": 1,
+  "why": "Copying running-config to startup-config saves the active configuration so it is loaded after a reload."
+ },
+ {
+  "q": "What does a license entitlement provide?",
+  "options": [
+   "The right to use a feature or capacity",
+   "The configuration of that feature",
+   "A backup of the running configuration",
+   "A guaranteed hardware replacement"
+  ],
+  "answer": 0,
+  "why": "A license grants entitlement. The feature still has to be configured, and the device must be authorized."
+ },
+ {
+  "q": "After Smart Licensing registration, what additional state should you confirm?",
+  "options": [
+   "The device is authorized",
+   "The device is in ROMMON",
+   "The device has a startup-config",
+   "The device is a route reflector"
+  ],
+  "answer": 0,
+  "why": "Registration establishes identity. Authorization confirms that the service accepts the entitlement and usage."
+ },
+ {
+  "q": "Which file system normally holds the IOS XE boot image?",
+  "options": [
+   "`nvram:`",
+   "`bootflash:`",
+   "`tftp:`",
+   "`system:`"
+  ],
+  "answer": 1,
+  "why": "On most IOS XE platforms the boot image and packages are stored in `bootflash:`. `nvram:` holds the startup configuration where applicable."
+ },
+ {
+  "q": "Which upgrade mode uses `install add`, `activate` and `commit`?",
+  "options": [
+   "Bundle mode",
    "Install mode",
    "ROMMON mode",
-   "Configuration register mode"
+   "Configuration replace"
   ],
   "answer": 1,
-  "why": "Install mode manages packages and supports rollback. Bundle mode boots directly from a single .bin file."
+  "why": "Install mode manages packages through the install lifecycle. Bundle mode boots from a single `.bin` image."
  },
  {
-  "q": "What must be done before a copied IOS XE image is used at the next boot?",
+  "q": "Why should a configuration backup be stored off the device?",
   "options": [
-   "Point the boot statement to the image",
-   "Disable CEF",
-   "Delete the startup config",
-   "Change the VTY password"
+   "To make the backup smaller",
+   "To recover if the device is lost or unbootable",
+   "To encrypt the configuration",
+   "To replace the startup configuration"
+  ],
+  "answer": 1,
+  "why": "A local copy is lost with the device. An off-box backup is needed for hardware failure or a corrupted file system."
+ },
+ {
+  "q": "A router boots with configuration register 0x2142. What is the effect?",
+  "options": [
+   "It ignores startup-config",
+   "It enters ROMMON",
+   "It enables Smart Licensing",
+   "It disables all interfaces permanently"
   ],
   "answer": 0,
-  "why": "Copying the file does not change the boot variable. The boot system statement or install process must select the new image."
+  "why": "0x2142 ignores startup-config for that boot, which is useful for password recovery. Restore 0x2102 afterward."
  },
  {
-  "q": "Where does the device read the startup configuration from after a reload?",
+  "q": "In IOS XE, what is the role of IOSd?",
   "options": [
-   "RAM",
-   "Flash only",
-   "TFTP",
-   "NVRAM"
-  ],
-  "answer": 3,
-  "why": "startup-config is stored in NVRAM. It is loaded into RAM as running-config during boot."
- },
- {
-  "q": "A router is configured with register 0x2142. What is the effect at the next reload?",
-  "options": [
-   "It boots the first image in flash",
-   "It enables ROMMON only",
-   "It ignores the startup configuration and starts without it",
-   "It erases the IOS image"
-  ],
-  "answer": 2,
-  "why": "0x2142 bypasses startup-config for password recovery. Restore 0x2102 after recovering access."
- },
- {
-  "q": "Which command verifies the MD5 checksum of a copied IOS XE image?",
-  "options": [
-   "show md5 image",
-   "verify /md5 bootflash:image.bin",
-   "checksum flash:image",
-   "dir /md5"
-  ],
-  "answer": 1,
-  "why": "The verify command compares the file checksum. A mismatch means the copy is corrupt and should not be booted."
- },
- {
-  "q": "What does the configuration archive feature provide?",
-  "options": [
-   "Timestamped backups of the running configuration",
-   "A copy of the IOS image",
-   "An encrypted licence file",
-   "A replacement for startup-config"
+   "It provides the control plane and traditional CLI",
+   "It is the hardware forwarding ASIC",
+   "It stores the startup configuration",
+   "It replaces the Linux kernel"
   ],
   "answer": 0,
-  "why": "The archive stores configuration snapshots and can support rollback. It does not replace the IOS image or licence."
+  "why": "IOSd is the IOS daemon. It runs control-plane protocols and the CLI, while platform daemons and the forwarding engine handle other roles."
  },
  {
-  "q": "Which step is required before RESTCONF can be used on IOS XE?",
+  "q": "Which protocol uses SSH on TCP 830 and XML RPC?",
   "options": [
-   "Disable the HTTPS server",
-   "Delete the running configuration",
-   "Enable only SNMPv2c",
-   "Enable the RESTCONF and NETCONF-YANG services"
-  ],
-  "answer": 3,
-  "why": "IOS XE needs `restconf`, `netconf-yang` and the HTTPS server. RESTCONF uses HTTPS and YANG models."
- },
- {
-  "q": "In CLI, what does the command \"show ?\" show or do?",
-  "options": [
-   "?",
-   "no space",
-   "partial",
-   "word"
-  ],
-  "answer": 2,
-  "why": "Help features in CLI pairs \"show ?\" with \"partial\"."
- },
- {
-  "q": "In CLI, what does the command \"show x?\" show or do?",
-  "options": [
-   "?",
-   "no space",
-   "partial",
-   "word"
+   "RESTCONF",
+   "NETCONF",
+   "SNMP",
+   "Syslog"
   ],
   "answer": 1,
-  "why": "Help features in CLI pairs \"show x?\" with \"no space\"."
+  "why": "NETCONF uses SSH and XML RPC. RESTCONF uses HTTPS and a REST-style data path."
  },
  {
-  "q": "In Configuration Modes — Mode hierarchy, which value matches \"Privileged EXEC\"?",
+  "q": "Which services must be enabled for RESTCONF on IOS XE?",
   "options": [
-   "#",
-   "(config)#",
-   "(config-if)#",
-   "(config-line)#"
+   "Only SNMP",
+   "`restconf` and the HTTPS server",
+   "Only Telnet",
+   "Only NETCONF"
+  ],
+  "answer": 1,
+  "why": "RESTCONF needs the `restconf` feature and a secure HTTP server, plus authentication and authorization."
+ },
+ {
+  "q": "Which control reduces the risk of an exposed management plane?",
+  "options": [
+   "A VTY ACL and SSH-only access",
+   "Telnet with a weak password",
+   "Disabling logging",
+   "Using SNMPv1"
   ],
   "answer": 0,
-  "why": "Mode hierarchy in Configuration Modes pairs \"Privileged EXEC\" with \"#\"."
+  "why": "Restrict management sources with an ACL and use SSH. Telnet and SNMPv1 expose credentials in clear text."
  },
  {
-  "q": "In Configuration Modes — Mode hierarchy, which value matches \"Global config\"?",
+  "q": "What is the purpose of control-plane policing or management-plane protection?",
   "options": [
-   "#",
-   "(config-if)#",
-   "(config-line)#",
-   "(config)#"
-  ],
-  "answer": 3,
-  "why": "Mode hierarchy in Configuration Modes pairs \"Global config\" with \"(config)#\"."
- },
- {
-  "q": "In Licensing — License packages (classic), which value matches \"ipbase\"?",
-  "options": [
-   "advanced",
-   "security",
-   "base routing",
-   "full (modern)"
-  ],
-  "answer": 2,
-  "why": "License packages (classic) in Licensing pairs \"ipbase\" with \"base routing\"."
- },
- {
-  "q": "In Licensing — License packages (classic), which value matches \"ipservices\"?",
-  "options": [
-   "base routing",
-   "advanced",
-   "security",
-   "full (modern)"
+   "To forward user data faster",
+   "To protect the control and management planes from excessive or malicious traffic",
+   "To replace AAA",
+   "To assign VLANs"
   ],
   "answer": 1,
-  "why": "License packages (classic) in Licensing pairs \"ipservices\" with \"advanced\"."
- },
- {
-  "q": "In Smart Licensing — How it works, which value matches \"CSSM\"?",
-  "options": [
-   "portal entitlement",
-   "token from portal",
-   "usage to portal",
-   "transport"
-  ],
-  "answer": 0,
-  "why": "How it works in Smart Licensing pairs \"CSSM\" with \"portal entitlement\"."
- },
- {
-  "q": "In Smart Licensing — How it works, which value matches \"Registration\"?",
-  "options": [
-   "portal entitlement",
-   "usage to portal",
-   "transport",
-   "token from portal"
-  ],
-  "answer": 3,
-  "why": "How it works in Smart Licensing pairs \"Registration\" with \"token from portal\"."
- },
- {
-  "q": "In File Systems — File system prefixes, which value matches \"flash:\"?",
-  "options": [
-   "boot flash (XE)",
-   "startup config",
-   "flash device",
-   "running config"
-  ],
-  "answer": 2,
-  "why": "File system prefixes in File Systems pairs \"flash:\" with \"flash device\"."
- },
- {
-  "q": "In File Systems — File system prefixes, which value matches \"bootflash:\"?",
-  "options": [
-   "flash device",
-   "boot flash (XE)",
-   "startup config",
-   "running config"
-  ],
-  "answer": 1,
-  "why": "File system prefixes in File Systems pairs \"bootflash:\" with \"boot flash (XE)\"."
- },
- {
-  "q": "In Software Upgrade — Getting the image, which value matches \"TFTP\"?",
-  "options": [
-   "copy tftp: flash:",
-   "copy ftp: flash:",
-   "copy scp: flash:",
-   "copy usb0: flash:"
-  ],
-  "answer": 0,
-  "why": "Getting the image in Software Upgrade pairs \"TFTP\" with \"copy tftp: flash:\"."
- },
- {
-  "q": "In Software Upgrade — Getting the image, which value matches \"FTP\"?",
-  "options": [
-   "copy tftp: flash:",
-   "copy scp: flash:",
-   "copy usb0: flash:",
-   "copy ftp: flash:"
-  ],
-  "answer": 3,
-  "why": "Getting the image in Software Upgrade pairs \"FTP\" with \"copy ftp: flash:\"."
- },
- {
-  "q": "In Configuration Backup — What to back up, which value matches \"Running config\"?",
-  "options": [
-   "nvram:startup-config",
-   "flash (separate)",
-   "system:running-config",
-   "auto snapshots"
-  ],
-  "answer": 2,
-  "why": "What to back up in Configuration Backup pairs \"Running config\" with \"system:running-config\"."
- },
- {
-  "q": "In Configuration Backup — What to back up, which value matches \"Startup config\"?",
-  "options": [
-   "system:running-config",
-   "nvram:startup-config",
-   "flash (separate)",
-   "auto snapshots"
-  ],
-  "answer": 1,
-  "why": "What to back up in Configuration Backup pairs \"Startup config\" with \"nvram:startup-config\"."
- },
- {
-  "q": "In Recovery — ROMMON / ROM monitor, which value matches \"Commands\"?",
-  "options": [
-   "boot, dir, set",
-   "break / register 0",
-   "boot without image",
-   "boot flash:..."
-  ],
-  "answer": 0,
-  "why": "ROMMON / ROM monitor in Recovery pairs \"Commands\" with \"boot, dir, set\"."
- },
- {
-  "q": "In Recovery — ROMMON / ROM monitor, which value matches \"Image boot\"?",
-  "options": [
-   "break / register 0",
-   "boot without image",
-   "boot, dir, set",
-   "boot flash:..."
-  ],
-  "answer": 3,
-  "why": "ROMMON / ROM monitor in Recovery pairs \"Image boot\" with \"boot flash:...\"."
- },
- {
-  "q": "In IOS XE Architecture (Linux-based / daemons) — The fundamental split, which value matches \"Linux kernel\"?",
-  "options": [
-   "runs the classic IOS control plane",
-   "container/orchestration framework",
-   "hosts the platform",
-   "platform services, data plane"
-  ],
-  "answer": 2,
-  "why": "The fundamental split in IOS XE Architecture (Linux-based / daemons) pairs \"Linux kernel\" with \"hosts the platform\"."
- },
- {
-  "q": "In IOS XE Architecture (Linux-based / daemons) — The fundamental split, which value matches \"IOSd daemon\"?",
-  "options": [
-   "hosts the platform",
-   "runs the classic IOS control plane",
-   "container/orchestration framework",
-   "platform services, data plane"
-  ],
-  "answer": 1,
-  "why": "The fundamental split in IOS XE Architecture (Linux-based / daemons) pairs \"IOSd daemon\" with \"runs the classic IOS control plane\"."
- },
- {
-  "q": "In YANG & RESTCONF on IOS XE — What YANG is, which value matches \"Form\"?",
-  "options": [
-   "structured tree of nodes",
-   "data-modeling language (RFC 6020/7950)",
-   "describe configuration + operational state",
-   "Cisco native + OpenConfig models"
-  ],
-  "answer": 0,
-  "why": "What YANG is in YANG & RESTCONF on IOS XE pairs \"Form\" with \"structured tree of nodes\"."
- },
- {
-  "q": "In YANG & RESTCONF on IOS XE — What YANG is, which value matches \"Vendor\"?",
-  "options": [
-   "data-modeling language (RFC 6020/7950)",
-   "describe configuration + operational state",
-   "structured tree of nodes",
-   "Cisco native + OpenConfig models"
-  ],
-  "answer": 3,
-  "why": "What YANG is in YANG & RESTCONF on IOS XE pairs \"Vendor\" with \"Cisco native + OpenConfig models\"."
- },
- {
-  "q": "In Device-Level Security Hardening (IOS XE) — Authentication, Authorization, Accounting (AAA), which value matches \"Authentication\"?",
-  "options": [
-   "what they may do",
-   "log what they did",
-   "verify who (login)",
-   "TACACS+ or RADIUS"
-  ],
-  "answer": 2,
-  "why": "Authentication, Authorization, Accounting (AAA) in Device-Level Security Hardening (IOS XE) pairs \"Authentication\" with \"verify who (login)\"."
- },
- {
-  "q": "In Device-Level Security Hardening (IOS XE) — Authentication, Authorization, Accounting (AAA), which value matches \"Authorization\"?",
-  "options": [
-   "verify who (login)",
-   "what they may do",
-   "log what they did",
-   "TACACS+ or RADIUS"
-  ],
-  "answer": 1,
-  "why": "Authentication, Authorization, Accounting (AAA) in Device-Level Security Hardening (IOS XE) pairs \"Authorization\" with \"what they may do\"."
+  "why": "CoPP and MPP rate-limit or filter traffic destined to the device so a flood does not overwhelm the control plane."
  }
 ];
 
@@ -4354,6 +1972,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

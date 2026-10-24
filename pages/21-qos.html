@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,1014 +600,3036 @@
         const heroIntro = `**[[QoS]]** decides which packets get better treatment when the network is busy. It starts with **[[QoS Classification|classification]]** and **[[QoS Marking|marking]]** at the **[[Trust Boundary|trust boundary]]**, then meters traffic with **[[Policing]]** and **[[Shaping]]**, schedules it with **[[Queuing]]**, **[[CBWFQ]]** and **[[LLQ]]**, and avoids collapse with **[[WRED]]**. **[[DiffServ]]** scales that per-class model using **[[DSCP]]**, while **[[IntServ]]** reserves per-flow resources with RSVP, and **[[MQC]]** is the CLI that ties it all together.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'traffic', title: 'Classification',
-            blurb: 'Identify traffic by DSCP, CoS, ACL or application before anything else',
-            overview: '**[[QoS Classification|Classification]]** is the QoS act of identifying which traffic gets which treatment. It groups packets using fields such as **[[DSCP]]**, IP precedence, 802.1p CoS, **[[ACL|ACLs]]** or application signatures. Classification is always the first step, because marking, policing and queuing need something to act on.',
-            keyIdea: 'Classification reads and groups; marking writes. Classify once at the edge, set the trust boundary there, and let the core trust the result.',
-            sections: [
-              { kind: 'table', h: 'What we classify on', cols: ['Field', 'Layer', 'Notes'], rows: [
-                ['**DSCP**', 'L3', '6 bits'],
-                ['**IP precedence**', 'L3', '3 bits'],
-                ['**802.1p CoS**', 'L2', '3 bits'],
-                ['**ACL**', 'L3 and L4', 'Match IP addresses and ports'],
-                ['**NBAR**', 'L7', 'Application recognition']
-              ]},
-              { kind: 'table', h: 'Trust boundaries', cols: ['Point', 'Trust state'], rows: [
-                ['**Access edge**', 'Untrusted, so re-mark'],
-                ['**Core**', 'Trusted, keep DSCP'],
-                ['**Ingress switch**', 'Classify and mark'],
-                ['**Camera or phone port**', 'Set CoS and DSCP']
-              ]},
-              { kind: 'table', h: 'Trust versus classify', cols: ['Mode', 'Action'], rows: [
-                ['**Trust**', 'Accept the existing CoS or DSCP'],
-                ['**Classify**', 'Match the traffic, then act']
-              ]},
-              { kind: 'table', h: 'Classification tools', cols: ['Tool', 'Match basis'], rows: [
-                ['**class-map**', 'Match criteria'],
-                ['**ACL**', 'IP addresses and ports'],
-                ['**NBAR**', 'Application signature'],
-                ['**PBR route-map**', 'Match conditions for policy routing']
-              ]},
-              { kind: 'code', h: 'class-map example', code:
-`  class-map match-any VOICE
-   match dscp ef
-  !
-  class-map match-any BULK
-   match access-group name BULK` },
-              { kind: 'table', h: 'class-map match logic', cols: ['Keyword', 'Logic'], rows: [
-                ['**%%match-all%%**', 'Every criterion must match'],
-                ['**%%match-any%%**', 'Any one criterion is enough']
-              ]},
-              { kind: 'para', h: 'Where classification happens', p: 'Classify on **ingress** at routers and switches, with NBAR usually on edge devices. Classify **once at the edge**, then trust the marking in the core instead of repeating the work at every hop.' }
-            ],
-            commands: [
-              { label: 'Build class maps for voice and bulk traffic', code:
-`class-map match-any VOICE\n match dscp ef\nclass-map match-any BULK\n match access-group name BULK` },
-              { label: 'Verify the class maps', code:
-`show class-map\nshow policy-map` },
-              { label: 'Reference a policy that uses the classes', code:
-`policy-map EDGE\n class VOICE\n  priority 128\n class BULK\n  bandwidth 1000` }
-            ],
-            traps: [
-              'Classification **identifies** traffic; marking **writes** the value.',
-              'The **trust boundary** decides whose markings are believed.',
-              'Know **%%match-any%%** versus **%%match-all%%** in a class-map.',
-              'NBAR classifies at **Layer 7** using application signatures.',
-              'Classify at the **edge**; the core should trust the result.',
-              'An ACL match is **Layer 3 and 4**, not application-aware.'
-            ],
-            table: {
-              cols: ['Item', 'Classification'],
-              rows: [
-                ['What', 'Identify traffic'],
-                ['Fields', 'DSCP, CoS, ACL, NBAR'],
-                ['Trust', 'Edge decision'],
-                ['Tool', 'class-map'],
-                ['Match', 'match-all or match-any'],
-                ['NBAR', 'Layer 7'],
-                ['Place', 'Ingress edge'],
-                ['Order', 'Before marking']
-              ]
-            },
-            related: [
-              { t: '02. Marking', d: 'The step that follows' },
-              { t: '07. DiffServ', d: 'The architecture it feeds' },
-              { t: '09. Modular QoS CLI', d: 'Where class maps live' }
-            ],
-            glossary: ['QoS Classification', 'DSCP', 'QoS Marking', 'MQC', 'Trust Boundary', 'ACL']
-          },
-          {
-            id: 't02', num: '02', group: 'traffic', title: 'Marking',
-            blurb: 'Write DSCP, CoS or precedence so every hop sees the same class',
-            overview: '**[[QoS Marking|Marking]]** writes a QoS value into the packet or frame so downstream devices can treat it consistently. Markers exist at Layer 2 as 802.1p CoS, at Layer 3 as IP precedence or **[[DSCP]]**, and in **[[MPLS]]** as the EXP bits. The core trusts that marking instead of reclassifying every packet.',
-            keyIdea: 'DSCP is the modern 6-bit L3 marker. EF is voice, AF4x and AF3x are video, CS6 is control, and the core trusts what the edge wrote.',
-            sections: [
-              { kind: 'table', h: 'Marking locations', cols: ['Layer', 'Field', 'Bits'], rows: [
-                ['**L2**', '802.1p CoS', '3'],
-                ['**L3**', 'IP precedence', '3'],
-                ['**L3**', 'DSCP', '6'],
-                ['**MPLS**', 'EXP', '3']
-              ]},
-              { kind: 'table', h: 'DSCP versus IP precedence', cols: ['Item', 'IP precedence', 'DSCP'], rows: [
-                ['Bits', '3', '6'],
-                ['Classes', '8', '64'],
-                ['Default', 'CS0', 'BE'],
-                ['Modern use', 'Legacy', 'Preferred']
-              ]},
-              { kind: 'table', h: 'Common DSCP values', cols: ['DSCP', 'Value', 'Use'], rows: [
-                ['**EF**', '46', 'Voice'],
-                ['**AF41**', '34', 'Video conference'],
-                ['**AF31**', '26', 'Video stream'],
-                ['**AF21**', '18', 'Bulk and signalling'],
-                ['**CS0**', '0', 'Best effort'],
-                ['**CS6 and CS7**', '48 and 56', 'Control']
-              ]},
-              { kind: 'code', h: 'Marking configuration', code:
-`  policy-map MARK-VOICE
-   class VOICE
-    set dscp ef
-  !
-  class-map match-all VIDEO
-   match dscp af41
-  policy-map MARK-VIDEO
-   class VIDEO
-    set dscp af41` },
-              { kind: 'table', h: 'Marking commands', cols: ['Command', 'Effect'], rows: [
-                ['**%%set dscp%%**', 'Write DSCP'],
-                ['**%%set precedence%%**', 'Write IP precedence'],
-                ['**%%set cos%%**', 'Write CoS']
-              ]},
-              { kind: 'table', h: 'Trusting markings', cols: ['Device', 'Action'], rows: [
-                ['**Edge**', 'Set or re-mark'],
-                ['**Core**', 'Trust and do not re-mark'],
-                ['**L2 to L3 boundary**', 'Map CoS to DSCP']
-              ]}
-            ],
-            commands: [
-              { label: 'Mark voice and video at the edge', code:
-`policy-map MARK\n class VOICE\n  set dscp ef\n class VIDEO\n  set dscp af41` },
-              { label: 'Verify marking policy', code:
-`show policy-map\nshow class-map\nshow run policy-map` },
-              { label: 'Check switch marking and trust', code:
-`show mls qos interface\nshow mls qos maps cos-dscp` }
-            ],
-            traps: [
-              'Marking **writes**; classification **reads**.',
-              '**DSCP is 6 bits and 64 values**; precedence is 3 bits and 8 values.',
-              '**EF is voice**, AF4x and AF3x are video, and **CS6 is control**.',
-              'Set DSCP at the **edge**, then trust it in the **core**.',
-              'Use **%%set dscp%%**, **%%set cos%%** or **%%set precedence%%** to write a value.',
-              'CoS and DSCP need a **mapping table** when traffic crosses L2 to L3.'
-            ],
-            table: {
-              cols: ['Item', 'Marking'],
-              rows: [
-                ['L2', '802.1p CoS'],
-                ['L3', 'DSCP'],
-                ['DSCP bits', '6'],
-                ['Voice', 'EF'],
-                ['Video conference', 'AF41'],
-                ['Video stream', 'AF31'],
-                ['Control', 'CS6'],
-                ['Core', 'Trust']
-              ]
-            },
-            related: [
-              { t: '01. Classification', d: 'The step before marking' },
-              { t: '07. DiffServ', d: 'DSCP marking model' },
-              { t: '12. QoS Marking & Trust Boundaries', d: 'Where trust is set' }
-            ],
-            glossary: ['QoS Marking', 'DSCP', 'Trust Boundary', 'DiffServ', 'MPLS']
-          },
-          {
-            id: 't03', num: '03', group: 'traffic', title: 'Policing',
-            blurb: 'Drop or re-mark excess traffic with a token bucket',
-            overview: '**[[Policing]]** enforces a rate by dropping or re-marking excess traffic, without buffering it. It uses the **token bucket** model and can work on ingress or egress. It is burst-sensitive, adds no delay, and is commonly used to meter customer or class rates.',
-            keyIdea: 'Policing drops or re-marks and never buffers. Token buckets use CIR, Bc and Be, with conform, exceed and violate outcomes.',
-            sections: [
-              { kind: 'table', h: 'Policing versus shaping', cols: ['Aspect', 'Policing', 'Shaping'], rows: [
-                ['Excess', 'Drop or re-mark', 'Buffer'],
-                ['Delay', 'None', 'Adds delay'],
-                ['Location', 'Ingress or egress', 'Egress only'],
-                ['Burst', 'Drops', 'Smooths'],
-                ['Use', 'Meter and enforce', 'Line-rate smoothing']
-              ]},
-              { kind: 'table', h: 'Token bucket basics', cols: ['Token', 'Meaning'], rows: [
-                ['**CIR**', 'Fill rate in bits per second'],
-                ['**Bc**', 'Committed burst'],
-                ['**Be**', 'Excess burst'],
-                ['**Conform**', 'Tokens were available'],
-                ['**Exceed**', 'No committed tokens']
-              ]},
-              { kind: 'table', h: 'Actions', cols: ['Action', 'When'], rows: [
-                ['**Transmit**', 'Packet conforms'],
-                ['**Drop**', 'Packet violates'],
-                ['**Set DSCP then transmit**', 'Packet exceeds and is re-marked']
-              ]},
-              { kind: 'code', h: 'Policer configuration', code:
-`  policy-map POLICE-DATA
-   class BULK
-    police cir 1000000 bc 200000 be 200000
-     conform-action transmit
-     exceed-action drop
-     violate-action drop
-  !
-  interface GigabitEthernet0/1
-   service-policy input POLICE-DATA` },
-              { kind: 'table', h: 'Policer commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%police cir%%**', 'Committed rate'],
-                ['**%%bc%%** and **%%be%%**', 'Burst sizes'],
-                ['**%%conform-action%%**', 'Action when tokens are available'],
-                ['**%%exceed-action%%**', 'Action when tokens are short']
-              ]},
-              { kind: 'table', h: 'Multi-action policing', cols: ['State', 'Token condition', 'Action'], rows: [
-                ['**Conform**', 'Bc available', 'Transmit'],
-                ['**Exceed**', 'Be available', 'Re-mark'],
-                ['**Violate**', 'No tokens', 'Drop']
-              ]},
-              { kind: 'table', h: 'Where policing is used', cols: ['Use', 'Reason'], rows: [
-                ['**Customer rate limit**', 'Enforce the SLA'],
-                ['**Bandwidth control**', 'Meter classes'],
-                ['**Mark-down**', 'Re-mark traffic over rate'],
-                ['**Ingress protection**', 'Stop floods']
-              ]}
-            ],
-            commands: [
-              { label: 'Configure a policer', code:
-`policy-map POLICE-DATA\n class BULK\n  police cir 1000000 bc 200000 be 200000\n   conform-action transmit\n   exceed-action drop\n   violate-action drop` },
-              { label: 'Attach it on ingress', code:
-`interface GigabitEthernet0/1\n service-policy input POLICE-DATA` },
-              { label: 'Verify policing counters', code:
-`show policy-map\nshow policy-map interface\nshow policy-map interface GigabitEthernet0/1` }
-            ],
-            traps: [
-              'Policing **drops or re-marks** excess traffic and never buffers.',
-              'It works **on ingress or egress**; shaping is egress only.',
-              'The token bucket uses **CIR, Bc and Be**.',
-              'The three outcomes are **conform, exceed and violate**.',
-              'Use **%%service-policy input%%** when policing incoming traffic.',
-              'Re-mark and transmit is gentler than dropping the excess.'
-            ],
-            table: {
-              cols: ['Item', 'Policing'],
-              rows: [
-                ['Excess', 'Drop or re-mark'],
-                ['Delay', 'None'],
-                ['Location', 'Ingress or egress'],
-                ['Bucket', 'Token bucket'],
-                ['CIR', 'Rate'],
-                ['Bursts', 'Bc and Be'],
-                ['Actions', 'Conform, exceed, violate'],
-                ['Attach', 'service-policy']
-              ]
-            },
-            related: [
-              { t: '04. Shaping', d: 'The buffering contrast' },
-              { t: '06. Congestion Avoidance', d: 'Other drop decisions' },
-              { t: '09. Modular QoS CLI', d: 'How policies are attached' }
-            ],
-            glossary: ['Policing', 'Shaping', 'MQC', 'QoS Classification']
-          },
-          {
-            id: 't04', num: '04', group: 'traffic', title: 'Shaping',
-            blurb: 'Buffer the excess, smooth the rate, and avoid downstream drops',
-            overview: '**[[Shaping]]** smooths traffic to a rate by buffering excess instead of dropping it. It works **egress only** and adds delay, which makes it ideal for aligning to a subscribed line rate or a downstream policer without wasting packets. The exam constantly contrasts it with **[[Policing]]**.',
-            keyIdea: 'Shaping buffers and adds delay on egress. Use shape average for the normal token bucket, shape peak to allow Be, and hierarchical policies for parent and child rates.',
-            sections: [
-              { kind: 'table', h: 'Shaping model', cols: ['Item', 'Meaning'], rows: [
-                ['**CIR**', 'Shaped rate'],
-                ['**Bc**', 'Committed burst'],
-                ['**Be**', 'Excess burst'],
-                ['**Queue**', 'Buffers the excess'],
-                ['**Delay**', 'Added latency']
-              ]},
-              { kind: 'table', h: 'Shaping versus policing', cols: ['Aspect', 'Shaping', 'Policing'], rows: [
-                ['Excess', 'Buffer', 'Drop or re-mark'],
-                ['Delay', 'Adds', 'None'],
-                ['Location', 'Egress', 'Ingress or egress'],
-                ['Rate', 'Smooth', 'Meter'],
-                ['Loss', 'Low', 'High']
-              ]},
-              { kind: 'table', h: 'Why shape', cols: ['Reason', 'Detail'], rows: [
-                ['**Access line**', 'Align to the subscribed CIR'],
-                ['**Avoid drops**', 'Do not exceed a downstream policer'],
-                ['**Fairness**', 'Smooth bursts'],
-                ['**Downstream**', 'Do not flood the next device']
-              ]},
-              { kind: 'code', h: 'Shaping configuration', code:
-`  policy-map SHAPE-LINK
-   class class-default
-    shape average 10000000
-  !
-  interface GigabitEthernet0/1
-   service-policy output SHAPE-LINK` },
-              { kind: 'table', h: 'Shaping commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%shape average%%**', 'Token bucket with Bc and Be'],
-                ['**%%shape peak%%**', 'Allow use of Be'],
-                ['**%%service-policy output%%**', 'Attach on egress']
-              ]},
-              { kind: 'table', h: 'Hierarchical shaping', cols: ['Level', 'Policy'], rows: [
-                ['**Parent**', 'Total rate, for example 10 Mbps'],
-                ['**Child**', 'Per-class sub-rates'],
-                ['**Result**', 'Class buckets inside the shaped link']
-              ]}
-            ],
-            commands: [
-              { label: 'Shape the aggregate egress rate', code:
-`policy-map SHAPE-LINK\n class class-default\n  shape average 10000000\ninterface GigabitEthernet0/1\n service-policy output SHAPE-LINK` },
-              { label: 'Verify shaping and queues', code:
-`show policy-map interface\nshow policy-map interface GigabitEthernet0/1\nshow queueing` },
-              { label: 'Check the physical interface', code:
-`show interface GigabitEthernet0/1\nshow policy-map interface GigabitEthernet0/1` }
-            ],
-            traps: [
-              'Shaping **buffers**; policing **drops**.',
-              'Shaping is **egress only** and adds **delay**.',
-              'Know **%%shape average%%** versus **%%shape peak%%**.',
-              '**Hierarchical shaping** nests a child policy inside a parent.',
-              'For access-rate smoothing, **shape**, do not police.',
-              'A shaping queue holds the excess until the token bucket allows it out.'
-            ],
-            table: {
-              cols: ['Item', 'Shaping'],
-              rows: [
-                ['Excess', 'Buffer'],
-                ['Delay', 'Adds'],
-                ['Location', 'Egress'],
-                ['Default', 'shape average'],
-                ['Peak', 'Uses Be'],
-                ['Access', 'Align to CIR'],
-                ['Hierarchy', 'Parent and child'],
-                ['Show', 'show policy-map interface']
-              ]
-            },
-            related: [
-              { t: '03. Policing', d: 'The contrasting mechanism' },
-              { t: '05. Queuing', d: 'Where shaped packets wait' },
-              { t: '09. Modular QoS CLI', d: 'Parent and child policies' }
-            ],
-            glossary: ['Shaping', 'Policing', 'MQC', 'Queuing']
-          },
-          {
-            id: 't05', num: '05', group: 'queue', title: 'Queuing',
-            blurb: 'FIFO, WFQ, PQ, CBWFQ and LLQ: who leaves the interface first',
-            overview: '**[[Queuing]]** decides the order packets leave an interface when it is congested. The modern answer is **[[CBWFQ]]** for class-based weighted shares, with **[[LLQ]]** adding a strict-priority class for delay-sensitive voice. The exam wants the mapping from each queuing mechanism to the need it serves.',
-            keyIdea: 'CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. PQ can starve, WFQ is per-flow fair, and queuing only matters at egress under congestion.',
-            sections: [
-              { kind: 'table', h: 'Queuing mechanisms', cols: ['Mechanism', 'Behaviour', 'Use'], rows: [
-                ['**FIFO**', 'First in, first out', 'No QoS'],
-                ['**WFQ**', 'Per-flow fair', 'Legacy default'],
-                ['**PQ**', 'Strict priority', 'Critical traffic only'],
-                ['**CBWFQ**', 'Per-class weights', 'Modern default'],
-                ['**LLQ**', 'Priority plus CBWFQ', 'Voice']
-              ]},
-              { kind: 'table', h: 'CBWFQ', cols: ['Concept', 'Detail'], rows: [
-                ['**Class**', 'Matched by class-map'],
-                ['**Bandwidth**', 'kbps share'],
-                ['**Weight**', 'Proportional service'],
-                ['**Drop**', 'Tail drop per queue']
-              ]},
-              { kind: 'table', h: 'LLQ, the strict priority class', cols: ['Item', 'Detail'], rows: [
-                ['**Priority class**', 'Served before bandwidth classes'],
-                ['**Limit**', 'Policed to the priority value'],
-                ['**Risk**', 'Starving others if unlimited'],
-                ['**Use**', 'Voice and EF']
-              ]},
-              { kind: 'code', h: 'Queuing configuration', code:
-`  policy-map QUEUE-EDGE
-   class VOICE
-    priority 128
-   class VIDEO
-    bandwidth 1000
-   class DATA
-    bandwidth 2000
-  !
-  interface GigabitEthernet0/1
-   service-policy output QUEUE-EDGE` },
-              { kind: 'table', h: 'Queuing commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%priority%%**', 'Strict priority LLQ class'],
-                ['**%%bandwidth%%**', 'Guaranteed CBWFQ share'],
-                ['**%%queue-limit%%**', 'Per-class queue depth'],
-                ['**%%fair-queue%%**', 'Per-flow treatment inside a class']
-              ]},
-              { kind: 'table', h: 'PQ versus CBWFQ versus WFQ', cols: ['Mechanism', 'Selection', 'Risk'], rows: [
-                ['**WFQ**', 'Per flow', 'Less control'],
-                ['**PQ**', 'Strict priority', 'Starvation'],
-                ['**CBWFQ**', 'Per class', 'No strict latency bound'],
-                ['**LLQ**', 'Priority plus class', 'Voice-safe when policed']
-              ]}
-            ],
-            commands: [
-              { label: 'Build a voice and data queuing policy', code:
-`policy-map QUEUE-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000` },
-              { label: 'Attach it on egress', code:
-`interface GigabitEthernet0/1\n service-policy output QUEUE-EDGE` },
-              { label: 'Verify queues and scheduling', code:
-`show policy-map interface\nshow queueing interface\nshow interfaces GigabitEthernet0/1` }
-            ],
-            traps: [
-              '**CBWFQ is per-class bandwidth**; **LLQ is a priority class plus CBWFQ**.',
-              'The LLQ priority class must be **policed** to avoid starvation.',
-              '**PQ is strict and can starve**; **WFQ is per-flow fair**.',
-              'Queuing is **egress** and only matters **under congestion**.',
-              'Know **%%priority%%** versus **%%bandwidth%%**.',
-              'FIFO provides no QoS differentiation at all.'
-            ],
-            table: {
-              cols: ['Item', 'Queuing'],
-              rows: [
-                ['FIFO', 'No QoS'],
-                ['WFQ', 'Per flow'],
-                ['PQ', 'Strict'],
-                ['CBWFQ', 'Per class'],
-                ['LLQ', 'Voice priority'],
-                ['Priority', 'Policed'],
-                ['Bandwidth', 'Share'],
-                ['Direction', 'Egress under congestion']
-              ]
-            },
-            related: [
-              { t: '06. Congestion Avoidance', d: 'Queue management inside the classes' },
-              { t: '10. LLQ & CBWFQ', d: 'The production pairing' },
-              { t: '03. Policing', d: 'Input rate control' }
-            ],
-            glossary: ['Queuing', 'CBWFQ', 'LLQ', 'WRED']
-          },
-          {
-            id: 't06', num: '06', group: 'queue', title: 'Congestion Avoidance',
-            blurb: 'WRED drops early and randomly to break TCP synchronisation',
-            overview: 'Congestion avoidance drops packets **before** a queue overflows, preventing tail drop and the **TCP global synchronisation** that follows it. The tool is **[[WRED]]**, which randomly drops lower-priority traffic as the queue fills, protecting high-priority flows and smoothing TCP behaviour.',
-            keyIdea: 'Tail drop causes TCP global sync. WRED drops randomly as the queue grows, using min and max thresholds, and ECN can mark instead of dropping.',
-            sections: [
-              { kind: 'table', h: 'The tail drop problem', cols: ['Issue', 'Effect'], rows: [
-                ['**Tail drop**', 'The last packets are dropped'],
-                ['**Synchronisation**', 'TCP windows collapse together'],
-                ['**Voice**', 'Burst loss'],
-                ['**Retransmission**', 'Efficiency loss']
-              ]},
-              { kind: 'table', h: 'RED and WRED idea', cols: ['Stage', 'Threshold', 'Action'], rows: [
-                ['**Below min**', 'Normal', 'No drop'],
-                ['**Min to max**', 'Growing', 'Random drop rate rises'],
-                ['**Above max**', 'Full', 'Drop all']
-              ]},
-              { kind: 'table', h: 'Weighted means per class', cols: ['Class', 'Drop profile'], rows: [
-                ['**Voice, EF**', 'No drop or highest minimum'],
-                ['**Video, AF**', 'Moderate'],
-                ['**Best effort**', 'Aggressive']
-              ]},
-              { kind: 'code', h: 'WRED configuration', code:
-`  policy-map AVOID
-   class AF31
-    bandwidth 1000
-    random-detect dscp-based
-  !
-  interface GigabitEthernet0/1
-   service-policy output AVOID` },
-              { kind: 'table', h: 'WRED commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%random-detect%%**', 'Enable WRED'],
-                ['**%%random-detect dscp-based%%**', 'Use DSCP drop profiles'],
-                ['**%%random-detect precedence-based%%**', 'Use precedence profiles'],
-                ['**%%min/max threshold%%**', 'Set the drop curve']
-              ]},
-              { kind: 'table', h: 'ECN', cols: ['Item', 'Detail'], rows: [
-                ['**What**', 'Mark instead of drop'],
-                ['**Bits**', 'ECT and CE'],
-                ['**Partner**', 'WRED plus ECN'],
-                ['**Result**', 'TCP backs off without loss']
-              ]},
-              { kind: 'table', h: 'Where to apply', cols: ['Device', 'Reason'], rows: [
-                ['**Egress WAN**', 'Protect voice and video'],
-                ['**Core queues**', 'Avoid synchronisation'],
-                ['**Edge**', 'Set drop profiles']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable DSCP-based WRED in a class', code:
-`policy-map AVOID\n class AF31\n  bandwidth 1000\n  random-detect dscp-based` },
-              { label: 'Attach the policy on egress', code:
-`interface GigabitEthernet0/1\n service-policy output AVOID` },
-              { label: 'Verify WRED and drop counters', code:
-`show policy-map interface\nshow queueing random-detect\nshow interfaces` }
-            ],
-            traps: [
-              '**Tail drop leads to TCP global synchronisation**, and WRED addresses both.',
-              'WRED means **weighted random early detection**, applied per class.',
-              'Thresholds run from **min to max to full drop**.',
-              '**ECN marks instead of dropping**, which keeps TCP friendly.',
-              'Apply WRED at **congested egress**, typically the WAN.',
-              'Lower drop precedence values survive longer than higher ones.'
-            ],
-            table: {
-              cols: ['Item', 'Congestion Avoidance'],
-              rows: [
-                ['Problem', 'Tail drop and sync'],
-                ['Tool', 'WRED'],
-                ['Model', 'RED per class'],
-                ['Threshold', 'Min and max'],
-                ['Weighted', 'Per DSCP'],
-                ['ECN', 'Mark instead of drop'],
-                ['Sync', 'Avoided'],
-                ['Place', 'Egress']
-              ]
-            },
-            related: [
-              { t: '05. Queuing', d: 'The queues WRED manages' },
-              { t: '11. DSCP PHB Deep-Dive', d: 'Drop precedence values' },
-              { t: '03. Policing', d: 'A different drop decision' }
-            ],
-            glossary: ['WRED', 'Queuing', 'DSCP']
-          }
-        ,
-          {
-            id: 't07', num: '07', group: 'arch', title: 'DiffServ',
-            blurb: 'Per-class DSCP and per-hop behaviour, with no signalling at all',
-            overview: '**[[DiffServ]]** is the QoS architecture where each packet carries its own class in the **[[DSCP]]** field and each router applies a per-hop behaviour. There is no signalling and no reservation, which makes it scalable and the de-facto model for enterprise and service-provider QoS.',
-            keyIdea: 'DiffServ is DSCP plus PHB: classify and mark at the edge, trust in the core. EF is voice, AF is assured forwarding with three drop levels, and CS is the class selector.',
-            sections: [
-              { kind: 'table', h: 'DiffServ versus IntServ', cols: ['Aspect', 'DiffServ', 'IntServ'], rows: [
-                ['Model', 'Per class', 'Per flow'],
-                ['Signalling', 'None', 'RSVP'],
-                ['Scale', 'Excellent', 'Poor'],
-                ['Guarantee', 'Statistical', 'Hard']
-              ]},
-              { kind: 'table', h: 'DSCP and PHB', cols: ['Field', 'Bits', 'Purpose'], rows: [
-                ['**DSCP**', '6', 'Packet class'],
-                ['**ECN**', '2', 'Congestion marks'],
-                ['**PHB**', 'Not a field', 'Treatment applied per class']
-              ]},
-              { kind: 'table', h: 'The PHB classes', cols: ['PHB', 'DSCP', 'Use'], rows: [
-                ['**EF**', '46', 'Voice, low latency'],
-                ['**AF4x**', '34, 36, 38', 'Video conference'],
-                ['**AF3x**', '26, 28, 30', 'Video stream'],
-                ['**AF2x**', '18, 20, 22', 'Signalling and OAM'],
-                ['**AF1x**', '10, 12, 14', 'Bulk'],
-                ['**CSx**', '0 to 56', 'Class selector and control'],
-                ['**BE**', '0', 'Default']
-              ]},
-              { kind: 'table', h: 'AF drop precedence', cols: ['Code', 'Drop', 'Example'], rows: [
-                ['**AF21**', 'Low', 'Signalling'],
-                ['**AF22**', 'Medium', 'Data'],
-                ['**AF23**', 'High', 'Bulk']
-              ]},
-              { kind: 'table', h: 'DiffServ in the network', cols: ['Zone', 'Action'], rows: [
-                ['**Edge**', 'Classify and mark'],
-                ['**Core**', 'Trust and apply the PHB'],
-                ['**Provider**', 'Honour DSCP or the contract']
-              ]},
-              { kind: 'code', h: 'Example policy', code:
-`  policy-map DIFFSERV
-   class VOICE
-    priority 128
-   class VIDEO
-    bandwidth 1000
-    random-detect dscp-based
-   class DATA
-    bandwidth 2000` }
-            ],
-            commands: [
-              { label: 'Build the DiffServ policy', code:
-`policy-map DIFFSERV\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n  random-detect dscp-based\n class DATA\n  bandwidth 2000` },
-              { label: 'Verify policy and classes', code:
-`show policy-map\nshow policy-map interface\nshow class-map` },
-              { label: 'Check the running policy', code:
-`show run policy-map\nshow policy-map interface` }
-            ],
-            traps: [
-              'DiffServ is **DSCP plus PHB**, with no signalling.',
-              '**EF (46) is voice**, AF is assured forwarding with three drop levels, and CS is the class selector.',
-              'The core **trusts DSCP**; the edge marks.',
-              'DiffServ is **statistical**; IntServ is per-flow guaranteed.',
-              'Within an AF class, a **lower drop number survives longer**.',
-              'The AF class number selects the queue and the drop number selects the drop probability.'
-            ],
-            table: {
-              cols: ['Item', 'DiffServ'],
-              rows: [
-                ['Model', 'Per class'],
-                ['Mark', 'DSCP'],
-                ['Voice', 'EF'],
-                ['Video', 'AF'],
-                ['Drop', 'AFx3 is highest'],
-                ['Control', 'CS6'],
-                ['Edge', 'Mark'],
-                ['Core', 'Trust and apply PHB']
-              ]
-            },
-            related: [
-              { t: '08. IntServ', d: 'The contrasting reservation model' },
-              { t: '11. DSCP PHB Deep-Dive', d: 'The PHB values' },
-              { t: '12. QoS Marking & Trust Boundaries', d: 'Edge marking' }
-            ],
-            glossary: ['DiffServ', 'DSCP', 'QoS Marking', 'Trust Boundary', 'IntServ', 'QoS', 'Data Plane']
-          },
-          {
-            id: 't08', num: '08', group: 'arch', title: 'IntServ',
-            blurb: 'Per-flow RSVP reservations with hard guarantees but poor scale',
-            overview: '**[[IntServ]]** delivers per-flow, hard QoS guarantees using RSVP to reserve bandwidth end to end **before** traffic flows. Unlike the per-class DiffServ model, every router holds per-flow state, which is why it does not scale to large networks. The exam contrasts IntServ with **[[DiffServ]]** constantly.',
-            keyIdea: 'IntServ is per-flow with RSVP PATH and RESV reservations and hard guarantees. It does not scale, while DiffServ does, and RSVP survives mainly as RSVP-TE for MPLS.',
-            sections: [
-              { kind: 'table', h: 'The IntServ model', cols: ['Item', 'Detail'], rows: [
-                ['**Flow**', 'Per session or application'],
-                ['**Reservation**', 'RSVP PATH and RESV'],
-                ['**State**', 'Per flow on every router'],
-                ['**Guarantee**', 'Hard'],
-                ['**Scale**', 'Poor']
-              ]},
-              { kind: 'table', h: 'RSVP basics', cols: ['Message', 'Direction', 'Job'], rows: [
-                ['**PATH**', 'Sender to receiver', 'Announce requirements'],
-                ['**RESV**', 'Receiver to sender', 'Reserve resources'],
-                ['**Admission**', 'Every hop', 'Accept or reject']
-              ]},
-              { kind: 'table', h: 'Services', cols: ['Service', 'Guarantee'], rows: [
-                ['**Guaranteed**', 'Hard bandwidth and delay'],
-                ['**Controlled load**', 'QoS under load'],
-                ['**Best effort**', 'None']
-              ]},
-              { kind: 'code', h: 'RSVP configuration', code:
-`  interface GigabitEthernet0/1
-   ip rsvp bandwidth 128 64
-   ip rsvp reservation bandwidth per-flow` },
-              { kind: 'table', h: 'RSVP commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%ip rsvp bandwidth%%**', 'Maximum and typical bandwidth'],
-                ['**%%ip rsvp reservation%%**', 'Per-flow caps'],
-                ['**%%ip rsvp neighbor%%**', 'Explicit peers']
-              ]},
-              { kind: 'table', h: 'IntServ versus DiffServ', cols: ['Aspect', 'IntServ', 'DiffServ'], rows: [
-                ['Unit', 'Flow', 'Class'],
-                ['Signal', 'RSVP', 'None'],
-                ['State', 'Per flow', 'Per class'],
-                ['Guarantee', 'Hard', 'Statistical'],
-                ['Scale', 'Low', 'High']
-              ]},
-              { kind: 'table', h: 'Where IntServ lives today', cols: ['Use', 'Note'], rows: [
-                ['**RSVP-TE**', 'MPLS traffic engineering'],
-                ['**Voice gateways**', 'Small segments'],
-                ['**Niche**', 'Hard guarantees']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable RSVP on an interface', code:
-`interface GigabitEthernet0/1\n ip rsvp bandwidth 128 64\n ip rsvp reservation bandwidth per-flow` },
-              { label: 'Verify reservations', code:
-`show ip rsvp interface\nshow ip rsvp reservation\nshow ip rsvp sender` },
-              { label: 'Check installed state and debug', code:
-`show ip rsvp installed\ndebug ip rsvp` }
-            ],
-            traps: [
-              'IntServ is **per flow with RSVP reservations** and hard guarantees.',
-              '**PATH announces and RESV reserves**; each router admits or rejects.',
-              'It **does not scale** because every router keeps per-flow state.',
-              'DiffServ is per class and scales; IntServ is per flow.',
-              'RSVP survives mainly as **RSVP-TE** for MPLS traffic engineering.',
-              'RSVP must be configured on **every hop** along the path.'
-            ],
-            table: {
-              cols: ['Item', 'IntServ'],
-              rows: [
-                ['Unit', 'Flow'],
-                ['Signal', 'RSVP'],
-                ['PATH', 'Announce'],
-                ['RESV', 'Reserve'],
-                ['State', 'Per flow'],
-                ['Guarantee', 'Hard'],
-                ['Scale', 'Low'],
-                ['Survives', 'RSVP-TE']
-              ]
-            },
-            related: [
-              { t: '07. DiffServ', d: 'The scalable contrast' },
-              { t: '05. Queuing', d: 'Per-hop treatment it reserves' }
-            ],
-            glossary: ['IntServ', 'DiffServ', 'LLQ', 'QoS']
-          },
-          {
-            id: 't09', num: '09', group: 'config', title: 'Modular QoS CLI',
-            blurb: 'class-map, policy-map, service-policy: match, treat, attach',
-            overview: '**[[MQC|MQC (Modular QoS CLI)]]** is the standard way to build QoS on Cisco routers. It separates QoS into three blocks: **class-map** to match, **policy-map** to define the action, and **service-policy** to attach. Every modern QoS config, whether marking, policing, shaping or queuing, uses these blocks.',
-            keyIdea: 'MQC equals class-map then policy-map then service-policy: match, treat, attach. Unmatched traffic hits class-default, and a policy attaches in one direction.',
-            sections: [
-              { kind: 'table', h: 'The three MQC blocks', cols: ['Block', 'Role', 'Command'], rows: [
-                ['**class-map**', 'Match traffic', 'class-map match-any or match-all NAME'],
-                ['**policy-map**', 'Define treatment', 'policy-map NAME'],
-                ['**service-policy**', 'Attach to interface', 'service-policy input or output NAME']
-              ]},
-              { kind: 'table', h: 'class-map matching', cols: ['Keyword', 'Logic'], rows: [
-                ['**%%match-all%%**', 'Every criterion must match'],
-                ['**%%match-any%%**', 'Any one criterion matches'],
-                ['**%%match dscp%%**', 'DSCP value or values'],
-                ['**%%match access-group%%**', 'ACL'],
-                ['**%%match protocol%%**', 'NBAR at Layer 7']
-              ]},
-              { kind: 'code', h: 'Class-map examples', code:
-`  class-map match-any VOICE
-   match dscp ef
-  class-map match-all STRICT
-   match dscp af41
-   match access-group name VIDEO-ACL` },
-              { kind: 'table', h: 'policy-map actions', cols: ['Command', 'Action'], rows: [
-                ['**%%set dscp%%** or **%%set cos%%**', 'Mark'],
-                ['**%%police%%**', 'Enforce a rate'],
-                ['**%%shape%%**', 'Smooth a rate'],
-                ['**%%bandwidth%%**', 'CBWFQ share'],
-                ['**%%priority%%**', 'LLQ strict priority'],
-                ['**%%random-detect%%**', 'WRED']
-              ]},
-              { kind: 'table', h: 'Attaching with service-policy', cols: ['Direction', 'Command'], rows: [
-                ['**Ingress**', 'service-policy input NAME'],
-                ['**Egress**', 'service-policy output NAME'],
-                ['**Both**', 'One policy per direction']
-              ]},
-              { kind: 'table', h: 'class-default', cols: ['Item', 'Detail'], rows: [
-                ['**%%class class-default%%**', 'Matches all unmatched traffic'],
-                ['**Existence**', 'Always present as the catch-all'],
-                ['**Actions**', 'Shape, police or queue the default']
-              ]},
-              { kind: 'code', h: 'Hierarchical MQC', code:
-`  policy-map PARENT
-   class class-default
-    shape average 10000000
-    service-policy CHILD` }
-            ],
-            commands: [
-              { label: 'Build classes and attach a policy', code:
-`class-map match-any VOICE\n match dscp ef\npolicy-map EDGE\n class VOICE\n  priority 128\n class class-default\n  fair-queue\ninterface GigabitEthernet0/1\n service-policy output EDGE` },
-              { label: 'Verify the building blocks', code:
-`show class-map\nshow policy-map\nshow policy-map interface` },
-              { label: 'Check the policy direction and hierarchy', code:
-`show run interface GigabitEthernet0/1\nshow run policy-map` }
-            ],
-            traps: [
-              'MQC is **class-map, policy-map, service-policy**: match, treat, attach.',
-              '**match-all** and **match-any** change the matching logic.',
-              'A service-policy attaches in **one direction**, input or output.',
-              'Unmatched traffic falls into **class-default**.',
-              '**Hierarchical MQC** nests a child policy under a parent for shaping plus per-class action.',
-              'The class-map is the what, the policy-map is the how, and the service-policy is the where.'
-            ],
-            table: {
-              cols: ['Block', 'Role'],
-              rows: [
-                ['class-map', 'Match'],
-                ['policy-map', 'Actions'],
-                ['service-policy', 'Attach in or out'],
-                ['match-all', 'All criteria'],
-                ['match-any', 'Any criterion'],
-                ['class-default', 'Catch-all'],
-                ['Actions', 'Mark, police, shape, queue'],
-                ['Hierarchy', 'Parent and child']
-              ]
-            },
-            related: [
-              { t: '01. Classification', d: 'class-map matching' },
-              { t: '03. Policing', d: 'A policy action' },
-              { t: '10. LLQ & CBWFQ', d: 'Queuing actions' }
-            ],
-            glossary: ['MQC', 'QoS Classification', 'Policing', 'Shaping', 'Queuing', 'WRED', 'Control Plane', 'Data Plane']
-          },
-          {
-            id: 't10', num: '10', group: 'config', title: 'LLQ & CBWFQ',
-            blurb: 'Guaranteed class shares plus a policed priority queue for voice',
-            overview: '**[[CBWFQ]]** is the egress scheduling method that gives each traffic class a guaranteed bandwidth share. **[[LLQ]]** adds a strict-priority class, usually voice or EF, served before everything else but rate-limited so it cannot starve the other classes. Together they are the production answer for converged voice, video and data.',
-            keyIdea: 'CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. Use priority for voice and bandwidth for video and data.',
-            sections: [
-              { kind: 'table', h: 'CBWFQ model', cols: ['Concept', 'Detail'], rows: [
-                ['**Class**', 'Matched by class-map'],
-                ['**Share**', 'Bandwidth in kbps per class'],
-                ['**Scheduling**', 'Proportional to weight'],
-                ['**Drop**', 'Tail drop per queue'],
-                ['**Residual**', 'Unused bandwidth is redistributed']
-              ]},
-              { kind: 'table', h: 'LLQ, the strict priority class', cols: ['Item', 'Detail'], rows: [
-                ['**Command**', 'priority kbps'],
-                ['**Behaviour**', 'Served before bandwidth classes'],
-                ['**Rate limit**', 'Policed to the priority value'],
-                ['**Use**', 'Voice and EF'],
-                ['**Risk**', 'Starvation if not limited']
-              ]},
-              { kind: 'table', h: 'priority versus bandwidth', cols: ['Keyword', 'Meaning'], rows: [
-                ['**%%priority%%**', 'Strict-priority LLQ class, policed'],
-                ['**%%bandwidth%%**', 'Guaranteed weighted share, not strict'],
-                ['**Both**', 'LLQ is served first, then CBWFQ classes']
-              ]},
-              { kind: 'code', h: 'Configuration example', code:
-`  policy-map WAN-EDGE
-   class VOICE
-    priority 128
-   class VIDEO
-    bandwidth 1000
-   class DATA
-    bandwidth 2000
-   class class-default
-    fair-queue
-  !
-  interface GigabitEthernet0/1
-   service-policy output WAN-EDGE` },
-              { kind: 'table', h: 'Queuing commands', cols: ['Command', 'Meaning'], rows: [
-                ['**%%priority%%**', 'LLQ strict-priority class'],
-                ['**%%bandwidth%%**', 'CBWFQ guaranteed share'],
-                ['**%%fair-queue%%**', 'Per-flow treatment in class-default'],
-                ['**%%queue-limit%%**', 'Per-class queue depth']
-              ]},
-              { kind: 'para', h: 'Why LLQ is policed', p: 'The priority queue is rate-limited to the configured **priority** value. Bursts beyond it are dropped, which guarantees that the bandwidth classes still get served instead of being starved by a busy voice queue.' },
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show policy-map interface%%**', 'Per-class rates and drops'],
-                ['**%%show queueing interface%%**', 'Queuing state'],
-                ['**%%show class-map%%**', 'Class definitions'],
-                ['**%%show policy-map%%**', 'Policy configuration']
-              ]}
-            ],
-            commands: [
-              { label: 'Build LLQ plus CBWFQ', code:
-`policy-map WAN-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000\n class class-default\n  fair-queue` },
-              { label: 'Attach on the WAN egress', code:
-`interface GigabitEthernet0/1\n service-policy output WAN-EDGE` },
-              { label: 'Verify queues and drops', code:
-`show policy-map interface GigabitEthernet0/1\nshow queueing interface\nshow interfaces GigabitEthernet0/1` }
-            ],
-            traps: [
-              '**CBWFQ is per-class guaranteed bandwidth**; **LLQ is a strict priority class**.',
-              'The LLQ priority class **must be policed** to prevent starvation.',
-              '**%%priority%%** is LLQ and policed; **%%bandwidth%%** is a CBWFQ share.',
-              'Queuing is **egress** and only matters under congestion.',
-              'Voice goes to **LLQ with EF**; video and data use **CBWFQ** shares.',
-              'If voice jitters on a congested link, the missing piece is usually an **LLQ priority class**.'
-            ],
-            table: {
-              cols: ['Item', 'CBWFQ', 'LLQ'],
-              rows: [
-                ['Command', 'bandwidth', 'priority'],
-                ['Served', 'Weighted share', 'Strict first'],
-                ['Policed', 'No', 'Yes'],
-                ['Use', 'Data and video', 'Voice, EF'],
-                ['Risk', 'No strict latency bound', 'Starvation if unlimited'],
-                ['Basis', 'Class weights', 'Priority plus CBWFQ']
-              ]
-            },
-            related: [
-              { t: '05. Queuing', d: 'The mechanism family' },
-              { t: '06. Congestion Avoidance', d: 'Queue management' },
-              { t: '09. Modular QoS CLI', d: 'The policy framework' }
-            ],
-            glossary: ['CBWFQ', 'LLQ', 'Queuing', 'MQC', 'WRED', 'Voice VLAN']
-          },
-          {
-            id: 't11', num: '11', group: 'config', title: 'DSCP PHB Deep-Dive',
-            blurb: 'EF, AF and CS values, including every drop precedence',
-            overview: '**[[DSCP]]** is the 6-bit Layer 3 field that selects a per-hop behaviour on each router. The key PHB families are **EF** for voice, **AF** for assured forwarding with drop precedences, and **CS** for class selector and control traffic. The exam tests the values and which PHB maps to which traffic.',
-            keyIdea: 'EF is exactly 46. AFxy uses class 1 to 4 and drop 1 to 3, where a lower drop number survives longer. CSx equals x times 8, so CS6 is 48.',
-            sections: [
-              { kind: 'table', h: 'DSCP field structure', cols: ['Field', 'Bits', 'Purpose'], rows: [
-                ['**DSCP**', '6', 'PHB selector'],
-                ['**ECN**', '2', 'Congestion notification'],
-                ['**Total ToS**', '8', 'DSCP plus ECN']
-              ]},
-              { kind: 'table', h: 'The three PHB families', cols: ['PHB', 'DSCP values', 'Use'], rows: [
-                ['**EF**', '46, binary 101110', 'Voice, low latency and jitter'],
-                ['**AF**', 'AF1x to AF4x', 'Video and data with drop classes'],
-                ['**CS**', 'CS0 to CS7', 'Legacy precedence and control']
-              ]},
-              { kind: 'table', h: 'EF in detail', cols: ['Item', 'Detail'], rows: [
-                ['**Value**', '46'],
-                ['**Binary**', '101110'],
-                ['**Meaning**', 'One expedited class, no drop precedences'],
-                ['**Typical**', 'Voice RTP'],
-                ['**Queue**', 'LLQ priority']
-              ]},
-              { kind: 'table', h: 'AF classes and drop precedence', cols: ['Class', 'DSCP values x1, x2, x3'], rows: [
-                ['**AF1x**', '10, 12, 14'],
-                ['**AF2x**', '18, 20, 22'],
-                ['**AF3x**', '26, 28, 30'],
-                ['**AF4x**', '34, 36, 38']
-              ]},
-              { kind: 'table', h: 'AF drop meaning', cols: ['Drop precedence', 'Meaning'], rows: [
-                ['**x1, low**', 'Lowest drop probability'],
-                ['**x2, medium**', 'Medium drop probability'],
-                ['**x3, high**', 'Highest drop probability']
-              ]},
-              { kind: 'table', h: 'CS values', cols: ['CS', 'DSCP', 'Legacy precedence'], rows: [
-                ['**CS0**', '0', '0, best effort'],
-                ['**CS1**', '8', '1'],
-                ['**CS2**', '16', '2'],
-                ['**CS3**', '24', '3'],
-                ['**CS4**', '32', '4'],
-                ['**CS5**', '40', '5'],
-                ['**CS6**', '48', '6, routing and control'],
-                ['**CS7**', '56', '7']
-              ]},
-              { kind: 'table', h: 'Common DSCP quick map', cols: ['DSCP', 'Value', 'Use'], rows: [
-                ['**EF**', '46', 'Voice'],
-                ['**AF41**', '34', 'Video conferencing'],
-                ['**AF31**', '26', 'Video streaming'],
-                ['**AF21**', '18', 'Signalling and OAM'],
-                ['**CS6**', '48', 'Routing control'],
-                ['**CS0 or BE**', '0', 'Best effort']
-              ]}
-            ],
-            commands: [
-              { label: 'Match DSCP values into classes', code:
-`class-map match-any VOICE\n match dscp ef\nclass-map match-any VIDEO\n match dscp af41 af31` },
-              { label: 'Apply PHB treatment', code:
-`policy-map DSCP-PHB\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000` },
-              { label: 'Verify classes and policy', code:
-`show class-map\nshow policy-map` }
-            ],
-            traps: [
-              '**EF is exactly 46**, a single value with no precedences.',
-              '**AF is class 1 to 4 plus drop 1 to 3**; AF41 survives longer than AF43.',
-              '**CSx equals x times 8**, so CS6 is 48 and maps to IP precedence 6.',
-              'ECN uses **2 bits**, while DSCP uses 6 of the 8 ToS bits.',
-              'Voice is **EF to LLQ**; video and data are **AF to CBWFQ and WRED**.',
-              'The AF class number selects the queue and the drop number selects the drop probability.'
-            ],
-            table: {
-              cols: ['PHB', 'DSCP', 'Use', 'Queue'],
-              rows: [
-                ['EF', '46', 'Voice', 'LLQ priority'],
-                ['AF4x', '34, 36, 38', 'Video conference', 'CBWFQ plus WRED'],
-                ['AF3x', '26, 28, 30', 'Video stream', 'CBWFQ plus WRED'],
-                ['AF2x', '18, 20, 22', 'Signalling', 'CBWFQ'],
-                ['CS6', '48', 'Control', 'Priority'],
-                ['BE', '0', 'Default', 'Default']
-              ]
-            },
-            related: [
-              { t: '07. DiffServ', d: 'The DSCP marking model' },
-              { t: '02. Marking', d: 'How values are written' },
-              { t: '06. Congestion Avoidance', d: 'Drop precedence in action' }
-            ],
-            glossary: ['DSCP', 'DiffServ', 'QoS Marking', 'WRED', 'QoS']
-          },
-          {
-            id: 't12', num: '12', group: 'config', title: 'QoS Marking & Trust Boundaries',
-            blurb: 'Mark once at the edge, trust in the core, and map CoS to DSCP',
-            overview: '**[[QoS Marking|Marking]]** writes a QoS value such as **[[DSCP]]**, CoS or IP precedence into the packet so downstream devices apply consistent treatment. The **[[Trust Boundary|trust boundary]]** is the point where the network decides to accept or re-mark incoming markings. Mark once at the edge, then trust and honour it in the core.',
-            keyIdea: 'The trust boundary sits at the access edge. Mark once there, trust DSCP in the core, and map CoS to DSCP when traffic crosses from L2 to L3.',
-            sections: [
-              { kind: 'table', h: 'Marking locations', cols: ['Layer', 'Field', 'Bits'], rows: [
-                ['**L2**', '802.1p CoS', '3'],
-                ['**L3**', 'IP precedence', '3'],
-                ['**L3**', 'DSCP', '6'],
-                ['**MPLS**', 'EXP', '3']
-              ]},
-              { kind: 'table', h: 'The trust boundary', cols: ['Zone', 'Action'], rows: [
-                ['**Access edge**', 'Untrusted, so re-mark or classify everything'],
-                ['**Trusted ports**', 'Trust the CoS or DSCP from phones, cameras and APs'],
-                ['**Core**', 'Trust DSCP and apply the PHB without re-marking']
-              ]},
-              { kind: 'table', h: 'Trust versus re-mark', cols: ['Mode', 'Behaviour'], rows: [
-                ['**Trust**', 'Accept the existing CoS or DSCP as-is'],
-                ['**Re-mark**', 'Overwrite with a policy-derived value']
-              ]},
-              { kind: 'code', h: 'Trust and marking configuration', code:
-`  mls qos trust cos
-  !
-  policy-map MARK
-   class VOICE
-    set dscp ef
-   class CAMERA
-    set dscp af41
-  !
-  interface GigabitEthernet0/1
-   service-policy input MARK` },
-              { kind: 'table', h: 'Trust and marking commands', cols: ['Command', 'Effect'], rows: [
-                ['**%%mls qos trust cos%%**', 'Trust incoming CoS'],
-                ['**%%mls qos trust dscp%%**', 'Trust incoming DSCP'],
-                ['**%%set dscp%%**', 'Write DSCP'],
-                ['**%%set cos%%**', 'Write CoS'],
-                ['**%%service-policy input%%**', 'Apply marking on ingress']
-              ]},
-              { kind: 'table', h: 'CoS to DSCP mapping', cols: ['CoS', 'Typical DSCP usage'], rows: [
-                ['**0**', 'BE'],
-                ['**3**', 'Call signalling'],
-                ['**4**', 'Video, AF41'],
-                ['**5**', 'Voice, EF'],
-                ['**6 and 7**', 'Network control']
-              ]},
-              { kind: 'table', h: 'Marking best practice', cols: ['Rule', 'Detail'], rows: [
-                ['**Mark once**', 'At the trust boundary or edge'],
-                ['**Trust in the core**', 'Core reads DSCP and does not re-mark'],
-                ['**Consistent PHB**', 'Queue by DSCP: EF, AF, CS'],
-                ['**Secure**', 'Untrusted ports are re-marked']
-              ]}
-            ],
-            commands: [
-              { label: 'Trust CoS on an access port', code:
-`interface GigabitEthernet0/1\n mls qos trust cos` },
-              { label: 'Mark traffic by class on ingress', code:
-`policy-map MARK\n class VOICE\n  set dscp ef\n class CAMERA\n  set dscp af41\ninterface GigabitEthernet0/1\n service-policy input MARK` },
-              { label: 'Verify trust and mapping', code:
-`show mls qos\nshow mls qos interface GigabitEthernet0/1\nshow mls qos maps cos-dscp` }
-            ],
-            traps: [
-              '**Marking writes**; **classification reads**.',
-              'The **trust boundary** decides who is trusted and who gets re-marked at the edge.',
-              'Mark **once at the edge**, then **trust in the core** without re-marking.',
-              'CoS is **Layer 2 and LAN-only**; DSCP crosses Layer 3, so map between them at the boundary.',
-              '**%%mls qos trust cos%%** trusts CoS; **%%set dscp%%** marks.',
-              'CoS is carried in the **VLAN tag**, so it only exists on trunked or tagged links.'
-            ],
-            table: {
-              cols: ['Item', 'Marking and Trust'],
-              rows: [
-                ['L2', 'CoS, 3 bits'],
-                ['L3', 'DSCP 6 bits or precedence'],
-                ['MPLS', 'EXP'],
-                ['Trust boundary', 'Access edge'],
-                ['Core', 'Trust, no re-mark'],
-                ['Mark command', 'set dscp or set cos'],
-                ['Trust command', 'mls qos trust'],
-                ['Map', 'CoS to DSCP']
-              ]
-            },
-            related: [
-              { t: '02. Marking', d: 'Edge marking detail' },
-              { t: '07. DiffServ', d: 'The DSCP model' },
-              { t: '01. Classification', d: 'Classify before marking' }
-            ],
-            glossary: ['QoS Marking', 'Trust Boundary', 'QoS Classification', 'DSCP', 'DiffServ', 'VLAN']
-          }
-        ];
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "traffic",
+    "title": "Classification",
+    "blurb": "Identify traffic by DSCP, CoS, ACL or application before anything else",
+    "overview": "**[[QoS Classification|Classification]]** is the QoS act of identifying which traffic gets which treatment. It groups packets using fields such as **[[DSCP]]**, IP precedence, 802.1p CoS, **[[ACL|ACLs]]** or application signatures. Classification is always the first step, because marking, policing and queuing need something to act on.",
+    "keyIdea": "Classification reads and groups; marking writes. Classify once at the edge, set the trust boundary there, and let the core trust the result.",
+    "sections": [
+      {
+        "h": "QoS",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">QoS</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Classification, Marking, Queuing, Policing, Shaping</text></g></svg>",
+        "caption": "Traffic prioritization."
+      },
+      {
+        "kind": "table",
+        "h": "What we classify on",
+        "cols": [
+          "Field",
+          "Layer",
+          "Notes"
+        ],
+        "rows": [
+          [
+            "**DSCP**",
+            "L3",
+            "6 bits"
+          ],
+          [
+            "**IP precedence**",
+            "L3",
+            "3 bits"
+          ],
+          [
+            "**802.1p CoS**",
+            "L2",
+            "3 bits"
+          ],
+          [
+            "**ACL**",
+            "L3 and L4",
+            "Match IP addresses and ports"
+          ],
+          [
+            "**NBAR**",
+            "L7",
+            "Application recognition"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Trust boundaries",
+        "cols": [
+          "Point",
+          "Trust state"
+        ],
+        "rows": [
+          [
+            "**Access edge**",
+            "Untrusted, so re-mark"
+          ],
+          [
+            "**Core**",
+            "Trusted, keep DSCP"
+          ],
+          [
+            "**Ingress switch**",
+            "Classify and mark"
+          ],
+          [
+            "**Camera or phone port**",
+            "Set CoS and DSCP"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Trust versus classify",
+        "cols": [
+          "Mode",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Trust**",
+            "Accept the existing CoS or DSCP"
+          ],
+          [
+            "**Classify**",
+            "Match the traffic, then act"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Classification tools",
+        "cols": [
+          "Tool",
+          "Match basis"
+        ],
+        "rows": [
+          [
+            "**class-map**",
+            "Match criteria"
+          ],
+          [
+            "**ACL**",
+            "IP addresses and ports"
+          ],
+          [
+            "**NBAR**",
+            "Application signature"
+          ],
+          [
+            "**PBR route-map**",
+            "Match conditions for policy routing"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "class-map example",
+        "code": "  class-map match-any VOICE\n   match dscp ef\n  !\n  class-map match-any BULK\n   match access-group name BULK"
+      },
+      {
+        "kind": "table",
+        "h": "class-map match logic",
+        "cols": [
+          "Keyword",
+          "Logic"
+        ],
+        "rows": [
+          [
+            "**%%match-all%%**",
+            "Every criterion must match"
+          ],
+          [
+            "**%%match-any%%**",
+            "Any one criterion is enough"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Where classification happens",
+        "p": "Classify on **ingress** at routers and switches, with NBAR usually on edge devices. Classify **once at the edge**, then trust the marking in the core instead of repeating the work at every hop."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build class maps for voice and bulk traffic",
+        "code": "class-map match-any VOICE\n match dscp ef\nclass-map match-any BULK\n match access-group name BULK"
+      },
+      {
+        "label": "Verify the class maps",
+        "code": "show class-map\nshow policy-map"
+      },
+      {
+        "label": "Reference a policy that uses the classes",
+        "code": "policy-map EDGE\n class VOICE\n  priority 128\n class BULK\n  bandwidth 1000"
+      }
+    ],
+    "traps": [
+      "Classification **identifies** traffic; marking **writes** the value.",
+      "The **trust boundary** decides whose markings are believed.",
+      "Know **%%match-any%%** versus **%%match-all%%** in a class-map.",
+      "NBAR classifies at **Layer 7** using application signatures.",
+      "Classify at the **edge**; the core should trust the result.",
+      "An ACL match is **Layer 3 and 4**, not application-aware."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Classification"
+      ],
+      "rows": [
+        [
+          "What",
+          "Identify traffic"
+        ],
+        [
+          "Fields",
+          "DSCP, CoS, ACL, NBAR"
+        ],
+        [
+          "Trust",
+          "Edge decision"
+        ],
+        [
+          "Tool",
+          "class-map"
+        ],
+        [
+          "Match",
+          "match-all or match-any"
+        ],
+        [
+          "NBAR",
+          "Layer 7"
+        ],
+        [
+          "Place",
+          "Ingress edge"
+        ],
+        [
+          "Order",
+          "Before marking"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Marking",
+        "d": "The step that follows"
+      },
+      {
+        "t": "07. DiffServ",
+        "d": "The architecture it feeds"
+      },
+      {
+        "t": "09. Modular QoS CLI",
+        "d": "Where class maps live"
+      }
+    ],
+    "glossary": [
+      "QoS Classification",
+      "DSCP",
+      "QoS Marking",
+      "MQC",
+      "Trust Boundary",
+      "ACL"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "traffic",
+    "title": "Marking",
+    "blurb": "Write DSCP, CoS or precedence so every hop sees the same class",
+    "overview": "**[[QoS Marking|Marking]]** writes a QoS value into the packet or frame so downstream devices can treat it consistently. Markers exist at Layer 2 as 802.1p CoS, at Layer 3 as IP precedence or **[[DSCP]]**, and in **[[MPLS]]** as the EXP bits. The core trusts that marking instead of reclassifying every packet.",
+    "keyIdea": "DSCP is the modern 6-bit L3 marker. EF is voice, AF4x and AF3x are video, CS6 is control, and the core trusts what the edge wrote.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Marking locations",
+        "cols": [
+          "Layer",
+          "Field",
+          "Bits"
+        ],
+        "rows": [
+          [
+            "**L2**",
+            "802.1p CoS",
+            "3"
+          ],
+          [
+            "**L3**",
+            "IP precedence",
+            "3"
+          ],
+          [
+            "**L3**",
+            "DSCP",
+            "6"
+          ],
+          [
+            "**MPLS**",
+            "EXP",
+            "3"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DSCP versus IP precedence",
+        "cols": [
+          "Item",
+          "IP precedence",
+          "DSCP"
+        ],
+        "rows": [
+          [
+            "Bits",
+            "3",
+            "6"
+          ],
+          [
+            "Classes",
+            "8",
+            "64"
+          ],
+          [
+            "Default",
+            "CS0",
+            "BE"
+          ],
+          [
+            "Modern use",
+            "Legacy",
+            "Preferred"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Common DSCP values",
+        "cols": [
+          "DSCP",
+          "Value",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**EF**",
+            "46",
+            "Voice"
+          ],
+          [
+            "**AF41**",
+            "34",
+            "Video conference"
+          ],
+          [
+            "**AF31**",
+            "26",
+            "Video stream"
+          ],
+          [
+            "**AF21**",
+            "18",
+            "Bulk and signalling"
+          ],
+          [
+            "**CS0**",
+            "0",
+            "Best effort"
+          ],
+          [
+            "**CS6 and CS7**",
+            "48 and 56",
+            "Control"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Marking configuration",
+        "code": "  policy-map MARK-VOICE\n   class VOICE\n    set dscp ef\n  !\n  class-map match-all VIDEO\n   match dscp af41\n  policy-map MARK-VIDEO\n   class VIDEO\n    set dscp af41"
+      },
+      {
+        "kind": "table",
+        "h": "Marking commands",
+        "cols": [
+          "Command",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "**%%set dscp%%**",
+            "Write DSCP"
+          ],
+          [
+            "**%%set precedence%%**",
+            "Write IP precedence"
+          ],
+          [
+            "**%%set cos%%**",
+            "Write CoS"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Trusting markings",
+        "cols": [
+          "Device",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Edge**",
+            "Set or re-mark"
+          ],
+          [
+            "**Core**",
+            "Trust and do not re-mark"
+          ],
+          [
+            "**L2 to L3 boundary**",
+            "Map CoS to DSCP"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Mark voice and video at the edge",
+        "code": "policy-map MARK\n class VOICE\n  set dscp ef\n class VIDEO\n  set dscp af41"
+      },
+      {
+        "label": "Verify marking policy",
+        "code": "show policy-map\nshow class-map\nshow run policy-map"
+      },
+      {
+        "label": "Check switch marking and trust",
+        "code": "show mls qos interface\nshow mls qos maps cos-dscp"
+      }
+    ],
+    "traps": [
+      "Marking **writes**; classification **reads**.",
+      "**DSCP is 6 bits and 64 values**; precedence is 3 bits and 8 values.",
+      "**EF is voice**, AF4x and AF3x are video, and **CS6 is control**.",
+      "Set DSCP at the **edge**, then trust it in the **core**.",
+      "Use **%%set dscp%%**, **%%set cos%%** or **%%set precedence%%** to write a value.",
+      "CoS and DSCP need a **mapping table** when traffic crosses L2 to L3."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Marking"
+      ],
+      "rows": [
+        [
+          "L2",
+          "802.1p CoS"
+        ],
+        [
+          "L3",
+          "DSCP"
+        ],
+        [
+          "DSCP bits",
+          "6"
+        ],
+        [
+          "Voice",
+          "EF"
+        ],
+        [
+          "Video conference",
+          "AF41"
+        ],
+        [
+          "Video stream",
+          "AF31"
+        ],
+        [
+          "Control",
+          "CS6"
+        ],
+        [
+          "Core",
+          "Trust"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Classification",
+        "d": "The step before marking"
+      },
+      {
+        "t": "07. DiffServ",
+        "d": "DSCP marking model"
+      },
+      {
+        "t": "12. QoS Marking & Trust Boundaries",
+        "d": "Where trust is set"
+      }
+    ],
+    "glossary": [
+      "QoS Marking",
+      "DSCP",
+      "Trust Boundary",
+      "DiffServ",
+      "MPLS"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "traffic",
+    "title": "Policing",
+    "blurb": "Drop or re-mark excess traffic with a token bucket",
+    "overview": "**[[Policing]]** enforces a rate by dropping or re-marking excess traffic, without buffering it. It uses the **token bucket** model and can work on ingress or egress. It is burst-sensitive, adds no delay, and is commonly used to meter customer or class rates.",
+    "keyIdea": "Policing drops or re-marks and never buffers. Token buckets use CIR, Bc and Be, with conform, exceed and violate outcomes.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Policing versus shaping",
+        "cols": [
+          "Aspect",
+          "Policing",
+          "Shaping"
+        ],
+        "rows": [
+          [
+            "Excess",
+            "Drop or re-mark",
+            "Buffer"
+          ],
+          [
+            "Delay",
+            "None",
+            "Adds delay"
+          ],
+          [
+            "Location",
+            "Ingress or egress",
+            "Egress only"
+          ],
+          [
+            "Burst",
+            "Drops",
+            "Smooths"
+          ],
+          [
+            "Use",
+            "Meter and enforce",
+            "Line-rate smoothing"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Token bucket basics",
+        "cols": [
+          "Token",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**CIR**",
+            "Fill rate in bits per second"
+          ],
+          [
+            "**Bc**",
+            "Committed burst"
+          ],
+          [
+            "**Be**",
+            "Excess burst"
+          ],
+          [
+            "**Conform**",
+            "Tokens were available"
+          ],
+          [
+            "**Exceed**",
+            "No committed tokens"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Actions",
+        "cols": [
+          "Action",
+          "When"
+        ],
+        "rows": [
+          [
+            "**Transmit**",
+            "Packet conforms"
+          ],
+          [
+            "**Drop**",
+            "Packet violates"
+          ],
+          [
+            "**Set DSCP then transmit**",
+            "Packet exceeds and is re-marked"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Policer configuration",
+        "code": "  policy-map POLICE-DATA\n   class BULK\n    police cir 1000000 bc 200000 be 200000\n     conform-action transmit\n     exceed-action drop\n     violate-action drop\n  !\n  interface GigabitEthernet0/1\n   service-policy input POLICE-DATA"
+      },
+      {
+        "kind": "table",
+        "h": "Policer commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%police cir%%**",
+            "Committed rate"
+          ],
+          [
+            "**%%bc%%** and **%%be%%**",
+            "Burst sizes"
+          ],
+          [
+            "**%%conform-action%%**",
+            "Action when tokens are available"
+          ],
+          [
+            "**%%exceed-action%%**",
+            "Action when tokens are short"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Multi-action policing",
+        "cols": [
+          "State",
+          "Token condition",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Conform**",
+            "Bc available",
+            "Transmit"
+          ],
+          [
+            "**Exceed**",
+            "Be available",
+            "Re-mark"
+          ],
+          [
+            "**Violate**",
+            "No tokens",
+            "Drop"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Where policing is used",
+        "cols": [
+          "Use",
+          "Reason"
+        ],
+        "rows": [
+          [
+            "**Customer rate limit**",
+            "Enforce the SLA"
+          ],
+          [
+            "**Bandwidth control**",
+            "Meter classes"
+          ],
+          [
+            "**Mark-down**",
+            "Re-mark traffic over rate"
+          ],
+          [
+            "**Ingress protection**",
+            "Stop floods"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configure a policer",
+        "code": "policy-map POLICE-DATA\n class BULK\n  police cir 1000000 bc 200000 be 200000\n   conform-action transmit\n   exceed-action drop\n   violate-action drop"
+      },
+      {
+        "label": "Attach it on ingress",
+        "code": "interface GigabitEthernet0/1\n service-policy input POLICE-DATA"
+      },
+      {
+        "label": "Verify policing counters",
+        "code": "show policy-map\nshow policy-map interface\nshow policy-map interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "Policing **drops or re-marks** excess traffic and never buffers.",
+      "It works **on ingress or egress**; shaping is egress only.",
+      "The token bucket uses **CIR, Bc and Be**.",
+      "The three outcomes are **conform, exceed and violate**.",
+      "Use **%%service-policy input%%** when policing incoming traffic.",
+      "Re-mark and transmit is gentler than dropping the excess."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Policing"
+      ],
+      "rows": [
+        [
+          "Excess",
+          "Drop or re-mark"
+        ],
+        [
+          "Delay",
+          "None"
+        ],
+        [
+          "Location",
+          "Ingress or egress"
+        ],
+        [
+          "Bucket",
+          "Token bucket"
+        ],
+        [
+          "CIR",
+          "Rate"
+        ],
+        [
+          "Bursts",
+          "Bc and Be"
+        ],
+        [
+          "Actions",
+          "Conform, exceed, violate"
+        ],
+        [
+          "Attach",
+          "service-policy"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Shaping",
+        "d": "The buffering contrast"
+      },
+      {
+        "t": "06. Congestion Avoidance",
+        "d": "Other drop decisions"
+      },
+      {
+        "t": "09. Modular QoS CLI",
+        "d": "How policies are attached"
+      }
+    ],
+    "glossary": [
+      "Policing",
+      "Shaping",
+      "MQC",
+      "QoS Classification"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "traffic",
+    "title": "Shaping",
+    "blurb": "Buffer the excess, smooth the rate, and avoid downstream drops",
+    "overview": "**[[Shaping]]** smooths traffic to a rate by buffering excess instead of dropping it. It works **egress only** and adds delay, which makes it ideal for aligning to a subscribed line rate or a downstream policer without wasting packets. The exam constantly contrasts it with **[[Policing]]**.",
+    "keyIdea": "Shaping buffers and adds delay on egress. Use shape average for the normal token bucket, shape peak to allow Be, and hierarchical policies for parent and child rates.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Shaping model",
+        "cols": [
+          "Item",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**CIR**",
+            "Shaped rate"
+          ],
+          [
+            "**Bc**",
+            "Committed burst"
+          ],
+          [
+            "**Be**",
+            "Excess burst"
+          ],
+          [
+            "**Queue**",
+            "Buffers the excess"
+          ],
+          [
+            "**Delay**",
+            "Added latency"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Shaping versus policing",
+        "cols": [
+          "Aspect",
+          "Shaping",
+          "Policing"
+        ],
+        "rows": [
+          [
+            "Excess",
+            "Buffer",
+            "Drop or re-mark"
+          ],
+          [
+            "Delay",
+            "Adds",
+            "None"
+          ],
+          [
+            "Location",
+            "Egress",
+            "Ingress or egress"
+          ],
+          [
+            "Rate",
+            "Smooth",
+            "Meter"
+          ],
+          [
+            "Loss",
+            "Low",
+            "High"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Why shape",
+        "cols": [
+          "Reason",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Access line**",
+            "Align to the subscribed CIR"
+          ],
+          [
+            "**Avoid drops**",
+            "Do not exceed a downstream policer"
+          ],
+          [
+            "**Fairness**",
+            "Smooth bursts"
+          ],
+          [
+            "**Downstream**",
+            "Do not flood the next device"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Shaping configuration",
+        "code": "  policy-map SHAPE-LINK\n   class class-default\n    shape average 10000000\n  !\n  interface GigabitEthernet0/1\n   service-policy output SHAPE-LINK"
+      },
+      {
+        "kind": "table",
+        "h": "Shaping commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%shape average%%**",
+            "Token bucket with Bc and Be"
+          ],
+          [
+            "**%%shape peak%%**",
+            "Allow use of Be"
+          ],
+          [
+            "**%%service-policy output%%**",
+            "Attach on egress"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Hierarchical shaping",
+        "cols": [
+          "Level",
+          "Policy"
+        ],
+        "rows": [
+          [
+            "**Parent**",
+            "Total rate, for example 10 Mbps"
+          ],
+          [
+            "**Child**",
+            "Per-class sub-rates"
+          ],
+          [
+            "**Result**",
+            "Class buckets inside the shaped link"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Shape the aggregate egress rate",
+        "code": "policy-map SHAPE-LINK\n class class-default\n  shape average 10000000\ninterface GigabitEthernet0/1\n service-policy output SHAPE-LINK"
+      },
+      {
+        "label": "Verify shaping and queues",
+        "code": "show policy-map interface\nshow policy-map interface GigabitEthernet0/1\nshow queueing"
+      },
+      {
+        "label": "Check the physical interface",
+        "code": "show interface GigabitEthernet0/1\nshow policy-map interface GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "Shaping **buffers**; policing **drops**.",
+      "Shaping is **egress only** and adds **delay**.",
+      "Know **%%shape average%%** versus **%%shape peak%%**.",
+      "**Hierarchical shaping** nests a child policy inside a parent.",
+      "For access-rate smoothing, **shape**, do not police.",
+      "A shaping queue holds the excess until the token bucket allows it out."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Shaping"
+      ],
+      "rows": [
+        [
+          "Excess",
+          "Buffer"
+        ],
+        [
+          "Delay",
+          "Adds"
+        ],
+        [
+          "Location",
+          "Egress"
+        ],
+        [
+          "Default",
+          "shape average"
+        ],
+        [
+          "Peak",
+          "Uses Be"
+        ],
+        [
+          "Access",
+          "Align to CIR"
+        ],
+        [
+          "Hierarchy",
+          "Parent and child"
+        ],
+        [
+          "Show",
+          "show policy-map interface"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Policing",
+        "d": "The contrasting mechanism"
+      },
+      {
+        "t": "05. Queuing",
+        "d": "Where shaped packets wait"
+      },
+      {
+        "t": "09. Modular QoS CLI",
+        "d": "Parent and child policies"
+      }
+    ],
+    "glossary": [
+      "Shaping",
+      "Policing",
+      "MQC",
+      "Queuing"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "queue",
+    "title": "Queuing",
+    "blurb": "FIFO, WFQ, PQ, CBWFQ and LLQ: who leaves the interface first",
+    "overview": "**[[Queuing]]** decides the order packets leave an interface when it is congested. The modern answer is **[[CBWFQ]]** for class-based weighted shares, with **[[LLQ]]** adding a strict-priority class for delay-sensitive voice. The exam wants the mapping from each queuing mechanism to the need it serves.",
+    "keyIdea": "CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. PQ can starve, WFQ is per-flow fair, and queuing only matters at egress under congestion.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Queuing mechanisms",
+        "cols": [
+          "Mechanism",
+          "Behaviour",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**FIFO**",
+            "First in, first out",
+            "No QoS"
+          ],
+          [
+            "**WFQ**",
+            "Per-flow fair",
+            "Legacy default"
+          ],
+          [
+            "**PQ**",
+            "Strict priority",
+            "Critical traffic only"
+          ],
+          [
+            "**CBWFQ**",
+            "Per-class weights",
+            "Modern default"
+          ],
+          [
+            "**LLQ**",
+            "Priority plus CBWFQ",
+            "Voice"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "CBWFQ",
+        "cols": [
+          "Concept",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Class**",
+            "Matched by class-map"
+          ],
+          [
+            "**Bandwidth**",
+            "kbps share"
+          ],
+          [
+            "**Weight**",
+            "Proportional service"
+          ],
+          [
+            "**Drop**",
+            "Tail drop per queue"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "LLQ, the strict priority class",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Priority class**",
+            "Served before bandwidth classes"
+          ],
+          [
+            "**Limit**",
+            "Policed to the priority value"
+          ],
+          [
+            "**Risk**",
+            "Starving others if unlimited"
+          ],
+          [
+            "**Use**",
+            "Voice and EF"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Queuing configuration",
+        "code": "  policy-map QUEUE-EDGE\n   class VOICE\n    priority 128\n   class VIDEO\n    bandwidth 1000\n   class DATA\n    bandwidth 2000\n  !\n  interface GigabitEthernet0/1\n   service-policy output QUEUE-EDGE"
+      },
+      {
+        "kind": "table",
+        "h": "Queuing commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%priority%%**",
+            "Strict priority LLQ class"
+          ],
+          [
+            "**%%bandwidth%%**",
+            "Guaranteed CBWFQ share"
+          ],
+          [
+            "**%%queue-limit%%**",
+            "Per-class queue depth"
+          ],
+          [
+            "**%%fair-queue%%**",
+            "Per-flow treatment inside a class"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "PQ versus CBWFQ versus WFQ",
+        "cols": [
+          "Mechanism",
+          "Selection",
+          "Risk"
+        ],
+        "rows": [
+          [
+            "**WFQ**",
+            "Per flow",
+            "Less control"
+          ],
+          [
+            "**PQ**",
+            "Strict priority",
+            "Starvation"
+          ],
+          [
+            "**CBWFQ**",
+            "Per class",
+            "No strict latency bound"
+          ],
+          [
+            "**LLQ**",
+            "Priority plus class",
+            "Voice-safe when policed"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build a voice and data queuing policy",
+        "code": "policy-map QUEUE-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000"
+      },
+      {
+        "label": "Attach it on egress",
+        "code": "interface GigabitEthernet0/1\n service-policy output QUEUE-EDGE"
+      },
+      {
+        "label": "Verify queues and scheduling",
+        "code": "show policy-map interface\nshow queueing interface\nshow interfaces GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**CBWFQ is per-class bandwidth**; **LLQ is a priority class plus CBWFQ**.",
+      "The LLQ priority class must be **policed** to avoid starvation.",
+      "**PQ is strict and can starve**; **WFQ is per-flow fair**.",
+      "Queuing is **egress** and only matters **under congestion**.",
+      "Know **%%priority%%** versus **%%bandwidth%%**.",
+      "FIFO provides no QoS differentiation at all."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Queuing"
+      ],
+      "rows": [
+        [
+          "FIFO",
+          "No QoS"
+        ],
+        [
+          "WFQ",
+          "Per flow"
+        ],
+        [
+          "PQ",
+          "Strict"
+        ],
+        [
+          "CBWFQ",
+          "Per class"
+        ],
+        [
+          "LLQ",
+          "Voice priority"
+        ],
+        [
+          "Priority",
+          "Policed"
+        ],
+        [
+          "Bandwidth",
+          "Share"
+        ],
+        [
+          "Direction",
+          "Egress under congestion"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. Congestion Avoidance",
+        "d": "Queue management inside the classes"
+      },
+      {
+        "t": "10. LLQ & CBWFQ",
+        "d": "The production pairing"
+      },
+      {
+        "t": "03. Policing",
+        "d": "Input rate control"
+      }
+    ],
+    "glossary": [
+      "Queuing",
+      "CBWFQ",
+      "LLQ",
+      "WRED"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "queue",
+    "title": "Congestion Avoidance",
+    "blurb": "WRED drops early and randomly to break TCP synchronisation",
+    "overview": "Congestion avoidance drops packets **before** a queue overflows, preventing tail drop and the **TCP global synchronisation** that follows it. The tool is **[[WRED]]**, which randomly drops lower-priority traffic as the queue fills, protecting high-priority flows and smoothing TCP behaviour.",
+    "keyIdea": "Tail drop causes TCP global sync. WRED drops randomly as the queue grows, using min and max thresholds, and ECN can mark instead of dropping.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The tail drop problem",
+        "cols": [
+          "Issue",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "**Tail drop**",
+            "The last packets are dropped"
+          ],
+          [
+            "**Synchronisation**",
+            "TCP windows collapse together"
+          ],
+          [
+            "**Voice**",
+            "Burst loss"
+          ],
+          [
+            "**Retransmission**",
+            "Efficiency loss"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RED and WRED idea",
+        "cols": [
+          "Stage",
+          "Threshold",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Below min**",
+            "Normal",
+            "No drop"
+          ],
+          [
+            "**Min to max**",
+            "Growing",
+            "Random drop rate rises"
+          ],
+          [
+            "**Above max**",
+            "Full",
+            "Drop all"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Weighted means per class",
+        "cols": [
+          "Class",
+          "Drop profile"
+        ],
+        "rows": [
+          [
+            "**Voice, EF**",
+            "No drop or highest minimum"
+          ],
+          [
+            "**Video, AF**",
+            "Moderate"
+          ],
+          [
+            "**Best effort**",
+            "Aggressive"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "WRED configuration",
+        "code": "  policy-map AVOID\n   class AF31\n    bandwidth 1000\n    random-detect dscp-based\n  !\n  interface GigabitEthernet0/1\n   service-policy output AVOID"
+      },
+      {
+        "kind": "table",
+        "h": "WRED commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%random-detect%%**",
+            "Enable WRED"
+          ],
+          [
+            "**%%random-detect dscp-based%%**",
+            "Use DSCP drop profiles"
+          ],
+          [
+            "**%%random-detect precedence-based%%**",
+            "Use precedence profiles"
+          ],
+          [
+            "**%%min/max threshold%%**",
+            "Set the drop curve"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "ECN",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**What**",
+            "Mark instead of drop"
+          ],
+          [
+            "**Bits**",
+            "ECT and CE"
+          ],
+          [
+            "**Partner**",
+            "WRED plus ECN"
+          ],
+          [
+            "**Result**",
+            "TCP backs off without loss"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Where to apply",
+        "cols": [
+          "Device",
+          "Reason"
+        ],
+        "rows": [
+          [
+            "**Egress WAN**",
+            "Protect voice and video"
+          ],
+          [
+            "**Core queues**",
+            "Avoid synchronisation"
+          ],
+          [
+            "**Edge**",
+            "Set drop profiles"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable DSCP-based WRED in a class",
+        "code": "policy-map AVOID\n class AF31\n  bandwidth 1000\n  random-detect dscp-based"
+      },
+      {
+        "label": "Attach the policy on egress",
+        "code": "interface GigabitEthernet0/1\n service-policy output AVOID"
+      },
+      {
+        "label": "Verify WRED and drop counters",
+        "code": "show policy-map interface\nshow queueing random-detect\nshow interfaces"
+      }
+    ],
+    "traps": [
+      "**Tail drop leads to TCP global synchronisation**, and WRED addresses both.",
+      "WRED means **weighted random early detection**, applied per class.",
+      "Thresholds run from **min to max to full drop**.",
+      "**ECN marks instead of dropping**, which keeps TCP friendly.",
+      "Apply WRED at **congested egress**, typically the WAN.",
+      "Lower drop precedence values survive longer than higher ones."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Congestion Avoidance"
+      ],
+      "rows": [
+        [
+          "Problem",
+          "Tail drop and sync"
+        ],
+        [
+          "Tool",
+          "WRED"
+        ],
+        [
+          "Model",
+          "RED per class"
+        ],
+        [
+          "Threshold",
+          "Min and max"
+        ],
+        [
+          "Weighted",
+          "Per DSCP"
+        ],
+        [
+          "ECN",
+          "Mark instead of drop"
+        ],
+        [
+          "Sync",
+          "Avoided"
+        ],
+        [
+          "Place",
+          "Egress"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Queuing",
+        "d": "The queues WRED manages"
+      },
+      {
+        "t": "11. DSCP PHB Deep-Dive",
+        "d": "Drop precedence values"
+      },
+      {
+        "t": "03. Policing",
+        "d": "A different drop decision"
+      }
+    ],
+    "glossary": [
+      "WRED",
+      "Queuing",
+      "DSCP"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "arch",
+    "title": "DiffServ",
+    "blurb": "Per-class DSCP and per-hop behaviour, with no signalling at all",
+    "overview": "**[[DiffServ]]** is the QoS architecture where each packet carries its own class in the **[[DSCP]]** field and each router applies a per-hop behaviour. There is no signalling and no reservation, which makes it scalable and the de-facto model for enterprise and service-provider QoS.",
+    "keyIdea": "DiffServ is DSCP plus PHB: classify and mark at the edge, trust in the core. EF is voice, AF is assured forwarding with three drop levels, and CS is the class selector.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "DiffServ versus IntServ",
+        "cols": [
+          "Aspect",
+          "DiffServ",
+          "IntServ"
+        ],
+        "rows": [
+          [
+            "Model",
+            "Per class",
+            "Per flow"
+          ],
+          [
+            "Signalling",
+            "None",
+            "RSVP"
+          ],
+          [
+            "Scale",
+            "Excellent",
+            "Poor"
+          ],
+          [
+            "Guarantee",
+            "Statistical",
+            "Hard"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DSCP and PHB",
+        "cols": [
+          "Field",
+          "Bits",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**DSCP**",
+            "6",
+            "Packet class"
+          ],
+          [
+            "**ECN**",
+            "2",
+            "Congestion marks"
+          ],
+          [
+            "**PHB**",
+            "Not a field",
+            "Treatment applied per class"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The PHB classes",
+        "cols": [
+          "PHB",
+          "DSCP",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**EF**",
+            "46",
+            "Voice, low latency"
+          ],
+          [
+            "**AF4x**",
+            "34, 36, 38",
+            "Video conference"
+          ],
+          [
+            "**AF3x**",
+            "26, 28, 30",
+            "Video stream"
+          ],
+          [
+            "**AF2x**",
+            "18, 20, 22",
+            "Signalling and OAM"
+          ],
+          [
+            "**AF1x**",
+            "10, 12, 14",
+            "Bulk"
+          ],
+          [
+            "**CSx**",
+            "0 to 56",
+            "Class selector and control"
+          ],
+          [
+            "**BE**",
+            "0",
+            "Default"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "AF drop precedence",
+        "cols": [
+          "Code",
+          "Drop",
+          "Example"
+        ],
+        "rows": [
+          [
+            "**AF21**",
+            "Low",
+            "Signalling"
+          ],
+          [
+            "**AF22**",
+            "Medium",
+            "Data"
+          ],
+          [
+            "**AF23**",
+            "High",
+            "Bulk"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "DiffServ in the network",
+        "cols": [
+          "Zone",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Edge**",
+            "Classify and mark"
+          ],
+          [
+            "**Core**",
+            "Trust and apply the PHB"
+          ],
+          [
+            "**Provider**",
+            "Honour DSCP or the contract"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Example policy",
+        "code": "  policy-map DIFFSERV\n   class VOICE\n    priority 128\n   class VIDEO\n    bandwidth 1000\n    random-detect dscp-based\n   class DATA\n    bandwidth 2000"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build the DiffServ policy",
+        "code": "policy-map DIFFSERV\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n  random-detect dscp-based\n class DATA\n  bandwidth 2000"
+      },
+      {
+        "label": "Verify policy and classes",
+        "code": "show policy-map\nshow policy-map interface\nshow class-map"
+      },
+      {
+        "label": "Check the running policy",
+        "code": "show run policy-map\nshow policy-map interface"
+      }
+    ],
+    "traps": [
+      "DiffServ is **DSCP plus PHB**, with no signalling.",
+      "**EF (46) is voice**, AF is assured forwarding with three drop levels, and CS is the class selector.",
+      "The core **trusts DSCP**; the edge marks.",
+      "DiffServ is **statistical**; IntServ is per-flow guaranteed.",
+      "Within an AF class, a **lower drop number survives longer**.",
+      "The AF class number selects the queue and the drop number selects the drop probability."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "DiffServ"
+      ],
+      "rows": [
+        [
+          "Model",
+          "Per class"
+        ],
+        [
+          "Mark",
+          "DSCP"
+        ],
+        [
+          "Voice",
+          "EF"
+        ],
+        [
+          "Video",
+          "AF"
+        ],
+        [
+          "Drop",
+          "AFx3 is highest"
+        ],
+        [
+          "Control",
+          "CS6"
+        ],
+        [
+          "Edge",
+          "Mark"
+        ],
+        [
+          "Core",
+          "Trust and apply PHB"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. IntServ",
+        "d": "The contrasting reservation model"
+      },
+      {
+        "t": "11. DSCP PHB Deep-Dive",
+        "d": "The PHB values"
+      },
+      {
+        "t": "12. QoS Marking & Trust Boundaries",
+        "d": "Edge marking"
+      }
+    ],
+    "glossary": [
+      "DiffServ",
+      "DSCP",
+      "QoS Marking",
+      "Trust Boundary",
+      "IntServ",
+      "QoS",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "arch",
+    "title": "IntServ",
+    "blurb": "Per-flow RSVP reservations with hard guarantees but poor scale",
+    "overview": "**[[IntServ]]** delivers per-flow, hard QoS guarantees using RSVP to reserve bandwidth end to end **before** traffic flows. Unlike the per-class DiffServ model, every router holds per-flow state, which is why it does not scale to large networks. The exam contrasts IntServ with **[[DiffServ]]** constantly.",
+    "keyIdea": "IntServ is per-flow with RSVP PATH and RESV reservations and hard guarantees. It does not scale, while DiffServ does, and RSVP survives mainly as RSVP-TE for MPLS.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The IntServ model",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Flow**",
+            "Per session or application"
+          ],
+          [
+            "**Reservation**",
+            "RSVP PATH and RESV"
+          ],
+          [
+            "**State**",
+            "Per flow on every router"
+          ],
+          [
+            "**Guarantee**",
+            "Hard"
+          ],
+          [
+            "**Scale**",
+            "Poor"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RSVP basics",
+        "cols": [
+          "Message",
+          "Direction",
+          "Job"
+        ],
+        "rows": [
+          [
+            "**PATH**",
+            "Sender to receiver",
+            "Announce requirements"
+          ],
+          [
+            "**RESV**",
+            "Receiver to sender",
+            "Reserve resources"
+          ],
+          [
+            "**Admission**",
+            "Every hop",
+            "Accept or reject"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Services",
+        "cols": [
+          "Service",
+          "Guarantee"
+        ],
+        "rows": [
+          [
+            "**Guaranteed**",
+            "Hard bandwidth and delay"
+          ],
+          [
+            "**Controlled load**",
+            "QoS under load"
+          ],
+          [
+            "**Best effort**",
+            "None"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "RSVP configuration",
+        "code": "  interface GigabitEthernet0/1\n   ip rsvp bandwidth 128 64\n   ip rsvp reservation bandwidth per-flow"
+      },
+      {
+        "kind": "table",
+        "h": "RSVP commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%ip rsvp bandwidth%%**",
+            "Maximum and typical bandwidth"
+          ],
+          [
+            "**%%ip rsvp reservation%%**",
+            "Per-flow caps"
+          ],
+          [
+            "**%%ip rsvp neighbor%%**",
+            "Explicit peers"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "IntServ versus DiffServ",
+        "cols": [
+          "Aspect",
+          "IntServ",
+          "DiffServ"
+        ],
+        "rows": [
+          [
+            "Unit",
+            "Flow",
+            "Class"
+          ],
+          [
+            "Signal",
+            "RSVP",
+            "None"
+          ],
+          [
+            "State",
+            "Per flow",
+            "Per class"
+          ],
+          [
+            "Guarantee",
+            "Hard",
+            "Statistical"
+          ],
+          [
+            "Scale",
+            "Low",
+            "High"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Where IntServ lives today",
+        "cols": [
+          "Use",
+          "Note"
+        ],
+        "rows": [
+          [
+            "**RSVP-TE**",
+            "MPLS traffic engineering"
+          ],
+          [
+            "**Voice gateways**",
+            "Small segments"
+          ],
+          [
+            "**Niche**",
+            "Hard guarantees"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable RSVP on an interface",
+        "code": "interface GigabitEthernet0/1\n ip rsvp bandwidth 128 64\n ip rsvp reservation bandwidth per-flow"
+      },
+      {
+        "label": "Verify reservations",
+        "code": "show ip rsvp interface\nshow ip rsvp reservation\nshow ip rsvp sender"
+      },
+      {
+        "label": "Check installed state and debug",
+        "code": "show ip rsvp installed\ndebug ip rsvp"
+      }
+    ],
+    "traps": [
+      "IntServ is **per flow with RSVP reservations** and hard guarantees.",
+      "**PATH announces and RESV reserves**; each router admits or rejects.",
+      "It **does not scale** because every router keeps per-flow state.",
+      "DiffServ is per class and scales; IntServ is per flow.",
+      "RSVP survives mainly as **RSVP-TE** for MPLS traffic engineering.",
+      "RSVP must be configured on **every hop** along the path."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "IntServ"
+      ],
+      "rows": [
+        [
+          "Unit",
+          "Flow"
+        ],
+        [
+          "Signal",
+          "RSVP"
+        ],
+        [
+          "PATH",
+          "Announce"
+        ],
+        [
+          "RESV",
+          "Reserve"
+        ],
+        [
+          "State",
+          "Per flow"
+        ],
+        [
+          "Guarantee",
+          "Hard"
+        ],
+        [
+          "Scale",
+          "Low"
+        ],
+        [
+          "Survives",
+          "RSVP-TE"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. DiffServ",
+        "d": "The scalable contrast"
+      },
+      {
+        "t": "05. Queuing",
+        "d": "Per-hop treatment it reserves"
+      }
+    ],
+    "glossary": [
+      "IntServ",
+      "DiffServ",
+      "LLQ",
+      "QoS"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "config",
+    "title": "Modular QoS CLI",
+    "blurb": "class-map, policy-map, service-policy: match, treat, attach",
+    "overview": "**[[MQC|MQC (Modular QoS CLI)]]** is the standard way to build QoS on Cisco routers. It separates QoS into three blocks: **class-map** to match, **policy-map** to define the action, and **service-policy** to attach. Every modern QoS config, whether marking, policing, shaping or queuing, uses these blocks.",
+    "keyIdea": "MQC equals class-map then policy-map then service-policy: match, treat, attach. Unmatched traffic hits class-default, and a policy attaches in one direction.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The three MQC blocks",
+        "cols": [
+          "Block",
+          "Role",
+          "Command"
+        ],
+        "rows": [
+          [
+            "**class-map**",
+            "Match traffic",
+            "class-map match-any or match-all NAME"
+          ],
+          [
+            "**policy-map**",
+            "Define treatment",
+            "policy-map NAME"
+          ],
+          [
+            "**service-policy**",
+            "Attach to interface",
+            "service-policy input or output NAME"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "class-map matching",
+        "cols": [
+          "Keyword",
+          "Logic"
+        ],
+        "rows": [
+          [
+            "**%%match-all%%**",
+            "Every criterion must match"
+          ],
+          [
+            "**%%match-any%%**",
+            "Any one criterion matches"
+          ],
+          [
+            "**%%match dscp%%**",
+            "DSCP value or values"
+          ],
+          [
+            "**%%match access-group%%**",
+            "ACL"
+          ],
+          [
+            "**%%match protocol%%**",
+            "NBAR at Layer 7"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Class-map examples",
+        "code": "  class-map match-any VOICE\n   match dscp ef\n  class-map match-all STRICT\n   match dscp af41\n   match access-group name VIDEO-ACL"
+      },
+      {
+        "kind": "table",
+        "h": "policy-map actions",
+        "cols": [
+          "Command",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**%%set dscp%%** or **%%set cos%%**",
+            "Mark"
+          ],
+          [
+            "**%%police%%**",
+            "Enforce a rate"
+          ],
+          [
+            "**%%shape%%**",
+            "Smooth a rate"
+          ],
+          [
+            "**%%bandwidth%%**",
+            "CBWFQ share"
+          ],
+          [
+            "**%%priority%%**",
+            "LLQ strict priority"
+          ],
+          [
+            "**%%random-detect%%**",
+            "WRED"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Attaching with service-policy",
+        "cols": [
+          "Direction",
+          "Command"
+        ],
+        "rows": [
+          [
+            "**Ingress**",
+            "service-policy input NAME"
+          ],
+          [
+            "**Egress**",
+            "service-policy output NAME"
+          ],
+          [
+            "**Both**",
+            "One policy per direction"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "class-default",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**%%class class-default%%**",
+            "Matches all unmatched traffic"
+          ],
+          [
+            "**Existence**",
+            "Always present as the catch-all"
+          ],
+          [
+            "**Actions**",
+            "Shape, police or queue the default"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Hierarchical MQC",
+        "code": "  policy-map PARENT\n   class class-default\n    shape average 10000000\n    service-policy CHILD"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build classes and attach a policy",
+        "code": "class-map match-any VOICE\n match dscp ef\npolicy-map EDGE\n class VOICE\n  priority 128\n class class-default\n  fair-queue\ninterface GigabitEthernet0/1\n service-policy output EDGE"
+      },
+      {
+        "label": "Verify the building blocks",
+        "code": "show class-map\nshow policy-map\nshow policy-map interface"
+      },
+      {
+        "label": "Check the policy direction and hierarchy",
+        "code": "show run interface GigabitEthernet0/1\nshow run policy-map"
+      }
+    ],
+    "traps": [
+      "MQC is **class-map, policy-map, service-policy**: match, treat, attach.",
+      "**match-all** and **match-any** change the matching logic.",
+      "A service-policy attaches in **one direction**, input or output.",
+      "Unmatched traffic falls into **class-default**.",
+      "**Hierarchical MQC** nests a child policy under a parent for shaping plus per-class action.",
+      "The class-map is the what, the policy-map is the how, and the service-policy is the where."
+    ],
+    "table": {
+      "cols": [
+        "Block",
+        "Role"
+      ],
+      "rows": [
+        [
+          "class-map",
+          "Match"
+        ],
+        [
+          "policy-map",
+          "Actions"
+        ],
+        [
+          "service-policy",
+          "Attach in or out"
+        ],
+        [
+          "match-all",
+          "All criteria"
+        ],
+        [
+          "match-any",
+          "Any criterion"
+        ],
+        [
+          "class-default",
+          "Catch-all"
+        ],
+        [
+          "Actions",
+          "Mark, police, shape, queue"
+        ],
+        [
+          "Hierarchy",
+          "Parent and child"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Classification",
+        "d": "class-map matching"
+      },
+      {
+        "t": "03. Policing",
+        "d": "A policy action"
+      },
+      {
+        "t": "10. LLQ & CBWFQ",
+        "d": "Queuing actions"
+      }
+    ],
+    "glossary": [
+      "MQC",
+      "QoS Classification",
+      "Policing",
+      "Shaping",
+      "Queuing",
+      "WRED",
+      "Control Plane",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t10",
+    "num": "10",
+    "group": "config",
+    "title": "LLQ & CBWFQ",
+    "blurb": "Guaranteed class shares plus a policed priority queue for voice",
+    "overview": "**[[CBWFQ]]** is the egress scheduling method that gives each traffic class a guaranteed bandwidth share. **[[LLQ]]** adds a strict-priority class, usually voice or EF, served before everything else but rate-limited so it cannot starve the other classes. Together they are the production answer for converged voice, video and data.",
+    "keyIdea": "CBWFQ gives per-class bandwidth shares. LLQ adds a strict priority class that is policed. Use priority for voice and bandwidth for video and data.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "CBWFQ model",
+        "cols": [
+          "Concept",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Class**",
+            "Matched by class-map"
+          ],
+          [
+            "**Share**",
+            "Bandwidth in kbps per class"
+          ],
+          [
+            "**Scheduling**",
+            "Proportional to weight"
+          ],
+          [
+            "**Drop**",
+            "Tail drop per queue"
+          ],
+          [
+            "**Residual**",
+            "Unused bandwidth is redistributed"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "LLQ, the strict priority class",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Command**",
+            "priority kbps"
+          ],
+          [
+            "**Behaviour**",
+            "Served before bandwidth classes"
+          ],
+          [
+            "**Rate limit**",
+            "Policed to the priority value"
+          ],
+          [
+            "**Use**",
+            "Voice and EF"
+          ],
+          [
+            "**Risk**",
+            "Starvation if not limited"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "priority versus bandwidth",
+        "cols": [
+          "Keyword",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%priority%%**",
+            "Strict-priority LLQ class, policed"
+          ],
+          [
+            "**%%bandwidth%%**",
+            "Guaranteed weighted share, not strict"
+          ],
+          [
+            "**Both**",
+            "LLQ is served first, then CBWFQ classes"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration example",
+        "code": "  policy-map WAN-EDGE\n   class VOICE\n    priority 128\n   class VIDEO\n    bandwidth 1000\n   class DATA\n    bandwidth 2000\n   class class-default\n    fair-queue\n  !\n  interface GigabitEthernet0/1\n   service-policy output WAN-EDGE"
+      },
+      {
+        "kind": "table",
+        "h": "Queuing commands",
+        "cols": [
+          "Command",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**%%priority%%**",
+            "LLQ strict-priority class"
+          ],
+          [
+            "**%%bandwidth%%**",
+            "CBWFQ guaranteed share"
+          ],
+          [
+            "**%%fair-queue%%**",
+            "Per-flow treatment in class-default"
+          ],
+          [
+            "**%%queue-limit%%**",
+            "Per-class queue depth"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Why LLQ is policed",
+        "p": "The priority queue is rate-limited to the configured **priority** value. Bursts beyond it are dropped, which guarantees that the bandwidth classes still get served instead of being starved by a busy voice queue."
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show policy-map interface%%**",
+            "Per-class rates and drops"
+          ],
+          [
+            "**%%show queueing interface%%**",
+            "Queuing state"
+          ],
+          [
+            "**%%show class-map%%**",
+            "Class definitions"
+          ],
+          [
+            "**%%show policy-map%%**",
+            "Policy configuration"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Build LLQ plus CBWFQ",
+        "code": "policy-map WAN-EDGE\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000\n class DATA\n  bandwidth 2000\n class class-default\n  fair-queue"
+      },
+      {
+        "label": "Attach on the WAN egress",
+        "code": "interface GigabitEthernet0/1\n service-policy output WAN-EDGE"
+      },
+      {
+        "label": "Verify queues and drops",
+        "code": "show policy-map interface GigabitEthernet0/1\nshow queueing interface\nshow interfaces GigabitEthernet0/1"
+      }
+    ],
+    "traps": [
+      "**CBWFQ is per-class guaranteed bandwidth**; **LLQ is a strict priority class**.",
+      "The LLQ priority class **must be policed** to prevent starvation.",
+      "**%%priority%%** is LLQ and policed; **%%bandwidth%%** is a CBWFQ share.",
+      "Queuing is **egress** and only matters under congestion.",
+      "Voice goes to **LLQ with EF**; video and data use **CBWFQ** shares.",
+      "If voice jitters on a congested link, the missing piece is usually an **LLQ priority class**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "CBWFQ",
+        "LLQ"
+      ],
+      "rows": [
+        [
+          "Command",
+          "bandwidth",
+          "priority"
+        ],
+        [
+          "Served",
+          "Weighted share",
+          "Strict first"
+        ],
+        [
+          "Policed",
+          "No",
+          "Yes"
+        ],
+        [
+          "Use",
+          "Data and video",
+          "Voice, EF"
+        ],
+        [
+          "Risk",
+          "No strict latency bound",
+          "Starvation if unlimited"
+        ],
+        [
+          "Basis",
+          "Class weights",
+          "Priority plus CBWFQ"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Queuing",
+        "d": "The mechanism family"
+      },
+      {
+        "t": "06. Congestion Avoidance",
+        "d": "Queue management"
+      },
+      {
+        "t": "09. Modular QoS CLI",
+        "d": "The policy framework"
+      }
+    ],
+    "glossary": [
+      "CBWFQ",
+      "LLQ",
+      "Queuing",
+      "MQC",
+      "WRED",
+      "Voice VLAN"
+    ]
+  },
+  {
+    "id": "t11",
+    "num": "11",
+    "group": "config",
+    "title": "DSCP PHB Deep-Dive",
+    "blurb": "EF, AF and CS values, including every drop precedence",
+    "overview": "**[[DSCP]]** is the 6-bit Layer 3 field that selects a per-hop behaviour on each router. The key PHB families are **EF** for voice, **AF** for assured forwarding with drop precedences, and **CS** for class selector and control traffic. The exam tests the values and which PHB maps to which traffic.",
+    "keyIdea": "EF is exactly 46. AFxy uses class 1 to 4 and drop 1 to 3, where a lower drop number survives longer. CSx equals x times 8, so CS6 is 48.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "DSCP field structure",
+        "cols": [
+          "Field",
+          "Bits",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**DSCP**",
+            "6",
+            "PHB selector"
+          ],
+          [
+            "**ECN**",
+            "2",
+            "Congestion notification"
+          ],
+          [
+            "**Total ToS**",
+            "8",
+            "DSCP plus ECN"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The three PHB families",
+        "cols": [
+          "PHB",
+          "DSCP values",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**EF**",
+            "46, binary 101110",
+            "Voice, low latency and jitter"
+          ],
+          [
+            "**AF**",
+            "AF1x to AF4x",
+            "Video and data with drop classes"
+          ],
+          [
+            "**CS**",
+            "CS0 to CS7",
+            "Legacy precedence and control"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "EF in detail",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Value**",
+            "46"
+          ],
+          [
+            "**Binary**",
+            "101110"
+          ],
+          [
+            "**Meaning**",
+            "One expedited class, no drop precedences"
+          ],
+          [
+            "**Typical**",
+            "Voice RTP"
+          ],
+          [
+            "**Queue**",
+            "LLQ priority"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "AF classes and drop precedence",
+        "cols": [
+          "Class",
+          "DSCP values x1, x2, x3"
+        ],
+        "rows": [
+          [
+            "**AF1x**",
+            "10, 12, 14"
+          ],
+          [
+            "**AF2x**",
+            "18, 20, 22"
+          ],
+          [
+            "**AF3x**",
+            "26, 28, 30"
+          ],
+          [
+            "**AF4x**",
+            "34, 36, 38"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "AF drop meaning",
+        "cols": [
+          "Drop precedence",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**x1, low**",
+            "Lowest drop probability"
+          ],
+          [
+            "**x2, medium**",
+            "Medium drop probability"
+          ],
+          [
+            "**x3, high**",
+            "Highest drop probability"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "CS values",
+        "cols": [
+          "CS",
+          "DSCP",
+          "Legacy precedence"
+        ],
+        "rows": [
+          [
+            "**CS0**",
+            "0",
+            "0, best effort"
+          ],
+          [
+            "**CS1**",
+            "8",
+            "1"
+          ],
+          [
+            "**CS2**",
+            "16",
+            "2"
+          ],
+          [
+            "**CS3**",
+            "24",
+            "3"
+          ],
+          [
+            "**CS4**",
+            "32",
+            "4"
+          ],
+          [
+            "**CS5**",
+            "40",
+            "5"
+          ],
+          [
+            "**CS6**",
+            "48",
+            "6, routing and control"
+          ],
+          [
+            "**CS7**",
+            "56",
+            "7"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Common DSCP quick map",
+        "cols": [
+          "DSCP",
+          "Value",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**EF**",
+            "46",
+            "Voice"
+          ],
+          [
+            "**AF41**",
+            "34",
+            "Video conferencing"
+          ],
+          [
+            "**AF31**",
+            "26",
+            "Video streaming"
+          ],
+          [
+            "**AF21**",
+            "18",
+            "Signalling and OAM"
+          ],
+          [
+            "**CS6**",
+            "48",
+            "Routing control"
+          ],
+          [
+            "**CS0 or BE**",
+            "0",
+            "Best effort"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Match DSCP values into classes",
+        "code": "class-map match-any VOICE\n match dscp ef\nclass-map match-any VIDEO\n match dscp af41 af31"
+      },
+      {
+        "label": "Apply PHB treatment",
+        "code": "policy-map DSCP-PHB\n class VOICE\n  priority 128\n class VIDEO\n  bandwidth 1000"
+      },
+      {
+        "label": "Verify classes and policy",
+        "code": "show class-map\nshow policy-map"
+      }
+    ],
+    "traps": [
+      "**EF is exactly 46**, a single value with no precedences.",
+      "**AF is class 1 to 4 plus drop 1 to 3**; AF41 survives longer than AF43.",
+      "**CSx equals x times 8**, so CS6 is 48 and maps to IP precedence 6.",
+      "ECN uses **2 bits**, while DSCP uses 6 of the 8 ToS bits.",
+      "Voice is **EF to LLQ**; video and data are **AF to CBWFQ and WRED**.",
+      "The AF class number selects the queue and the drop number selects the drop probability."
+    ],
+    "table": {
+      "cols": [
+        "PHB",
+        "DSCP",
+        "Use",
+        "Queue"
+      ],
+      "rows": [
+        [
+          "EF",
+          "46",
+          "Voice",
+          "LLQ priority"
+        ],
+        [
+          "AF4x",
+          "34, 36, 38",
+          "Video conference",
+          "CBWFQ plus WRED"
+        ],
+        [
+          "AF3x",
+          "26, 28, 30",
+          "Video stream",
+          "CBWFQ plus WRED"
+        ],
+        [
+          "AF2x",
+          "18, 20, 22",
+          "Signalling",
+          "CBWFQ"
+        ],
+        [
+          "CS6",
+          "48",
+          "Control",
+          "Priority"
+        ],
+        [
+          "BE",
+          "0",
+          "Default",
+          "Default"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. DiffServ",
+        "d": "The DSCP marking model"
+      },
+      {
+        "t": "02. Marking",
+        "d": "How values are written"
+      },
+      {
+        "t": "06. Congestion Avoidance",
+        "d": "Drop precedence in action"
+      }
+    ],
+    "glossary": [
+      "DSCP",
+      "DiffServ",
+      "QoS Marking",
+      "WRED",
+      "QoS"
+    ]
+  },
+  {
+    "id": "t12",
+    "num": "12",
+    "group": "config",
+    "title": "QoS Marking & Trust Boundaries",
+    "blurb": "Mark once at the edge, trust in the core, and map CoS to DSCP",
+    "overview": "**[[QoS Marking|Marking]]** writes a QoS value such as **[[DSCP]]**, CoS or IP precedence into the packet so downstream devices apply consistent treatment. The **[[Trust Boundary|trust boundary]]** is the point where the network decides to accept or re-mark incoming markings. Mark once at the edge, then trust and honour it in the core.",
+    "keyIdea": "The trust boundary sits at the access edge. Mark once there, trust DSCP in the core, and map CoS to DSCP when traffic crosses from L2 to L3.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Marking locations",
+        "cols": [
+          "Layer",
+          "Field",
+          "Bits"
+        ],
+        "rows": [
+          [
+            "**L2**",
+            "802.1p CoS",
+            "3"
+          ],
+          [
+            "**L3**",
+            "IP precedence",
+            "3"
+          ],
+          [
+            "**L3**",
+            "DSCP",
+            "6"
+          ],
+          [
+            "**MPLS**",
+            "EXP",
+            "3"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The trust boundary",
+        "cols": [
+          "Zone",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Access edge**",
+            "Untrusted, so re-mark or classify everything"
+          ],
+          [
+            "**Trusted ports**",
+            "Trust the CoS or DSCP from phones, cameras and APs"
+          ],
+          [
+            "**Core**",
+            "Trust DSCP and apply the PHB without re-marking"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Trust versus re-mark",
+        "cols": [
+          "Mode",
+          "Behaviour"
+        ],
+        "rows": [
+          [
+            "**Trust**",
+            "Accept the existing CoS or DSCP as-is"
+          ],
+          [
+            "**Re-mark**",
+            "Overwrite with a policy-derived value"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Trust and marking configuration",
+        "code": "  mls qos trust cos\n  !\n  policy-map MARK\n   class VOICE\n    set dscp ef\n   class CAMERA\n    set dscp af41\n  !\n  interface GigabitEthernet0/1\n   service-policy input MARK"
+      },
+      {
+        "kind": "table",
+        "h": "Trust and marking commands",
+        "cols": [
+          "Command",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "**%%mls qos trust cos%%**",
+            "Trust incoming CoS"
+          ],
+          [
+            "**%%mls qos trust dscp%%**",
+            "Trust incoming DSCP"
+          ],
+          [
+            "**%%set dscp%%**",
+            "Write DSCP"
+          ],
+          [
+            "**%%set cos%%**",
+            "Write CoS"
+          ],
+          [
+            "**%%service-policy input%%**",
+            "Apply marking on ingress"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "CoS to DSCP mapping",
+        "cols": [
+          "CoS",
+          "Typical DSCP usage"
+        ],
+        "rows": [
+          [
+            "**0**",
+            "BE"
+          ],
+          [
+            "**3**",
+            "Call signalling"
+          ],
+          [
+            "**4**",
+            "Video, AF41"
+          ],
+          [
+            "**5**",
+            "Voice, EF"
+          ],
+          [
+            "**6 and 7**",
+            "Network control"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Marking best practice",
+        "cols": [
+          "Rule",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Mark once**",
+            "At the trust boundary or edge"
+          ],
+          [
+            "**Trust in the core**",
+            "Core reads DSCP and does not re-mark"
+          ],
+          [
+            "**Consistent PHB**",
+            "Queue by DSCP: EF, AF, CS"
+          ],
+          [
+            "**Secure**",
+            "Untrusted ports are re-marked"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Trust CoS on an access port",
+        "code": "interface GigabitEthernet0/1\n mls qos trust cos"
+      },
+      {
+        "label": "Mark traffic by class on ingress",
+        "code": "policy-map MARK\n class VOICE\n  set dscp ef\n class CAMERA\n  set dscp af41\ninterface GigabitEthernet0/1\n service-policy input MARK"
+      },
+      {
+        "label": "Verify trust and mapping",
+        "code": "show mls qos\nshow mls qos interface GigabitEthernet0/1\nshow mls qos maps cos-dscp"
+      }
+    ],
+    "traps": [
+      "**Marking writes**; **classification reads**.",
+      "The **trust boundary** decides who is trusted and who gets re-marked at the edge.",
+      "Mark **once at the edge**, then **trust in the core** without re-marking.",
+      "CoS is **Layer 2 and LAN-only**; DSCP crosses Layer 3, so map between them at the boundary.",
+      "**%%mls qos trust cos%%** trusts CoS; **%%set dscp%%** marks.",
+      "CoS is carried in the **VLAN tag**, so it only exists on trunked or tagged links."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Marking and Trust"
+      ],
+      "rows": [
+        [
+          "L2",
+          "CoS, 3 bits"
+        ],
+        [
+          "L3",
+          "DSCP 6 bits or precedence"
+        ],
+        [
+          "MPLS",
+          "EXP"
+        ],
+        [
+          "Trust boundary",
+          "Access edge"
+        ],
+        [
+          "Core",
+          "Trust, no re-mark"
+        ],
+        [
+          "Mark command",
+          "set dscp or set cos"
+        ],
+        [
+          "Trust command",
+          "mls qos trust"
+        ],
+        [
+          "Map",
+          "CoS to DSCP"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Marking",
+        "d": "Edge marking detail"
+      },
+      {
+        "t": "07. DiffServ",
+        "d": "The DSCP model"
+      },
+      {
+        "t": "01. Classification",
+        "d": "Classify before marking"
+      }
+    ],
+    "glossary": [
+      "QoS Marking",
+      "Trust Boundary",
+      "QoS Classification",
+      "DSCP",
+      "DiffServ",
+      "VLAN"
+    ]
+  }
+];
 
         const GROUPS = [
           { key: 'traffic', label: 'Traffic Control', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
@@ -1772,6 +3801,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

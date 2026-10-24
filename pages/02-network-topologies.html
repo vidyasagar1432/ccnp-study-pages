@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'table'" class="mt-2 overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
                 <table class="w-full border-collapse text-left text-[13px]">
                   <thead class="bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500 dark:bg-slate-800/70 dark:text-slate-400">
@@ -589,786 +596,1652 @@
         const heroIntro = `Describes how network devices are physically and logically interconnected — from the classic [[Bus Topology|bus]], [[Star Topology|star]], [[Ring Topology|ring]] and [[Mesh Topology|mesh]] models to modern enterprise designs such as [[Spine-Leaf|spine-leaf]] and the hierarchical [[Collapsed Core|two-tier]] and [[Three-Tier|three-tier]] models, assembled into the [[Enterprise Campus|enterprise campus]]. This is the blueprint for how a network is laid out, grown and scaled.`;
 
         const topics = [
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "classic",
+    "title": "Bus",
+    "blurb": "A single shared backbone connecting every device",
+    "overview": "In a **[[Bus Topology|bus]]** topology every device shares a single transmission medium — originally a coaxial cable (10BASE2 \"thinnet\" and 10BASE5 \"thicknet\"). Every frame travels the whole cable and every node hears it: one shared **collision domain** and one **broadcast domain** for the entire segment.",
+    "keyIdea": "**Key idea:** A bus is defined by what it does not have — no central device and no per-node isolation. A single break anywhere kills the segment, which is exactly why twisted-pair star wiring replaced it.",
+    "sections": [
+      {
+        "h": "Bus topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 260\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">BUS</text><line x1=\"60\" y1=\"120\" x2=\"840\" y2=\"120\" stroke=\"#0EA5E9\" stroke-width=\"3\"/><circle cx=\"150\" cy=\"150\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"450\" cy=\"150\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"750\" cy=\"150\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><line x1=\"150\" y1=\"120\" x2=\"150\" y2=\"138\" stroke=\"#64748B\"/><line x1=\"450\" y1=\"120\" x2=\"450\" y2=\"138\" stroke=\"#64748B\"/><line x1=\"750\" y1=\"120\" x2=\"750\" y2=\"138\" stroke=\"#64748B\"/><rect x=\"30\" y=\"90\" width=\"20\" height=\"60\" rx=\"3\" fill=\"#64748B\" fill-opacity=\"0.3\" stroke=\"#64748B\"/><rect x=\"850\" y=\"90\" width=\"20\" height=\"60\" rx=\"3\" fill=\"#64748B\" fill-opacity=\"0.3\" stroke=\"#64748B\"/><text x=\"450\" y=\"200\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Shared backbone</text></g></svg>",
+        "caption": "Single shared backbone."
+      },
+      {
+        "h": "How it worked",
+        "kind": "list",
+        "items": [
           {
-            id: 't01',
-            num: '01',
-            group: 'classic',
-            title: 'Bus',
-            blurb: 'A single shared backbone connecting every device',
-            overview: `In a **[[Bus Topology|bus]]** topology every device shares a single transmission medium — originally a coaxial cable (10BASE2 "thinnet" and 10BASE5 "thicknet"). Every frame travels the whole cable and every node hears it: one shared **collision domain** and one **broadcast domain** for the entire segment.`,
-            keyIdea: `**Key idea:** A bus is defined by what it does not have — no central device and no per-node isolation. A single break anywhere kills the segment, which is exactly why twisted-pair star wiring replaced it.`,
-            sections: [
-              {
-                h: 'How it worked', kind: 'list', items: [
-                  { t: 'One backbone cable', d: 'Taps and transceivers attach the nodes — BNC T-connectors daisy-chained on 10BASE2, vampire taps on 10BASE5.' },
-                  { t: 'CSMA/CD arbitrated access', d: 'Every node on the bus shared one **collision domain** and arbitrated with carrier sense and collision detection.' },
-                  { t: 'Terminators at both ends', d: 'They absorbed the signal. A missing terminator caused reflections and the classic "the whole network went down" symptom.' }
-                ]
-              },
-              {
-                h: 'Characteristics', kind: 'table',
-                cols: ['Property', 'Value'],
-                rows: [
-                  ['Collision domain', 'One for every node on the bus'],
-                  ['Broadcast domain', 'One'],
-                  ['Failure mode', 'Any break splits the bus; a short can take the whole segment down'],
-                  ['Bandwidth', 'Shared — every node divides the 10 Mbps'],
-                  ['Security', 'Every node can see all traffic (promiscuous capture)'],
-                  ['Cost', 'Cheap; legacy only']
-                ]
-              },
-              {
-                h: 'Why it died', kind: 'list', items: [
-                  { t: 'Single point of failure', d: 'One cable break took the whole segment offline.' },
-                  { t: 'Poor fault isolation', d: 'Finding the break meant checking every node on the shared cable.' },
-                  { t: 'Security exposure', d: 'Every node heard everything, so one compromised host saw all traffic.' },
-                  { t: 'Scalability ceilings', d: 'Shared 10 Mbps and half-duplex access stopped scaling long before bandwidth did.' }
-                ]
-              },
-              {
-                h: 'Conceptual relevance to modern switching', kind: 'list', items: [
-                  { t: 'A hub recreates a bus', d: 'All nodes behind a hub share one collision domain — bus behaviour, in a box.' },
-                  { t: 'A switch microsegments', d: 'Each port becomes its own collision domain, and that is what actually killed the bus (Level 04 of the path).' },
-                  { t: 'The exam still uses it as a definition', d: 'Bus equals one shared collision domain — treat it as the reference case against which star and switch are contrasted.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'There is no bus configuration to learn — it was physical. Here is what replaced it.',
-                code: `# There is no bus configuration to learn: it was a physical coax segment.
-# What replaced it, per access port on the switch that replaced the hub:
-
-interface GigabitEthernet0/1
- description host-port - the star that replaced the bus
- switchport access vlan 10
- spanning-tree portfast
-
-# Verify the microsegmentation the switch gives you:
-show interfaces GigabitEthernet0/1
-show mac address-table`
-              }
-            ],
-            traps: [
-              '**Bus = one collision domain AND one broadcast domain** — state both, unless VLANs separated it later.',
-              '**A cable break kills the entire bus** — that is the classic "get rid of bus" argument; do not soften it.',
-              '**Do not confuse a bus with a logical layer 3 structure** — modern chassis call their internal fabric a "bus", which is a different thing entirely.',
-              '**CSMA/CD belongs to bus and half-duplex media** — it does not exist on a switched full-duplex link.'
-            ],
-            table: {
-              cols: ['Aspect', 'Detail', 'Exam Tip'],
-              rows: [
-                ['Media', 'Single shared coaxial cable', '10BASE2 / 10BASE5'],
-                ['Collision domain', 'One for all nodes', 'Shared access (CSMA/CD)'],
-                ['Failure', 'Cable break = segment down', 'Worst fault isolation'],
-                ['Bandwidth', 'Shared 10 Mbps', 'Everyone divides it'],
-                ['Security', 'All traffic visible', 'Promiscuous capture'],
-                ['Status', 'Legacy', 'Only in historical questions']
-              ]
-            },
-            related: [
-              { t: '02. Star', d: 'the topology that replaced it' },
-              { t: '03. Ring', d: 'another legacy topology' },
-              { t: '08. Broadcast Domains', d: 'the shared-medium effect' }
-            ],
-            glossary: ['Bus Topology', 'Star Topology', 'Ring Topology', 'Mesh Topology', 'Hybrid Topology', 'Ethernet']
+            "t": "One backbone cable",
+            "d": "Taps and transceivers attach the nodes — BNC T-connectors daisy-chained on 10BASE2, vampire taps on 10BASE5."
           },
           {
-            id: 't02',
-            num: '02',
-            group: 'classic',
-            title: 'Star',
-            blurb: 'Every device point-to-point to one central device',
-            overview: `**[[Star Topology|Star]]** means every device connects point-to-point to a central device — a hub in the original Ethernet, a **switch** in practice. It is the physical foundation of modern Ethernet wiring: each host has its own UTP link, and the logical behaviour is decided entirely by what sits in the middle.`,
-            keyIdea: `**Key idea:** The wiring pattern is always a star; the behaviour is decided by the centre device. A hub centre means a logical bus inside a star; a switch centre means one collision domain per port and full duplex.`,
-            sections: [
-              {
-                h: 'The centre device decides everything', kind: 'table',
-                cols: ['Centre is a...', 'Collision domain', 'Behaviour'],
-                rows: [
-                  ['**Hub** (layer 1)', 'One for all nodes', 'Repeats frames to every port; half-duplex CSMA/CD'],
-                  ['**Switch** (layer 2)', 'One per port', 'Microsegmentation, full duplex, MAC learning'],
-                  ['**Router** (layer 3)', 'Isolated per port', 'Each interface is a separate network and subnet boundary']
-                ]
-              },
-              {
-                h: 'Advantages', kind: 'list', items: [
-                  { t: 'Fault isolation', d: 'A bad cable or port affects only that link — the rest of the network keeps working.' },
-                  { t: 'Easy adds and moves', d: 'Plug into a spare port; there are no bus taps to re-terminate.' },
-                  { t: 'Scalable', d: 'Add ports or another switch; the pattern is predictable and it is the enterprise standard.' },
-                  { t: 'Switch-only benefits', d: 'Full duplex, per-host bandwidth, and segmentation through VLANs.' }
-                ]
-              },
-              {
-                h: 'Disadvantages', kind: 'list', items: [
-                  { t: 'The centre is a single point of failure', d: 'Mitigate with redundant switches, dual-homed hosts and server NICs, and an HSRP or VRRP gateway (Level 14 / Level 27).' },
-                  { t: 'More cabling than bus or ring', d: 'Every node needs its own run back to the closet.' },
-                  { t: 'Physical star, logical bus', d: 'The classic trick: with a hub at the centre the wiring is a star but the behaviour is a bus.' }
-                ]
-              },
-              {
-                h: 'Where stars appear in enterprise design', kind: 'list', items: [
-                  { t: 'Access layer', d: 'Every endpoint star-wires to its access switch.' },
-                  { t: 'Spine-leaf', d: 'Each leaf connects to each spine — a logical star that behaves like a mesh.' },
-                  { t: 'Collapsed core', d: 'Two distribution switches give every access block a redundant star behind it.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Star-wiring an access port and backing up the centre device',
-                code: `# The port that makes the star work, per endpoint
-interface GigabitEthernet0/1
- switchport access vlan 10
- spanning-tree portfast        # host port - no STP delay
-
-# Redundancy for the central single point of failure
-interface Vlan10
- standby 10 ip 10.1.10.1       # HSRP on the distribution pair (Level 14)
-
-# Confirm the centre is switching, not repeating
-show mac address-table
-show interfaces status`
-              }
-            ],
-            traps: [
-              '**Star wiring with a hub centre is a physical star but a logical bus** — same single collision domain.',
-              '**A star is not automatically full duplex** — that depends entirely on the centre being a switch.',
-              '**The single point of failure is the centre switch** — the fix is a redundant switch pair plus dual-homed hosts, not more cabling.',
-              '**One cable break in a star isolates one host** — this is the clean contrast with the bus, where it kills the segment.'
-            ],
-            table: {
-              cols: ['Centre', 'L2 effect', 'Collision domains'],
-              rows: [
-                ['Hub', 'Repeats to all ports, shared', '1 (all)'],
-                ['Switch', 'MAC learning, separate per port', 'N (one per port)'],
-                ['Router', 'Layer 3 subnets', 'Isolated per interface'],
-                ['Fault impact', 'Only the bad link', 'Good isolation'],
-                ['SPOF', 'The centre device', 'Mitigate with redundancy + HSRP'],
-                ['Wiring', 'Point-to-point to the centre', 'More cable, easier moves']
-              ]
-            },
-            related: [
-              { t: '01. Bus', d: 'the contrasting topology' },
-              { t: '07. Two-Tier', d: 'a star-based campus' },
-              { t: '07. Network Design Principles', d: 'why a topology is chosen' }
-            ],
-            glossary: ['Star Topology', 'Bus Topology', 'Duplex', 'LAN', 'Ethernet']
+            "t": "CSMA/CD arbitrated access",
+            "d": "Every node on the bus shared one **collision domain** and arbitrated with carrier sense and collision detection."
           },
           {
-            id: 't03',
-            num: '03',
-            group: 'classic',
-            title: 'Ring',
-            blurb: 'Devices connected in a closed loop with token access',
-            overview: `In a **[[Ring Topology|ring]]** topology every device connects to exactly two neighbours, forming a closed loop. Frames circulate in one direction under token control (Token Ring, FDDI). Modern rings are often only logical — a physical **ring of stars**, where each node is a hub or switch and the loop is closed by the wiring.`,
-            keyIdea: `**Key idea:** Ring access is token passing, not CSMA/CD. A ring gives deterministic access with no collisions, but a single break kills a single ring — which is why FDDI added a second counter-rotating ring.`,
-            sections: [
-              {
-                h: 'Logical ring versus physical wiring', kind: 'list', items: [
-                  { t: 'Logical ring', d: 'Data circulates along a defined path regardless of how the wires physically run.' },
-                  { t: 'Physical star-ring', d: 'Token Ring (IBM, 16 Mbps) wired each station to a MAU, and the MAU closed the loop internally — ring logic, star wiring.' },
-                  { t: 'Exam phrasing', d: 'Expect "ring logic, star wiring" — never say a ring must be wired in a circle.' }
-                ]
-              },
-              {
-                h: 'Examples', kind: 'table',
-                cols: ['Technology', 'Details'],
-                rows: [
-                  ['**Token Ring (IEEE 802.5)**', '4 and 16 Mbps; token passing; each station has a 48-bit MAC; deterministic access; legacy'],
-                  ['**FDDI**', '100 Mbps dual counter-rotating rings; survived as a campus backbone'],
-                  ['**Metro ring networks**', 'SONET/SDH and Metro Ethernet rings; traffic redirects the other way on a fibre cut (Level 23)']
-                ]
-              },
-              {
-                h: 'Controlled access — the token', kind: 'list', items: [
-                  { t: 'A small token frame circulates', d: 'A station holding the token may send one frame, then passes the token on.' },
-                  { t: 'Single-token ring', d: 'Only one station transmits at a time — deterministic, and collisions never happen.' },
-                  { t: 'Ring monitor / active monitor', d: 'Watches for a lost token and takes over, so a failed station cannot silently kill the ring.' }
-                ]
-              },
-              {
-                h: 'Pros and cons', kind: 'table',
-                cols: ['Pros', 'Cons'],
-                rows: [
-                  ['No collisions (token, up to 16 Mbps)', 'One break in a single ring takes the whole ring down'],
-                  ['Deterministic delay for real-time traffic', 'Hard to add or remove nodes'],
-                  ['FDDI dual ring self-heals', 'Expensive and complex; not Ethernet'],
-                  ['No bandwidth contention under light load', 'Legacy — replaced by switched Ethernet']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Token ring is legacy — there is no modern IOS configuration. Here is what replaced it.',
-                code: `# Token ring has no modern IOS configuration - it is shown only to recall its
-# attributes. Modern "ring" resilience is provider-side Metro Ethernet:
-# on an Ethernet ring switch the commands live on the provider side
-# (Ring Protection / ERPS), not in standard IOS.
-
-# What replaced it at the access layer: a switched, full-duplex star
-interface GigabitEthernet0/1
- description access - switched Ethernet replaced the MAU
- switchport access vlan 10
- spanning-tree portfast
-
-# Verify that no half-duplex shared access remains
-show interfaces GigabitEthernet0/1 | include duplex`
-              }
-            ],
-            traps: [
-              '**Ring means token-passing media access, NOT CSMA/CD** — the shared-access answer is a common distractor.',
-              '**The physical layout can be a star while the logic is a ring** — do not insist it must be physically circular.',
-              '**A single ring halves on a break; a dual FDDI ring survives it.**',
-              '**Never mention collisions in a token ring** — there are none, by construction.',
-              '**Modern switches use spanning-tree trees, not rings** — except for provider Metro Ethernet rings.'
-            ],
-            table: {
-              cols: ['Aspect', 'Detail', 'Exam Tip'],
-              rows: [
-                ['Access', 'Token passing', 'Deterministic, one sender at a time'],
-                ['Speeds', '4/16 Mbps (Token), 100 Mbps (FDDI)', 'Legacy numbers'],
-                ['Physical', 'Star-neat via MAU with ring logic', '802.5 MAU closes the loop'],
-                ['Failure', 'A break splits a single ring', 'Dual FDDI self-heals'],
-                ['Modern', 'Metro Ethernet reuses the path-diversity idea', 'Different technology, same principle'],
-                ['Collisions', 'None in a ring', 'Contrast with CSMA/CD media']
-              ]
-            },
-            related: [
-              { t: '01. Bus', d: 'legacy topology' },
-              { t: '02. Star', d: 'the modern alternative' },
-              { t: '04. Mesh', d: 'the redundancy contrast' }
-            ],
-            glossary: ['Ring Topology', 'Mesh Topology', 'Ethernet', 'Hybrid Topology']
-          },
-          {
-            id: 't04',
-            num: '04',
-            group: 'classic',
-            title: 'Mesh',
-            blurb: 'Full and partial mesh redundancy and how it is realised',
-            overview: `In a **[[Mesh Topology|mesh]]** topology nodes are interconnected with direct links — **full mesh** (every node to every other) or **partial mesh** (only selected pairs). Mesh gives the most redundancy and the lowest hop count; the link count is the price.`,
-            keyIdea: `**Key idea:** Mesh is the redundancy topology. The exam number to remember is N(N−1)/2 links for a full mesh, and the rule that comes with it: redundancy at layer 2 must be controlled by spanning tree or EtherChannel, or you get a loop.`,
-            sections: [
-              {
-                h: 'Full versus partial mesh', kind: 'table',
-                cols: ['Model', 'Links needed', 'When used'],
-                rows: [
-                  ['**Full mesh** (N nodes)', 'N(N−1)/2 links', 'Small core or key hub HA; the cost dominates beyond about 5–6 nodes'],
-                  ['**Partial mesh**', 'A subset — hub-and-spoke plus extras', 'WAN cores, ISP backbones, data centres']
-                ]
-              },
-              {
-                h: 'Why mesh exists', kind: 'list', items: [
-                  { t: 'Multiple paths', d: 'If a link fails, traffic takes another — fault tolerance by construction.' },
-                  { t: 'No single point of failure for a meshed node', d: 'Every node keeps at least one path.' },
-                  { t: 'Lower hop count and lower latency', d: 'Near-complete connectivity means traffic rarely detours.' },
-                  { t: 'Load balancing', d: 'Equal-cost multipath spreads traffic over the parallel paths.' }
-                ]
-              },
-              {
-                h: 'Mechanisms that make mesh possible', kind: 'list', items: [
-                  { t: 'Layer 2: spanning tree and EtherChannel', d: 'Redundancy creates loops, so STP places redundant links into Blocking, and EtherChannel bundles two links into one logical link (Level 08).' },
-                  { t: 'Layer 3: routing protocols and ECMP', d: 'OSPF, EIGRP or BGP learn multiple equal paths, and ECMP balances across them; convergence is fast when a path disappears (Levels 09, 10 and 12).' },
-                  { t: 'Spine-leaf is disciplined mesh', d: 'Every leaf connects to every spine, and no leaf connects to another.' }
-                ]
-              },
-              {
-                h: 'Where mesh appears in the real world', kind: 'list', items: [
-                  { t: 'WAN partial mesh', d: 'Backup circuits between major sites — for example each branch to HQ plus a link to a peer.' },
-                  { t: 'ISP backbone', d: 'National meshes give sub-50 ms convergence on a fibre cut.' },
-                  { t: 'Data centre spine-leaf', d: 'A full-mesh-like underlay between spines and leaves.' },
-                  { t: 'Wireless mesh', d: 'APs relay to each other to extend coverage without cabling — a radio-forwarding topology.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Realising mesh benefits: ECMP at layer 3 and EtherChannel at layer 2',
-                code: `# ECMP - two equal-cost default routes; the router balances across them
-ip route 0.0.0.0 0.0.0.0 10.0.0.1
-ip route 0.0.0.0 0.0.0.0 10.0.0.2
-# show ip route lists both with the same AD and metric -> load-balanced via CEF
-
-# L2 - two links between the same pair of switches become one logical link
-interface Port-channel1
- channel-group 1 mode active          # LACP
-interface GigabitEthernet0/1
- channel-group 1 mode active
-interface GigabitEthernet0/2
- channel-group 1 mode active
-
-# If you keep the links separate instead, STP will block one of them.`
-              }
-            ],
-            traps: [
-              '**The full-mesh link count is N(N−1)/2** — an easy calculation question (4 nodes gives 6 links).',
-              '**Layer 2 mesh without spanning tree or EtherChannel is a loop risk** — the design must explicitly control the redundancy.',
-              '**Mesh is not the default for small networks** — a full mesh across 20 routers is absurd; partial mesh or hub-and-spoke is the realistic answer.',
-              '**ECMP is how routing realises the mesh benefit** — the administrative distance and the metric must both be equal.',
-              '**Wireless mesh degrades with hops** — each relay costs throughput and adds latency, which is a favourite RF trap.'
-            ],
-            table: {
-              cols: ['Aspect', 'Full mesh', 'Partial mesh'],
-              rows: [
-                ['Links', 'N(N−1)/2', 'A selected subset'],
-                ['Redundancy', 'Every pair', 'Some pairs'],
-                ['Cost', 'Grows fast', 'Moderate'],
-                ['Fault tolerance', 'Best per node', 'Depends on the links kept'],
-                ['Load balancing', 'ECMP is easy', 'Paths exist for hot spots'],
-                ['Typical use', 'Small cores, spines', 'WAN and ISP backbones'],
-                ['L2 caveat', 'STP or EtherChannel required', 'Loops still need control']
-              ]
-            },
-            related: [
-              { t: '03. Ring', d: 'redundancy contrast' },
-              { t: '06. Spine-Leaf', d: 'full-mesh-like design' },
-              { t: '07. Network Design Principles', d: 'why redundancy is chosen' }
-            ],
-            glossary: ['Mesh Topology', 'Spine-Leaf', 'Network Design Principles', 'Hybrid Topology']
-          },
-          {
-            id: 't05',
-            num: '05',
-            group: 'classic',
-            title: 'Hybrid',
-            blurb: 'Combining base topologies into a real deployment',
-            overview: `A **[[Hybrid Topology|hybrid topology]]** combines two or more base topologies — bus, star, ring, mesh, tree — into one network. Real networks are almost always hybrids: the word means "this deployment mixes topologies", not a topology in itself.`,
-            keyIdea: `**Key idea:** Hybrid is a description, not a wiring diagram. When a scenario question asks "what topology is this", look for which base topologies are combined — and in a modern campus the answer is usually star at the access plus mesh at the core.`,
-            sections: [
-              {
-                h: 'Common combinations', kind: 'table',
-                cols: ['Hybrid', 'Composition', 'Where it appears'],
-                rows: [
-                  ['**Star-bus / tree**', 'Endpoint stars to hubs, hubs daisy-chained on a backbone', 'Classic campus; the standard tree'],
-                  ['**Star-ring**', 'Star wiring, logical ring (MAU / token)', 'Legacy token-ring wiring'],
-                  ['**Star-mesh**', 'Stars at the access, mesh at the backbone', 'Modern enterprise — spine-leaf is star plus mesh'],
-                  ['**Bus-drop**', 'Backbone bus with star subnets hanging off it', 'Older thicknet campuses'],
-                  ['**Wireless mesh plus star**', 'APs star-wired to a switch, radio mesh for extension', 'Mixed wireless designs']
-                ]
-              },
-              {
-                h: 'Why hybrid is the norm', kind: 'list', items: [
-                  { t: 'Functional blocks use what fits', d: 'Access = star because it is cheap and simple; core = mesh because paths must be redundant; WAN = partial mesh; wireless = mesh where cabling cannot go.' },
-                  { t: 'Modularity', d: 'Each module chooses its own topology and mates at the core or distribution layer.' },
-                  { t: 'Fault isolation improves with hierarchy', d: 'Stars at the edge plus mesh at the core gives both cheap edges and reliable backbones.' }
-                ]
-              },
-              {
-                h: 'Design guidance', kind: 'list', items: [
-                  { t: 'Keep the complex part at the core', d: 'Mesh and ring logic belong on the backbone only, never at the access layer.' },
-                  { t: 'Keep access star-hierarchical', d: 'Predictable, easy to manage, easy to extend.' },
-                  { t: 'Isolate failures per block', d: 'A bus-like backbone is an anti-pattern — replace it with redundant star or mesh.' },
-                  { t: 'Always control the redundancy', d: 'Every mesh-flavoured area needs redundant links plus spanning tree or ECMP control.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Configuring each block of a hybrid campus',
-                code: `# Star access port
-interface GigabitEthernet0/1
- switchport access vlan 10
- spanning-tree portfast
-
-# Mesh-flavoured core: the switch sees ordinary links, nothing special
-interface TenGigabitEthernet1/1
- description to CORE-A
- ip address 10.0.1.1 255.255.255.252
-
-# The control that keeps the mesh safe
-interface Port-channel1
- channel-group 1 mode active`
-              }
-            ],
-            traps: [
-              '**"Hybrid" is a description, not one fixed wiring pattern** — identify which base topologies the scenario combines.',
-              '**Star-mesh versus star-bus** — when the question describes access = star and core = mesh, the answer is hybrid (star plus mesh).',
-              '**Do not apply spanning-tree thinking only to pure mesh** — any layer 2 loop needs loop control, hybrid or not.',
-              '**Terminator and ring-monitor language applies only to the legacy component it belongs to** — each piece keeps its own failure properties.'
-            ],
-            table: {
-              cols: ['Hybrid', 'Pieces', 'Key point'],
-              rows: [
-                ['Star-bus / tree', 'Stars on a backbone', 'Classic campus'],
-                ['Star-ring', 'Star wiring plus ring logic', 'Token ring'],
-                ['Star-mesh', 'Stars at access, mesh at core', 'Modern enterprise'],
-                ['Partial mesh WAN', 'Hub-and-spoke plus extras', 'Cost balance'],
-                ['Wireless mesh', 'AP radio relays', 'Extended coverage'],
-                ['Rule', 'Modular blocks pick their own', 'Complexity at the core, not the access']
-              ]
-            },
-            related: [
-              { t: '02. Star', d: 'hybrid component' },
-              { t: '07. Two-Tier', d: 'hybrid in practice' },
-              { t: '09. Enterprise Campus', d: 'the hybrid whole' }
-            ],
-            glossary: ['Hybrid Topology', 'Bus Topology', 'Star Topology', 'Ring Topology', 'Mesh Topology', 'Spine-Leaf']
-          },
-          {
-            id: 't06',
-            num: '06',
-            group: 'modern',
-            title: 'Spine-Leaf',
-            blurb: 'Data-centre fabric with uniform east-west latency',
-            overview: `**[[Spine-Leaf|Spine-leaf]]** is the modern data-centre and enterprise switching architecture: every **leaf** (top-of-rack) switch connects to every **spine** switch, and no leaf connects to another leaf. It is a Clos network that delivers predictable east-west performance, low latency, and straightforward scaling.`,
-            keyIdea: `**Key idea:** Spine-leaf is a disciplined partial mesh with two hard rules — no leaf-to-leaf links and no spine-to-spine links — so every path is equal-cost and no spanning-tree blocking is needed. It replaces the tree for east-west traffic.`,
-            sections: [
-              {
-                h: 'Why it replaces the tree', kind: 'list', items: [
-                  { t: 'The three-tier tree bottlenecks north-south traffic', d: 'East-west traffic (server to server) had to traverse many hops through access, distribution and core.' },
-                  { t: 'Any-to-any in a fixed number of hops', d: 'Leaf to spine to leaf, regardless of how large the fabric grows.' },
-                  { t: 'Every member of the ECMP set is equal cost', d: 'Load balancing is real, not a side effect of spanning tree blocking one link.' }
-                ]
-              },
-              {
-                h: 'Structure and rules', kind: 'table',
-                cols: ['Element', 'Role', 'Rules'],
-                rows: [
-                  ['Spines', 'Aggregation and backbone', 'Never link to another spine; all traffic passes through a spine'],
-                  ['Leaves (ToR / EoR)', 'Connect servers and storage, plus the gateways', 'Every leaf to every spine; never to another leaf'],
-                  ['Uplinks', 'Equal-cost parallel paths', 'All links are used (ECMP) — nothing is blocked'],
-                  ['Overlay and underlay', 'Often VXLAN with BGP or IS-IS', 'Address scaling; anycast gateways']
-                ]
-              },
-              {
-                h: 'Characteristics', kind: 'list', items: [
-                  { t: 'Predictable latency', d: 'Three or four hops for any flow, and every ECMP member costs the same.' },
-                  { t: 'Linear scaling', d: 'Add a spine and every leaf gains one more path — capacity grows with the spine count.' },
-                  { t: 'No loops by design', d: 'Either a layer 2 fabric with a loop-free overlay, or a fully routed fabric — so ECMP works and STP does not block.' },
-                  { t: 'Load balancing', d: 'ECMP and VXLAN hashing spread flows across every spine.' }
-                ]
-              },
-              {
-                h: 'Spine-leaf modernisation details', kind: 'list', items: [
-                  { t: 'Overlay: VXLAN and anycast gateways', d: 'VXLAN gives layer 2 segments over the layer 3 underlay (Level 24), and anycast VTEP gateways make VM migration seamless.' },
-                  { t: 'Control plane: BGP EVPN and IS-IS or OSPF', d: 'BGP EVPN exchanges MAC and IP reachability; the underlay runs a simple IGP.' },
-                  { t: 'Physical connectivity', d: '40G and 100G uplinks with QSFP and MPO optics (see the transceivers note in Level 01).' },
-                  { t: 'Classroom versus production', d: 'Two spines and four leaves is the teaching example; production is four to eight or more spines and many leaves.' }
-                ]
-              },
-              {
-                h: 'Spine-leaf versus the traditional tree', kind: 'table',
-                cols: ['', 'Traditional tree', 'Spine-leaf'],
-                rows: [
-                  ['Hop count', 'Variable and grows with the design', 'Fixed at three or four'],
-                  ['Link utilisation', 'The core becomes the bottleneck', 'All uplinks are ECMP members'],
-                  ['East-west traffic', 'Slow and variable', 'Fast and predictable'],
-                  ['Loop control', 'Spanning-tree blocking', 'ECMP or a routed fabric'],
-                  ['Scaling', 'Redesign the core', 'Add spines and leaves']
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'A leaf in a spine-leaf fabric: underlay addressing, OSPF, and ECMP verification',
-                code: `# Underlay IGP on a leaf - every link equal cost
-interface Ethernet1/1
- description to SPINE-1
- ip address 10.10.0.1/31
-interface Ethernet1/2
- description to SPINE-2
- ip address 10.10.1.1/31
-
-router ospf 1
- network 10.10.0.0/16 area 0      # leaves and spines all in area 0
-                                     # (BGP underlay is the production alternative)
-
-# Verify ECMP
-show ip route | include "via Two"
-show ip cef 1.1.1.1 internal      # multiple FIB next-hops`
-              }
-            ],
-            traps: [
-              '**No leaf-to-leaf links and no spine-to-spine links** — that is the definition; a config showing either is wrong.',
-              '**ECMP everywhere** — in spine-leaf all parallel links are active, so never say "STP blocks one" — that is old-tree thinking.',
-              '**Hop-count reasoning** — leaf to leaf across two spines is three hops.',
-              '**Scaling** — to raise capacity per leaf, add spines; to raise total capacity, add leaves.',
-              '**Underlay versus overlay** — VXLAN is an overlay on top of the fabric, and the topology question is about the interconnected fabric below it.'
-            ],
-            table: {
-              cols: ['Item', 'Function', 'Rule'],
-              rows: [
-                ['Spine', 'Aggregate and forward', 'Never links to another spine'],
-                ['Leaf', 'Connect servers and storage', 'Never links to another leaf'],
-                ['Uplinks', 'ECMP paths', 'All active, nothing blocked'],
-                ['Latency', 'Fixed and small', 'Any-to-any within N hops'],
-                ['Overlay', 'VXLAN and EVPN', 'Layer 2 over a layer 3 underlay'],
-                ['Scaling', 'Add spines and leaves', 'Capacity grows predictably'],
-                ['Versus tree', 'Faster east-west, no bottleneck', 'The data-centre answer']
-              ]
-            },
-            related: [
-              { t: '08. Three-Tier', d: 'the data-centre contrast' },
-              { t: '07. Network Design Principles', d: 'scalability' },
-              { t: '08. Data Center', d: 'spine-leaf lab' }
-            ],
-            glossary: ['Spine-Leaf', 'Three-Tier', 'Mesh Topology', 'Enterprise Campus']
-          },
-          {
-            id: 't07',
-            num: '07',
-            group: 'modern',
-            title: 'Two-Tier',
-            blurb: 'Collapsed-core access and distribution design',
-            overview: `**[[Collapsed Core|Two-tier]]** merges the distribution and core layers into a single **collapsed core** on top of the access layer. It fits small and medium sites: fewer devices, lower cost, simpler operations, while keeping routing and policy centralised. This is what most branch and small-campus designs actually use.`,
-            keyIdea: `**Key idea:** Collapsed core is the exam synonym for two-tier. The design merges core and distribution — it does not merge policy away, so the collapsed pair still carries inter-VLAN routing and policy, and it still has to be an HA pair.`,
-            sections: [
-              {
-                h: 'The two tiers', kind: 'table',
-                cols: ['Tier', 'Role', 'Typical device'],
-                rows: [
-                  ['**Access**', 'Endpoints, VLAN ports, PoE', 'Layer 2 or layer 3 access switches'],
-                  ['**Collapsed core / distribution**', 'Inter-VLAN routing, default gateways, WAN edge, policy', 'A layer 3 switch or router pair, running HA'],
-                  ['The whole block', 'Does everything the three-tier distribution did, plus the core backbone role', '—']
-                ]
-              },
-              {
-                h: 'Why choose two-tier', kind: 'list', items: [
-                  { t: 'Cost and simplicity', d: 'Fewer chassis, simpler licensing, easier operations.' },
-                  { t: 'Small site scale', d: 'The traffic volume does not justify a separate core tier.' },
-                  { t: 'Faster convergence', d: 'Fewer router hops to react to a failure.' },
-                  { t: 'Where it fits', d: 'Branch offices, remote sites, SMB campuses, and small data centres.' }
-                ]
-              },
-              {
-                h: 'Failure and HA in the collapsed block', kind: 'list', items: [
-                  { t: 'The collapsed core is the single critical point', d: 'Deploy it as an HSRP or VRRP pair with dual uplinks from every access switch (Level 14).' },
-                  { t: 'Access switches dual-home', d: 'Two uplinks to the pair, ideally as an EtherChannel or an L2 trunk, with spanning tree running over them.' },
-                  { t: 'Consider routed access', d: 'Routing to the access edge gives the fastest convergence, and each access switch becomes its own layer 3 device with ECMP to the cores.' }
-                ]
-              },
-              {
-                h: 'When to move to three-tier', kind: 'list', items: [
-                  { t: 'Scale triggers', d: 'More than roughly 5 000 users, multiple buildings, or heavy core aggregation.' },
-                  { t: 'Segmentation triggers', d: 'Strict segmentation requirements, or a campus core whose functions diverge from the WAN and complete functions.' },
-                  { t: 'What changes', d: 'A dedicated core siloises the load and gives the distribution layer a single job — see the three-tier note.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Building the collapsed core: an HA gateway pair and a dual-homed access switch',
-                code: `# Collapsed core - a layer 3 switch pair carrying the default gateway
-interface Vlan10
- ip address 10.1.10.1 255.255.255.0
- no shutdown
-standby 10 ip 10.1.10.254
-standby 10 priority 110
-
-# Access switch dual-homing to the pair
-interface GigabitEthernet0/23
- switchport trunk encapsulation dot1q
- switchport mode trunk
- channel-group 1 mode active        # EtherChannel to CORE-A`
-              }
-            ],
-            traps: [
-              '**"Collapsed core" is the exam term for two-tier** — memorise the synonym, questions use both.',
-              '**Two-tier puts routing at the distribution and core merger** — not at the access layer.',
-              '**The single point of failure is the collapsed core** — a single-core two-tier fails hard, so the HA pair is required for the "best design" answer.',
-              '**Do not call a two-tier with a WAN distribution three-tier** — count only the campus layer 3 tiers that separate hosts from the WAN edge.',
-              '**Access still uses VLANs and spanning tree** unless you have gone fully routed.'
-            ],
-            table: {
-              cols: ['Aspect', 'Two-tier', 'Note'],
-              rows: [
-                ['Layers', 'Access plus collapsed core', 'Distribution merged into the core'],
-                ['Cost', 'Low', 'SMB and branch'],
-                ['Convergence', 'Fast', 'Fewer hops'],
-                ['Guideline', 'Always make the pair HA', 'HSRP or VRRP, dual uplinks'],
-                ['Move when', 'Below campus scale', 'Large sites move to three-tier'],
-                ['Routed access', 'Optional', 'Fastest convergence']
-              ]
-            },
-            related: [
-              { t: '02. Star', d: 'the building block' },
-              { t: '08. Three-Tier', d: 'the scaled-up alternative' },
-              { t: '09. Enterprise Campus', d: 'a collapsed-core campus' }
-            ],
-            glossary: ['Collapsed Core', 'Three-Tier', 'Enterprise Network Architecture', 'Network Design Principles']
-          },
-          {
-            id: 't08',
-            num: '08',
-            group: 'modern',
-            title: 'Three-Tier',
-            blurb: 'Core, distribution, and access hierarchical model',
-            overview: `The **[[Three-Tier|three-tier]]** (hierarchical) model layers the LAN as **Core → Distribution → Access**. This is Cisco's classic campus framework: each layer has a distinct job, which is what makes the network scalable, predictable, and easy to tune. It suits large campuses, multi-building sites, and enterprise cores.`,
-            keyIdea: `**Key idea:** The core is fast and dumb — it forwards and never enforces policy. The distribution is the smart layer — routing, ACLs, QoS marking, summarisation, and the default gateway. The access is simple and cheap.`,
-            sections: [
-              {
-                h: 'The three layers and their jobs', kind: 'table',
-                cols: ['Layer', 'Role', 'What runs there'],
-                rows: [
-                  ['**Access**', 'Endpoint connectivity', 'Ports, VLAN assignment, PoE, port security and 802.1X, QoS trust on endpoints'],
-                  ['**Distribution**', 'Policy, routing, aggregation', 'Inter-VLAN routing, ACLs and firewalling, QoS marking, default gateways (HSRP or VRRP), summarisation'],
-                  ['**Core**', 'Fast transport backbone', 'Pure layer 3 forwarding, no policy, maximum speed and redundancy']
-                ]
-              },
-              {
-                h: 'The rules that make it work', kind: 'list', items: [
-                  { t: 'Core is fast and dumb', d: 'Never attach users or policy to the core.' },
-                  { t: 'Distribution is the smart layer', d: 'Aggregation and the policy enforcement point — the routing brain of the campus.' },
-                  { t: 'Access is simple and cheap', d: 'Keep it shallow and let the distribution hold the logic.' }
-                ]
-              },
-              {
-                h: 'Traffic-flow logic', kind: 'list', items: [
-                  { t: 'North-south flows', d: 'They traverse access to distribution to core — for example to the server farm or the WAN edge.' },
-                  { t: 'Summarisation at the distribution', d: 'VLANs are summarised into summary routes toward the core, which keeps core tables small and convergence fast.' },
-                  { t: 'Redundancy everywhere', d: 'Dual uplinks from access to both distribution switches, and a distribution pair to a core pair.' }
-                ]
-              },
-              {
-                h: 'Variants and scaling', kind: 'list', items: [
-                  { t: 'Small: collapsed core', d: 'Two tiers — see the two-tier note.' },
-                  { t: 'Large: split distribution', d: 'One distribution pair per building, each owning its VLANs and subnets, with the core interconnecting them.' },
-                  { t: 'Modern: spine-leaf in the data centre', d: 'Spine-leaf replaces the rigid three-tier for data centres, but the access, distribution and core logic still underpins the campus design questions.' }
-                ]
-              },
-              {
-                h: 'Failure and spanning-tree interplay', kind: 'list', items: [
-                  { t: 'Layer 2 loops', d: 'Handled by MST or Rapid PVST+ (see Level 08 of the path).' },
-                  { t: 'First-hop redundancy', d: 'Distribution pairs run HSRP or VRRP so hosts always have a gateway.' },
-                  { t: 'Core failure', d: 'The routing protocols converge; distribution-to-core links are usually routed.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Distribution as the routing and policy layer, core as pure transport',
-                code: `# Distribution switch - inter-VLAN router and the default gateway
-interface Vlan10
- ip address 10.1.10.1 255.255.255.0
-standby 10 ip 10.1.10.254
-standby 10 priority 120           # the active half of the pair
-
-# Summarisation toward the core
-router ospf 1
- summary-address 10.1.0.0 255.255.252.0
-
-# Core - pure layer 3, no VLANs, no policy, just routes
-interface TenGigabitEthernet1/1
- ip address 10.0.0.1 255.255.255.252`
-              }
-            ],
-            traps: [
-              '**No policy in the core** is the number-one three-tier trap — the answer is "core transports, distribution enforces".',
-              '**The best place for the default gateway is the distribution** — not access, not core.',
-              '**Access switches may be layer 2** — that is common, so do not insist they must route.',
-              '**Spanning tree belongs to the layer 2 access and distribution spans** — a routed core has none.',
-              '**The synonym mapping** — "collapsed core" means two-tier; "hierarchical" means three-tier.'
-            ],
-            table: {
-              cols: ['Layer', 'Responsibility', 'Watch-list'],
-              rows: [
-                ['Access', 'Ports, VLANs, PoE, edge security', 'Keep it simple'],
-                ['Distribution', 'Routing, policy, gateways, summarisation', 'The smart layer'],
-                ['Core', 'Fast layer 3 backbone', 'No policy!'],
-                ['Redundancy', 'Dual uplinks everywhere', 'HSRP or VRRP plus duplex STP'],
-                ['Sizing', 'Large campuses', 'Small sites use a collapsed core']
-              ]
-            },
-            related: [
-              { t: '07. Two-Tier', d: 'the scaled-down alternative' },
-              { t: '06. Spine-Leaf', d: 'the data-centre contrast' },
-              { t: '06. Enterprise Network Architecture', d: 'the hierarchy' }
-            ],
-            glossary: ['Three-Tier', 'Enterprise Network Architecture', 'Collapsed Core', 'Spine-Leaf']
-          },
-          {
-            id: 't09',
-            num: '09',
-            group: 'modern',
-            title: 'Enterprise Campus',
-            blurb: 'Applying hierarchical design to a campus network',
-            overview: `The **[[Enterprise Campus|enterprise campus]]** is the full in-building and between-buildings network serving users, plus its server, WAN, and security modules. It is not one topology: it assembles three-tier hierarchy, star access and mesh-like cores with server farm, WAN edge, wireless and DMZ modules into a resilient, segmentable whole.`,
-            keyIdea: `**Key idea:** The campus is the whole modular design, not a single building star. The default gateway lives at the distribution layer, spanning tree covers only the layer 2 spans, and the data centre is usually its own block attached to the campus core.`,
-            sections: [
-              {
-                h: 'The campus blocks', kind: 'table',
-                cols: ['Block', 'Purpose', 'Topology flavour'],
-                rows: [
-                  ['Campus core', 'Backbone between buildings', 'Routed mesh or collapsed'],
-                  ['Distribution', 'Per-building aggregation and policy', 'Dual switch pair with HSRP'],
-                  ['Access', 'Endpoints, VLANs, wireless APs', 'Star'],
-                  ['Server farm / data centre', 'Compute and storage', 'Spine-leaf, or three-tier'],
-                  ['WAN edge', 'MPLS, SD-WAN, Internet', 'Partial mesh or hub-and-spoke'],
-                  ['DMZ', 'Public-facing servers', 'Two-arm to the firewalls'],
-                  ['Management', 'Out-of-band, NMS, NetOps', 'Dedicated VLAN or VRF']
-                ]
-              },
-              {
-                h: 'Design goals (shared with Level 00)', kind: 'list', items: [
-                  { t: 'High availability everywhere', d: 'Dual core, dual distribution, dual-homed access, HSRP or VRRP, port channeling, redundant power supplies — all of it removes single points of failure.' },
-                  { t: 'Fast convergence', d: 'Routing protocols with summaries, RSTP on the layer 2 spans, and first-hop redundancy for the gateways.' },
-                  { t: 'Segmentation', d: 'A VLAN per role, plus VRFs and ACLs where security needs them; guest, voice and management kept apart.' },
-                  { t: 'Manageability', d: 'A dedicated management VLAN and out-of-band management, with NetFlow and telemetry feeding the NMS (Level 26).' },
-                  { t: 'Quality of service', d: 'Trust boundaries at the access layer, marking, and priority queuing on the uplinks for voice and video (Level 21).' }
-                ]
-              },
-              {
-                h: 'Wired versus wireless in the campus', kind: 'list', items: [
-                  { t: 'Wireless is a first-class citizen', d: 'APs connect to access switches, CAPWAP carries traffic to the wireless controllers, with steering and virtualisation on top.' },
-                  { t: 'Mobility with the wireless module', d: 'Roaming is anchored at the controller (Level 22).' },
-                  { t: 'Design mapping', d: 'SSIDs map to VLANs, roaming is anchored at the controller, and AAA goes through RADIUS.' }
-                ]
-              },
-              {
-                h: 'The classic small-campus scenario', kind: 'para',
-                p: `A typical exam drawing is a small two-tier campus: a redundant core pair on top, a distribution pair with HSRP in the middle, and two access switches below it — with VLAN 10 for users, VLAN 20 for servers, VLAN 30 for management, VLAN 40 for voice, and VLAN 50 for guest.`
-              }
-            ],
-            commands: [
-              {
-                label: 'The campus spine: distribution HA, access ports, and a routed core',
-                code: `# Distribution pair with HSRP
-interface Vlan10
- ip address 10.1.10.2 255.255.255.0
-standby 1 ip 10.1.10.1
-standby 1 preempt
-
-# Access - trunk to distribution, portfast on the host ports
-interface GigabitEthernet0/1
- switchport access vlan 10
- spanning-tree portfast
-
-# Core - routes and fast forwarding only, no policy
-ip cef
-router ospf 1
- network 10.0.0.0 0.255.255.255 area 0`
-              }
-            ],
-            traps: [
-              '**"Enterprise campus" does not mean "a single building star"** — it is the whole modular model.',
-              '**The default gateway lives at the distribution** (with HSRP), not at the access switch.',
-              '**Spanning tree only covers the layer 2 spans** from access to distribution — the core is routed.',
-              '**Always distinguish the campus from the data-centre spine-leaf** — the data centre is usually its own block attached to the campus core.',
-              '**The full-architecture answer** — "collapsed core for the branch, three-tier for the campus, spine-leaf data centre attached to the campus core."'
-            ],
-            table: {
-              cols: ['Block', 'Role', 'Redundancy trick'],
-              rows: [
-                ['Core', 'Backbone', 'Dual switches, routed'],
-                ['Distribution', 'Policy and routing', 'HSRP or VRRP pair'],
-                ['Access', 'Ports and endpoints', 'Dual-homed, portfast'],
-                ['Server farm', 'Compute and storage', 'Spine-leaf for east-west capacity'],
-                ['WAN edge', 'Carriers and SD-WAN', 'Partial mesh, DMVPN'],
-                ['DMZ', 'Public services', 'Two-arm firewalls'],
-                ['Management', 'Out-of-band tools', 'Dedicated VLAN or VRF'],
-                ['Wireless', 'Coverage and mobility', 'CAPWAP to the controller, SSID to VLAN']
-              ]
-            },
-            related: [
-              { t: '07. Two-Tier', d: 'campus topology block' },
-              { t: '08. Three-Tier', d: 'the larger campus' },
-              { t: '01. VLAN', d: 'campus switching' }
-            ],
-            glossary: ['Enterprise Campus', 'Three-Tier', 'Collapsed Core', 'Spine-Leaf', 'LAN', 'WAN']
+            "t": "Terminators at both ends",
+            "d": "They absorbed the signal. A missing terminator caused reflections and the classic \"the whole network went down\" symptom."
           }
-        ];
-
+        ]
+      },
+      {
+        "h": "Characteristics",
+        "kind": "table",
+        "cols": [
+          "Property",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Collision domain",
+            "One for every node on the bus"
+          ],
+          [
+            "Broadcast domain",
+            "One"
+          ],
+          [
+            "Failure mode",
+            "Any break splits the bus; a short can take the whole segment down"
+          ],
+          [
+            "Bandwidth",
+            "Shared — every node divides the 10 Mbps"
+          ],
+          [
+            "Security",
+            "Every node can see all traffic (promiscuous capture)"
+          ],
+          [
+            "Cost",
+            "Cheap; legacy only"
+          ]
+        ]
+      },
+      {
+        "h": "Why it died",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Single point of failure",
+            "d": "One cable break took the whole segment offline."
+          },
+          {
+            "t": "Poor fault isolation",
+            "d": "Finding the break meant checking every node on the shared cable."
+          },
+          {
+            "t": "Security exposure",
+            "d": "Every node heard everything, so one compromised host saw all traffic."
+          },
+          {
+            "t": "Scalability ceilings",
+            "d": "Shared 10 Mbps and half-duplex access stopped scaling long before bandwidth did."
+          }
+        ]
+      },
+      {
+        "h": "Conceptual relevance to modern switching",
+        "kind": "list",
+        "items": [
+          {
+            "t": "A hub recreates a bus",
+            "d": "All nodes behind a hub share one collision domain — bus behaviour, in a box."
+          },
+          {
+            "t": "A switch microsegments",
+            "d": "Each port becomes its own collision domain, and that is what actually killed the bus (Level 04 of the path)."
+          },
+          {
+            "t": "The exam still uses it as a definition",
+            "d": "Bus equals one shared collision domain — treat it as the reference case against which star and switch are contrasted."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "There is no bus configuration to learn — it was physical. Here is what replaced it.",
+        "code": "# There is no bus configuration to learn: it was a physical coax segment.\n# What replaced it, per access port on the switch that replaced the hub:\n\ninterface GigabitEthernet0/1\n description host-port - the star that replaced the bus\n switchport access vlan 10\n spanning-tree portfast\n\n# Verify the microsegmentation the switch gives you:\nshow interfaces GigabitEthernet0/1\nshow mac address-table"
+      }
+    ],
+    "traps": [
+      "**Bus = one collision domain AND one broadcast domain** — state both, unless VLANs separated it later.",
+      "**A cable break kills the entire bus** — that is the classic \"get rid of bus\" argument; do not soften it.",
+      "**Do not confuse a bus with a logical layer 3 structure** — modern chassis call their internal fabric a \"bus\", which is a different thing entirely.",
+      "**CSMA/CD belongs to bus and half-duplex media** — it does not exist on a switched full-duplex link."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Detail",
+        "Exam Tip"
+      ],
+      "rows": [
+        [
+          "Media",
+          "Single shared coaxial cable",
+          "10BASE2 / 10BASE5"
+        ],
+        [
+          "Collision domain",
+          "One for all nodes",
+          "Shared access (CSMA/CD)"
+        ],
+        [
+          "Failure",
+          "Cable break = segment down",
+          "Worst fault isolation"
+        ],
+        [
+          "Bandwidth",
+          "Shared 10 Mbps",
+          "Everyone divides it"
+        ],
+        [
+          "Security",
+          "All traffic visible",
+          "Promiscuous capture"
+        ],
+        [
+          "Status",
+          "Legacy",
+          "Only in historical questions"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Star",
+        "d": "the topology that replaced it"
+      },
+      {
+        "t": "03. Ring",
+        "d": "another legacy topology"
+      },
+      {
+        "t": "08. Broadcast Domains",
+        "d": "the shared-medium effect"
+      }
+    ],
+    "glossary": [
+      "Bus Topology",
+      "Star Topology",
+      "Ring Topology",
+      "Mesh Topology",
+      "Hybrid Topology",
+      "Ethernet"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "classic",
+    "title": "Star",
+    "blurb": "Every device point-to-point to one central device",
+    "overview": "**[[Star Topology|Star]]** means every device connects point-to-point to a central device — a hub in the original Ethernet, a **switch** in practice. It is the physical foundation of modern Ethernet wiring: each host has its own UTP link, and the logical behaviour is decided entirely by what sits in the middle.",
+    "keyIdea": "**Key idea:** The wiring pattern is always a star; the behaviour is decided by the centre device. A hub centre means a logical bus inside a star; a switch centre means one collision domain per port and full duplex.",
+    "sections": [
+      {
+        "h": "Star topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 260\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">STAR</text><rect x=\"410\" y=\"110\" width=\"80\" height=\"40\" rx=\"6\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"450\" y=\"135\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Switch</text><circle cx=\"200\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"700\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"200\" cy=\"180\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"700\" cy=\"180\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><line x1=\"410\" y1=\"120\" x2=\"212\" y2=\"86\" stroke=\"#64748B\"/><line x1=\"490\" y1=\"120\" x2=\"688\" y2=\"86\" stroke=\"#64748B\"/><line x1=\"410\" y1=\"140\" x2=\"212\" y2=\"174\" stroke=\"#64748B\"/><line x1=\"490\" y1=\"140\" x2=\"688\" y2=\"174\" stroke=\"#64748B\"/><text x=\"450\" y=\"210\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Central device</text></g></svg>",
+        "caption": "Central device connects all nodes."
+      },
+      {
+        "h": "The centre device decides everything",
+        "kind": "table",
+        "cols": [
+          "Centre is a...",
+          "Collision domain",
+          "Behaviour"
+        ],
+        "rows": [
+          [
+            "**Hub** (layer 1)",
+            "One for all nodes",
+            "Repeats frames to every port; half-duplex CSMA/CD"
+          ],
+          [
+            "**Switch** (layer 2)",
+            "One per port",
+            "Microsegmentation, full duplex, MAC learning"
+          ],
+          [
+            "**Router** (layer 3)",
+            "Isolated per port",
+            "Each interface is a separate network and subnet boundary"
+          ]
+        ]
+      },
+      {
+        "h": "Advantages",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Fault isolation",
+            "d": "A bad cable or port affects only that link — the rest of the network keeps working."
+          },
+          {
+            "t": "Easy adds and moves",
+            "d": "Plug into a spare port; there are no bus taps to re-terminate."
+          },
+          {
+            "t": "Scalable",
+            "d": "Add ports or another switch; the pattern is predictable and it is the enterprise standard."
+          },
+          {
+            "t": "Switch-only benefits",
+            "d": "Full duplex, per-host bandwidth, and segmentation through VLANs."
+          }
+        ]
+      },
+      {
+        "h": "Disadvantages",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The centre is a single point of failure",
+            "d": "Mitigate with redundant switches, dual-homed hosts and server NICs, and an HSRP or VRRP gateway (Level 14 / Level 27)."
+          },
+          {
+            "t": "More cabling than bus or ring",
+            "d": "Every node needs its own run back to the closet."
+          },
+          {
+            "t": "Physical star, logical bus",
+            "d": "The classic trick: with a hub at the centre the wiring is a star but the behaviour is a bus."
+          }
+        ]
+      },
+      {
+        "h": "Where stars appear in enterprise design",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Access layer",
+            "d": "Every endpoint star-wires to its access switch."
+          },
+          {
+            "t": "Spine-leaf",
+            "d": "Each leaf connects to each spine — a logical star that behaves like a mesh."
+          },
+          {
+            "t": "Collapsed core",
+            "d": "Two distribution switches give every access block a redundant star behind it."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Star-wiring an access port and backing up the centre device",
+        "code": "# The port that makes the star work, per endpoint\ninterface GigabitEthernet0/1\n switchport access vlan 10\n spanning-tree portfast        # host port - no STP delay\n\n# Redundancy for the central single point of failure\ninterface Vlan10\n standby 10 ip 10.1.10.1       # HSRP on the distribution pair (Level 14)\n\n# Confirm the centre is switching, not repeating\nshow mac address-table\nshow interfaces status"
+      }
+    ],
+    "traps": [
+      "**Star wiring with a hub centre is a physical star but a logical bus** — same single collision domain.",
+      "**A star is not automatically full duplex** — that depends entirely on the centre being a switch.",
+      "**The single point of failure is the centre switch** — the fix is a redundant switch pair plus dual-homed hosts, not more cabling.",
+      "**One cable break in a star isolates one host** — this is the clean contrast with the bus, where it kills the segment."
+    ],
+    "table": {
+      "cols": [
+        "Centre",
+        "L2 effect",
+        "Collision domains"
+      ],
+      "rows": [
+        [
+          "Hub",
+          "Repeats to all ports, shared",
+          "1 (all)"
+        ],
+        [
+          "Switch",
+          "MAC learning, separate per port",
+          "N (one per port)"
+        ],
+        [
+          "Router",
+          "Layer 3 subnets",
+          "Isolated per interface"
+        ],
+        [
+          "Fault impact",
+          "Only the bad link",
+          "Good isolation"
+        ],
+        [
+          "SPOF",
+          "The centre device",
+          "Mitigate with redundancy + HSRP"
+        ],
+        [
+          "Wiring",
+          "Point-to-point to the centre",
+          "More cable, easier moves"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Bus",
+        "d": "the contrasting topology"
+      },
+      {
+        "t": "07. Two-Tier",
+        "d": "a star-based campus"
+      },
+      {
+        "t": "07. Network Design Principles",
+        "d": "why a topology is chosen"
+      }
+    ],
+    "glossary": [
+      "Star Topology",
+      "Bus Topology",
+      "Duplex",
+      "LAN",
+      "Ethernet"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "classic",
+    "title": "Ring",
+    "blurb": "Devices connected in a closed loop with token access",
+    "overview": "In a **[[Ring Topology|ring]]** topology every device connects to exactly two neighbours, forming a closed loop. Frames circulate in one direction under token control (Token Ring, FDDI). Modern rings are often only logical — a physical **ring of stars**, where each node is a hub or switch and the loop is closed by the wiring.",
+    "keyIdea": "**Key idea:** Ring access is token passing, not CSMA/CD. A ring gives deterministic access with no collisions, but a single break kills a single ring — which is why FDDI added a second counter-rotating ring.",
+    "sections": [
+      {
+        "h": "Ring topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 260\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">RING</text><circle cx=\"450\" cy=\"130\" r=\"70\" fill=\"none\" stroke=\"#0EA5E9\" stroke-width=\"2\"/><circle cx=\"450\" cy=\"60\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"520\" cy=\"130\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"450\" cy=\"200\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"380\" cy=\"130\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><text x=\"450\" y=\"230\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Closed loop</text></g></svg>",
+        "caption": "Closed loop."
+      },
+      {
+        "h": "Logical ring versus physical wiring",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Logical ring",
+            "d": "Data circulates along a defined path regardless of how the wires physically run."
+          },
+          {
+            "t": "Physical star-ring",
+            "d": "Token Ring (IBM, 16 Mbps) wired each station to a MAU, and the MAU closed the loop internally — ring logic, star wiring."
+          },
+          {
+            "t": "Exam phrasing",
+            "d": "Expect \"ring logic, star wiring\" — never say a ring must be wired in a circle."
+          }
+        ]
+      },
+      {
+        "h": "Examples",
+        "kind": "table",
+        "cols": [
+          "Technology",
+          "Details"
+        ],
+        "rows": [
+          [
+            "**Token Ring (IEEE 802.5)**",
+            "4 and 16 Mbps; token passing; each station has a 48-bit MAC; deterministic access; legacy"
+          ],
+          [
+            "**FDDI**",
+            "100 Mbps dual counter-rotating rings; survived as a campus backbone"
+          ],
+          [
+            "**Metro ring networks**",
+            "SONET/SDH and Metro Ethernet rings; traffic redirects the other way on a fibre cut (Level 23)"
+          ]
+        ]
+      },
+      {
+        "h": "Controlled access — the token",
+        "kind": "list",
+        "items": [
+          {
+            "t": "A small token frame circulates",
+            "d": "A station holding the token may send one frame, then passes the token on."
+          },
+          {
+            "t": "Single-token ring",
+            "d": "Only one station transmits at a time — deterministic, and collisions never happen."
+          },
+          {
+            "t": "Ring monitor / active monitor",
+            "d": "Watches for a lost token and takes over, so a failed station cannot silently kill the ring."
+          }
+        ]
+      },
+      {
+        "h": "Pros and cons",
+        "kind": "table",
+        "cols": [
+          "Pros",
+          "Cons"
+        ],
+        "rows": [
+          [
+            "No collisions (token, up to 16 Mbps)",
+            "One break in a single ring takes the whole ring down"
+          ],
+          [
+            "Deterministic delay for real-time traffic",
+            "Hard to add or remove nodes"
+          ],
+          [
+            "FDDI dual ring self-heals",
+            "Expensive and complex; not Ethernet"
+          ],
+          [
+            "No bandwidth contention under light load",
+            "Legacy — replaced by switched Ethernet"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Token ring is legacy — there is no modern IOS configuration. Here is what replaced it.",
+        "code": "# Token ring has no modern IOS configuration - it is shown only to recall its\n# attributes. Modern \"ring\" resilience is provider-side Metro Ethernet:\n# on an Ethernet ring switch the commands live on the provider side\n# (Ring Protection / ERPS), not in standard IOS.\n\n# What replaced it at the access layer: a switched, full-duplex star\ninterface GigabitEthernet0/1\n description access - switched Ethernet replaced the MAU\n switchport access vlan 10\n spanning-tree portfast\n\n# Verify that no half-duplex shared access remains\nshow interfaces GigabitEthernet0/1 | include duplex"
+      }
+    ],
+    "traps": [
+      "**Ring means token-passing media access, NOT CSMA/CD** — the shared-access answer is a common distractor.",
+      "**The physical layout can be a star while the logic is a ring** — do not insist it must be physically circular.",
+      "**A single ring halves on a break; a dual FDDI ring survives it.**",
+      "**Never mention collisions in a token ring** — there are none, by construction.",
+      "**Modern switches use spanning-tree trees, not rings** — except for provider Metro Ethernet rings."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Detail",
+        "Exam Tip"
+      ],
+      "rows": [
+        [
+          "Access",
+          "Token passing",
+          "Deterministic, one sender at a time"
+        ],
+        [
+          "Speeds",
+          "4/16 Mbps (Token), 100 Mbps (FDDI)",
+          "Legacy numbers"
+        ],
+        [
+          "Physical",
+          "Star-neat via MAU with ring logic",
+          "802.5 MAU closes the loop"
+        ],
+        [
+          "Failure",
+          "A break splits a single ring",
+          "Dual FDDI self-heals"
+        ],
+        [
+          "Modern",
+          "Metro Ethernet reuses the path-diversity idea",
+          "Different technology, same principle"
+        ],
+        [
+          "Collisions",
+          "None in a ring",
+          "Contrast with CSMA/CD media"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. Bus",
+        "d": "legacy topology"
+      },
+      {
+        "t": "02. Star",
+        "d": "the modern alternative"
+      },
+      {
+        "t": "04. Mesh",
+        "d": "the redundancy contrast"
+      }
+    ],
+    "glossary": [
+      "Ring Topology",
+      "Mesh Topology",
+      "Ethernet",
+      "Hybrid Topology"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "classic",
+    "title": "Mesh",
+    "blurb": "Full and partial mesh redundancy and how it is realised",
+    "overview": "In a **[[Mesh Topology|mesh]]** topology nodes are interconnected with direct links — **full mesh** (every node to every other) or **partial mesh** (only selected pairs). Mesh gives the most redundancy and the lowest hop count; the link count is the price.",
+    "keyIdea": "**Key idea:** Mesh is the redundancy topology. The exam number to remember is N(N−1)/2 links for a full mesh, and the rule that comes with it: redundancy at layer 2 must be controlled by spanning tree or EtherChannel, or you get a loop.",
+    "sections": [
+      {
+        "h": "Mesh topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 260\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">MESH</text><circle cx=\"300\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"600\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"700\" cy=\"160\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"450\" cy=\"210\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"200\" cy=\"160\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><line x1=\"300\" y1=\"80\" x2=\"600\" y2=\"80\" stroke=\"#64748B\"/><line x1=\"600\" y1=\"80\" x2=\"700\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"700\" y1=\"160\" x2=\"450\" y2=\"210\" stroke=\"#64748B\"/><line x1=\"450\" y1=\"210\" x2=\"200\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"200\" y1=\"160\" x2=\"300\" y2=\"80\" stroke=\"#64748B\"/><line x1=\"300\" y1=\"80\" x2=\"700\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"600\" y1=\"80\" x2=\"450\" y2=\"210\" stroke=\"#64748B\"/><line x1=\"600\" y1=\"80\" x2=\"200\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"700\" y1=\"160\" x2=\"300\" y2=\"80\" stroke=\"#64748B\"/><line x1=\"700\" y1=\"160\" x2=\"200\" y2=\"160\" stroke=\"#64748B\"/><text x=\"450\" y=\"240\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">n(n-1)/2 links</text></g></svg>",
+        "caption": "Multiple redundant paths."
+      },
+      {
+        "h": "Full versus partial mesh",
+        "kind": "table",
+        "cols": [
+          "Model",
+          "Links needed",
+          "When used"
+        ],
+        "rows": [
+          [
+            "**Full mesh** (N nodes)",
+            "N(N−1)/2 links",
+            "Small core or key hub HA; the cost dominates beyond about 5–6 nodes"
+          ],
+          [
+            "**Partial mesh**",
+            "A subset — hub-and-spoke plus extras",
+            "WAN cores, ISP backbones, data centres"
+          ]
+        ]
+      },
+      {
+        "h": "Why mesh exists",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Multiple paths",
+            "d": "If a link fails, traffic takes another — fault tolerance by construction."
+          },
+          {
+            "t": "No single point of failure for a meshed node",
+            "d": "Every node keeps at least one path."
+          },
+          {
+            "t": "Lower hop count and lower latency",
+            "d": "Near-complete connectivity means traffic rarely detours."
+          },
+          {
+            "t": "Load balancing",
+            "d": "Equal-cost multipath spreads traffic over the parallel paths."
+          }
+        ]
+      },
+      {
+        "h": "Mechanisms that make mesh possible",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Layer 2: spanning tree and EtherChannel",
+            "d": "Redundancy creates loops, so STP places redundant links into Blocking, and EtherChannel bundles two links into one logical link (Level 08)."
+          },
+          {
+            "t": "Layer 3: routing protocols and ECMP",
+            "d": "OSPF, EIGRP or BGP learn multiple equal paths, and ECMP balances across them; convergence is fast when a path disappears (Levels 09, 10 and 12)."
+          },
+          {
+            "t": "Spine-leaf is disciplined mesh",
+            "d": "Every leaf connects to every spine, and no leaf connects to another."
+          }
+        ]
+      },
+      {
+        "h": "Where mesh appears in the real world",
+        "kind": "list",
+        "items": [
+          {
+            "t": "WAN partial mesh",
+            "d": "Backup circuits between major sites — for example each branch to HQ plus a link to a peer."
+          },
+          {
+            "t": "ISP backbone",
+            "d": "National meshes give sub-50 ms convergence on a fibre cut."
+          },
+          {
+            "t": "Data centre spine-leaf",
+            "d": "A full-mesh-like underlay between spines and leaves."
+          },
+          {
+            "t": "Wireless mesh",
+            "d": "APs relay to each other to extend coverage without cabling — a radio-forwarding topology."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Realising mesh benefits: ECMP at layer 3 and EtherChannel at layer 2",
+        "code": "# ECMP - two equal-cost default routes; the router balances across them\nip route 0.0.0.0 0.0.0.0 10.0.0.1\nip route 0.0.0.0 0.0.0.0 10.0.0.2\n# show ip route lists both with the same AD and metric -> load-balanced via CEF\n\n# L2 - two links between the same pair of switches become one logical link\ninterface Port-channel1\n channel-group 1 mode active          # LACP\ninterface GigabitEthernet0/1\n channel-group 1 mode active\ninterface GigabitEthernet0/2\n channel-group 1 mode active\n\n# If you keep the links separate instead, STP will block one of them."
+      }
+    ],
+    "traps": [
+      "**The full-mesh link count is N(N−1)/2** — an easy calculation question (4 nodes gives 6 links).",
+      "**Layer 2 mesh without spanning tree or EtherChannel is a loop risk** — the design must explicitly control the redundancy.",
+      "**Mesh is not the default for small networks** — a full mesh across 20 routers is absurd; partial mesh or hub-and-spoke is the realistic answer.",
+      "**ECMP is how routing realises the mesh benefit** — the administrative distance and the metric must both be equal.",
+      "**Wireless mesh degrades with hops** — each relay costs throughput and adds latency, which is a favourite RF trap."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Full mesh",
+        "Partial mesh"
+      ],
+      "rows": [
+        [
+          "Links",
+          "N(N−1)/2",
+          "A selected subset"
+        ],
+        [
+          "Redundancy",
+          "Every pair",
+          "Some pairs"
+        ],
+        [
+          "Cost",
+          "Grows fast",
+          "Moderate"
+        ],
+        [
+          "Fault tolerance",
+          "Best per node",
+          "Depends on the links kept"
+        ],
+        [
+          "Load balancing",
+          "ECMP is easy",
+          "Paths exist for hot spots"
+        ],
+        [
+          "Typical use",
+          "Small cores, spines",
+          "WAN and ISP backbones"
+        ],
+        [
+          "L2 caveat",
+          "STP or EtherChannel required",
+          "Loops still need control"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Ring",
+        "d": "redundancy contrast"
+      },
+      {
+        "t": "06. Spine-Leaf",
+        "d": "full-mesh-like design"
+      },
+      {
+        "t": "07. Network Design Principles",
+        "d": "why redundancy is chosen"
+      }
+    ],
+    "glossary": [
+      "Mesh Topology",
+      "Spine-Leaf",
+      "Network Design Principles",
+      "Hybrid Topology"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "classic",
+    "title": "Hybrid",
+    "blurb": "Combining base topologies into a real deployment",
+    "overview": "A **[[Hybrid Topology|hybrid topology]]** combines two or more base topologies — bus, star, ring, mesh, tree — into one network. Real networks are almost always hybrids: the word means \"this deployment mixes topologies\", not a topology in itself.",
+    "keyIdea": "**Key idea:** Hybrid is a description, not a wiring diagram. When a scenario question asks \"what topology is this\", look for which base topologies are combined — and in a modern campus the answer is usually star at the access plus mesh at the core.",
+    "sections": [
+      {
+        "h": "Hybrid topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 260\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">STAR</text><rect x=\"410\" y=\"110\" width=\"80\" height=\"40\" rx=\"6\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"450\" y=\"135\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Switch</text><circle cx=\"200\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"700\" cy=\"80\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"200\" cy=\"180\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><circle cx=\"700\" cy=\"180\" r=\"12\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><line x1=\"410\" y1=\"120\" x2=\"212\" y2=\"86\" stroke=\"#64748B\"/><line x1=\"490\" y1=\"120\" x2=\"688\" y2=\"86\" stroke=\"#64748B\"/><line x1=\"410\" y1=\"140\" x2=\"212\" y2=\"174\" stroke=\"#64748B\"/><line x1=\"490\" y1=\"140\" x2=\"688\" y2=\"174\" stroke=\"#64748B\"/><text x=\"450\" y=\"210\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Central device</text></g></svg>",
+        "caption": "Combines topologies."
+      },
+      {
+        "h": "Common combinations",
+        "kind": "table",
+        "cols": [
+          "Hybrid",
+          "Composition",
+          "Where it appears"
+        ],
+        "rows": [
+          [
+            "**Star-bus / tree**",
+            "Endpoint stars to hubs, hubs daisy-chained on a backbone",
+            "Classic campus; the standard tree"
+          ],
+          [
+            "**Star-ring**",
+            "Star wiring, logical ring (MAU / token)",
+            "Legacy token-ring wiring"
+          ],
+          [
+            "**Star-mesh**",
+            "Stars at the access, mesh at the backbone",
+            "Modern enterprise — spine-leaf is star plus mesh"
+          ],
+          [
+            "**Bus-drop**",
+            "Backbone bus with star subnets hanging off it",
+            "Older thicknet campuses"
+          ],
+          [
+            "**Wireless mesh plus star**",
+            "APs star-wired to a switch, radio mesh for extension",
+            "Mixed wireless designs"
+          ]
+        ]
+      },
+      {
+        "h": "Why hybrid is the norm",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Functional blocks use what fits",
+            "d": "Access = star because it is cheap and simple; core = mesh because paths must be redundant; WAN = partial mesh; wireless = mesh where cabling cannot go."
+          },
+          {
+            "t": "Modularity",
+            "d": "Each module chooses its own topology and mates at the core or distribution layer."
+          },
+          {
+            "t": "Fault isolation improves with hierarchy",
+            "d": "Stars at the edge plus mesh at the core gives both cheap edges and reliable backbones."
+          }
+        ]
+      },
+      {
+        "h": "Design guidance",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Keep the complex part at the core",
+            "d": "Mesh and ring logic belong on the backbone only, never at the access layer."
+          },
+          {
+            "t": "Keep access star-hierarchical",
+            "d": "Predictable, easy to manage, easy to extend."
+          },
+          {
+            "t": "Isolate failures per block",
+            "d": "A bus-like backbone is an anti-pattern — replace it with redundant star or mesh."
+          },
+          {
+            "t": "Always control the redundancy",
+            "d": "Every mesh-flavoured area needs redundant links plus spanning tree or ECMP control."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Configuring each block of a hybrid campus",
+        "code": "# Star access port\ninterface GigabitEthernet0/1\n switchport access vlan 10\n spanning-tree portfast\n\n# Mesh-flavoured core: the switch sees ordinary links, nothing special\ninterface TenGigabitEthernet1/1\n description to CORE-A\n ip address 10.0.1.1 255.255.255.252\n\n# The control that keeps the mesh safe\ninterface Port-channel1\n channel-group 1 mode active"
+      }
+    ],
+    "traps": [
+      "**\"Hybrid\" is a description, not one fixed wiring pattern** — identify which base topologies the scenario combines.",
+      "**Star-mesh versus star-bus** — when the question describes access = star and core = mesh, the answer is hybrid (star plus mesh).",
+      "**Do not apply spanning-tree thinking only to pure mesh** — any layer 2 loop needs loop control, hybrid or not.",
+      "**Terminator and ring-monitor language applies only to the legacy component it belongs to** — each piece keeps its own failure properties."
+    ],
+    "table": {
+      "cols": [
+        "Hybrid",
+        "Pieces",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Star-bus / tree",
+          "Stars on a backbone",
+          "Classic campus"
+        ],
+        [
+          "Star-ring",
+          "Star wiring plus ring logic",
+          "Token ring"
+        ],
+        [
+          "Star-mesh",
+          "Stars at access, mesh at core",
+          "Modern enterprise"
+        ],
+        [
+          "Partial mesh WAN",
+          "Hub-and-spoke plus extras",
+          "Cost balance"
+        ],
+        [
+          "Wireless mesh",
+          "AP radio relays",
+          "Extended coverage"
+        ],
+        [
+          "Rule",
+          "Modular blocks pick their own",
+          "Complexity at the core, not the access"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Star",
+        "d": "hybrid component"
+      },
+      {
+        "t": "07. Two-Tier",
+        "d": "hybrid in practice"
+      },
+      {
+        "t": "09. Enterprise Campus",
+        "d": "the hybrid whole"
+      }
+    ],
+    "glossary": [
+      "Hybrid Topology",
+      "Bus Topology",
+      "Star Topology",
+      "Ring Topology",
+      "Mesh Topology",
+      "Spine-Leaf"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "modern",
+    "title": "Spine-Leaf",
+    "blurb": "Data-centre fabric with uniform east-west latency",
+    "overview": "**[[Spine-Leaf|Spine-leaf]]** is the modern data-centre and enterprise switching architecture: every **leaf** (top-of-rack) switch connects to every **spine** switch, and no leaf connects to another leaf. It is a Clos network that delivers predictable east-west performance, low latency, and straightforward scaling.",
+    "keyIdea": "**Key idea:** Spine-leaf is a disciplined partial mesh with two hard rules — no leaf-to-leaf links and no spine-to-spine links — so every path is equal-cost and no spanning-tree blocking is needed. It replaces the tree for east-west traffic.",
+    "sections": [
+      {
+        "h": "Spine-leaf topology",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 300\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">SPINE-LEAF</text><rect x=\"320\" y=\"60\" width=\"80\" height=\"30\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><rect x=\"500\" y=\"60\" width=\"80\" height=\"30\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><rect x=\"200\" y=\"160\" width=\"70\" height=\"28\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"340\" y=\"160\" width=\"70\" height=\"28\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"480\" y=\"160\" width=\"70\" height=\"28\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"620\" y=\"160\" width=\"70\" height=\"28\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><line x1=\"360\" y1=\"90\" x2=\"235\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"360\" y1=\"90\" x2=\"375\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"360\" y1=\"90\" x2=\"515\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"360\" y1=\"90\" x2=\"655\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"540\" y1=\"90\" x2=\"235\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"540\" y1=\"90\" x2=\"375\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"540\" y1=\"90\" x2=\"515\" y2=\"160\" stroke=\"#64748B\"/><line x1=\"540\" y1=\"90\" x2=\"655\" y2=\"160\" stroke=\"#64748B\"/><text x=\"450\" y=\"250\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Every leaf to every spine</text></g></svg>",
+        "caption": "Every leaf to every spine."
+      },
+      {
+        "h": "Why it replaces the tree",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The three-tier tree bottlenecks north-south traffic",
+            "d": "East-west traffic (server to server) had to traverse many hops through access, distribution and core."
+          },
+          {
+            "t": "Any-to-any in a fixed number of hops",
+            "d": "Leaf to spine to leaf, regardless of how large the fabric grows."
+          },
+          {
+            "t": "Every member of the ECMP set is equal cost",
+            "d": "Load balancing is real, not a side effect of spanning tree blocking one link."
+          }
+        ]
+      },
+      {
+        "h": "Structure and rules",
+        "kind": "table",
+        "cols": [
+          "Element",
+          "Role",
+          "Rules"
+        ],
+        "rows": [
+          [
+            "Spines",
+            "Aggregation and backbone",
+            "Never link to another spine; all traffic passes through a spine"
+          ],
+          [
+            "Leaves (ToR / EoR)",
+            "Connect servers and storage, plus the gateways",
+            "Every leaf to every spine; never to another leaf"
+          ],
+          [
+            "Uplinks",
+            "Equal-cost parallel paths",
+            "All links are used (ECMP) — nothing is blocked"
+          ],
+          [
+            "Overlay and underlay",
+            "Often VXLAN with BGP or IS-IS",
+            "Address scaling; anycast gateways"
+          ]
+        ]
+      },
+      {
+        "h": "Characteristics",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Predictable latency",
+            "d": "Three or four hops for any flow, and every ECMP member costs the same."
+          },
+          {
+            "t": "Linear scaling",
+            "d": "Add a spine and every leaf gains one more path — capacity grows with the spine count."
+          },
+          {
+            "t": "No loops by design",
+            "d": "Either a layer 2 fabric with a loop-free overlay, or a fully routed fabric — so ECMP works and STP does not block."
+          },
+          {
+            "t": "Load balancing",
+            "d": "ECMP and VXLAN hashing spread flows across every spine."
+          }
+        ]
+      },
+      {
+        "h": "Spine-leaf modernisation details",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Overlay: VXLAN and anycast gateways",
+            "d": "VXLAN gives layer 2 segments over the layer 3 underlay (Level 24), and anycast VTEP gateways make VM migration seamless."
+          },
+          {
+            "t": "Control plane: BGP EVPN and IS-IS or OSPF",
+            "d": "BGP EVPN exchanges MAC and IP reachability; the underlay runs a simple IGP."
+          },
+          {
+            "t": "Physical connectivity",
+            "d": "40G and 100G uplinks with QSFP and MPO optics (see the transceivers note in Level 01)."
+          },
+          {
+            "t": "Classroom versus production",
+            "d": "Two spines and four leaves is the teaching example; production is four to eight or more spines and many leaves."
+          }
+        ]
+      },
+      {
+        "h": "Spine-leaf versus the traditional tree",
+        "kind": "table",
+        "cols": [
+          "",
+          "Traditional tree",
+          "Spine-leaf"
+        ],
+        "rows": [
+          [
+            "Hop count",
+            "Variable and grows with the design",
+            "Fixed at three or four"
+          ],
+          [
+            "Link utilisation",
+            "The core becomes the bottleneck",
+            "All uplinks are ECMP members"
+          ],
+          [
+            "East-west traffic",
+            "Slow and variable",
+            "Fast and predictable"
+          ],
+          [
+            "Loop control",
+            "Spanning-tree blocking",
+            "ECMP or a routed fabric"
+          ],
+          [
+            "Scaling",
+            "Redesign the core",
+            "Add spines and leaves"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "A leaf in a spine-leaf fabric: underlay addressing, OSPF, and ECMP verification",
+        "code": "# Underlay IGP on a leaf - every link equal cost\ninterface Ethernet1/1\n description to SPINE-1\n ip address 10.10.0.1/31\ninterface Ethernet1/2\n description to SPINE-2\n ip address 10.10.1.1/31\n\nrouter ospf 1\n network 10.10.0.0/16 area 0      # leaves and spines all in area 0\n                                     # (BGP underlay is the production alternative)\n\n# Verify ECMP\nshow ip route | include \"via Two\"\nshow ip cef 1.1.1.1 internal      # multiple FIB next-hops"
+      }
+    ],
+    "traps": [
+      "**No leaf-to-leaf links and no spine-to-spine links** — that is the definition; a config showing either is wrong.",
+      "**ECMP everywhere** — in spine-leaf all parallel links are active, so never say \"STP blocks one\" — that is old-tree thinking.",
+      "**Hop-count reasoning** — leaf to leaf across two spines is three hops.",
+      "**Scaling** — to raise capacity per leaf, add spines; to raise total capacity, add leaves.",
+      "**Underlay versus overlay** — VXLAN is an overlay on top of the fabric, and the topology question is about the interconnected fabric below it."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Function",
+        "Rule"
+      ],
+      "rows": [
+        [
+          "Spine",
+          "Aggregate and forward",
+          "Never links to another spine"
+        ],
+        [
+          "Leaf",
+          "Connect servers and storage",
+          "Never links to another leaf"
+        ],
+        [
+          "Uplinks",
+          "ECMP paths",
+          "All active, nothing blocked"
+        ],
+        [
+          "Latency",
+          "Fixed and small",
+          "Any-to-any within N hops"
+        ],
+        [
+          "Overlay",
+          "VXLAN and EVPN",
+          "Layer 2 over a layer 3 underlay"
+        ],
+        [
+          "Scaling",
+          "Add spines and leaves",
+          "Capacity grows predictably"
+        ],
+        [
+          "Versus tree",
+          "Faster east-west, no bottleneck",
+          "The data-centre answer"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Three-Tier",
+        "d": "the data-centre contrast"
+      },
+      {
+        "t": "07. Network Design Principles",
+        "d": "scalability"
+      },
+      {
+        "t": "08. Data Center",
+        "d": "spine-leaf lab"
+      }
+    ],
+    "glossary": [
+      "Spine-Leaf",
+      "Three-Tier",
+      "Mesh Topology",
+      "Enterprise Campus"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "modern",
+    "title": "Two-Tier",
+    "blurb": "Collapsed-core access and distribution design",
+    "overview": "**[[Collapsed Core|Two-tier]]** merges the distribution and core layers into a single **collapsed core** on top of the access layer. It fits small and medium sites: fewer devices, lower cost, simpler operations, while keeping routing and policy centralised. This is what most branch and small-campus designs actually use.",
+    "keyIdea": "**Key idea:** Collapsed core is the exam synonym for two-tier. The design merges core and distribution — it does not merge policy away, so the collapsed pair still carries inter-VLAN routing and policy, and it still has to be an HA pair.",
+    "sections": [
+      {
+        "h": "Two-tier / collapsed core",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">THREE-TIER</text><rect x=\"390\" y=\"60\" width=\"120\" height=\"32\" rx=\"6\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"300\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"470\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"200\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"395\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"590\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><line x1=\"450\" y1=\"92\" x2=\"365\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"450\" y1=\"92\" x2=\"535\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"255\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"645\" y2=\"200\" stroke=\"#64748B\"/></g></svg>",
+        "caption": "Access + collapsed core."
+      },
+      {
+        "h": "The two tiers",
+        "kind": "table",
+        "cols": [
+          "Tier",
+          "Role",
+          "Typical device"
+        ],
+        "rows": [
+          [
+            "**Access**",
+            "Endpoints, VLAN ports, PoE",
+            "Layer 2 or layer 3 access switches"
+          ],
+          [
+            "**Collapsed core / distribution**",
+            "Inter-VLAN routing, default gateways, WAN edge, policy",
+            "A layer 3 switch or router pair, running HA"
+          ],
+          [
+            "The whole block",
+            "Does everything the three-tier distribution did, plus the core backbone role",
+            "—"
+          ]
+        ]
+      },
+      {
+        "h": "Why choose two-tier",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Cost and simplicity",
+            "d": "Fewer chassis, simpler licensing, easier operations."
+          },
+          {
+            "t": "Small site scale",
+            "d": "The traffic volume does not justify a separate core tier."
+          },
+          {
+            "t": "Faster convergence",
+            "d": "Fewer router hops to react to a failure."
+          },
+          {
+            "t": "Where it fits",
+            "d": "Branch offices, remote sites, SMB campuses, and small data centres."
+          }
+        ]
+      },
+      {
+        "h": "Failure and HA in the collapsed block",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The collapsed core is the single critical point",
+            "d": "Deploy it as an HSRP or VRRP pair with dual uplinks from every access switch (Level 14)."
+          },
+          {
+            "t": "Access switches dual-home",
+            "d": "Two uplinks to the pair, ideally as an EtherChannel or an L2 trunk, with spanning tree running over them."
+          },
+          {
+            "t": "Consider routed access",
+            "d": "Routing to the access edge gives the fastest convergence, and each access switch becomes its own layer 3 device with ECMP to the cores."
+          }
+        ]
+      },
+      {
+        "h": "When to move to three-tier",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Scale triggers",
+            "d": "More than roughly 5 000 users, multiple buildings, or heavy core aggregation."
+          },
+          {
+            "t": "Segmentation triggers",
+            "d": "Strict segmentation requirements, or a campus core whose functions diverge from the WAN and complete functions."
+          },
+          {
+            "t": "What changes",
+            "d": "A dedicated core siloises the load and gives the distribution layer a single job — see the three-tier note."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Building the collapsed core: an HA gateway pair and a dual-homed access switch",
+        "code": "# Collapsed core - a layer 3 switch pair carrying the default gateway\ninterface Vlan10\n ip address 10.1.10.1 255.255.255.0\n no shutdown\nstandby 10 ip 10.1.10.254\nstandby 10 priority 110\n\n# Access switch dual-homing to the pair\ninterface GigabitEthernet0/23\n switchport trunk encapsulation dot1q\n switchport mode trunk\n channel-group 1 mode active        # EtherChannel to CORE-A"
+      }
+    ],
+    "traps": [
+      "**\"Collapsed core\" is the exam term for two-tier** — memorise the synonym, questions use both.",
+      "**Two-tier puts routing at the distribution and core merger** — not at the access layer.",
+      "**The single point of failure is the collapsed core** — a single-core two-tier fails hard, so the HA pair is required for the \"best design\" answer.",
+      "**Do not call a two-tier with a WAN distribution three-tier** — count only the campus layer 3 tiers that separate hosts from the WAN edge.",
+      "**Access still uses VLANs and spanning tree** unless you have gone fully routed."
+    ],
+    "table": {
+      "cols": [
+        "Aspect",
+        "Two-tier",
+        "Note"
+      ],
+      "rows": [
+        [
+          "Layers",
+          "Access plus collapsed core",
+          "Distribution merged into the core"
+        ],
+        [
+          "Cost",
+          "Low",
+          "SMB and branch"
+        ],
+        [
+          "Convergence",
+          "Fast",
+          "Fewer hops"
+        ],
+        [
+          "Guideline",
+          "Always make the pair HA",
+          "HSRP or VRRP, dual uplinks"
+        ],
+        [
+          "Move when",
+          "Below campus scale",
+          "Large sites move to three-tier"
+        ],
+        [
+          "Routed access",
+          "Optional",
+          "Fastest convergence"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Star",
+        "d": "the building block"
+      },
+      {
+        "t": "08. Three-Tier",
+        "d": "the scaled-up alternative"
+      },
+      {
+        "t": "09. Enterprise Campus",
+        "d": "a collapsed-core campus"
+      }
+    ],
+    "glossary": [
+      "Collapsed Core",
+      "Three-Tier",
+      "Enterprise Network Architecture",
+      "Network Design Principles"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "modern",
+    "title": "Three-Tier",
+    "blurb": "Core, distribution, and access hierarchical model",
+    "overview": "The **[[Three-Tier|three-tier]]** (hierarchical) model layers the LAN as **Core → Distribution → Access**. This is Cisco's classic campus framework: each layer has a distinct job, which is what makes the network scalable, predictable, and easy to tune. It suits large campuses, multi-building sites, and enterprise cores.",
+    "keyIdea": "**Key idea:** The core is fast and dumb — it forwards and never enforces policy. The distribution is the smart layer — routing, ACLs, QoS marking, summarisation, and the default gateway. The access is simple and cheap.",
+    "sections": [
+      {
+        "h": "Three-tier hierarchy",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">THREE-TIER</text><rect x=\"390\" y=\"60\" width=\"120\" height=\"32\" rx=\"6\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"300\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"470\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"200\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"395\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"590\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><line x1=\"450\" y1=\"92\" x2=\"365\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"450\" y1=\"92\" x2=\"535\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"255\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"645\" y2=\"200\" stroke=\"#64748B\"/></g></svg>",
+        "caption": "Access, distribution, core."
+      },
+      {
+        "h": "The three layers and their jobs",
+        "kind": "table",
+        "cols": [
+          "Layer",
+          "Role",
+          "What runs there"
+        ],
+        "rows": [
+          [
+            "**Access**",
+            "Endpoint connectivity",
+            "Ports, VLAN assignment, PoE, port security and 802.1X, QoS trust on endpoints"
+          ],
+          [
+            "**Distribution**",
+            "Policy, routing, aggregation",
+            "Inter-VLAN routing, ACLs and firewalling, QoS marking, default gateways (HSRP or VRRP), summarisation"
+          ],
+          [
+            "**Core**",
+            "Fast transport backbone",
+            "Pure layer 3 forwarding, no policy, maximum speed and redundancy"
+          ]
+        ]
+      },
+      {
+        "h": "The rules that make it work",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Core is fast and dumb",
+            "d": "Never attach users or policy to the core."
+          },
+          {
+            "t": "Distribution is the smart layer",
+            "d": "Aggregation and the policy enforcement point — the routing brain of the campus."
+          },
+          {
+            "t": "Access is simple and cheap",
+            "d": "Keep it shallow and let the distribution hold the logic."
+          }
+        ]
+      },
+      {
+        "h": "Traffic-flow logic",
+        "kind": "list",
+        "items": [
+          {
+            "t": "North-south flows",
+            "d": "They traverse access to distribution to core — for example to the server farm or the WAN edge."
+          },
+          {
+            "t": "Summarisation at the distribution",
+            "d": "VLANs are summarised into summary routes toward the core, which keeps core tables small and convergence fast."
+          },
+          {
+            "t": "Redundancy everywhere",
+            "d": "Dual uplinks from access to both distribution switches, and a distribution pair to a core pair."
+          }
+        ]
+      },
+      {
+        "h": "Variants and scaling",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Small: collapsed core",
+            "d": "Two tiers — see the two-tier note."
+          },
+          {
+            "t": "Large: split distribution",
+            "d": "One distribution pair per building, each owning its VLANs and subnets, with the core interconnecting them."
+          },
+          {
+            "t": "Modern: spine-leaf in the data centre",
+            "d": "Spine-leaf replaces the rigid three-tier for data centres, but the access, distribution and core logic still underpins the campus design questions."
+          }
+        ]
+      },
+      {
+        "h": "Failure and spanning-tree interplay",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Layer 2 loops",
+            "d": "Handled by MST or Rapid PVST+ (see Level 08 of the path)."
+          },
+          {
+            "t": "First-hop redundancy",
+            "d": "Distribution pairs run HSRP or VRRP so hosts always have a gateway."
+          },
+          {
+            "t": "Core failure",
+            "d": "The routing protocols converge; distribution-to-core links are usually routed."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Distribution as the routing and policy layer, core as pure transport",
+        "code": "# Distribution switch - inter-VLAN router and the default gateway\ninterface Vlan10\n ip address 10.1.10.1 255.255.255.0\nstandby 10 ip 10.1.10.254\nstandby 10 priority 120           # the active half of the pair\n\n# Summarisation toward the core\nrouter ospf 1\n summary-address 10.1.0.0 255.255.252.0\n\n# Core - pure layer 3, no VLANs, no policy, just routes\ninterface TenGigabitEthernet1/1\n ip address 10.0.0.1 255.255.255.252"
+      }
+    ],
+    "traps": [
+      "**No policy in the core** is the number-one three-tier trap — the answer is \"core transports, distribution enforces\".",
+      "**The best place for the default gateway is the distribution** — not access, not core.",
+      "**Access switches may be layer 2** — that is common, so do not insist they must route.",
+      "**Spanning tree belongs to the layer 2 access and distribution spans** — a routed core has none.",
+      "**The synonym mapping** — \"collapsed core\" means two-tier; \"hierarchical\" means three-tier."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Responsibility",
+        "Watch-list"
+      ],
+      "rows": [
+        [
+          "Access",
+          "Ports, VLANs, PoE, edge security",
+          "Keep it simple"
+        ],
+        [
+          "Distribution",
+          "Routing, policy, gateways, summarisation",
+          "The smart layer"
+        ],
+        [
+          "Core",
+          "Fast layer 3 backbone",
+          "No policy!"
+        ],
+        [
+          "Redundancy",
+          "Dual uplinks everywhere",
+          "HSRP or VRRP plus duplex STP"
+        ],
+        [
+          "Sizing",
+          "Large campuses",
+          "Small sites use a collapsed core"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. Two-Tier",
+        "d": "the scaled-down alternative"
+      },
+      {
+        "t": "06. Spine-Leaf",
+        "d": "the data-centre contrast"
+      },
+      {
+        "t": "06. Enterprise Network Architecture",
+        "d": "the hierarchy"
+      }
+    ],
+    "glossary": [
+      "Three-Tier",
+      "Enterprise Network Architecture",
+      "Collapsed Core",
+      "Spine-Leaf"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "modern",
+    "title": "Enterprise Campus",
+    "blurb": "Applying hierarchical design to a campus network",
+    "overview": "The **[[Enterprise Campus|enterprise campus]]** is the full in-building and between-buildings network serving users, plus its server, WAN, and security modules. It is not one topology: it assembles three-tier hierarchy, star access and mesh-like cores with server farm, WAN edge, wireless and DMZ modules into a resilient, segmentable whole.",
+    "keyIdea": "**Key idea:** The campus is the whole modular design, not a single building star. The default gateway lives at the distribution layer, spanning tree covers only the layer 2 spans, and the data centre is usually its own block attached to the campus core.",
+    "sections": [
+      {
+        "h": "Enterprise campus",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">THREE-TIER</text><rect x=\"390\" y=\"60\" width=\"120\" height=\"32\" rx=\"6\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"300\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"470\" y=\"130\" width=\"130\" height=\"32\" rx=\"6\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"200\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"395\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"590\" y=\"200\" width=\"110\" height=\"32\" rx=\"6\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><line x1=\"450\" y1=\"92\" x2=\"365\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"450\" y1=\"92\" x2=\"535\" y2=\"130\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"255\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"365\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"450\" y2=\"200\" stroke=\"#64748B\"/><line x1=\"535\" y1=\"162\" x2=\"645\" y2=\"200\" stroke=\"#64748B\"/></g></svg>",
+        "caption": "Hierarchical campus design."
+      },
+      {
+        "h": "The campus blocks",
+        "kind": "table",
+        "cols": [
+          "Block",
+          "Purpose",
+          "Topology flavour"
+        ],
+        "rows": [
+          [
+            "Campus core",
+            "Backbone between buildings",
+            "Routed mesh or collapsed"
+          ],
+          [
+            "Distribution",
+            "Per-building aggregation and policy",
+            "Dual switch pair with HSRP"
+          ],
+          [
+            "Access",
+            "Endpoints, VLANs, wireless APs",
+            "Star"
+          ],
+          [
+            "Server farm / data centre",
+            "Compute and storage",
+            "Spine-leaf, or three-tier"
+          ],
+          [
+            "WAN edge",
+            "MPLS, SD-WAN, Internet",
+            "Partial mesh or hub-and-spoke"
+          ],
+          [
+            "DMZ",
+            "Public-facing servers",
+            "Two-arm to the firewalls"
+          ],
+          [
+            "Management",
+            "Out-of-band, NMS, NetOps",
+            "Dedicated VLAN or VRF"
+          ]
+        ]
+      },
+      {
+        "h": "Design goals (shared with Level 00)",
+        "kind": "list",
+        "items": [
+          {
+            "t": "High availability everywhere",
+            "d": "Dual core, dual distribution, dual-homed access, HSRP or VRRP, port channeling, redundant power supplies — all of it removes single points of failure."
+          },
+          {
+            "t": "Fast convergence",
+            "d": "Routing protocols with summaries, RSTP on the layer 2 spans, and first-hop redundancy for the gateways."
+          },
+          {
+            "t": "Segmentation",
+            "d": "A VLAN per role, plus VRFs and ACLs where security needs them; guest, voice and management kept apart."
+          },
+          {
+            "t": "Manageability",
+            "d": "A dedicated management VLAN and out-of-band management, with NetFlow and telemetry feeding the NMS (Level 26)."
+          },
+          {
+            "t": "Quality of service",
+            "d": "Trust boundaries at the access layer, marking, and priority queuing on the uplinks for voice and video (Level 21)."
+          }
+        ]
+      },
+      {
+        "h": "Wired versus wireless in the campus",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Wireless is a first-class citizen",
+            "d": "APs connect to access switches, CAPWAP carries traffic to the wireless controllers, with steering and virtualisation on top."
+          },
+          {
+            "t": "Mobility with the wireless module",
+            "d": "Roaming is anchored at the controller (Level 22)."
+          },
+          {
+            "t": "Design mapping",
+            "d": "SSIDs map to VLANs, roaming is anchored at the controller, and AAA goes through RADIUS."
+          }
+        ]
+      },
+      {
+        "h": "The classic small-campus scenario",
+        "kind": "para",
+        "p": "A typical exam drawing is a small two-tier campus: a redundant core pair on top, a distribution pair with HSRP in the middle, and two access switches below it — with VLAN 10 for users, VLAN 20 for servers, VLAN 30 for management, VLAN 40 for voice, and VLAN 50 for guest."
+      }
+    ],
+    "commands": [
+      {
+        "label": "The campus spine: distribution HA, access ports, and a routed core",
+        "code": "# Distribution pair with HSRP\ninterface Vlan10\n ip address 10.1.10.2 255.255.255.0\nstandby 1 ip 10.1.10.1\nstandby 1 preempt\n\n# Access - trunk to distribution, portfast on the host ports\ninterface GigabitEthernet0/1\n switchport access vlan 10\n spanning-tree portfast\n\n# Core - routes and fast forwarding only, no policy\nip cef\nrouter ospf 1\n network 10.0.0.0 0.255.255.255 area 0"
+      }
+    ],
+    "traps": [
+      "**\"Enterprise campus\" does not mean \"a single building star\"** — it is the whole modular model.",
+      "**The default gateway lives at the distribution** (with HSRP), not at the access switch.",
+      "**Spanning tree only covers the layer 2 spans** from access to distribution — the core is routed.",
+      "**Always distinguish the campus from the data-centre spine-leaf** — the data centre is usually its own block attached to the campus core.",
+      "**The full-architecture answer** — \"collapsed core for the branch, three-tier for the campus, spine-leaf data centre attached to the campus core.\""
+    ],
+    "table": {
+      "cols": [
+        "Block",
+        "Role",
+        "Redundancy trick"
+      ],
+      "rows": [
+        [
+          "Core",
+          "Backbone",
+          "Dual switches, routed"
+        ],
+        [
+          "Distribution",
+          "Policy and routing",
+          "HSRP or VRRP pair"
+        ],
+        [
+          "Access",
+          "Ports and endpoints",
+          "Dual-homed, portfast"
+        ],
+        [
+          "Server farm",
+          "Compute and storage",
+          "Spine-leaf for east-west capacity"
+        ],
+        [
+          "WAN edge",
+          "Carriers and SD-WAN",
+          "Partial mesh, DMVPN"
+        ],
+        [
+          "DMZ",
+          "Public services",
+          "Two-arm firewalls"
+        ],
+        [
+          "Management",
+          "Out-of-band tools",
+          "Dedicated VLAN or VRF"
+        ],
+        [
+          "Wireless",
+          "Coverage and mobility",
+          "CAPWAP to the controller, SSID to VLAN"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. Two-Tier",
+        "d": "campus topology block"
+      },
+      {
+        "t": "08. Three-Tier",
+        "d": "the larger campus"
+      },
+      {
+        "t": "01. VLAN",
+        "d": "campus switching"
+      }
+    ],
+    "glossary": [
+      "Enterprise Campus",
+      "Three-Tier",
+      "Collapsed Core",
+      "Spine-Leaf",
+      "LAN",
+      "WAN"
+    ]
+  }
+];
         const GROUPS = [
           { key: 'classic', label: 'Classic Topologies', chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300', dot: 'bg-amber-600', bullet: 'text-amber-600 dark:text-amber-400' },
           { key: 'modern', label: 'Modern Enterprise Designs', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' }
@@ -1652,6 +2525,7 @@ router ospf 1
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

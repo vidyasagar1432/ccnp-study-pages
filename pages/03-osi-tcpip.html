@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,522 +600,1186 @@
         const heroIntro = `Explains the layered stack every protocol sits on: the seven-layer [[OSI Model|OSI model]], the four-layer [[TCP-IP Model|TCP/IP model]] that Cisco actually runs, how data is [[Encapsulation|encapsulated]] and [[Decapsulation|decapsulated]] as it crosses the stack, the [[PDU]] names at each layer, and the end-to-end data flow of a packet from an application to its destination.`;
 
         const topics = [
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "models",
+    "title": "OSI Model",
+    "blurb": "Seven layers, their functions, PDUs and devices",
+    "overview": "The **[[OSI Model|Open Systems Interconnection]]** (ISO/IEC 7498) describes networking in **seven layers**, each with a distinct function. It is the vocabulary for discussing protocols, for troubleshooting (\"is this Layer 2 or Layer 3?\"), and for matching real protocols to functions.",
+    "keyIdea": "**Key idea:** OSI is a reference, not an implementation. Its real exam value is the mapping — which layer owns addressing, which owns ports, which owns the PDU name, and which device operates there.",
+    "sections": [
+      {
+        "h": "OSI 7-layer model",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 420\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">OSI MODEL</text><rect x=\"60\" y=\"60\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"60\" y=\"100\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><rect x=\"60\" y=\"140\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#FBBF24\" fill-opacity=\"0.2\" stroke=\"#FBBF24\"/><rect x=\"60\" y=\"180\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"60\" y=\"220\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"60\" y=\"260\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#6366F1\" fill-opacity=\"0.2\" stroke=\"#6366F1\"/><rect x=\"60\" y=\"300\" width=\"200\" height=\"30\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"160\" y=\"80\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">7. Application</text><text x=\"160\" y=\"120\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">6. Presentation</text><text x=\"160\" y=\"160\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">5. Session</text><text x=\"160\" y=\"200\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">4. Transport</text><text x=\"160\" y=\"240\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">3. Network</text><text x=\"160\" y=\"280\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">2. Data Link</text><text x=\"160\" y=\"320\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">1. Physical</text><text x=\"340\" y=\"80\" font-size=\"8\" fill=\"currentColor\">User data, HTTP/DNS</text><text x=\"340\" y=\"200\" font-size=\"8\" fill=\"currentColor\">TCP/UDP, port numbers</text><text x=\"340\" y=\"240\" font-size=\"8\" fill=\"currentColor\">IP, routing</text><text x=\"340\" y=\"280\" font-size=\"8\" fill=\"currentColor\">MAC, switching</text><text x=\"340\" y=\"320\" font-size=\"8\" fill=\"currentColor\">Bits, media</text></g></svg>",
+        "caption": "All People Seem To Need Data Processing."
+      },
+      {
+        "h": "The seven layers and their PDUs",
+        "kind": "table",
+        "cols": [
+          "Layer",
+          "Name",
+          "Function",
+          "Real-world protocol or device",
+          "PDU"
+        ],
+        "rows": [
+          [
+            "7",
+            "Application",
+            "User services, APIs",
+            "HTTP, DNS, FTP, SMTP, DHCP",
+            "Data"
+          ],
+          [
+            "6",
+            "Presentation",
+            "Encoding, encryption, compression",
+            "TLS (sometimes); SSL is more OSI",
+            "Data"
+          ],
+          [
+            "5",
+            "Session",
+            "Connection state, sessions",
+            "NetBIOS, RPC; the TCP session logic",
+            "Data"
+          ],
+          [
+            "4",
+            "Transport",
+            "End-to-end delivery, ports, reliability",
+            "**TCP, UDP**",
+            "**Segment**"
+          ],
+          [
+            "3",
+            "Network",
+            "Addressing, routing, path selection",
+            "**IP**, ICMP; **routers**",
+            "**Packet**"
+          ],
+          [
+            "2",
+            "Data Link",
+            "MAC addressing, framing, media access",
+            "**Ethernet**, 802.11; **switches**",
+            "**Frame**"
+          ],
+          [
+            "1",
+            "Physical",
+            "Bits, signals, connectors",
+            "UTP, fiber; **hubs, transceivers**",
+            "**Bits**"
+          ]
+        ]
+      },
+      {
+        "h": "Layer responsibilities in depth",
+        "kind": "list",
+        "items": [
           {
-            id: 't01',
-            num: '01',
-            group: 'models',
-            title: 'OSI Model',
-            blurb: 'Seven layers, their functions, PDUs and devices',
-            overview: `The **[[OSI Model|Open Systems Interconnection]]** (ISO/IEC 7498) describes networking in **seven layers**, each with a distinct function. It is the vocabulary for discussing protocols, for troubleshooting ("is this Layer 2 or Layer 3?"), and for matching real protocols to functions.`,
-            keyIdea: `**Key idea:** OSI is a reference, not an implementation. Its real exam value is the mapping — which layer owns addressing, which owns ports, which owns the PDU name, and which device operates there.`,
-            sections: [
-              {
-                h: 'The seven layers and their PDUs', kind: 'table',
-                cols: ['Layer', 'Name', 'Function', 'Real-world protocol or device', 'PDU'],
-                rows: [
-                  ['7', 'Application', 'User services, APIs', 'HTTP, DNS, FTP, SMTP, DHCP', 'Data'],
-                  ['6', 'Presentation', 'Encoding, encryption, compression', 'TLS (sometimes); SSL is more OSI', 'Data'],
-                  ['5', 'Session', 'Connection state, sessions', 'NetBIOS, RPC; the TCP session logic', 'Data'],
-                  ['4', 'Transport', 'End-to-end delivery, ports, reliability', '**TCP, UDP**', '**Segment**'],
-                  ['3', 'Network', 'Addressing, routing, path selection', '**IP**, ICMP; **routers**', '**Packet**'],
-                  ['2', 'Data Link', 'MAC addressing, framing, media access', '**Ethernet**, 802.11; **switches**', '**Frame**'],
-                  ['1', 'Physical', 'Bits, signals, connectors', 'UTP, fiber; **hubs, transceivers**', '**Bits**']
-                ]
-              },
-              {
-                h: 'Layer responsibilities in depth', kind: 'list', items: [
-                  { t: 'L7 Application', d: 'Interfaces applications to network services — DNS names, file transfer, email.' },
-                  { t: 'L6 Presentation', d: 'Data format, character encoding, encryption.' },
-                  { t: 'L5 Session', d: 'Establishes and tears down sessions, with checkpointing and resume.' },
-                  { t: 'L4 Transport', d: '**Segmentation**, **reliability (TCP)**, port multiplexing, and error recovery through acknowledgements.' },
-                  { t: 'L3 Network', d: '**Logical addressing (IP)**, best-path selection (routing), and fragmentation.' },
-                  { t: 'L2 Data Link', d: 'Frame assembly, **MAC addresses**, and error detection with the FCS; it splits into the LLC and MAC sublayers.' },
-                  { t: 'L1 Physical', d: 'Bits on the wire as electrical, optical, or RF signals, plus the topology and connectors.' }
-                ]
-              },
-              {
-                h: 'Mnemonic', kind: 'para',
-                p: `**All People Seem To Need Data Processing** is the top-down mnemonic. For bottom-up (L1 to L7) use **Please Do Not Throw Sausage Pizza Away**.`
-              },
-              {
-                h: 'Two useful sub-concepts', kind: 'list', items: [
-                  { t: 'LLC (Logical Link Control)', d: 'The 802.2 half of Layer 2 — it multiplexes upper-layer protocols using the EtherType field.' },
-                  { t: 'MAC sublayer', d: 'Handles media access (CSMA/CD history, backoff) and MAC addressing.' }
-                ]
-              },
-              {
-                h: 'Troubleshooting value — the biggest exam use', kind: 'list', items: [
-                  { t: 'Layer-by-layer isolation', d: 'Physical (link lights, errors) to data link (MAC, VLAN, STP) to network (IP route) to transport (ports) to application.' },
-                  { t: 'Works for some but not others', d: 'Usually a Layer 2 or Layer 3 issue — a broadcast domain, a VLAN, or a route.' },
-                  { t: 'Ping works but telnet fails', d: 'That is a Layer 4 port problem, not a Layer 3 problem.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'The layer-isolation toolkit on a Cisco device',
-                code: `# The test used to isolate layers:
-ping <ip>            # If OK -> L1-L3 are fine (ICMP is L3).
-telnet <ip> <port>   # L4 port reachability.
-curl http://<host>   # L7 verification for end-user services.
-
-# In a network device:
-show interfaces | include (Duplex|Speed|Error|CRC)   # L1 health
-show mac address-table                                # L2 learning
-show ip route                                        # L3 table`
-              }
-            ],
-            traps: [
-              '**PDU names are the number-one trap** — frame versus packet versus segment. Learn them cold.',
-              '**"Layer 4 equals application port logic"** — NAT sits at the L3/L4 boundary, ACLs at L3 plus L4, and firewalls work across L4 to L7.',
-              '**Encryption lives at L6 Presentation in OSI** — but TLS is often described at L4 or L7 in practice. The OSI-wise answer is L6; know both viewpoints without mixing them.',
-              '**Device mapping trap** — switch is L2, router is L3, hub is L1, firewall and load balancer are L4 to L7.',
-              '**MAC is L2, IP is L3, port is L4.** Everything else in the exam hangs off those three facts.'
-            ],
-            table: {
-              cols: ['Layer', 'PDU', 'Protocol landmark', 'Device'],
-              rows: [
-                ['7 App', 'Data', 'HTTP, DNS', 'Apps'],
-                ['6 Pres', 'Data', 'TLS, codecs', '—'],
-                ['5 Sess', 'Data', 'NetBIOS, sessions', '—'],
-                ['4 Trans', '**Segment**', 'TCP, UDP', 'LB, firewall'],
-                ['3 Net', '**Packet**', 'IP, ICMP', 'Router'],
-                ['2 DLL', '**Frame**', 'Ethernet, 802.11', 'Switch'],
-                ['1 Phys', '**Bit**', 'UTP, fiber', 'Hub']
-              ]
-            },
-            related: [
-              { t: '02. TCP IP Model', d: 'the practical counterpart' },
-              { t: '03. Encapsulation', d: 'down the stack' },
-              { t: '05. PDUs', d: 'data units per layer' }
-            ],
-            glossary: ['OSI Model', 'TCP-IP Model', 'Encapsulation', 'Decapsulation', 'PDU', 'Ethernet']
+            "t": "L7 Application",
+            "d": "Interfaces applications to network services — DNS names, file transfer, email."
           },
           {
-            id: 't02',
-            num: '02',
-            group: 'models',
-            title: 'TCP/IP Model',
-            blurb: 'The four layers Cisco actually implements',
-            overview: `The **[[TCP-IP Model|TCP/IP model]]** (the DoD/Internet model) describes the protocol stack actually developed for the Internet. It has **four layers** that map onto the [[OSI Model|OSI]] seven, and it is what Cisco IOS speaks natively.`,
-            keyIdea: `**Key idea:** TCP/IP merged the OSI top three layers into one, because that is how the real Internet was built. Every "which layer" question about a live network is answered in TCP/IP terms — and then translated into OSI for the exam.`,
-            sections: [
-              {
-                h: 'Four layers versus OSI seven', kind: 'table',
-                cols: ['TCP/IP layer', 'Covers OSI layers', 'Protocols'],
-                rows: [
-                  ['**Application**', '7 + 6 + 5', 'HTTP, FTP, SMTP, DNS, DHCP, Telnet, SSH, SNMP'],
-                  ['**Transport**', '4', 'TCP, UDP (and others)'],
-                  ['**Internet (Network)**', '3', 'IP, ICMP, ICMPv6, IGMP'],
-                  ['**Network Access (Link)**', '2 + 1', 'Ethernet, 802.11, PPP, and the physical layer']
-                ]
-              },
-              {
-                h: 'Layer jobs in TCP/IP terms', kind: 'list', items: [
-                  { t: 'Application', d: 'Everything above ports — protocols, data formats, and sessions all merged into one layer. That merge is why OSI layers 5, 6 and 7 barely appear in real networks.' },
-                  { t: 'Transport', d: '**TCP** (reliable, connection-oriented, with flow and congestion control) or **UDP** (best-effort, connectionless). It adds the **ports** — source and destination.' },
-                  { t: 'Internet', d: '**IP** (addressing and best-effort delivery), **ICMP** (errors and diagnosis), **IGMP** (multicast group membership).' },
-                  { t: 'Network Access', d: 'Puts IP packets into **Ethernet frames**, resolves IP to MAC via **ARP**, and transmits the bits.' }
-                ]
-              },
-              {
-                h: 'The correspondence rule', kind: 'table',
-                cols: ['OSI', 'TCP/IP'],
-                rows: [
-                  ['7, 6, 5', '4. Application'],
-                  ['4', '3. Transport'],
-                  ['3', '2. Internet'],
-                  ['1, 2', '1. Network Access']
-                ]
-              },
-              {
-                h: 'Why TCP/IP won over pure OSI', kind: 'list', items: [
-                  { t: 'OSI is reference-only', d: 'TCP/IP shipped working software; IP is the internetwork protocol everything else was built on.' },
-                  { t: 'Operators think in TCP/IP', d: '"Ping works so Layer 3 is up; try port 443 with telnet for Layer 4" is the real troubleshooting flow.' },
-                  { t: 'The layers merge naturally', d: 'Application, presentation, and session functions rarely need separate implementations in a real stack.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Network-layer configuration — the TCP/IP stack you actually configure',
-                code: `# On a Cisco router, "network layer" config is what TCP/IP users see:
-interface GigabitEthernet0/0
- ip address 192.168.1.1 255.255.255.0
- no shutdown
-
-# The stack relies on the TCP/IP protocol family only:
-show ip protocols
-show ip route`
-              }
-            ],
-            traps: [
-              '**Four versus five layer TCP/IP variants** — Cisco teaches **four**; some texts split the link layer into two. Answer per the model the question names.',
-              '**ARP lives in the Network Access layer** in TCP/IP (it maps IP to MAC) — many exams place it at Layer 3 or "between layers", so know both statements contextually.',
-              '**ICMP belongs to the Internet layer** — it is Layer 3, never "forum-less" or an application protocol.',
-              '**Only TCP and UDP are usually asked** — SCTP and DCCP are beyond scope.',
-              '**Best-effort principle** — IP, ICMP and UDP are unreliable; reliability is added by TCP or by the application.'
-            ],
-            table: {
-              cols: ['TCP/IP layer', 'Equals OSI', 'Protocols'],
-              rows: [
-                ['4 Application', '7, 6, 5', 'HTTP, DNS, DHCP, SMTP'],
-                ['3 Transport', '4', 'TCP, UDP'],
-                ['2 Internet', '3', 'IP, ICMP'],
-                ['1 Network Access', '2, 1', 'Ethernet, ARP, PPP, 802.11'],
-                ['Reliability', '—', 'Only TCP adds it']
-              ]
-            },
-            related: [
-              { t: '01. OSI Model', d: 'the contrasting model' },
-              { t: '06. Data Flow', d: 'end-to-end flow' },
-              { t: '03. Encapsulation', d: 'headers per layer' }
-            ],
-            glossary: ['TCP-IP Model', 'OSI Model', 'Encapsulation', 'PDU', 'ARP', 'IPv4']
+            "t": "L6 Presentation",
+            "d": "Data format, character encoding, encryption."
           },
           {
-            id: 't03',
-            num: '03',
-            group: 'data',
-            title: 'Encapsulation',
-            blurb: 'Adding headers as data moves down the stack',
-            overview: `**[[Encapsulation]]** is the process of adding **headers (and trailers)** as data is passed down the protocol stack from application to transport, then network, then link. Each layer wraps the previous layer's data in its own envelope before handing it to the layer below — payload plus header equals the next layer's PDU.`,
-            keyIdea: `**Key idea:** Encapsulation always happens **down** the source stack. The payload never changes; only the wrapping grows — and every intermediate device re-writes only the Layer 2 envelope, never the Layer 3 or Layer 4 one.`,
-            sections: [
-              {
-                h: 'The envelope chain (an HTTP request)', kind: 'code',
-                code: `[HTTP request ................]                     <- Application data (L7)
-[TCP hdr ][HTTP data ........]   = Segment         <- src/dst ports, seq, flags
-[IP hdr ][TCP hdr][HTTP data ]   = Packet          <- src/dst IP, TTL, protocol
-[Eth hdr][IP ][TCP][HTTP][FCS ]   = Frame          <- MAC, EtherType, FCS`
-              },
-              {
-                h: 'Why one header per layer', kind: 'list', items: [
-                  { t: 'Each layer offers its own service', d: 'Ports at L4, addressing and routing at L3, framing and error checking at L2 — so each layer needs its own private context in the header.' },
-                  { t: 'Peer communication', d: 'Each layer only reads the header it understands and ignores the rest.' },
-                  { t: 'Multiplexing', d: 'The EtherType field at L2, the protocol field at L3, and the port numbers at L4 tell the receiver exactly which higher layer to hand the data to.' }
-                ]
-              },
-              {
-                h: 'Headers and trailers per layer', kind: 'table',
-                cols: ['Layer', 'Header or trailer', 'Key fields'],
-                rows: [
-                  ['L4 (TCP)', '20 to 60 byte header', 'ports, seq/ack, flags, window, checksum'],
-                  ['L4 (UDP)', '8 byte header', 'ports, length, checksum'],
-                  ['L3 (IPv4)', '20+ byte header', 'version, IHL, TTL, protocol, src/dst IP, checksum'],
-                  ['L3 (IPv6)', '40 byte fixed header', 'flow label, hop limit, src/dst 128-bit'],
-                  ['L2 (Ethernet)', '14 byte header + 4 byte FCS trailer', 'dst/src MAC, EtherType or length, FCS'],
-                  ['L2 (802.1Q)', 'plus a 4 byte VLAN tag inside the header', 'TPID, PCP, VID']
-                ]
-              },
-              {
-                h: 'Encapsulation for special frames', kind: 'list', items: [
-                  { t: 'VLAN trunk', d: 'An extra 802.1Q tag is inserted — the frame gets "harder" (see Level 07).' },
-                  { t: 'Tunnels (GRE, IPsec, VXLAN)', d: 'The outer protocol encapsulates the whole original IP packet as its payload, so you get double addressing and the MTU must shrink (Level 01).' },
-                  { t: 'MPLS', d: 'A label shim is shoved between L2 and L3, with the Layer 3 header still intact underneath (Level 20).' }
-                ]
-              },
-              {
-                h: 'Encapsulation runs into the MTU', kind: 'list', items: [
-                  { t: 'Headers push the frame toward the maximum frame size', d: 'Standard Ethernet carries a 1500 byte IP packet plus roughly 18 bytes of Layer 2 overhead.' },
-                  { t: 'Oversize means fragment or drop', d: 'IPv4 fragments when it must, IPv6 does not fragment at the router — the source must respect the path MTU.' },
-                  { t: 'Tunnels shrink the usable MTU', d: 'Every extra encapsulation layer takes bytes from the payload, which is why tunnel MTUs are set below 1500.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Watching encapsulation on the wire, and sizing a tunnel MTU',
-                code: `# Ping and watch the headers build up going down the stack
-debug ip packet
-show interfaces | include MTU
-
-# Tunnels add another encapsulation layer - the MTU must shrink
-interface Tunnel0
- ip mtu 1476`
-              }
-            ],
-            traps: [
-              '**"Which header exists in a packet?"** — a segment carries L4 fields; a frame carries Layer 2 plus everything above it.',
-              '**Direction** — encapsulation goes **down** the source stack (adding); decapsulation goes **up** at the destination (removing). Never flip these.',
-              '**Every hop does Layer 2 re-encapsulation** — a new Ethernet header per link, while the Layer 3 and Layer 4 headers only change at the endpoints.',
-              '**Tunnels mean double IP headers** — the outer header routes, the inner one is payload.',
-              '**Checksums** — IPv4 has a header checksum, **IPv6 has no header checksum**, and TCP and UDP checksums are end-to-end.'
-            ],
-            table: {
-              cols: ['Layer', 'Add', 'Becomes', 'Peer reads'],
-              rows: [
-                ['7 Apps', '—', 'Data', 'payload'],
-                ['4 TCP', 'ports, seq, flags', '**Segment**', 'receiver L4'],
-                ['3 IP', 'src/dst IP, TTL', '**Packet**', 'each router (L3)'],
-                ['2 Eth', 'MAC, EtherType, FCS', '**Frame**', 'each switch (L2)'],
-                ['1 Phys', 'electrical', 'Bits', '—'],
-                ['Tunnel', 'extra IP or GRE', 'inner packet is payload', 'only the endpoints'],
-                ['Rule', 'headers only added', 'data unchanged', 'down means add']
-              ]
-            },
-            related: [
-              { t: '04. Decapsulation', d: 'the reverse process' },
-              { t: '05. PDUs', d: 'the data units change' },
-              { t: '01. VLAN', d: 'Layer 2 encapsulation' }
-            ],
-            glossary: ['Encapsulation', 'Decapsulation', 'PDU', 'OSI Model', 'MTU', 'IPv4', 'IPv6', 'Ethernet', 'VLAN']
+            "t": "L5 Session",
+            "d": "Establishes and tears down sessions, with checkpointing and resume."
           },
           {
-            id: 't04',
-            num: '04',
-            group: 'data',
-            title: 'Decapsulation',
-            blurb: 'Stripping and validating headers on the receive side',
-            overview: `**[[Decapsulation]]** is the reverse of [[Encapsulation|encapsulation]]: at the receiver each layer **strips its own header or trailer**, validates it, and passes the payload up to the next higher layer until the application receives the original data.`,
-            keyIdea: `**Key idea:** Decapsulation is bottom-up, and a device only ever removes the headers it owns. A router removes the Layer 2 header and rebuilds a new one per link — it never touches the Layer 3 or Layer 4 header except the TTL.`,
-            sections: [
-              {
-                h: 'The receive process', kind: 'code',
-                code: `On the wire:      [Eth ][ IP ][TCP][HTTP data][FCS]
-L2 removes:  ->   [ IP ][TCP][HTTP data]      (check FCS -> drop if bad)
-L3 removes:  ->      [TCP][HTTP data]         (checksum, TTL ok?)
-L4 removes:  ->         [HTTP data]           (deliver by port)
-L7 receives:            application data`
-              },
-              {
-                h: 'Where decapsulation happens — hop versus endpoint', kind: 'table',
-                cols: ['Device', 'Decapsulates', 'Keeps'],
-                rows: [
-                  ['Switch (L2)', 'Ethernet header and FCS', 'Re-encapsulates the same frame out another port; it never reads IP or TCP'],
-                  ['Router (L3)', 'Ethernet header, **reads IP**, rewrites Layer 2', 'Forwards the IP datagram; it adds no Layer 4 information'],
-                  ['Target host', 'All layers', 'Delivers the data to the application'],
-                  ['Tunnel endpoint', 'Outer headers (IP plus GRE or IPsec)', 'The inner packet is passed on or decrypted']
-                ]
-              },
-              {
-                h: 'What each layer validates', kind: 'list', items: [
-                  { t: 'L2', d: 'The FCS (CRC) — a mismatch means the frame is dropped, and the interface CRC counters climb (Level 29).' },
-                  { t: 'L3', d: 'The IPv4 header checksum and the TTL — a TTL of zero produces an ICMP TTL exceeded message and the packet is dropped. IPv6 has only the hop limit to check.' },
-                  { t: 'L4', d: 'The TCP or UDP checksum plus port matching; TCP adds its ACK and sequence logic.' },
-                  { t: 'Application', d: 'The data format and the session context.' }
-                ]
-              },
-              {
-                h: 'The IPv4 checksum is recomputed every hop', kind: 'list', items: [
-                  { t: 'The TTL changes on every routed hop', d: 'Because the header changed, the IPv4 header checksum must be recalculated at each router.' },
-                  { t: 'IPv6 removed the header checksum entirely', d: 'It relies on the link and transport checksums plus ICMPv6, so there is nothing to recompute.' },
-                  { t: 'Transport checksums stay end-to-end', d: 'The TCP and UDP checksum covers the payload, so routers never touch it.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Seeing the encapsulation boundary on the wire',
-                code: `# Packet capture: choose an interface, filter the frame, then expand
-# the headers layer by layer.
-
-# Router-level view:
-debug ip icmp
-debug ip packet detail
-show interfaces counters errors   # CRC and framing errors from a bad FCS`
-              }
-            ],
-            traps: [
-              '**Direction trap** — the source encapsulates going down, the destination decapsulates going up. Do not flip them.',
-              '**A router does not decapsulate on behalf of the host** — it removes Layer 2, reads Layer 3, then **re-encapsulates a brand-new Layer 2 header**; the MAC addresses change every hop.',
-              '**The FCS check is Layer 2** — CRC errors are reported on switch interfaces, not as routing problems.',
-              '**Tunnels** — an intermediate tunnel endpoint decapsulates the **outer** header only; the inner packet stays untouched.',
-              '**IPv6** — there is no header checksum to check, only the hop limit at Layer 3.'
-            ],
-            table: {
-              cols: ['Layer', 'Check during decap', 'Result if bad'],
-              rows: [
-                ['L2 / FCS', 'CRC match', 'Drop, and the CRC counter climbs'],
-                ['L3 IPv4', 'Checksum, TTL', 'Drop, or ICMP TTL exceeded'],
-                ['L3 IPv6', 'Hop limit only', 'Drop (there is no header checksum)'],
-                ['L4 TCP/UDP', 'Checksum, port', 'Drop, or a reset'],
-                ['App', 'Format, session', 'Application error'],
-                ['Hop devices', 'Layer 2 reswap only', 'MAC fields change'],
-                ['Endpoints', 'Full chain', 'Data delivered']
-              ]
-            },
-            related: [
-              { t: '03. Encapsulation', d: 'the reverse process' },
-              { t: '05. PDUs', d: 'unwrapping units' },
-              { t: '06. Data Flow', d: 'the whole journey' }
-            ],
-            glossary: ['Decapsulation', 'Encapsulation', 'PDU', 'OSI Model', 'IPv4', 'IPv6', 'ARP']
+            "t": "L4 Transport",
+            "d": "**Segmentation**, **reliability (TCP)**, port multiplexing, and error recovery through acknowledgements."
           },
           {
-            id: 't05',
-            num: '05',
-            group: 'data',
-            title: 'PDUs',
-            blurb: 'Protocol data units and the names at each layer',
-            overview: `A **[[PDU|Protocol Data Unit]]** is the unit of data at a given layer of the stack: that layer's header (plus trailer) together with the payload it carries from the layer above. Each layer has its own PDU name — **data, segment, packet, frame, bits** — and a PDU becomes the payload of the next lower PDU.`,
-            keyIdea: `**Key idea:** The PDU name tells you which layer you are talking about. Segment equals TCP, packet equals IP, frame equals Ethernet, bits equals physical — and a PDU includes its own header, so a segment is the TCP header plus data, not the data alone.`,
-            sections: [
-              {
-                h: 'PDU names by layer', kind: 'table',
-                cols: ['Layer', 'PDU name'],
-                rows: [
-                  ['Application (7/6/5)', '**Data** (sometimes called a message)'],
-                  ['Transport (4)', '**Segment** (TCP) or **Datagram** (UDP)'],
-                  ['Network (3)', '**Packet** (RFC 791 calls the IPv4 unit a datagram)'],
-                  ['Data Link (2)', '**Frame**'],
-                  ['Physical (1)', '**Bits** (physically, symbols and codewords)']
-                ]
-              },
-              {
-                h: 'How the PDU chain is built', kind: 'code',
-                code: `DATA    ->(L4 header)->   SEGMENT   ->(L3 header)->   PACKET
-                                                   ->(L2 header + FCS)->   FRAME   ->(L1)->   BITS
-
-The segment is the payload of the packet, and the packet is the payload of the frame.
-The PDU of layer N is the SDU (service data unit) from layer N plus a header, and
-that PDU becomes the SDU for layer N-1.`
-              },
-              {
-                h: 'Official IP terminology', kind: 'list', items: [
-                  { t: 'RFC 791 calls the IPv4 unit a datagram', d: 'Cisco exams usually say "packet" for Layer 3 and IPv6, and may say "datagram" for UDP and IP. Be ready for both words.' },
-                  { t: 'The two-datagram trap', d: 'A UDP datagram is the Layer 4 PDU; an IP datagram is the Layer 3 PDU. They are different units, and the exam uses both.' },
-                  { t: 'Do not call a frame a packet', d: 'A packet becomes a frame once the Layer 2 header and FCS are added — the names describe different units.' }
-                ]
-              },
-              {
-                h: 'Size context', kind: 'list', items: [
-                  { t: 'MSS controls segment size, MTU controls packet size', d: 'The frame must fit inside the link MTU — 1500 bytes of IP payload on standard Ethernet (Level 01).' },
-                  { t: 'PDU sizes include the header', d: 'A segment is the TCP header plus the data, so a 1460 byte MSS produces a 1500 byte IP packet.' },
-                  { t: 'Over the MTU means drop or fragment', d: 'IPv4 fragments when allowed; IPv6 routers never fragment, so the source has to fit the path MTU.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Relating PDU sizes to the MTU',
-                code: `ip mtu 1500            # interface L3 packet max
-
-# Verify with:
-show ip interface      # MTU reported
-ping 10.0.0.2 size 1472 df-bit   # 1472 payload + 20 IP + 8 ICMP = 1500`
-              }
-            ],
-            traps: [
-              '**The single most-asked PDU fact** — segment equals TCP, packet equals IP, frame equals Ethernet.',
-              '**UDP datagram and IP datagram** — the two-datagram trap; they are different layers.',
-              '**A packet becomes a frame** once the Layer 2 header is added — never call a frame a packet.',
-              '**Bits at Layer 1** — physically they are symbols and codewords, but the exam says "bits".',
-              '**Encapsulation math** — "what is the frame size?" is the MTU plus 18 bytes (or 22 with a VLAN tag).'
-            ],
-            table: {
-              cols: ['Layer', 'PDU', 'Added by'],
-              rows: [
-                ['7-5', 'Data', 'the applications'],
-                ['4 TCP', 'Segment', 'TCP header'],
-                ['4 UDP', 'Datagram', 'UDP header'],
-                ['3', 'Packet (datagram for IP)', 'IP header'],
-                ['2', 'Frame', 'Ethernet header + FCS'],
-                ['1', 'Bits', 'physical encoding'],
-                ['Chain rule', 'PDU_n is the payload of PDU_(n-1)', 'encapsulation']
-              ]
-            },
-            related: [
-              { t: '03. Encapsulation', d: 'produces the PDUs' },
-              { t: '06. Data Flow', d: 'PDU movement' },
-              { t: '02. Ethernet Frame', d: 'a Layer 2 PDU' }
-            ],
-            glossary: ['PDU', 'Encapsulation', 'Decapsulation', 'OSI Model', 'TCP-IP Model', 'MTU', 'Ethernet']
+            "t": "L3 Network",
+            "d": "**Logical addressing (IP)**, best-path selection (routing), and fragmentation."
           },
           {
-            id: 't06',
-            num: '06',
-            group: 'data',
-            title: 'Data Flow',
-            blurb: 'The end-to-end journey of a unit of data',
-            overview: `**Data flow** is the lifecycle of a unit of data from a source application to a destination application across a network: **[[Encapsulation|encapsulation]] down** the source stack, transmission across intermediate devices, and **decapsulation up** the destination — plus the peer-to-peer and directional concepts (unicast, broadcast, multicast) that frame each journey.`,
-            keyIdea: `**Key idea:** The Layer 2 header is rewritten at every link while the Layer 3 and Layer 4 headers stay constant end to end. That single fact explains MAC churn, routing behaviour, and why NAT is visible at the boundary.`,
-            sections: [
-              {
-                h: 'The end-to-end journey', kind: 'list', items: [
-                  { t: '1. The application generates data', d: 'Layer 7 — an HTTP request, a DNS query, a file transfer.' },
-                  { t: '2. The stack builds the units on the way down', d: 'Transport adds ports to make a **segment**; network adds IP to make a **packet**; link adds Ethernet to make a **frame**; physical sends **bits**.' },
-                  { t: '3. Each switch works at Layer 2', d: 'It receives the frame, checks the FCS, forwards on the destination MAC, and re-encapsulates a new Layer 2 header on egress.' },
-                  { t: '4. Each router works at Layer 3', d: 'It strips the Ethernet header, checks the TTL and checksum, looks up the destination route in CEF, then rewrites a new Layer 2 header and sends it out the next media.' },
-                  { t: '5. Special devices act mid-path', d: 'NAT, tunnels, and firewalls add or replace addresses, or encrypt, while the data is in flight.' },
-                  { t: '6. The destination strips everything back off', d: 'The frame becomes a packet, the packet becomes a segment, and the segment becomes application data.' },
-                  { t: '7. The reply runs the same path in reverse', d: 'Which is why the session is full duplex — each direction builds its own headers.' }
-                ]
-              },
-              {
-                h: 'Peer-to-peer communication', kind: 'list', items: [
-                  { t: 'Logical layer to logical layer', d: 'TCP at one end understands TCP at the other; OSPF on a router talks to OSPF on its neighbour, even though the wire carries frames.' },
-                  { t: 'Adjacent layers also talk', d: 'The same layer talks to its peer, and each layer talks to the layer directly above and below through its service interface.' },
-                  { t: 'The mapping is the point of the model', d: 'That is exactly what the OSI model is designed to describe — a clean separation of concerns.' }
-                ]
-              },
-              {
-                h: 'Direction classes of data flow', kind: 'table',
-                cols: ['Type', 'Definition', 'Example'],
-                rows: [
-                  ['**Unicast**', 'One source to one destination', 'Normal HTTP, an SSH download'],
-                  ['**Broadcast**', 'One source to everyone on the segment', 'ARP request, DHCP discover'],
-                  ['**Multicast**', 'One source to the subscribed group members only', 'Video feed, OSPF and VRRP hellos'],
-                  ['**Anycast** (IPv6 and BGP)', 'One address to the nearest of several instances', 'DNS anycast, an anycast gateway']
-                ]
-              },
-              {
-                h: 'Where data flow gets controlled', kind: 'list', items: [
-                  { t: 'Switches', d: 'Filter and forward using the MAC address table (Level 04).' },
-                  { t: 'Routers', d: 'Choose the next hop by longest-prefix match (Level 09).' },
-                  { t: 'ACLs and firewalls', d: 'Accept or drop by the 5-tuple; **QoS** marks and queues the flow (Level 21).' },
-                  { t: 'Load balancers', d: 'Distribute flows across the members of a server pool.' },
-                  { t: 'NetFlow', d: 'Exports the 5-tuple records of every conversation for analysis (Level 26).' }
-                ]
-              },
-              {
-                h: 'Flow identity and session semantics', kind: 'list', items: [
-                  { t: 'A TCP flow is a 5-tuple', d: 'Source IP, destination IP, source port, destination port, and protocol — the key used by ACLs, firewalls and NetFlow to identify a conversation.' },
-                  { t: 'Real-time UDP uses the same idea', d: 'RTP voice and video are classified for QoS with exactly the same 5-tuple.' },
-                  { t: 'Direction matters', d: 'A conversation is two unidirectional flows, and the reverse tuple is what the return path is keyed on.' }
-                ]
-              }
-            ],
-            commands: [
-              {
-                label: 'Observing the flow journey and exporting flow records',
-                code: `traceroute 10.9.9.9        # shows each L3 hop (ICMP or UDP)
-ping <host>                # round trip across the path
-show ip fib                # CEF next hop for the flow
-
-# Flow records (NetFlow) capture the 5-tuple:
-ip flow-export destination 10.1.1.10 2055`
-              }
-            ],
-            traps: [
-              '**"The packet hops Layer 2 but the MAC changes"** — the destination MAC changes per link, while the source and destination IP stay constant (NAT excepted).',
-              '**Do not say "the frame travels across the router"** — routers strip Layer 2 and route the IP packet, recreating Layer 2 per link.',
-              '**Peer-to-peer here means layer peer, not file sharing** — keep the two apart (see the Level 00 note).',
-              '**Anycast versus multicast** — a distinction that is frequently tested at Layer 3 and in IPv6.',
-              '**The TTL decreases per router hop** — it always goes down on an Layer 3 forward.'
-            ],
-            table: {
-              cols: ['Stage', 'Device', 'Header it reads'],
-              rows: [
-                ['Send down', 'Source', 'builds them all'],
-                ['L2 transit', 'Switch', 'Ethernet'],
-                ['L3 transit', 'Router', 'IP (and rewrites Ethernet)'],
-                ['Tunnels and NAT', 'Special devices', 'outer or translated'],
-                ['Receive up', 'Destination', 'strips them all'],
-                ['Peer talk', 'Logical', 'same layer at both ends'],
-                ['Direction', 'uni, bcast, mcast, anycast', 'defines delivery to whom'],
-                ['Flow identity', '5-tuple', 'src/dst IP plus port plus protocol']
-              ]
-            },
-            related: [
-              { t: '05. PDUs', d: 'the units that are flowing' },
-              { t: '03. Encapsulation', d: 'framing within the flow' },
-              { t: '01. Routing Table', d: 'the path of the data' }
-            ],
-            glossary: ['Encapsulation', 'Decapsulation', 'PDU', 'OSI Model', 'ARP', 'NetFlow', 'MTU']
+            "t": "L2 Data Link",
+            "d": "Frame assembly, **MAC addresses**, and error detection with the FCS; it splits into the LLC and MAC sublayers."
+          },
+          {
+            "t": "L1 Physical",
+            "d": "Bits on the wire as electrical, optical, or RF signals, plus the topology and connectors."
           }
-        ];
-
+        ]
+      },
+      {
+        "h": "Mnemonic",
+        "kind": "para",
+        "p": "**All People Seem To Need Data Processing** is the top-down mnemonic. For bottom-up (L1 to L7) use **Please Do Not Throw Sausage Pizza Away**."
+      },
+      {
+        "h": "Two useful sub-concepts",
+        "kind": "list",
+        "items": [
+          {
+            "t": "LLC (Logical Link Control)",
+            "d": "The 802.2 half of Layer 2 — it multiplexes upper-layer protocols using the EtherType field."
+          },
+          {
+            "t": "MAC sublayer",
+            "d": "Handles media access (CSMA/CD history, backoff) and MAC addressing."
+          }
+        ]
+      },
+      {
+        "h": "Troubleshooting value — the biggest exam use",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Layer-by-layer isolation",
+            "d": "Physical (link lights, errors) to data link (MAC, VLAN, STP) to network (IP route) to transport (ports) to application."
+          },
+          {
+            "t": "Works for some but not others",
+            "d": "Usually a Layer 2 or Layer 3 issue — a broadcast domain, a VLAN, or a route."
+          },
+          {
+            "t": "Ping works but telnet fails",
+            "d": "That is a Layer 4 port problem, not a Layer 3 problem."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "The layer-isolation toolkit on a Cisco device",
+        "code": "# The test used to isolate layers:\nping <ip>            # If OK -> L1-L3 are fine (ICMP is L3).\ntelnet <ip> <port>   # L4 port reachability.\ncurl http://<host>   # L7 verification for end-user services.\n\n# In a network device:\nshow interfaces | include (Duplex|Speed|Error|CRC)   # L1 health\nshow mac address-table                                # L2 learning\nshow ip route                                        # L3 table"
+      }
+    ],
+    "traps": [
+      "**PDU names are the number-one trap** — frame versus packet versus segment. Learn them cold.",
+      "**\"Layer 4 equals application port logic\"** — NAT sits at the L3/L4 boundary, ACLs at L3 plus L4, and firewalls work across L4 to L7.",
+      "**Encryption lives at L6 Presentation in OSI** — but TLS is often described at L4 or L7 in practice. The OSI-wise answer is L6; know both viewpoints without mixing them.",
+      "**Device mapping trap** — switch is L2, router is L3, hub is L1, firewall and load balancer are L4 to L7.",
+      "**MAC is L2, IP is L3, port is L4.** Everything else in the exam hangs off those three facts."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "PDU",
+        "Protocol landmark",
+        "Device"
+      ],
+      "rows": [
+        [
+          "7 App",
+          "Data",
+          "HTTP, DNS",
+          "Apps"
+        ],
+        [
+          "6 Pres",
+          "Data",
+          "TLS, codecs",
+          "—"
+        ],
+        [
+          "5 Sess",
+          "Data",
+          "NetBIOS, sessions",
+          "—"
+        ],
+        [
+          "4 Trans",
+          "**Segment**",
+          "TCP, UDP",
+          "LB, firewall"
+        ],
+        [
+          "3 Net",
+          "**Packet**",
+          "IP, ICMP",
+          "Router"
+        ],
+        [
+          "2 DLL",
+          "**Frame**",
+          "Ethernet, 802.11",
+          "Switch"
+        ],
+        [
+          "1 Phys",
+          "**Bit**",
+          "UTP, fiber",
+          "Hub"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. TCP IP Model",
+        "d": "the practical counterpart"
+      },
+      {
+        "t": "03. Encapsulation",
+        "d": "down the stack"
+      },
+      {
+        "t": "05. PDUs",
+        "d": "data units per layer"
+      }
+    ],
+    "glossary": [
+      "OSI Model",
+      "TCP-IP Model",
+      "Encapsulation",
+      "Decapsulation",
+      "PDU",
+      "Ethernet"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "models",
+    "title": "TCP/IP Model",
+    "blurb": "The four layers Cisco actually implements",
+    "overview": "The **[[TCP-IP Model|TCP/IP model]]** (the DoD/Internet model) describes the protocol stack actually developed for the Internet. It has **four layers** that map onto the [[OSI Model|OSI]] seven, and it is what Cisco IOS speaks natively.",
+    "keyIdea": "**Key idea:** TCP/IP merged the OSI top three layers into one, because that is how the real Internet was built. Every \"which layer\" question about a live network is answered in TCP/IP terms — and then translated into OSI for the exam.",
+    "sections": [
+      {
+        "h": "TCP/IP 4-layer model",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 300\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">TCP/IP MODEL</text><rect x=\"60\" y=\"80\" width=\"240\" height=\"40\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"60\" y=\"140\" width=\"240\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"60\" y=\"200\" width=\"240\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"60\" y=\"260\" width=\"240\" height=\"40\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"180\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Application</text><text x=\"180\" y=\"165\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Transport</text><text x=\"180\" y=\"225\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Internet</text><text x=\"180\" y=\"285\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Network Access</text><text x=\"340\" y=\"105\" font-size=\"8\" fill=\"currentColor\">HTTP, FTP, DNS, SMTP</text><text x=\"340\" y=\"165\" font-size=\"8\" fill=\"currentColor\">TCP, UDP</text><text x=\"340\" y=\"225\" font-size=\"8\" fill=\"currentColor\">IP, ICMP, ARP</text><text x=\"340\" y=\"285\" font-size=\"8\" fill=\"currentColor\">Ethernet, Wi-Fi</text></g></svg>",
+        "caption": "Maps to OSI; focused on real-world protocols."
+      },
+      {
+        "h": "Four layers versus OSI seven",
+        "kind": "table",
+        "cols": [
+          "TCP/IP layer",
+          "Covers OSI layers",
+          "Protocols"
+        ],
+        "rows": [
+          [
+            "**Application**",
+            "7 + 6 + 5",
+            "HTTP, FTP, SMTP, DNS, DHCP, Telnet, SSH, SNMP"
+          ],
+          [
+            "**Transport**",
+            "4",
+            "TCP, UDP (and others)"
+          ],
+          [
+            "**Internet (Network)**",
+            "3",
+            "IP, ICMP, ICMPv6, IGMP"
+          ],
+          [
+            "**Network Access (Link)**",
+            "2 + 1",
+            "Ethernet, 802.11, PPP, and the physical layer"
+          ]
+        ]
+      },
+      {
+        "h": "Layer jobs in TCP/IP terms",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Application",
+            "d": "Everything above ports — protocols, data formats, and sessions all merged into one layer. That merge is why OSI layers 5, 6 and 7 barely appear in real networks."
+          },
+          {
+            "t": "Transport",
+            "d": "**TCP** (reliable, connection-oriented, with flow and congestion control) or **UDP** (best-effort, connectionless). It adds the **ports** — source and destination."
+          },
+          {
+            "t": "Internet",
+            "d": "**IP** (addressing and best-effort delivery), **ICMP** (errors and diagnosis), **IGMP** (multicast group membership)."
+          },
+          {
+            "t": "Network Access",
+            "d": "Puts IP packets into **Ethernet frames**, resolves IP to MAC via **ARP**, and transmits the bits."
+          }
+        ]
+      },
+      {
+        "h": "The correspondence rule",
+        "kind": "table",
+        "cols": [
+          "OSI",
+          "TCP/IP"
+        ],
+        "rows": [
+          [
+            "7, 6, 5",
+            "4. Application"
+          ],
+          [
+            "4",
+            "3. Transport"
+          ],
+          [
+            "3",
+            "2. Internet"
+          ],
+          [
+            "1, 2",
+            "1. Network Access"
+          ]
+        ]
+      },
+      {
+        "h": "Why TCP/IP won over pure OSI",
+        "kind": "list",
+        "items": [
+          {
+            "t": "OSI is reference-only",
+            "d": "TCP/IP shipped working software; IP is the internetwork protocol everything else was built on."
+          },
+          {
+            "t": "Operators think in TCP/IP",
+            "d": "\"Ping works so Layer 3 is up; try port 443 with telnet for Layer 4\" is the real troubleshooting flow."
+          },
+          {
+            "t": "The layers merge naturally",
+            "d": "Application, presentation, and session functions rarely need separate implementations in a real stack."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Network-layer configuration — the TCP/IP stack you actually configure",
+        "code": "# On a Cisco router, \"network layer\" config is what TCP/IP users see:\ninterface GigabitEthernet0/0\n ip address 192.168.1.1 255.255.255.0\n no shutdown\n\n# The stack relies on the TCP/IP protocol family only:\nshow ip protocols\nshow ip route"
+      }
+    ],
+    "traps": [
+      "**Four versus five layer TCP/IP variants** — Cisco teaches **four**; some texts split the link layer into two. Answer per the model the question names.",
+      "**ARP lives in the Network Access layer** in TCP/IP (it maps IP to MAC) — many exams place it at Layer 3 or \"between layers\", so know both statements contextually.",
+      "**ICMP belongs to the Internet layer** — it is Layer 3, never \"forum-less\" or an application protocol.",
+      "**Only TCP and UDP are usually asked** — SCTP and DCCP are beyond scope.",
+      "**Best-effort principle** — IP, ICMP and UDP are unreliable; reliability is added by TCP or by the application."
+    ],
+    "table": {
+      "cols": [
+        "TCP/IP layer",
+        "Equals OSI",
+        "Protocols"
+      ],
+      "rows": [
+        [
+          "4 Application",
+          "7, 6, 5",
+          "HTTP, DNS, DHCP, SMTP"
+        ],
+        [
+          "3 Transport",
+          "4",
+          "TCP, UDP"
+        ],
+        [
+          "2 Internet",
+          "3",
+          "IP, ICMP"
+        ],
+        [
+          "1 Network Access",
+          "2, 1",
+          "Ethernet, ARP, PPP, 802.11"
+        ],
+        [
+          "Reliability",
+          "—",
+          "Only TCP adds it"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "01. OSI Model",
+        "d": "the contrasting model"
+      },
+      {
+        "t": "06. Data Flow",
+        "d": "end-to-end flow"
+      },
+      {
+        "t": "03. Encapsulation",
+        "d": "headers per layer"
+      }
+    ],
+    "glossary": [
+      "TCP-IP Model",
+      "OSI Model",
+      "Encapsulation",
+      "PDU",
+      "ARP",
+      "IPv4"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "data",
+    "title": "Encapsulation",
+    "blurb": "Adding headers as data moves down the stack",
+    "overview": "**[[Encapsulation]]** is the process of adding **headers (and trailers)** as data is passed down the protocol stack from application to transport, then network, then link. Each layer wraps the previous layer's data in its own envelope before handing it to the layer below — payload plus header equals the next layer's PDU.",
+    "keyIdea": "**Key idea:** Encapsulation always happens **down** the source stack. The payload never changes; only the wrapping grows — and every intermediate device re-writes only the Layer 2 envelope, never the Layer 3 or Layer 4 one.",
+    "sections": [
+      {
+        "h": "Encapsulation",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">ENCAPSULATION & DE-ENCAPSULATION</text><rect x=\"60\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#F43F5E\" fill-opacity=\"0.2\" stroke=\"#F43F5E\"/><rect x=\"240\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"420\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"600\" y=\"80\" width=\"160\" height=\"40\" rx=\"4\" fill=\"#8B5CF6\" fill-opacity=\"0.2\" stroke=\"#8B5CF6\"/><text x=\"140\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Data</text><text x=\"320\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Segment/Datagram</text><text x=\"500\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Packet</text><text x=\"680\" y=\"105\" text-anchor=\"middle\" fill=\"currentColor\" font-size=\"8\">Frame</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">L4 adds TCP/UDP header</text><text x=\"60\" y=\"190\" font-size=\"8\" fill=\"currentColor\">L3 adds IP header</text><text x=\"60\" y=\"210\" font-size=\"8\" fill=\"currentColor\">L2 adds MAC header + trailer</text><text x=\"60\" y=\"260\" font-size=\"8\" fill=\"currentColor\">At receiver: reverse (de-encapsulation)</text></g></svg>",
+        "caption": "Each layer adds headers/trailers; PDU names differ."
+      },
+      {
+        "h": "The envelope chain (an HTTP request)",
+        "kind": "code",
+        "code": "[HTTP request ................]                     <- Application data (L7)\n[TCP hdr ][HTTP data ........]   = Segment         <- src/dst ports, seq, flags\n[IP hdr ][TCP hdr][HTTP data ]   = Packet          <- src/dst IP, TTL, protocol\n[Eth hdr][IP ][TCP][HTTP][FCS ]   = Frame          <- MAC, EtherType, FCS"
+      },
+      {
+        "h": "Why one header per layer",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Each layer offers its own service",
+            "d": "Ports at L4, addressing and routing at L3, framing and error checking at L2 — so each layer needs its own private context in the header."
+          },
+          {
+            "t": "Peer communication",
+            "d": "Each layer only reads the header it understands and ignores the rest."
+          },
+          {
+            "t": "Multiplexing",
+            "d": "The EtherType field at L2, the protocol field at L3, and the port numbers at L4 tell the receiver exactly which higher layer to hand the data to."
+          }
+        ]
+      },
+      {
+        "h": "Headers and trailers per layer",
+        "kind": "table",
+        "cols": [
+          "Layer",
+          "Header or trailer",
+          "Key fields"
+        ],
+        "rows": [
+          [
+            "L4 (TCP)",
+            "20 to 60 byte header",
+            "ports, seq/ack, flags, window, checksum"
+          ],
+          [
+            "L4 (UDP)",
+            "8 byte header",
+            "ports, length, checksum"
+          ],
+          [
+            "L3 (IPv4)",
+            "20+ byte header",
+            "version, IHL, TTL, protocol, src/dst IP, checksum"
+          ],
+          [
+            "L3 (IPv6)",
+            "40 byte fixed header",
+            "flow label, hop limit, src/dst 128-bit"
+          ],
+          [
+            "L2 (Ethernet)",
+            "14 byte header + 4 byte FCS trailer",
+            "dst/src MAC, EtherType or length, FCS"
+          ],
+          [
+            "L2 (802.1Q)",
+            "plus a 4 byte VLAN tag inside the header",
+            "TPID, PCP, VID"
+          ]
+        ]
+      },
+      {
+        "h": "Encapsulation for special frames",
+        "kind": "list",
+        "items": [
+          {
+            "t": "VLAN trunk",
+            "d": "An extra 802.1Q tag is inserted — the frame gets \"harder\" (see Level 07)."
+          },
+          {
+            "t": "Tunnels (GRE, IPsec, VXLAN)",
+            "d": "The outer protocol encapsulates the whole original IP packet as its payload, so you get double addressing and the MTU must shrink (Level 01)."
+          },
+          {
+            "t": "MPLS",
+            "d": "A label shim is shoved between L2 and L3, with the Layer 3 header still intact underneath (Level 20)."
+          }
+        ]
+      },
+      {
+        "h": "Encapsulation runs into the MTU",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Headers push the frame toward the maximum frame size",
+            "d": "Standard Ethernet carries a 1500 byte IP packet plus roughly 18 bytes of Layer 2 overhead."
+          },
+          {
+            "t": "Oversize means fragment or drop",
+            "d": "IPv4 fragments when it must, IPv6 does not fragment at the router — the source must respect the path MTU."
+          },
+          {
+            "t": "Tunnels shrink the usable MTU",
+            "d": "Every extra encapsulation layer takes bytes from the payload, which is why tunnel MTUs are set below 1500."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Watching encapsulation on the wire, and sizing a tunnel MTU",
+        "code": "# Ping and watch the headers build up going down the stack\ndebug ip packet\nshow interfaces | include MTU\n\n# Tunnels add another encapsulation layer - the MTU must shrink\ninterface Tunnel0\n ip mtu 1476"
+      }
+    ],
+    "traps": [
+      "**\"Which header exists in a packet?\"** — a segment carries L4 fields; a frame carries Layer 2 plus everything above it.",
+      "**Direction** — encapsulation goes **down** the source stack (adding); decapsulation goes **up** at the destination (removing). Never flip these.",
+      "**Every hop does Layer 2 re-encapsulation** — a new Ethernet header per link, while the Layer 3 and Layer 4 headers only change at the endpoints.",
+      "**Tunnels mean double IP headers** — the outer header routes, the inner one is payload.",
+      "**Checksums** — IPv4 has a header checksum, **IPv6 has no header checksum**, and TCP and UDP checksums are end-to-end."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Add",
+        "Becomes",
+        "Peer reads"
+      ],
+      "rows": [
+        [
+          "7 Apps",
+          "—",
+          "Data",
+          "payload"
+        ],
+        [
+          "4 TCP",
+          "ports, seq, flags",
+          "**Segment**",
+          "receiver L4"
+        ],
+        [
+          "3 IP",
+          "src/dst IP, TTL",
+          "**Packet**",
+          "each router (L3)"
+        ],
+        [
+          "2 Eth",
+          "MAC, EtherType, FCS",
+          "**Frame**",
+          "each switch (L2)"
+        ],
+        [
+          "1 Phys",
+          "electrical",
+          "Bits",
+          "—"
+        ],
+        [
+          "Tunnel",
+          "extra IP or GRE",
+          "inner packet is payload",
+          "only the endpoints"
+        ],
+        [
+          "Rule",
+          "headers only added",
+          "data unchanged",
+          "down means add"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. Decapsulation",
+        "d": "the reverse process"
+      },
+      {
+        "t": "05. PDUs",
+        "d": "the data units change"
+      },
+      {
+        "t": "01. VLAN",
+        "d": "Layer 2 encapsulation"
+      }
+    ],
+    "glossary": [
+      "Encapsulation",
+      "Decapsulation",
+      "PDU",
+      "OSI Model",
+      "MTU",
+      "IPv4",
+      "IPv6",
+      "Ethernet",
+      "VLAN"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "data",
+    "title": "Decapsulation",
+    "blurb": "Stripping and validating headers on the receive side",
+    "overview": "**[[Decapsulation]]** is the reverse of [[Encapsulation|encapsulation]]: at the receiver each layer **strips its own header or trailer**, validates it, and passes the payload up to the next higher layer until the application receives the original data.",
+    "keyIdea": "**Key idea:** Decapsulation is bottom-up, and a device only ever removes the headers it owns. A router removes the Layer 2 header and rebuilds a new one per link — it never touches the Layer 3 or Layer 4 header except the TTL.",
+    "sections": [
+      {
+        "h": "The receive process",
+        "kind": "code",
+        "code": "On the wire:      [Eth ][ IP ][TCP][HTTP data][FCS]\nL2 removes:  ->   [ IP ][TCP][HTTP data]      (check FCS -> drop if bad)\nL3 removes:  ->      [TCP][HTTP data]         (checksum, TTL ok?)\nL4 removes:  ->         [HTTP data]           (deliver by port)\nL7 receives:            application data"
+      },
+      {
+        "h": "Where decapsulation happens — hop versus endpoint",
+        "kind": "table",
+        "cols": [
+          "Device",
+          "Decapsulates",
+          "Keeps"
+        ],
+        "rows": [
+          [
+            "Switch (L2)",
+            "Ethernet header and FCS",
+            "Re-encapsulates the same frame out another port; it never reads IP or TCP"
+          ],
+          [
+            "Router (L3)",
+            "Ethernet header, **reads IP**, rewrites Layer 2",
+            "Forwards the IP datagram; it adds no Layer 4 information"
+          ],
+          [
+            "Target host",
+            "All layers",
+            "Delivers the data to the application"
+          ],
+          [
+            "Tunnel endpoint",
+            "Outer headers (IP plus GRE or IPsec)",
+            "The inner packet is passed on or decrypted"
+          ]
+        ]
+      },
+      {
+        "h": "What each layer validates",
+        "kind": "list",
+        "items": [
+          {
+            "t": "L2",
+            "d": "The FCS (CRC) — a mismatch means the frame is dropped, and the interface CRC counters climb (Level 29)."
+          },
+          {
+            "t": "L3",
+            "d": "The IPv4 header checksum and the TTL — a TTL of zero produces an ICMP TTL exceeded message and the packet is dropped. IPv6 has only the hop limit to check."
+          },
+          {
+            "t": "L4",
+            "d": "The TCP or UDP checksum plus port matching; TCP adds its ACK and sequence logic."
+          },
+          {
+            "t": "Application",
+            "d": "The data format and the session context."
+          }
+        ]
+      },
+      {
+        "h": "The IPv4 checksum is recomputed every hop",
+        "kind": "list",
+        "items": [
+          {
+            "t": "The TTL changes on every routed hop",
+            "d": "Because the header changed, the IPv4 header checksum must be recalculated at each router."
+          },
+          {
+            "t": "IPv6 removed the header checksum entirely",
+            "d": "It relies on the link and transport checksums plus ICMPv6, so there is nothing to recompute."
+          },
+          {
+            "t": "Transport checksums stay end-to-end",
+            "d": "The TCP and UDP checksum covers the payload, so routers never touch it."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Seeing the encapsulation boundary on the wire",
+        "code": "# Packet capture: choose an interface, filter the frame, then expand\n# the headers layer by layer.\n\n# Router-level view:\ndebug ip icmp\ndebug ip packet detail\nshow interfaces counters errors   # CRC and framing errors from a bad FCS"
+      }
+    ],
+    "traps": [
+      "**Direction trap** — the source encapsulates going down, the destination decapsulates going up. Do not flip them.",
+      "**A router does not decapsulate on behalf of the host** — it removes Layer 2, reads Layer 3, then **re-encapsulates a brand-new Layer 2 header**; the MAC addresses change every hop.",
+      "**The FCS check is Layer 2** — CRC errors are reported on switch interfaces, not as routing problems.",
+      "**Tunnels** — an intermediate tunnel endpoint decapsulates the **outer** header only; the inner packet stays untouched.",
+      "**IPv6** — there is no header checksum to check, only the hop limit at Layer 3."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "Check during decap",
+        "Result if bad"
+      ],
+      "rows": [
+        [
+          "L2 / FCS",
+          "CRC match",
+          "Drop, and the CRC counter climbs"
+        ],
+        [
+          "L3 IPv4",
+          "Checksum, TTL",
+          "Drop, or ICMP TTL exceeded"
+        ],
+        [
+          "L3 IPv6",
+          "Hop limit only",
+          "Drop (there is no header checksum)"
+        ],
+        [
+          "L4 TCP/UDP",
+          "Checksum, port",
+          "Drop, or a reset"
+        ],
+        [
+          "App",
+          "Format, session",
+          "Application error"
+        ],
+        [
+          "Hop devices",
+          "Layer 2 reswap only",
+          "MAC fields change"
+        ],
+        [
+          "Endpoints",
+          "Full chain",
+          "Data delivered"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Encapsulation",
+        "d": "the reverse process"
+      },
+      {
+        "t": "05. PDUs",
+        "d": "unwrapping units"
+      },
+      {
+        "t": "06. Data Flow",
+        "d": "the whole journey"
+      }
+    ],
+    "glossary": [
+      "Decapsulation",
+      "Encapsulation",
+      "PDU",
+      "OSI Model",
+      "IPv4",
+      "IPv6",
+      "ARP"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "data",
+    "title": "PDUs",
+    "blurb": "Protocol data units and the names at each layer",
+    "overview": "A **[[PDU|Protocol Data Unit]]** is the unit of data at a given layer of the stack: that layer's header (plus trailer) together with the payload it carries from the layer above. Each layer has its own PDU name — **data, segment, packet, frame, bits** — and a PDU becomes the payload of the next lower PDU.",
+    "keyIdea": "**Key idea:** The PDU name tells you which layer you are talking about. Segment equals TCP, packet equals IP, frame equals Ethernet, bits equals physical — and a PDU includes its own header, so a segment is the TCP header plus data, not the data alone.",
+    "sections": [
+      {
+        "h": "PDU names by layer",
+        "kind": "table",
+        "cols": [
+          "Layer",
+          "PDU name"
+        ],
+        "rows": [
+          [
+            "Application (7/6/5)",
+            "**Data** (sometimes called a message)"
+          ],
+          [
+            "Transport (4)",
+            "**Segment** (TCP) or **Datagram** (UDP)"
+          ],
+          [
+            "Network (3)",
+            "**Packet** (RFC 791 calls the IPv4 unit a datagram)"
+          ],
+          [
+            "Data Link (2)",
+            "**Frame**"
+          ],
+          [
+            "Physical (1)",
+            "**Bits** (physically, symbols and codewords)"
+          ]
+        ]
+      },
+      {
+        "h": "How the PDU chain is built",
+        "kind": "code",
+        "code": "DATA    ->(L4 header)->   SEGMENT   ->(L3 header)->   PACKET\n                                                   ->(L2 header + FCS)->   FRAME   ->(L1)->   BITS\n\nThe segment is the payload of the packet, and the packet is the payload of the frame.\nThe PDU of layer N is the SDU (service data unit) from layer N plus a header, and\nthat PDU becomes the SDU for layer N-1."
+      },
+      {
+        "h": "Official IP terminology",
+        "kind": "list",
+        "items": [
+          {
+            "t": "RFC 791 calls the IPv4 unit a datagram",
+            "d": "Cisco exams usually say \"packet\" for Layer 3 and IPv6, and may say \"datagram\" for UDP and IP. Be ready for both words."
+          },
+          {
+            "t": "The two-datagram trap",
+            "d": "A UDP datagram is the Layer 4 PDU; an IP datagram is the Layer 3 PDU. They are different units, and the exam uses both."
+          },
+          {
+            "t": "Do not call a frame a packet",
+            "d": "A packet becomes a frame once the Layer 2 header and FCS are added — the names describe different units."
+          }
+        ]
+      },
+      {
+        "h": "Size context",
+        "kind": "list",
+        "items": [
+          {
+            "t": "MSS controls segment size, MTU controls packet size",
+            "d": "The frame must fit inside the link MTU — 1500 bytes of IP payload on standard Ethernet (Level 01)."
+          },
+          {
+            "t": "PDU sizes include the header",
+            "d": "A segment is the TCP header plus the data, so a 1460 byte MSS produces a 1500 byte IP packet."
+          },
+          {
+            "t": "Over the MTU means drop or fragment",
+            "d": "IPv4 fragments when allowed; IPv6 routers never fragment, so the source has to fit the path MTU."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Relating PDU sizes to the MTU",
+        "code": "ip mtu 1500            # interface L3 packet max\n\n# Verify with:\nshow ip interface      # MTU reported\nping 10.0.0.2 size 1472 df-bit   # 1472 payload + 20 IP + 8 ICMP = 1500"
+      }
+    ],
+    "traps": [
+      "**The single most-asked PDU fact** — segment equals TCP, packet equals IP, frame equals Ethernet.",
+      "**UDP datagram and IP datagram** — the two-datagram trap; they are different layers.",
+      "**A packet becomes a frame** once the Layer 2 header is added — never call a frame a packet.",
+      "**Bits at Layer 1** — physically they are symbols and codewords, but the exam says \"bits\".",
+      "**Encapsulation math** — \"what is the frame size?\" is the MTU plus 18 bytes (or 22 with a VLAN tag)."
+    ],
+    "table": {
+      "cols": [
+        "Layer",
+        "PDU",
+        "Added by"
+      ],
+      "rows": [
+        [
+          "7-5",
+          "Data",
+          "the applications"
+        ],
+        [
+          "4 TCP",
+          "Segment",
+          "TCP header"
+        ],
+        [
+          "4 UDP",
+          "Datagram",
+          "UDP header"
+        ],
+        [
+          "3",
+          "Packet (datagram for IP)",
+          "IP header"
+        ],
+        [
+          "2",
+          "Frame",
+          "Ethernet header + FCS"
+        ],
+        [
+          "1",
+          "Bits",
+          "physical encoding"
+        ],
+        [
+          "Chain rule",
+          "PDU_n is the payload of PDU_(n-1)",
+          "encapsulation"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Encapsulation",
+        "d": "produces the PDUs"
+      },
+      {
+        "t": "06. Data Flow",
+        "d": "PDU movement"
+      },
+      {
+        "t": "02. Ethernet Frame",
+        "d": "a Layer 2 PDU"
+      }
+    ],
+    "glossary": [
+      "PDU",
+      "Encapsulation",
+      "Decapsulation",
+      "OSI Model",
+      "TCP-IP Model",
+      "MTU",
+      "Ethernet"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "data",
+    "title": "Data Flow",
+    "blurb": "The end-to-end journey of a unit of data",
+    "overview": "**Data flow** is the lifecycle of a unit of data from a source application to a destination application across a network: **[[Encapsulation|encapsulation]] down** the source stack, transmission across intermediate devices, and **decapsulation up** the destination — plus the peer-to-peer and directional concepts (unicast, broadcast, multicast) that frame each journey.",
+    "keyIdea": "**Key idea:** The Layer 2 header is rewritten at every link while the Layer 3 and Layer 4 headers stay constant end to end. That single fact explains MAC churn, routing behaviour, and why NAT is visible at the boundary.",
+    "sections": [
+      {
+        "h": "The end-to-end journey",
+        "kind": "list",
+        "items": [
+          {
+            "t": "1. The application generates data",
+            "d": "Layer 7 — an HTTP request, a DNS query, a file transfer."
+          },
+          {
+            "t": "2. The stack builds the units on the way down",
+            "d": "Transport adds ports to make a **segment**; network adds IP to make a **packet**; link adds Ethernet to make a **frame**; physical sends **bits**."
+          },
+          {
+            "t": "3. Each switch works at Layer 2",
+            "d": "It receives the frame, checks the FCS, forwards on the destination MAC, and re-encapsulates a new Layer 2 header on egress."
+          },
+          {
+            "t": "4. Each router works at Layer 3",
+            "d": "It strips the Ethernet header, checks the TTL and checksum, looks up the destination route in CEF, then rewrites a new Layer 2 header and sends it out the next media."
+          },
+          {
+            "t": "5. Special devices act mid-path",
+            "d": "NAT, tunnels, and firewalls add or replace addresses, or encrypt, while the data is in flight."
+          },
+          {
+            "t": "6. The destination strips everything back off",
+            "d": "The frame becomes a packet, the packet becomes a segment, and the segment becomes application data."
+          },
+          {
+            "t": "7. The reply runs the same path in reverse",
+            "d": "Which is why the session is full duplex — each direction builds its own headers."
+          }
+        ]
+      },
+      {
+        "h": "Peer-to-peer communication",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Logical layer to logical layer",
+            "d": "TCP at one end understands TCP at the other; OSPF on a router talks to OSPF on its neighbour, even though the wire carries frames."
+          },
+          {
+            "t": "Adjacent layers also talk",
+            "d": "The same layer talks to its peer, and each layer talks to the layer directly above and below through its service interface."
+          },
+          {
+            "t": "The mapping is the point of the model",
+            "d": "That is exactly what the OSI model is designed to describe — a clean separation of concerns."
+          }
+        ]
+      },
+      {
+        "h": "Direction classes of data flow",
+        "kind": "table",
+        "cols": [
+          "Type",
+          "Definition",
+          "Example"
+        ],
+        "rows": [
+          [
+            "**Unicast**",
+            "One source to one destination",
+            "Normal HTTP, an SSH download"
+          ],
+          [
+            "**Broadcast**",
+            "One source to everyone on the segment",
+            "ARP request, DHCP discover"
+          ],
+          [
+            "**Multicast**",
+            "One source to the subscribed group members only",
+            "Video feed, OSPF and VRRP hellos"
+          ],
+          [
+            "**Anycast** (IPv6 and BGP)",
+            "One address to the nearest of several instances",
+            "DNS anycast, an anycast gateway"
+          ]
+        ]
+      },
+      {
+        "h": "Where data flow gets controlled",
+        "kind": "list",
+        "items": [
+          {
+            "t": "Switches",
+            "d": "Filter and forward using the MAC address table (Level 04)."
+          },
+          {
+            "t": "Routers",
+            "d": "Choose the next hop by longest-prefix match (Level 09)."
+          },
+          {
+            "t": "ACLs and firewalls",
+            "d": "Accept or drop by the 5-tuple; **QoS** marks and queues the flow (Level 21)."
+          },
+          {
+            "t": "Load balancers",
+            "d": "Distribute flows across the members of a server pool."
+          },
+          {
+            "t": "NetFlow",
+            "d": "Exports the 5-tuple records of every conversation for analysis (Level 26)."
+          }
+        ]
+      },
+      {
+        "h": "Flow identity and session semantics",
+        "kind": "list",
+        "items": [
+          {
+            "t": "A TCP flow is a 5-tuple",
+            "d": "Source IP, destination IP, source port, destination port, and protocol — the key used by ACLs, firewalls and NetFlow to identify a conversation."
+          },
+          {
+            "t": "Real-time UDP uses the same idea",
+            "d": "RTP voice and video are classified for QoS with exactly the same 5-tuple."
+          },
+          {
+            "t": "Direction matters",
+            "d": "A conversation is two unidirectional flows, and the reverse tuple is what the return path is keyed on."
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Observing the flow journey and exporting flow records",
+        "code": "traceroute 10.9.9.9        # shows each L3 hop (ICMP or UDP)\nping <host>                # round trip across the path\nshow ip fib                # CEF next hop for the flow\n\n# Flow records (NetFlow) capture the 5-tuple:\nip flow-export destination 10.1.1.10 2055"
+      }
+    ],
+    "traps": [
+      "**\"The packet hops Layer 2 but the MAC changes\"** — the destination MAC changes per link, while the source and destination IP stay constant (NAT excepted).",
+      "**Do not say \"the frame travels across the router\"** — routers strip Layer 2 and route the IP packet, recreating Layer 2 per link.",
+      "**Peer-to-peer here means layer peer, not file sharing** — keep the two apart (see the Level 00 note).",
+      "**Anycast versus multicast** — a distinction that is frequently tested at Layer 3 and in IPv6.",
+      "**The TTL decreases per router hop** — it always goes down on an Layer 3 forward."
+    ],
+    "table": {
+      "cols": [
+        "Stage",
+        "Device",
+        "Header it reads"
+      ],
+      "rows": [
+        [
+          "Send down",
+          "Source",
+          "builds them all"
+        ],
+        [
+          "L2 transit",
+          "Switch",
+          "Ethernet"
+        ],
+        [
+          "L3 transit",
+          "Router",
+          "IP (and rewrites Ethernet)"
+        ],
+        [
+          "Tunnels and NAT",
+          "Special devices",
+          "outer or translated"
+        ],
+        [
+          "Receive up",
+          "Destination",
+          "strips them all"
+        ],
+        [
+          "Peer talk",
+          "Logical",
+          "same layer at both ends"
+        ],
+        [
+          "Direction",
+          "uni, bcast, mcast, anycast",
+          "defines delivery to whom"
+        ],
+        [
+          "Flow identity",
+          "5-tuple",
+          "src/dst IP plus port plus protocol"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. PDUs",
+        "d": "the units that are flowing"
+      },
+      {
+        "t": "03. Encapsulation",
+        "d": "framing within the flow"
+      },
+      {
+        "t": "01. Routing Table",
+        "d": "the path of the data"
+      }
+    ],
+    "glossary": [
+      "Encapsulation",
+      "Decapsulation",
+      "PDU",
+      "OSI Model",
+      "ARP",
+      "NetFlow",
+      "MTU"
+    ]
+  }
+];
         const GROUPS = [
           { key: 'models', label: 'Reference Models', chip: 'bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300', dot: 'bg-violet-600', bullet: 'text-violet-600 dark:text-violet-400' },
           { key: 'data', label: 'Data Handling', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' }
@@ -1368,6 +2039,7 @@ ip flow-export destination 10.1.1.10 2055`
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

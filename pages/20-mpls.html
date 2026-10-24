@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,716 +600,2132 @@
         const heroIntro = `**[[MPLS]]** forwards packets with short fixed-length **[[MPLS Label|labels]]** in a 2.5 shim header, replacing hop-by-hop IP lookups with label operations. The edge is built from **[[LER]]** routers that push and pop, while the core is a fabric of **[[LSR]]** routers that swap from the **[[LFIB]]**. A **[[FEC]]** defines which packets share a label, and **[[VRF]]**, **[[MP-BGP]]** and **[[MPLS VPN]]** turn that transport into isolated Layer 3 VPN services.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'core', title: 'MPLS Basics',
-            blurb: 'Labels, the 2.5 shim, and why carriers build on MPLS',
-            overview: '**[[MPLS]]** forwards packets using short fixed-length **[[MPLS Label|labels]]** instead of IP longest-prefix lookups. The label sits between Layer 2 and Layer 3 in a **shim header**, which is why MPLS is called a Layer 2.5 technology. It is the basis for traffic engineering, Layer 3 VPNs and Layer 2 pseudowires.',
-            keyIdea: 'MPLS is label switching at Layer 2.5. Edge routers push and pop, core routers swap, and the whole thing needs CEF plus LDP.',
-            sections: [
-              { kind: 'table', h: 'Why MPLS', cols: ['Problem', 'MPLS answer'], rows: [
-                ['Slow IP lookup', 'Label swap in the core'],
-                ['No traffic engineering', 'MPLS-TE paths'],
-                ['No VPN in the core', 'Label-stack VPN'],
-                ['Layer 2 services', 'Pseudowire']
-              ]},
-              { kind: 'table', h: 'Position in the stack', cols: ['Layer', 'Example'], rows: [
-                ['L3', 'IP'],
-                ['**2.5**', '**MPLS shim, labels**'],
-                ['L2', 'Ethernet or PPP']
-              ]},
-              { kind: 'code', h: 'The core idea', code:
-`  CE -- PE (LER) -- P (LSR) -- P -- PE (LER) -- CE
-          push          swap/swap          pop` },
-              { kind: 'table', h: 'MPLS domains', cols: ['Element', 'Role'], rows: [
-                ['**LSP**', 'Label-switched path, the tunnel'],
-                ['**LER**', 'Edge router: push and pop'],
-                ['**LSR**', 'Core router: swap'],
-                ['**FEC**', 'Class of packets sharing a label']
-              ]},
-              { kind: 'table', h: 'Enabling MPLS on IOS-XE', cols: ['Command', 'Purpose'], rows: [
-                ['**%%ip cef%%**', 'CEF prerequisite'],
-                ['**%%mpls ip%%**', 'Enable label distribution'],
-                ['**%%interface ... mpls ip%%**', 'Enable MPLS per link']
-              ]},
-              { kind: 'table', h: 'What MPLS brings', cols: ['Benefit', 'Detail'], rows: [
-                ['Speed', 'Label forwarding in the core'],
-                ['Transparency', 'Core needs no customer routes'],
-                ['Services', 'VPN, TE and pseudowire'],
-                ['Scaling', 'Far fewer core routes']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable CEF and MPLS', code:
-`ip cef\nmpls ip\ninterface GigabitEthernet0/0\n mpls ip` },
-              { label: 'Verify the forwarding and label state', code:
-`show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls interfaces` },
-              { label: 'Test the label-switched path', code:
-`ping mpls ipv4 10.0.0.2/32\nshow ip cef` }
-            ],
-            traps: [
-              'MPLS means **label switching**, with the shim at **Layer 2.5**.',
-              'Core LSRs **swap**; edge LERs **push and pop**.',
-              'MPLS needs **CEF plus LDP** to work.',
-              'An **LSP** is the path; a **FEC** is the packet class.',
-              'MPLS is the foundation for **L3VPN, L2VPN and TE**.',
-              'The core stays free of **customer routes**, which is the scaling win.'
-            ],
-            table: {
-              cols: ['Item', 'MPLS'],
-              rows: [
-                ['Forwarding', 'Labels'],
-                ['Position', 'Layer 2.5'],
-                ['Edge', 'Push and pop'],
-                ['Core', 'Swap'],
-                ['LSP', 'Path'],
-                ['FEC', 'Class'],
-                ['Enablers', 'CEF plus LDP'],
-                ['Services', 'VPN, TE and pseudowire']
-              ]
-            },
-            related: [
-              { t: '02. Labels', d: 'The shim header in detail' },
-              { t: '03. LER', d: 'The edge role' },
-              { t: '09. MPLS VPN', d: 'The biggest MPLS service' }
-            ],
-            glossary: ['MPLS', 'MPLS Label', 'FEC', 'LER', 'LSR', 'LFIB', 'CEF', 'Data Plane']
-          },
-          {
-            id: 't02', num: '02', group: 'core', title: 'Labels',
-            blurb: 'The 32-bit shim, label stack, PHP, and null labels',
-            overview: 'MPLS forwarding is driven by **[[MPLS Label|labels]]**, 20-bit values carried in a 32-bit shim header between Layer 2 and Layer 3. Each router swaps the top label and forwards. A packet can carry a **label stack**, which is how VPN and traffic-engineering services nest inside one another.',
-            keyIdea: 'Shim equals 20 label, 3 Exp, 1 S and 8 TTL. The S bit marks the bottom of the stack, and PHP pops the label before the egress.',
-            sections: [
-              { kind: 'table', h: 'The shim header', cols: ['Field', 'Bits', 'Meaning'], rows: [
-                ['**Label**', '20', 'Forwarding value'],
-                ['**Exp**', '3', 'QoS and class'],
-                ['**S**', '1', 'Bottom-of-stack flag'],
-                ['**TTL**', '8', 'Hop limit']
-              ]},
-              { kind: 'table', h: 'Label values', cols: ['Range', 'Use'], rows: [
-                ['**0 to 15**', 'Reserved and special use'],
-                ['**0**', 'IPv4 explicit null'],
-                ['**3**', 'Implicit null, used by PHP'],
-                ['**16 to 1,048,575**', 'Normal label range']
-              ]},
-              { kind: 'table', h: 'The label stack', cols: ['Label', 'Purpose'], rows: [
-                ['**Top**', 'Forwards the packet through the core'],
-                ['**Inner**', 'Service label, for example VPN'],
-                ['**Bottom**', 'Deepest label, **S=1**']
-              ]},
-              { kind: 'table', h: 'Label operations', cols: ['Operation', 'Where', 'Effect'], rows: [
-                ['**Push**', 'Ingress LER', 'Add a shim'],
-                ['**Swap**', 'Core LSR', 'Replace the top label'],
-                ['**Pop**', 'Penultimate or egress', 'Remove the label'],
-                ['**PHP**', 'Penultimate LSR', 'Pop one hop early']
-              ]},
-              { kind: 'table', h: 'Explicit versus implicit null', cols: ['Label', 'Value', 'Use'], rows: [
-                ['**Implicit null**', '**3**', 'PHP, pop before the egress'],
-                ['**Explicit null**', '**0**', 'Keep QoS via Exp at the egress'],
-                ['**Router alert**', '**1**', 'Control traffic']
-              ]},
-              { kind: 'table', h: 'TTL handling', cols: ['Mode', 'Behaviour'], rows: [
-                ['**Pipe**', 'TTL is not decremented, core is hidden'],
-                ['**Uniform**', 'TTL decrements normally']
-              ]}
-            ],
-            commands: [
-              { label: 'Inspect labels and the forwarding table', code:
-`show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls label range` },
-              { label: 'Inspect interfaces and bindings in detail', code:
-`show mpls interfaces detail\nshow mpls ldp bindings` },
-              { label: 'Debug label distribution', code:
-`debug mpls ldp` }
-            ],
-            traps: [
-              'The shim is **20 label, 3 Exp, 1 S and 8 TTL** bits.',
-              'The **S bit** marks the bottom of the stack.',
-              '**PHP** pops before the egress; **explicit null 0** preserves QoS.',
-              'A VPN uses a **two-label stack**: transport plus service.',
-              '**Pipe mode** hides the core TTL from customer packets.',
-              '**Implicit null is 3**; explicit null is 0.'
-            ],
-            table: {
-              cols: ['Item', 'Label'],
-              rows: [
-                ['Label bits', '20'],
-                ['Exp bits', '3'],
-                ['S bit', 'Bottom of stack'],
-                ['TTL', '8 bits'],
-                ['PHP', 'Pop early'],
-                ['Implicit null', '3'],
-                ['Explicit null', '0'],
-                ['VPN', '2 labels']
-              ]
-            },
-            related: [
-              { t: '05. LFIB', d: 'Where labels are installed' },
-              { t: '06. FEC', d: 'What a label is bound to' },
-              { t: '09. MPLS VPN', d: 'Two-label stack in use' }
-            ],
-            glossary: ['MPLS Label', 'MPLS', 'LFIB', 'FEC', 'QoS', 'Data Plane']
-          },
-          {
-            id: 't03', num: '03', group: 'core', title: 'LER',
-            blurb: 'The PE edge: classify, push, pop, and face the customer',
-            overview: 'The **[[LER]]**, also called the PE in VPN terms, sits at the edge of the MPLS domain. It performs the IP-to-label transition: pushing a label on ingress and popping it on egress. It runs the full IP routing stack, including IGP and **[[MP-BGP]]** for VPNs, so it can classify packets into FECs and build the right label stack.',
-            keyIdea: 'The edge PE pushes on ingress and pops on egress. Core links get mpls ip, customer links go into a VRF, and LER plus VRF plus MP-BGP is the VPN edge.',
-            sections: [
-              { kind: 'table', h: 'Edge responsibilities', cols: ['Direction', 'Action'], rows: [
-                ['**Ingress**', 'Classify, then push a label'],
-                ['**Egress**', 'Pop the label, then deliver IP'],
-                ['**Core side**', 'Faces the MPLS LSP'],
-                ['**CE side**', 'Faces the customer']
-              ]},
-              { kind: 'table', h: 'Ingress behaviour', cols: ['Step', 'Detail'], rows: [
-                ['1', 'Receive IP from the CE'],
-                ['2', 'CEF lookup maps the packet to a FEC'],
-                ['3', 'Push the transport label, plus a service label for VPN'],
-                ['4', 'Forward into the core']
-              ]},
-              { kind: 'table', h: 'Egress behaviour', cols: ['Step', 'Detail'], rows: [
-                ['1', 'Receive a labelled packet from the core'],
-                ['2', 'Pop after PHP'],
-                ['3', 'Route or deliver to the CE'],
-                ['4', 'VRFs keep customers separate']
-              ]},
-              { kind: 'table', h: 'LER in a VPN, the PE role', cols: ['Role', 'Job'], rows: [
-                ['**VRF**', 'Per-customer routing table'],
-                ['**MP-BGP**', 'Exchange VPNv4 routes'],
-                ['**LDP**', 'Transport labels in the core'],
-                ['**CE-facing**', 'PE to CE routing']
-              ]},
-              { kind: 'code', h: 'Configuration sketch', code:
-`  interface GigabitEthernet0/0        ! core facing
-   mpls ip
-  !
-  interface GigabitEthernet0/1        ! CE facing
-   ip vrf forwarding CUST1
-   ip address 10.10.0.1 255.255.255.0` },
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show ip cef%%**', 'IP to next-hop entries'],
-                ['**%%show mpls forwarding-table%%**', 'Label operations'],
-                ['**%%show ip vrf%%**', 'VRF definitions'],
-                ['**%%show bgp vpnv4%%**', 'VPN routes']
-              ]}
-            ],
-            commands: [
-              { label: 'Check CEF and the label table', code:
-`show ip cef\nshow ip cef vrf CUST1\nshow mpls forwarding-table` },
-              { label: 'Check LDP neighbours and VRFs', code:
-`show mpls ldp neighbor\nshow ip vrf` },
-              { label: 'Check the VRF routing table', code:
-`show ip route vrf CUST1\nshow ip vrf detail` }
-            ],
-            traps: [
-              'The LER is the **edge**, or PE: push on ingress and pop on egress.',
-              'Core-facing interfaces get **%%mpls ip%%**; CE interfaces go into a **VRF**.',
-              'A VPN edge is an LER plus **VRF plus MP-BGP**.',
-              'Ingress classifies packets into **FECs** to choose labels.',
-              'With PHP, the egress usually receives an **implicit or explicit null**.',
-              'The LER runs **IGP plus MP-BGP**, not label switching alone.'
-            ],
-            table: {
-              cols: ['Item', 'LER'],
-              rows: [
-                ['Position', 'Edge'],
-                ['Ingress', 'Push'],
-                ['Egress', 'Pop'],
-                ['VPN role', 'PE'],
-                ['CE side', 'VRF'],
-                ['Core side', 'mpls ip'],
-                ['Routing', 'IGP plus MP-BGP'],
-                ['Classify', 'FEC']
-              ]
-            },
-            related: [
-              { t: '04. LSR', d: 'The core counterpart' },
-              { t: '09. MPLS VPN', d: 'LER as the PE' },
-              { t: '07. VRF', d: 'Customer separation' }
-            ],
-            glossary: ['LER', 'MPLS', 'MPLS Label', 'FEC', 'MP-BGP', 'VRF', 'CEF', 'BGP']
-          },
-          {
-            id: 't04', num: '04', group: 'core', title: 'LSR',
-            blurb: 'The P router: swap the top label from the LFIB',
-            overview: 'The **[[LSR]]**, also called the P router in VPN terms, lives in the core of the MPLS domain. It forwards by swapping the top label based on the **[[LFIB]]**, with no IP lookup and no customer routes. The LSR runs an IGP plus LDP to build label bindings for core reachability.',
-            keyIdea: 'The core swaps labels only. It uses the LFIB, not the IP RIB, runs LDP on UDP and TCP 646, and holds no customer routes.',
-            sections: [
-              { kind: 'table', h: 'Core responsibilities', cols: ['Task', 'Detail'], rows: [
-                ['**Swap labels**', 'Driven by the LFIB'],
-                ['**LDP**', 'Label distribution'],
-                ['**IGP**', 'Core reachability'],
-                ['**Transparency**', 'No customer routes at all']
-              ]},
-              { kind: 'table', h: 'Forwarding flow', cols: ['Step', 'Detail'], rows: [
-                ['1', 'Receive a labelled packet'],
-                ['2', 'Look up the in-label in the LFIB'],
-                ['3', 'Swap the top label'],
-                ['4', 'Forward out the listed interface']
-              ]},
-              { kind: 'table', h: 'Label bindings with LDP', cols: ['Item', 'Detail'], rows: [
-                ['**Protocol**', 'LDP on UDP and TCP **646**'],
-                ['**Exchange**', 'Label to FEC bindings'],
-                ['**Trigger**', 'IGP routes'],
-                ['**Result**', 'Core LSPs']
-              ]},
-              { kind: 'table', h: 'PHP at the penultimate LSR', cols: ['Role', 'Action'], rows: [
-                ['**Penultimate LSR**', 'Pops with implicit null'],
-                ['**Egress LER**', 'Receives naked IP'],
-                ['**Exception**', 'Explicit null when QoS must survive']
-              ]},
-              { kind: 'code', h: 'Configuration sketch', code:
-`  mpls ip
-  !
-  interface GigabitEthernet0/0
-   mpls ip
-  !
-  mpls ldp router-id Loopback0 force` },
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show mpls forwarding-table%%**', 'In to out label mapping'],
-                ['**%%show mpls ldp bindings%%**', 'Label bindings'],
-                ['**%%show mpls ldp neighbor%%**', 'LDP sessions'],
-                ['**%%show ip cef%%**', 'Underlying IP paths']
-              ]}
-            ],
-            commands: [
-              { label: 'Enable MPLS on core links', code:
-`mpls ip\ninterface GigabitEthernet0/0\n mpls ip\nmpls ldp router-id Loopback0 force` },
-              { label: 'Verify label forwarding and neighbors', code:
-`show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls ldp neighbor` },
-              { label: 'Check interfaces and debug LDP', code:
-`show mpls interfaces\ndebug mpls ldp` }
-            ],
-            traps: [
-              'The LSR is the **core**, or P router: it swaps labels only.',
-              'It forwards from the **LFIB**, not the IP RIB.',
-              '**LDP uses UDP and TCP 646** to distribute labels.',
-              'The **penultimate LSR** performs PHP before the egress.',
-              'The core holds **no customer routes**.',
-              'Every core link needs **%%mpls ip%%**.'
-            ],
-            table: {
-              cols: ['Item', 'LSR'],
-              rows: [
-                ['Position', 'Core'],
-                ['Forward', 'LFIB swap'],
-                ['Protocol', 'LDP'],
-                ['Port', '646'],
-                ['PHP', 'Penultimate'],
-                ['Routes', 'Core only'],
-                ['Config', 'mpls ip'],
-                ['Verify', 'show mpls forwarding-table']
-              ]
-            },
-            related: [
-              { t: '03. LER', d: 'The edge counterpart' },
-              { t: '05. LFIB', d: 'The table it forwards from' },
-              { t: '06. FEC', d: 'What the bindings describe' }
-            ],
-            glossary: ['LSR', 'LFIB', 'MPLS', 'MPLS Label', 'LER', 'RIB', 'Control Plane', 'Loopback Address']
-          },
-          {
-            id: 't05', num: '05', group: 'core', title: 'LFIB',
-            blurb: 'In-label to out-label, plus the interfaces it uses',
-            overview: 'The **[[LFIB]]** is the MPLS forwarding table on each router. It maps an incoming label to a swap or pop action and an outgoing interface. LSRs forward exclusively from the LFIB, while LERs also consult CEF to push a label on ingress. It is the table you inspect when MPLS forwarding breaks.',
-            keyIdea: 'LFIB equals in-label to out-label plus interface. Core forwarding uses the LFIB only; ingress push consults CEF; pop plus push is the VPN edge pattern.',
-            sections: [
-              { kind: 'table', h: 'What the LFIB holds', cols: ['Column', 'Meaning'], rows: [
-                ['**In label**', 'What arrives'],
-                ['**Out label**', 'What leaves'],
-                ['**Prefix**', 'The FEC it serves'],
-                ['**Interface**', 'Next hop out'],
-                ['**Operation**', 'Swap, pop or push']
-              ]},
-              { kind: 'table', h: 'Relationship to CEF and the LIB', cols: ['Table', 'Purpose'], rows: [
-                ['**CEF**', 'IP prefix to next hop'],
-                ['**LFIB**', 'In-label to out-label'],
-                ['**LIB**', 'LDP label bindings'],
-                ['**Working table**', 'The LFIB, fed by the other two']
-              ]},
-              { kind: 'code', h: 'Example forwarding table', code:
-`  show mpls forwarding-table
-
-   In Label   Out Label   Prefix      Out Interface   Next Hop
-   17         32          10.0.0.0    Gi0/1           192.0.2.2
-   20         Pop         10.0.0.0    Gi0/0           192.0.2.1` },
-              { kind: 'table', h: 'Operations per entry', cols: ['Operation', 'Where', 'Result'], rows: [
-                ['**Swap**', 'Core LSR', 'Change the top label'],
-                ['**Pop**', 'Penultimate', 'Remove the label'],
-                ['**Pop plus push**', 'Ingress or VPN edge', 'Swap the service label'],
-                ['**Push**', 'Ingress LER', 'Add a transport label']
-              ]},
-              { kind: 'table', h: 'Building the LFIB', cols: ['Source', 'Data supplied'], rows: [
-                ['**CEF**', 'FEC and next hop'],
-                ['**LDP**', 'Core label bindings'],
-                ['**MP-BGP**', 'VPN service label'],
-                ['**Interface state**', 'Adjacency information']
-              ]},
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show mpls forwarding-table%%**', 'The working LFIB'],
-                ['**%%show mpls forwarding-table detail%%**', 'Extra counters and detail'],
-                ['**%%show mpls forwarding vrf CUST1%%**', 'Per-VRF entries'],
-                ['**%%show ip cef%%**', 'The FEC and next hop']
-              ]}
-            ],
-            commands: [
-              { label: 'Show the LFIB', code:
-`show mpls forwarding-table\nshow mpls forwarding-table detail` },
-              { label: 'Show per-VRF and IP bindings', code:
-`show mpls forwarding vrf CUST1\nshow mpls ip bindings` },
-              { label: 'Debug label forwarding', code:
-`debug mpls ldp` }
-            ],
-            traps: [
-              'The LFIB maps **in-label to out-label plus interface**.',
-              'Core forwarding uses the **LFIB only**; ingress push uses **CEF**.',
-              '**Pop plus push** is the VPN edge label swap.',
-              'A missing LFIB entry means a missing **FEC or LDP binding**.',
-              '**%%show mpls forwarding-table%%** is the main troubleshooting command.',
-              'The LFIB is built from **CEF and LDP**, plus MP-BGP for VPN labels.'
-            ],
-            table: {
-              cols: ['Item', 'LFIB'],
-              rows: [
-                ['Input', 'In label'],
-                ['Output', 'Out label'],
-                ['Also', 'Prefix and interface'],
-                ['Core op', 'Swap'],
-                ['Edge op', 'Push and pop'],
-                ['VPN op', 'Pop plus push'],
-                ['Source', 'CEF and LDP'],
-                ['Show', 'show mpls forwarding-table']
-              ]
-            },
-            related: [
-              { t: '02. Labels', d: 'The values it forwards' },
-              { t: '03. LER', d: 'The ingress push path' },
-              { t: '09. MPLS VPN', d: 'VPN label operation' }
-            ],
-            glossary: ['LFIB', 'FIB', 'RIB', 'LSR', 'LER', 'CEF', 'MPLS Label', 'MP-BGP']
-          }
-        ,
-          {
-            id: 't06', num: '06', group: 'core', title: 'FEC',
-            blurb: 'One forwarding class, one label, one label-switched path',
-            overview: 'A **[[FEC]]** is a class of packets that share the same forwarding treatment: the same next hop, the same path and the same label. MPLS assigns one label per FEC, so the core only needs to recognise the label instead of reclassifying every packet. FECs explain why MPLS is fast and how VPNs carve out separate forwarding classes.',
-            keyIdea: 'Same forwarding treatment means the same label. One label per FEC, LDP binds label to FEC, and VPNs create per-VRF FECs.',
-            sections: [
-              { kind: 'table', h: 'What defines a FEC', cols: ['Criteria', 'Example'], rows: [
-                ['**Prefix**', 'A /24 destination'],
-                ['**Next hop**', 'The same egress'],
-                ['**QoS**', 'The same class'],
-                ['**VPN**', 'The same VRF']
-              ]},
-              { kind: 'table', h: 'One FEC, one label', cols: ['Item', 'Relationship'], rows: [
-                ['**FEC**', 'Packet class'],
-                ['**Label**', 'Per-FEC binding'],
-                ['**LSP**', 'Per-FEC path'],
-                ['**Binding**', 'Label to FEC']
-              ]},
-              { kind: 'table', h: 'FEC granularity', cols: ['Granularity', 'Use'], rows: [
-                ['**Host, per /32**', 'Fine control, many labels'],
-                ['**Aggregate**', 'Coarse, fewer labels'],
-                ['**Per-VRF**', 'VPN separation'],
-                ['**Per-prefix**', 'Standard IGP behaviour']
-              ]},
-              { kind: 'table', h: 'How ingress classifies', cols: ['Packet', 'FEC'], rows: [
-                ['To 10.0.0.0/24', 'FEC A'],
-                ['To 10.1.0.0/24', 'FEC B'],
-                ['VPN prefix', 'Per-VRF FEC']
-              ]},
-              { kind: 'table', h: 'FEC and LDP', cols: ['Step', 'Detail'], rows: [
-                ['1', 'The IGP installs the prefix'],
-                ['2', 'A FEC is created'],
-                ['3', 'A label is bound in the LIB'],
-                ['4', 'The binding is advertised by LDP'],
-                ['5', 'The LFIB entry is built']
-              ]},
-              { kind: 'para', h: 'FEC in VPNs', p: 'VPN routes are their own **FECs**, scoped per VRF and made unique with a route distinguisher. The service label is what separates customers inside the shared core.' }
-            ],
-            commands: [
-              { label: 'Inspect bindings and forwarding', code:
-`show mpls ldp bindings\nshow mpls forwarding-table` },
-              { label: 'Inspect the CEF entry behind a FEC', code:
-`show ip cef\nshow ip cef vrf CUST1` },
-              { label: 'Debug FEC and label binding', code:
-`debug mpls ldp` }
-            ],
-            traps: [
-              'A FEC is a class with the **same forwarding treatment**, so it gets the same label.',
-              'MPLS assigns **one label per FEC**.',
-              'Ingress classifies IP into a FEC; the core only sees the **label**.',
-              'LDP advertises **label to FEC bindings**.',
-              'VPNs create **per-VRF FECs**, made unique with an RD.',
-              'Finer granularity means **more labels and more control**.'
-            ],
-            table: {
-              cols: ['Item', 'FEC'],
-              rows: [
-                ['Meaning', 'Same treatment'],
-                ['Label', 'One per FEC'],
-                ['Basis', 'Prefix and next hop'],
-                ['LDP', 'Binds the label'],
-                ['LSP', 'Per-FEC path'],
-                ['Granular', '/32 or aggregate'],
-                ['VPN', 'Per-VRF FEC'],
-                ['Core', 'Label only']
-              ]
-            },
-            related: [
-              { t: '02. Labels', d: 'The binding target' },
-              { t: '03. LER', d: 'Where classification happens' },
-              { t: '07. VRF', d: 'Per-VRF forwarding' }
-            ],
-            glossary: ['FEC', 'MPLS', 'MPLS Label', 'LER', 'MPLS VPN', 'LFIB']
-          },
-          {
-            id: 't07', num: '07', group: 'vpn', title: 'VRF',
-            blurb: 'Per-tenant routing and forwarding, with RD and RT doing different jobs',
-            overview: 'A **[[VRF]]** is a per-tenant virtual routing table and forwarding instance on a PE router. Each VRF has its own RIB, FIB, interfaces and routes, so customers stay isolated even though they share the same physical router and core. VRFs plus route distinguishers are the foundation of **[[MPLS VPN|MPLS L3VPN]]**.',
-            keyIdea: 'A VRF isolates routes and forwarding per tenant. RD creates uniqueness, RT controls membership, and ip vrf forwarding removes the interface IP.',
-            sections: [
-              { kind: 'table', h: 'What a VRF contains', cols: ['Table or item', 'Per-VRF'], rows: [
-                ['**RIB**', 'Routes'],
-                ['**CEF and FIB**', 'Forwarding'],
-                ['**Interfaces**', 'CE-facing'],
-                ['**Routing protocol**', 'eBGP, OSPF, EIGRP or static'],
-                ['**Labels**', 'VPN service label']
-              ]},
-              { kind: 'table', h: 'VRF versus global', cols: ['Aspect', 'Global', 'VRF'], rows: [
-                ['RIB', 'Main table', 'Per-VRF table'],
-                ['Visibility', 'All routes', 'Only VRF routes'],
-                ['CE sharing', 'None', 'Per customer'],
-                ['Use', 'Core and Internet', 'L3VPN']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  ip vrf CUST1
-   rd 65000:100
-   route-target export 65000:100
-   route-target import 65000:100
-  !
-  interface GigabitEthernet0/1
-   ip vrf forwarding CUST1
-   ip address 10.10.0.1 255.255.255.0
-  !
-  router bgp 65000
-   address-family ipv4 vrf CUST1` },
-              { kind: 'table', h: 'RD versus RT', cols: ['Item', 'Function'], rows: [
-                ['**RD**', 'Makes prefixes unique in MP-BGP'],
-                ['**RT**', 'Import and export membership policy'],
-                ['**RD role**', 'Identity'],
-                ['**RT role**', 'Who shares the VRF']
-              ]},
-              { kind: 'table', h: 'VRF-aware features', cols: ['Feature', 'Use'], rows: [
-                ['**Static routes**', 'Per VRF'],
-                ['**eBGP and iBGP**', 'Per VRF address family'],
-                ['**OSPF and EIGRP**', 'Per-VRF process'],
-                ['**Ping and traceroute**', 'Use the vrf keyword'],
-                ['**Management**', 'SNMP and Telnet can be VRF-aware']
-              ]},
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show ip vrf%%**', 'VRF list'],
-                ['**%%show ip vrf detail%%**', 'RD, RT and interfaces'],
-                ['**%%show ip route vrf CUST1%%**', 'Per-VRF routes'],
-                ['**%%ping vrf CUST1 10.10.0.2%%**', 'VRF-aware reachability']
-              ]}
-            ],
-            commands: [
-              { label: 'Create the VRF and bind an interface', code:
-`ip vrf CUST1\n rd 65000:100\n route-target export 65000:100\n route-target import 65000:100\ninterface GigabitEthernet0/1\n ip vrf forwarding CUST1\n ip address 10.10.0.1 255.255.255.0` },
-              { label: 'Verify VRFs and routes', code:
-`show ip vrf\nshow ip vrf detail\nshow ip route vrf CUST1` },
-              { label: 'Test from inside the VRF', code:
-`show ip cef vrf CUST1\nshow bgp vpnv4 vrf CUST1\nping vrf CUST1 10.10.0.2` }
-            ],
-            traps: [
-              'A VRF is a **per-tenant routing and forwarding instance**.',
-              '**RD gives uniqueness; RT gives membership**.',
-              '**%%ip vrf forwarding%%** removes the interface IP, so re-apply **%%ip address%%**.',
-              'Per-VRF BGP uses **%%address-family ipv4 vrf%%**.',
-              'Use **%%ping vrf X%%** for VRF-aware checks.',
-              'The **global table stays clean** of customer prefixes.'
-            ],
-            table: {
-              cols: ['Item', 'VRF'],
-              rows: [
-                ['What', 'Virtual routing table'],
-                ['Isolate', 'RIB, FIB and interfaces'],
-                ['RD', 'Uniqueness'],
-                ['RT', 'Membership'],
-                ['Bind', 'ip vrf forwarding'],
-                ['BGP', 'AF per VRF'],
-                ['Ping', 'ping vrf'],
-                ['Purpose', 'L3VPN']
-              ]
-            },
-            related: [
-              { t: '09. MPLS VPN', d: 'VPNs built on VRFs' },
-              { t: '08. MP-BGP', d: 'How VRF routes travel' }
-            ],
-            glossary: ['VRF', 'MP-BGP', 'MPLS VPN', 'MPLS', 'BGP', 'RIB', 'FIB', 'OSPF', 'EIGRP', 'Control Plane', 'Data Plane']
-          },
-          {
-            id: 't08', num: '08', group: 'vpn', title: 'MP-BGP',
-            blurb: 'VPNv4, address families, and RD plus RT semantics',
-            overview: '**[[MP-BGP]]** carries VPN routes between PE routers in an MPLS network. Address families plus the RD and RT model make overlapping customer prefixes unique and control who receives them. The VPNv4 address family is how the control plane builds L3VPNs.',
-            keyIdea: 'MP-BGP equals address family plus RD and RT. VPNv4 carries RD, IPv4 prefix and label; RD is uniqueness, RT is membership, and RTs ride as extended communities.',
-            sections: [
-              { kind: 'table', h: 'Address families', cols: ['Address family', 'What it carries'], rows: [
-                ['**ipv4 unicast**', 'Normal BGP'],
-                ['**ipv4 multicast**', 'Multicast NLRI'],
-                ['**vpnv4**', 'VRF routes plus a label'],
-                ['**ipv6 unicast**', 'IPv6'],
-                ['**vpnv6**', 'IPv6 VPN routes']
-              ]},
-              { kind: 'table', h: 'The VPNv4 route', cols: ['Field', 'Meaning'], rows: [
-                ['**RD**', 'Makes the prefix unique'],
-                ['**IPv4 prefix**', 'The customer route'],
-                ['**Label**', 'VPN service label'],
-                ['**Next hop**', 'The egress PE'],
-                ['**RT**', 'Membership policy']
-              ]},
-              { kind: 'table', h: 'RD formats and rules', cols: ['Format', 'Example'], rows: [
-                ['**ASN:NN**', '65000:100'],
-                ['**IP:NN**', '10.0.0.1:100'],
-                ['**Rule**', 'Must be unique per VRF on the PE'],
-                ['**Overlap**', 'Customers may reuse the same IPv4 space']
-              ]},
-              { kind: 'table', h: 'RT semantics', cols: ['RT', 'Meaning'], rows: [
-                ['**Export**', 'Tag routes leaving the VRF'],
-                ['**Import**', 'Choose which routes enter the VRF'],
-                ['**Policy**', 'Controls VPN membership'],
-                ['**Topology**', 'Full mesh, hub-and-spoke or extranet']
-              ]},
-              { kind: 'code', h: 'Configuration', code:
-`  router bgp 65000
-   neighbor 192.0.2.2 remote-as 65000
-   !
-   address-family vpnv4
-    neighbor 192.0.2.2 activate
-    neighbor 192.0.2.2 send-community extended
-   exit-address-family
-  !
-  ip vrf CUST1
-   rd 65000:100
-   route-target export 65000:100
-   route-target import 65000:100` },
-              { kind: 'table', h: 'Verification', cols: ['Command', 'Shows'], rows: [
-                ['**%%show bgp vpnv4 unicast all%%**', 'All VPNv4 routes'],
-                ['**%%show bgp vpnv4 unicast vrf CUST1%%**', 'Routes for one VRF'],
-                ['**%%show ip vrf detail%%**', 'RD and RT configuration'],
-                ['**%%show ip route vrf CUST1%%**', 'Installed VRF routes']
-              ]}
-            ],
-            commands: [
-              { label: 'Activate the VPNv4 session', code:
-`router bgp 65000\n neighbor 192.0.2.2 remote-as 65000\n address-family vpnv4\n  neighbor 192.0.2.2 activate\n  neighbor 192.0.2.2 send-community extended` },
-              { label: 'Verify VPNv4 routes', code:
-`show bgp vpnv4 unicast all\nshow bgp vpnv4 unicast vrf CUST1\nshow bgp vpnv4 all summary` },
-              { label: 'Verify VRF identity and routes', code:
-`show ip vrf detail\nshow ip route vrf CUST1` }
-            ],
-            traps: [
-              'MP-BGP uses the **address family plus RD and RT** model.',
-              'A **VPNv4 NLRI** carries the RD, the IPv4 prefix and a label.',
-              '**RD is uniqueness; RT is membership policy**.',
-              'RTs travel as **extended communities**, so extended send-community is required.',
-              '**%%show bgp vpnv4 unicast vrf X%%** is the key check.',
-              'The RD must be **unique per VRF** on the PE.'
-            ],
-            table: {
-              cols: ['Item', 'MP-BGP'],
-              rows: [
-                ['AF', 'VPNv4'],
-                ['NLRI', 'RD plus prefix plus label'],
-                ['RD', 'Uniqueness'],
-                ['RT', 'Membership'],
-                ['Carries', 'Extended community'],
-                ['Between', 'PE routers'],
-                ['Enable', 'activate'],
-                ['Show', 'show bgp vpnv4']
-              ]
-            },
-            related: [
-              { t: '07. VRF', d: 'The local routing instance' },
-              { t: '09. MPLS VPN', d: 'The service it signals' },
-              { t: '02. Labels', d: 'The service label in the NLRI' }
-            ],
-            glossary: ['MP-BGP', 'BGP', 'VRF', 'MPLS VPN', 'MPLS', 'Loopback Address', 'Control Plane']
-          },
-          {
-            id: 't09', num: '09', group: 'vpn', title: 'MPLS VPN',
-            blurb: 'CE, PE and P roles, two labels, and three routing layers',
-            overview: '**[[MPLS VPN|MPLS L3VPN]]** delivers private, isolated customer connectivity over a shared service-provider core. Each customer has a **[[VRF]]** on the PE. The PE exchanges routes with the customer edge, turns them into VPNv4 routes with a service label via MP-BGP, and the core carries them in a two-label stack.',
-            keyIdea: 'L3VPN equals VRF plus MP-BGP plus a two-label stack. The top label is transport, the inner is service, and RTs define the VPN topology.',
-            sections: [
-              { kind: 'table', h: 'The roles', cols: ['Role', 'Device', 'Job'], rows: [
-                ['**CE**', 'Customer router', 'Faces the PE'],
-                ['**PE**', 'Provider edge', 'VRF plus MP-BGP'],
-                ['**P**', 'Provider core', 'Label switching only']
-              ]},
-              { kind: 'table', h: 'The two-label stack', cols: ['Label', 'Layer', 'Purpose'], rows: [
-                ['**Top**', 'Transport', 'Reaches the egress PE via LDP'],
-                ['**Inner**', 'Service or VPN', 'Selects the VRF or CE at the egress']
-              ]},
-              { kind: 'code', h: 'End-to-end flow', code:
-`  CE1 --(IP)--> PE1: push [transport | service]
-              P: swap the transport label
-              PE2: pop transport, read service label -> VRF -> CE2` },
-              { kind: 'table', h: 'End-to-end steps', cols: ['Step', 'Who', 'Action'], rows: [
-                ['1', 'CE1', 'Sends plain IP'],
-                ['2', 'PE1', 'VRF lookup, then push labels'],
-                ['3', 'P', 'Swap the top label'],
-                ['4', 'PE2', 'Pop transport, use service label, deliver to CE2']
-              ]},
-              { kind: 'table', h: 'Control plane plumbing', cols: ['Plane', 'Protocol', 'Result'], rows: [
-                ['**Core**', 'IGP plus LDP', 'Transport labels'],
-                ['**VPN**', 'MP-BGP', 'VPNv4 and service label'],
-                ['**CE to PE**', 'eBGP, OSPF, EIGRP or static', 'Customer routes']
-              ]},
-              { kind: 'table', h: 'VPN models', cols: ['Model', 'RT policy'], rows: [
-                ['**Full mesh**', 'All RTs shared'],
-                ['**Hub and spoke**', 'Import and export split'],
-                ['**Extranet**', 'Selective sharing']
-              ]}
-            ],
-            commands: [
-              { label: 'Verify the end-to-end service', code:
-`show ip vrf\nshow ip route vrf CUST1\nshow bgp vpnv4 unicast vrf CUST1` },
-              { label: 'Verify labels and forwarding', code:
-`show mpls forwarding-table\nshow mpls forwarding vrf CUST1` },
-              { label: 'Verify from inside the VRF', code:
-`ping vrf CUST1 10.10.0.2\ntraceroute vrf CUST1 10.10.0.2` }
-            ],
-            traps: [
-              'L3VPN equals **VRF plus MP-BGP plus a two-label stack**.',
-              'The **PE** is edge intelligence; the **P** only switches labels.',
-              'The top label is **transport, from LDP**; the inner label is **service or VPN**.',
-              '**RTs** define VPN membership and topology.',
-              'CE to PE routing can be **eBGP, OSPF, EIGRP or static**.',
-              'The core only looks at the **top label**; the egress PE reads the inner one.'
-            ],
-            table: {
-              cols: ['Item', 'MPLS VPN'],
-              rows: [
-                ['Edge', 'PE plus VRF'],
-                ['Core', 'P, labels only'],
-                ['Customer', 'CE'],
-                ['Transport label', 'LDP'],
-                ['Service label', 'VPN'],
-                ['Control', 'MP-BGP'],
-                ['Topology', 'RTs'],
-                ['Verify', 'show bgp vpnv4']
-              ]
-            },
-            related: [
-              { t: '07. VRF', d: 'Customer separation' },
-              { t: '08. MP-BGP', d: 'Route exchange' },
-              { t: '02. Labels', d: 'The stack in detail' }
-            ],
-            glossary: ['MPLS VPN', 'MPLS', 'VRF', 'MP-BGP', 'MPLS Label', 'LSR', 'LER', 'BGP', 'OSPF', 'EIGRP', 'QoS', 'CEF']
-          }
-        ];
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "core",
+    "title": "MPLS Basics",
+    "blurb": "Labels, the 2.5 shim, and why carriers build on MPLS",
+    "overview": "**[[MPLS]]** forwards packets using short fixed-length **[[MPLS Label|labels]]** instead of IP longest-prefix lookups. The label sits between Layer 2 and Layer 3 in a **shim header**, which is why MPLS is called a Layer 2.5 technology. It is the basis for traffic engineering, Layer 3 VPNs and Layer 2 pseudowires.",
+    "keyIdea": "MPLS is label switching at Layer 2.5. Edge routers push and pop, core routers swap, and the whole thing needs CEF plus LDP.",
+    "sections": [
+      {
+        "h": "MPLS",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">MPLS</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Label switching, LSP, CE/PE/P</text></g></svg>",
+        "caption": "Packet forwarding by labels."
+      },
+      {
+        "kind": "table",
+        "h": "Why MPLS",
+        "cols": [
+          "Problem",
+          "MPLS answer"
+        ],
+        "rows": [
+          [
+            "Slow IP lookup",
+            "Label swap in the core"
+          ],
+          [
+            "No traffic engineering",
+            "MPLS-TE paths"
+          ],
+          [
+            "No VPN in the core",
+            "Label-stack VPN"
+          ],
+          [
+            "Layer 2 services",
+            "Pseudowire"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Position in the stack",
+        "cols": [
+          "Layer",
+          "Example"
+        ],
+        "rows": [
+          [
+            "L3",
+            "IP"
+          ],
+          [
+            "**2.5**",
+            "**MPLS shim, labels**"
+          ],
+          [
+            "L2",
+            "Ethernet or PPP"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "The core idea",
+        "code": "  CE -- PE (LER) -- P (LSR) -- P -- PE (LER) -- CE\n          push          swap/swap          pop"
+      },
+      {
+        "kind": "table",
+        "h": "MPLS domains",
+        "cols": [
+          "Element",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**LSP**",
+            "Label-switched path, the tunnel"
+          ],
+          [
+            "**LER**",
+            "Edge router: push and pop"
+          ],
+          [
+            "**LSR**",
+            "Core router: swap"
+          ],
+          [
+            "**FEC**",
+            "Class of packets sharing a label"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Enabling MPLS on IOS-XE",
+        "cols": [
+          "Command",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**%%ip cef%%**",
+            "CEF prerequisite"
+          ],
+          [
+            "**%%mpls ip%%**",
+            "Enable label distribution"
+          ],
+          [
+            "**%%interface ... mpls ip%%**",
+            "Enable MPLS per link"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "What MPLS brings",
+        "cols": [
+          "Benefit",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "Speed",
+            "Label forwarding in the core"
+          ],
+          [
+            "Transparency",
+            "Core needs no customer routes"
+          ],
+          [
+            "Services",
+            "VPN, TE and pseudowire"
+          ],
+          [
+            "Scaling",
+            "Far fewer core routes"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable CEF and MPLS",
+        "code": "ip cef\nmpls ip\ninterface GigabitEthernet0/0\n mpls ip"
+      },
+      {
+        "label": "Verify the forwarding and label state",
+        "code": "show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls interfaces"
+      },
+      {
+        "label": "Test the label-switched path",
+        "code": "ping mpls ipv4 10.0.0.2/32\nshow ip cef"
+      }
+    ],
+    "traps": [
+      "MPLS means **label switching**, with the shim at **Layer 2.5**.",
+      "Core LSRs **swap**; edge LERs **push and pop**.",
+      "MPLS needs **CEF plus LDP** to work.",
+      "An **LSP** is the path; a **FEC** is the packet class.",
+      "MPLS is the foundation for **L3VPN, L2VPN and TE**.",
+      "The core stays free of **customer routes**, which is the scaling win."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "MPLS"
+      ],
+      "rows": [
+        [
+          "Forwarding",
+          "Labels"
+        ],
+        [
+          "Position",
+          "Layer 2.5"
+        ],
+        [
+          "Edge",
+          "Push and pop"
+        ],
+        [
+          "Core",
+          "Swap"
+        ],
+        [
+          "LSP",
+          "Path"
+        ],
+        [
+          "FEC",
+          "Class"
+        ],
+        [
+          "Enablers",
+          "CEF plus LDP"
+        ],
+        [
+          "Services",
+          "VPN, TE and pseudowire"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Labels",
+        "d": "The shim header in detail"
+      },
+      {
+        "t": "03. LER",
+        "d": "The edge role"
+      },
+      {
+        "t": "09. MPLS VPN",
+        "d": "The biggest MPLS service"
+      }
+    ],
+    "glossary": [
+      "MPLS",
+      "MPLS Label",
+      "FEC",
+      "LER",
+      "LSR",
+      "LFIB",
+      "CEF",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "core",
+    "title": "Labels",
+    "blurb": "The 32-bit shim, label stack, PHP, and null labels",
+    "overview": "MPLS forwarding is driven by **[[MPLS Label|labels]]**, 20-bit values carried in a 32-bit shim header between Layer 2 and Layer 3. Each router swaps the top label and forwards. A packet can carry a **label stack**, which is how VPN and traffic-engineering services nest inside one another.",
+    "keyIdea": "Shim equals 20 label, 3 Exp, 1 S and 8 TTL. The S bit marks the bottom of the stack, and PHP pops the label before the egress.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The shim header",
+        "cols": [
+          "Field",
+          "Bits",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**Label**",
+            "20",
+            "Forwarding value"
+          ],
+          [
+            "**Exp**",
+            "3",
+            "QoS and class"
+          ],
+          [
+            "**S**",
+            "1",
+            "Bottom-of-stack flag"
+          ],
+          [
+            "**TTL**",
+            "8",
+            "Hop limit"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Label values",
+        "cols": [
+          "Range",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**0 to 15**",
+            "Reserved and special use"
+          ],
+          [
+            "**0**",
+            "IPv4 explicit null"
+          ],
+          [
+            "**3**",
+            "Implicit null, used by PHP"
+          ],
+          [
+            "**16 to 1,048,575**",
+            "Normal label range"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The label stack",
+        "cols": [
+          "Label",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**Top**",
+            "Forwards the packet through the core"
+          ],
+          [
+            "**Inner**",
+            "Service label, for example VPN"
+          ],
+          [
+            "**Bottom**",
+            "Deepest label, **S=1**"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Label operations",
+        "cols": [
+          "Operation",
+          "Where",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "**Push**",
+            "Ingress LER",
+            "Add a shim"
+          ],
+          [
+            "**Swap**",
+            "Core LSR",
+            "Replace the top label"
+          ],
+          [
+            "**Pop**",
+            "Penultimate or egress",
+            "Remove the label"
+          ],
+          [
+            "**PHP**",
+            "Penultimate LSR",
+            "Pop one hop early"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Explicit versus implicit null",
+        "cols": [
+          "Label",
+          "Value",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Implicit null**",
+            "**3**",
+            "PHP, pop before the egress"
+          ],
+          [
+            "**Explicit null**",
+            "**0**",
+            "Keep QoS via Exp at the egress"
+          ],
+          [
+            "**Router alert**",
+            "**1**",
+            "Control traffic"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "TTL handling",
+        "cols": [
+          "Mode",
+          "Behaviour"
+        ],
+        "rows": [
+          [
+            "**Pipe**",
+            "TTL is not decremented, core is hidden"
+          ],
+          [
+            "**Uniform**",
+            "TTL decrements normally"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Inspect labels and the forwarding table",
+        "code": "show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls label range"
+      },
+      {
+        "label": "Inspect interfaces and bindings in detail",
+        "code": "show mpls interfaces detail\nshow mpls ldp bindings"
+      },
+      {
+        "label": "Debug label distribution",
+        "code": "debug mpls ldp"
+      }
+    ],
+    "traps": [
+      "The shim is **20 label, 3 Exp, 1 S and 8 TTL** bits.",
+      "The **S bit** marks the bottom of the stack.",
+      "**PHP** pops before the egress; **explicit null 0** preserves QoS.",
+      "A VPN uses a **two-label stack**: transport plus service.",
+      "**Pipe mode** hides the core TTL from customer packets.",
+      "**Implicit null is 3**; explicit null is 0."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Label"
+      ],
+      "rows": [
+        [
+          "Label bits",
+          "20"
+        ],
+        [
+          "Exp bits",
+          "3"
+        ],
+        [
+          "S bit",
+          "Bottom of stack"
+        ],
+        [
+          "TTL",
+          "8 bits"
+        ],
+        [
+          "PHP",
+          "Pop early"
+        ],
+        [
+          "Implicit null",
+          "3"
+        ],
+        [
+          "Explicit null",
+          "0"
+        ],
+        [
+          "VPN",
+          "2 labels"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. LFIB",
+        "d": "Where labels are installed"
+      },
+      {
+        "t": "06. FEC",
+        "d": "What a label is bound to"
+      },
+      {
+        "t": "09. MPLS VPN",
+        "d": "Two-label stack in use"
+      }
+    ],
+    "glossary": [
+      "MPLS Label",
+      "MPLS",
+      "LFIB",
+      "FEC",
+      "QoS",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "core",
+    "title": "LER",
+    "blurb": "The PE edge: classify, push, pop, and face the customer",
+    "overview": "The **[[LER]]**, also called the PE in VPN terms, sits at the edge of the MPLS domain. It performs the IP-to-label transition: pushing a label on ingress and popping it on egress. It runs the full IP routing stack, including IGP and **[[MP-BGP]]** for VPNs, so it can classify packets into FECs and build the right label stack.",
+    "keyIdea": "The edge PE pushes on ingress and pops on egress. Core links get mpls ip, customer links go into a VRF, and LER plus VRF plus MP-BGP is the VPN edge.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Edge responsibilities",
+        "cols": [
+          "Direction",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Ingress**",
+            "Classify, then push a label"
+          ],
+          [
+            "**Egress**",
+            "Pop the label, then deliver IP"
+          ],
+          [
+            "**Core side**",
+            "Faces the MPLS LSP"
+          ],
+          [
+            "**CE side**",
+            "Faces the customer"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Ingress behaviour",
+        "cols": [
+          "Step",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "1",
+            "Receive IP from the CE"
+          ],
+          [
+            "2",
+            "CEF lookup maps the packet to a FEC"
+          ],
+          [
+            "3",
+            "Push the transport label, plus a service label for VPN"
+          ],
+          [
+            "4",
+            "Forward into the core"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Egress behaviour",
+        "cols": [
+          "Step",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "1",
+            "Receive a labelled packet from the core"
+          ],
+          [
+            "2",
+            "Pop after PHP"
+          ],
+          [
+            "3",
+            "Route or deliver to the CE"
+          ],
+          [
+            "4",
+            "VRFs keep customers separate"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "LER in a VPN, the PE role",
+        "cols": [
+          "Role",
+          "Job"
+        ],
+        "rows": [
+          [
+            "**VRF**",
+            "Per-customer routing table"
+          ],
+          [
+            "**MP-BGP**",
+            "Exchange VPNv4 routes"
+          ],
+          [
+            "**LDP**",
+            "Transport labels in the core"
+          ],
+          [
+            "**CE-facing**",
+            "PE to CE routing"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration sketch",
+        "code": "  interface GigabitEthernet0/0        ! core facing\n   mpls ip\n  !\n  interface GigabitEthernet0/1        ! CE facing\n   ip vrf forwarding CUST1\n   ip address 10.10.0.1 255.255.255.0"
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show ip cef%%**",
+            "IP to next-hop entries"
+          ],
+          [
+            "**%%show mpls forwarding-table%%**",
+            "Label operations"
+          ],
+          [
+            "**%%show ip vrf%%**",
+            "VRF definitions"
+          ],
+          [
+            "**%%show bgp vpnv4%%**",
+            "VPN routes"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Check CEF and the label table",
+        "code": "show ip cef\nshow ip cef vrf CUST1\nshow mpls forwarding-table"
+      },
+      {
+        "label": "Check LDP neighbours and VRFs",
+        "code": "show mpls ldp neighbor\nshow ip vrf"
+      },
+      {
+        "label": "Check the VRF routing table",
+        "code": "show ip route vrf CUST1\nshow ip vrf detail"
+      }
+    ],
+    "traps": [
+      "The LER is the **edge**, or PE: push on ingress and pop on egress.",
+      "Core-facing interfaces get **%%mpls ip%%**; CE interfaces go into a **VRF**.",
+      "A VPN edge is an LER plus **VRF plus MP-BGP**.",
+      "Ingress classifies packets into **FECs** to choose labels.",
+      "With PHP, the egress usually receives an **implicit or explicit null**.",
+      "The LER runs **IGP plus MP-BGP**, not label switching alone."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "LER"
+      ],
+      "rows": [
+        [
+          "Position",
+          "Edge"
+        ],
+        [
+          "Ingress",
+          "Push"
+        ],
+        [
+          "Egress",
+          "Pop"
+        ],
+        [
+          "VPN role",
+          "PE"
+        ],
+        [
+          "CE side",
+          "VRF"
+        ],
+        [
+          "Core side",
+          "mpls ip"
+        ],
+        [
+          "Routing",
+          "IGP plus MP-BGP"
+        ],
+        [
+          "Classify",
+          "FEC"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. LSR",
+        "d": "The core counterpart"
+      },
+      {
+        "t": "09. MPLS VPN",
+        "d": "LER as the PE"
+      },
+      {
+        "t": "07. VRF",
+        "d": "Customer separation"
+      }
+    ],
+    "glossary": [
+      "LER",
+      "MPLS",
+      "MPLS Label",
+      "FEC",
+      "MP-BGP",
+      "VRF",
+      "CEF",
+      "BGP"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "core",
+    "title": "LSR",
+    "blurb": "The P router: swap the top label from the LFIB",
+    "overview": "The **[[LSR]]**, also called the P router in VPN terms, lives in the core of the MPLS domain. It forwards by swapping the top label based on the **[[LFIB]]**, with no IP lookup and no customer routes. The LSR runs an IGP plus LDP to build label bindings for core reachability.",
+    "keyIdea": "The core swaps labels only. It uses the LFIB, not the IP RIB, runs LDP on UDP and TCP 646, and holds no customer routes.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Core responsibilities",
+        "cols": [
+          "Task",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Swap labels**",
+            "Driven by the LFIB"
+          ],
+          [
+            "**LDP**",
+            "Label distribution"
+          ],
+          [
+            "**IGP**",
+            "Core reachability"
+          ],
+          [
+            "**Transparency**",
+            "No customer routes at all"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Forwarding flow",
+        "cols": [
+          "Step",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "1",
+            "Receive a labelled packet"
+          ],
+          [
+            "2",
+            "Look up the in-label in the LFIB"
+          ],
+          [
+            "3",
+            "Swap the top label"
+          ],
+          [
+            "4",
+            "Forward out the listed interface"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Label bindings with LDP",
+        "cols": [
+          "Item",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "**Protocol**",
+            "LDP on UDP and TCP **646**"
+          ],
+          [
+            "**Exchange**",
+            "Label to FEC bindings"
+          ],
+          [
+            "**Trigger**",
+            "IGP routes"
+          ],
+          [
+            "**Result**",
+            "Core LSPs"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "PHP at the penultimate LSR",
+        "cols": [
+          "Role",
+          "Action"
+        ],
+        "rows": [
+          [
+            "**Penultimate LSR**",
+            "Pops with implicit null"
+          ],
+          [
+            "**Egress LER**",
+            "Receives naked IP"
+          ],
+          [
+            "**Exception**",
+            "Explicit null when QoS must survive"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration sketch",
+        "code": "  mpls ip\n  !\n  interface GigabitEthernet0/0\n   mpls ip\n  !\n  mpls ldp router-id Loopback0 force"
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show mpls forwarding-table%%**",
+            "In to out label mapping"
+          ],
+          [
+            "**%%show mpls ldp bindings%%**",
+            "Label bindings"
+          ],
+          [
+            "**%%show mpls ldp neighbor%%**",
+            "LDP sessions"
+          ],
+          [
+            "**%%show ip cef%%**",
+            "Underlying IP paths"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Enable MPLS on core links",
+        "code": "mpls ip\ninterface GigabitEthernet0/0\n mpls ip\nmpls ldp router-id Loopback0 force"
+      },
+      {
+        "label": "Verify label forwarding and neighbors",
+        "code": "show mpls forwarding-table\nshow mpls ldp bindings\nshow mpls ldp neighbor"
+      },
+      {
+        "label": "Check interfaces and debug LDP",
+        "code": "show mpls interfaces\ndebug mpls ldp"
+      }
+    ],
+    "traps": [
+      "The LSR is the **core**, or P router: it swaps labels only.",
+      "It forwards from the **LFIB**, not the IP RIB.",
+      "**LDP uses UDP and TCP 646** to distribute labels.",
+      "The **penultimate LSR** performs PHP before the egress.",
+      "The core holds **no customer routes**.",
+      "Every core link needs **%%mpls ip%%**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "LSR"
+      ],
+      "rows": [
+        [
+          "Position",
+          "Core"
+        ],
+        [
+          "Forward",
+          "LFIB swap"
+        ],
+        [
+          "Protocol",
+          "LDP"
+        ],
+        [
+          "Port",
+          "646"
+        ],
+        [
+          "PHP",
+          "Penultimate"
+        ],
+        [
+          "Routes",
+          "Core only"
+        ],
+        [
+          "Config",
+          "mpls ip"
+        ],
+        [
+          "Verify",
+          "show mpls forwarding-table"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. LER",
+        "d": "The edge counterpart"
+      },
+      {
+        "t": "05. LFIB",
+        "d": "The table it forwards from"
+      },
+      {
+        "t": "06. FEC",
+        "d": "What the bindings describe"
+      }
+    ],
+    "glossary": [
+      "LSR",
+      "LFIB",
+      "MPLS",
+      "MPLS Label",
+      "LER",
+      "RIB",
+      "Control Plane",
+      "Loopback Address"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "core",
+    "title": "LFIB",
+    "blurb": "In-label to out-label, plus the interfaces it uses",
+    "overview": "The **[[LFIB]]** is the MPLS forwarding table on each router. It maps an incoming label to a swap or pop action and an outgoing interface. LSRs forward exclusively from the LFIB, while LERs also consult CEF to push a label on ingress. It is the table you inspect when MPLS forwarding breaks.",
+    "keyIdea": "LFIB equals in-label to out-label plus interface. Core forwarding uses the LFIB only; ingress push consults CEF; pop plus push is the VPN edge pattern.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "What the LFIB holds",
+        "cols": [
+          "Column",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**In label**",
+            "What arrives"
+          ],
+          [
+            "**Out label**",
+            "What leaves"
+          ],
+          [
+            "**Prefix**",
+            "The FEC it serves"
+          ],
+          [
+            "**Interface**",
+            "Next hop out"
+          ],
+          [
+            "**Operation**",
+            "Swap, pop or push"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Relationship to CEF and the LIB",
+        "cols": [
+          "Table",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**CEF**",
+            "IP prefix to next hop"
+          ],
+          [
+            "**LFIB**",
+            "In-label to out-label"
+          ],
+          [
+            "**LIB**",
+            "LDP label bindings"
+          ],
+          [
+            "**Working table**",
+            "The LFIB, fed by the other two"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Example forwarding table",
+        "code": "  show mpls forwarding-table\n\n   In Label   Out Label   Prefix      Out Interface   Next Hop\n   17         32          10.0.0.0    Gi0/1           192.0.2.2\n   20         Pop         10.0.0.0    Gi0/0           192.0.2.1"
+      },
+      {
+        "kind": "table",
+        "h": "Operations per entry",
+        "cols": [
+          "Operation",
+          "Where",
+          "Result"
+        ],
+        "rows": [
+          [
+            "**Swap**",
+            "Core LSR",
+            "Change the top label"
+          ],
+          [
+            "**Pop**",
+            "Penultimate",
+            "Remove the label"
+          ],
+          [
+            "**Pop plus push**",
+            "Ingress or VPN edge",
+            "Swap the service label"
+          ],
+          [
+            "**Push**",
+            "Ingress LER",
+            "Add a transport label"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Building the LFIB",
+        "cols": [
+          "Source",
+          "Data supplied"
+        ],
+        "rows": [
+          [
+            "**CEF**",
+            "FEC and next hop"
+          ],
+          [
+            "**LDP**",
+            "Core label bindings"
+          ],
+          [
+            "**MP-BGP**",
+            "VPN service label"
+          ],
+          [
+            "**Interface state**",
+            "Adjacency information"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show mpls forwarding-table%%**",
+            "The working LFIB"
+          ],
+          [
+            "**%%show mpls forwarding-table detail%%**",
+            "Extra counters and detail"
+          ],
+          [
+            "**%%show mpls forwarding vrf CUST1%%**",
+            "Per-VRF entries"
+          ],
+          [
+            "**%%show ip cef%%**",
+            "The FEC and next hop"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Show the LFIB",
+        "code": "show mpls forwarding-table\nshow mpls forwarding-table detail"
+      },
+      {
+        "label": "Show per-VRF and IP bindings",
+        "code": "show mpls forwarding vrf CUST1\nshow mpls ip bindings"
+      },
+      {
+        "label": "Debug label forwarding",
+        "code": "debug mpls ldp"
+      }
+    ],
+    "traps": [
+      "The LFIB maps **in-label to out-label plus interface**.",
+      "Core forwarding uses the **LFIB only**; ingress push uses **CEF**.",
+      "**Pop plus push** is the VPN edge label swap.",
+      "A missing LFIB entry means a missing **FEC or LDP binding**.",
+      "**%%show mpls forwarding-table%%** is the main troubleshooting command.",
+      "The LFIB is built from **CEF and LDP**, plus MP-BGP for VPN labels."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "LFIB"
+      ],
+      "rows": [
+        [
+          "Input",
+          "In label"
+        ],
+        [
+          "Output",
+          "Out label"
+        ],
+        [
+          "Also",
+          "Prefix and interface"
+        ],
+        [
+          "Core op",
+          "Swap"
+        ],
+        [
+          "Edge op",
+          "Push and pop"
+        ],
+        [
+          "VPN op",
+          "Pop plus push"
+        ],
+        [
+          "Source",
+          "CEF and LDP"
+        ],
+        [
+          "Show",
+          "show mpls forwarding-table"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Labels",
+        "d": "The values it forwards"
+      },
+      {
+        "t": "03. LER",
+        "d": "The ingress push path"
+      },
+      {
+        "t": "09. MPLS VPN",
+        "d": "VPN label operation"
+      }
+    ],
+    "glossary": [
+      "LFIB",
+      "FIB",
+      "RIB",
+      "LSR",
+      "LER",
+      "CEF",
+      "MPLS Label",
+      "MP-BGP"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "core",
+    "title": "FEC",
+    "blurb": "One forwarding class, one label, one label-switched path",
+    "overview": "A **[[FEC]]** is a class of packets that share the same forwarding treatment: the same next hop, the same path and the same label. MPLS assigns one label per FEC, so the core only needs to recognise the label instead of reclassifying every packet. FECs explain why MPLS is fast and how VPNs carve out separate forwarding classes.",
+    "keyIdea": "Same forwarding treatment means the same label. One label per FEC, LDP binds label to FEC, and VPNs create per-VRF FECs.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "What defines a FEC",
+        "cols": [
+          "Criteria",
+          "Example"
+        ],
+        "rows": [
+          [
+            "**Prefix**",
+            "A /24 destination"
+          ],
+          [
+            "**Next hop**",
+            "The same egress"
+          ],
+          [
+            "**QoS**",
+            "The same class"
+          ],
+          [
+            "**VPN**",
+            "The same VRF"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "One FEC, one label",
+        "cols": [
+          "Item",
+          "Relationship"
+        ],
+        "rows": [
+          [
+            "**FEC**",
+            "Packet class"
+          ],
+          [
+            "**Label**",
+            "Per-FEC binding"
+          ],
+          [
+            "**LSP**",
+            "Per-FEC path"
+          ],
+          [
+            "**Binding**",
+            "Label to FEC"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "FEC granularity",
+        "cols": [
+          "Granularity",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Host, per /32**",
+            "Fine control, many labels"
+          ],
+          [
+            "**Aggregate**",
+            "Coarse, fewer labels"
+          ],
+          [
+            "**Per-VRF**",
+            "VPN separation"
+          ],
+          [
+            "**Per-prefix**",
+            "Standard IGP behaviour"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "How ingress classifies",
+        "cols": [
+          "Packet",
+          "FEC"
+        ],
+        "rows": [
+          [
+            "To 10.0.0.0/24",
+            "FEC A"
+          ],
+          [
+            "To 10.1.0.0/24",
+            "FEC B"
+          ],
+          [
+            "VPN prefix",
+            "Per-VRF FEC"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "FEC and LDP",
+        "cols": [
+          "Step",
+          "Detail"
+        ],
+        "rows": [
+          [
+            "1",
+            "The IGP installs the prefix"
+          ],
+          [
+            "2",
+            "A FEC is created"
+          ],
+          [
+            "3",
+            "A label is bound in the LIB"
+          ],
+          [
+            "4",
+            "The binding is advertised by LDP"
+          ],
+          [
+            "5",
+            "The LFIB entry is built"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "FEC in VPNs",
+        "p": "VPN routes are their own **FECs**, scoped per VRF and made unique with a route distinguisher. The service label is what separates customers inside the shared core."
+      }
+    ],
+    "commands": [
+      {
+        "label": "Inspect bindings and forwarding",
+        "code": "show mpls ldp bindings\nshow mpls forwarding-table"
+      },
+      {
+        "label": "Inspect the CEF entry behind a FEC",
+        "code": "show ip cef\nshow ip cef vrf CUST1"
+      },
+      {
+        "label": "Debug FEC and label binding",
+        "code": "debug mpls ldp"
+      }
+    ],
+    "traps": [
+      "A FEC is a class with the **same forwarding treatment**, so it gets the same label.",
+      "MPLS assigns **one label per FEC**.",
+      "Ingress classifies IP into a FEC; the core only sees the **label**.",
+      "LDP advertises **label to FEC bindings**.",
+      "VPNs create **per-VRF FECs**, made unique with an RD.",
+      "Finer granularity means **more labels and more control**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "FEC"
+      ],
+      "rows": [
+        [
+          "Meaning",
+          "Same treatment"
+        ],
+        [
+          "Label",
+          "One per FEC"
+        ],
+        [
+          "Basis",
+          "Prefix and next hop"
+        ],
+        [
+          "LDP",
+          "Binds the label"
+        ],
+        [
+          "LSP",
+          "Per-FEC path"
+        ],
+        [
+          "Granular",
+          "/32 or aggregate"
+        ],
+        [
+          "VPN",
+          "Per-VRF FEC"
+        ],
+        [
+          "Core",
+          "Label only"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. Labels",
+        "d": "The binding target"
+      },
+      {
+        "t": "03. LER",
+        "d": "Where classification happens"
+      },
+      {
+        "t": "07. VRF",
+        "d": "Per-VRF forwarding"
+      }
+    ],
+    "glossary": [
+      "FEC",
+      "MPLS",
+      "MPLS Label",
+      "LER",
+      "MPLS VPN",
+      "LFIB"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "vpn",
+    "title": "VRF",
+    "blurb": "Per-tenant routing and forwarding, with RD and RT doing different jobs",
+    "overview": "A **[[VRF]]** is a per-tenant virtual routing table and forwarding instance on a PE router. Each VRF has its own RIB, FIB, interfaces and routes, so customers stay isolated even though they share the same physical router and core. VRFs plus route distinguishers are the foundation of **[[MPLS VPN|MPLS L3VPN]]**.",
+    "keyIdea": "A VRF isolates routes and forwarding per tenant. RD creates uniqueness, RT controls membership, and ip vrf forwarding removes the interface IP.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "What a VRF contains",
+        "cols": [
+          "Table or item",
+          "Per-VRF"
+        ],
+        "rows": [
+          [
+            "**RIB**",
+            "Routes"
+          ],
+          [
+            "**CEF and FIB**",
+            "Forwarding"
+          ],
+          [
+            "**Interfaces**",
+            "CE-facing"
+          ],
+          [
+            "**Routing protocol**",
+            "eBGP, OSPF, EIGRP or static"
+          ],
+          [
+            "**Labels**",
+            "VPN service label"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "VRF versus global",
+        "cols": [
+          "Aspect",
+          "Global",
+          "VRF"
+        ],
+        "rows": [
+          [
+            "RIB",
+            "Main table",
+            "Per-VRF table"
+          ],
+          [
+            "Visibility",
+            "All routes",
+            "Only VRF routes"
+          ],
+          [
+            "CE sharing",
+            "None",
+            "Per customer"
+          ],
+          [
+            "Use",
+            "Core and Internet",
+            "L3VPN"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  ip vrf CUST1\n   rd 65000:100\n   route-target export 65000:100\n   route-target import 65000:100\n  !\n  interface GigabitEthernet0/1\n   ip vrf forwarding CUST1\n   ip address 10.10.0.1 255.255.255.0\n  !\n  router bgp 65000\n   address-family ipv4 vrf CUST1"
+      },
+      {
+        "kind": "table",
+        "h": "RD versus RT",
+        "cols": [
+          "Item",
+          "Function"
+        ],
+        "rows": [
+          [
+            "**RD**",
+            "Makes prefixes unique in MP-BGP"
+          ],
+          [
+            "**RT**",
+            "Import and export membership policy"
+          ],
+          [
+            "**RD role**",
+            "Identity"
+          ],
+          [
+            "**RT role**",
+            "Who shares the VRF"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "VRF-aware features",
+        "cols": [
+          "Feature",
+          "Use"
+        ],
+        "rows": [
+          [
+            "**Static routes**",
+            "Per VRF"
+          ],
+          [
+            "**eBGP and iBGP**",
+            "Per VRF address family"
+          ],
+          [
+            "**OSPF and EIGRP**",
+            "Per-VRF process"
+          ],
+          [
+            "**Ping and traceroute**",
+            "Use the vrf keyword"
+          ],
+          [
+            "**Management**",
+            "SNMP and Telnet can be VRF-aware"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show ip vrf%%**",
+            "VRF list"
+          ],
+          [
+            "**%%show ip vrf detail%%**",
+            "RD, RT and interfaces"
+          ],
+          [
+            "**%%show ip route vrf CUST1%%**",
+            "Per-VRF routes"
+          ],
+          [
+            "**%%ping vrf CUST1 10.10.0.2%%**",
+            "VRF-aware reachability"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Create the VRF and bind an interface",
+        "code": "ip vrf CUST1\n rd 65000:100\n route-target export 65000:100\n route-target import 65000:100\ninterface GigabitEthernet0/1\n ip vrf forwarding CUST1\n ip address 10.10.0.1 255.255.255.0"
+      },
+      {
+        "label": "Verify VRFs and routes",
+        "code": "show ip vrf\nshow ip vrf detail\nshow ip route vrf CUST1"
+      },
+      {
+        "label": "Test from inside the VRF",
+        "code": "show ip cef vrf CUST1\nshow bgp vpnv4 vrf CUST1\nping vrf CUST1 10.10.0.2"
+      }
+    ],
+    "traps": [
+      "A VRF is a **per-tenant routing and forwarding instance**.",
+      "**RD gives uniqueness; RT gives membership**.",
+      "**%%ip vrf forwarding%%** removes the interface IP, so re-apply **%%ip address%%**.",
+      "Per-VRF BGP uses **%%address-family ipv4 vrf%%**.",
+      "Use **%%ping vrf X%%** for VRF-aware checks.",
+      "The **global table stays clean** of customer prefixes."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "VRF"
+      ],
+      "rows": [
+        [
+          "What",
+          "Virtual routing table"
+        ],
+        [
+          "Isolate",
+          "RIB, FIB and interfaces"
+        ],
+        [
+          "RD",
+          "Uniqueness"
+        ],
+        [
+          "RT",
+          "Membership"
+        ],
+        [
+          "Bind",
+          "ip vrf forwarding"
+        ],
+        [
+          "BGP",
+          "AF per VRF"
+        ],
+        [
+          "Ping",
+          "ping vrf"
+        ],
+        [
+          "Purpose",
+          "L3VPN"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "09. MPLS VPN",
+        "d": "VPNs built on VRFs"
+      },
+      {
+        "t": "08. MP-BGP",
+        "d": "How VRF routes travel"
+      }
+    ],
+    "glossary": [
+      "VRF",
+      "MP-BGP",
+      "MPLS VPN",
+      "MPLS",
+      "BGP",
+      "RIB",
+      "FIB",
+      "OSPF",
+      "EIGRP",
+      "Control Plane",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "vpn",
+    "title": "MP-BGP",
+    "blurb": "VPNv4, address families, and RD plus RT semantics",
+    "overview": "**[[MP-BGP]]** carries VPN routes between PE routers in an MPLS network. Address families plus the RD and RT model make overlapping customer prefixes unique and control who receives them. The VPNv4 address family is how the control plane builds L3VPNs.",
+    "keyIdea": "MP-BGP equals address family plus RD and RT. VPNv4 carries RD, IPv4 prefix and label; RD is uniqueness, RT is membership, and RTs ride as extended communities.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "Address families",
+        "cols": [
+          "Address family",
+          "What it carries"
+        ],
+        "rows": [
+          [
+            "**ipv4 unicast**",
+            "Normal BGP"
+          ],
+          [
+            "**ipv4 multicast**",
+            "Multicast NLRI"
+          ],
+          [
+            "**vpnv4**",
+            "VRF routes plus a label"
+          ],
+          [
+            "**ipv6 unicast**",
+            "IPv6"
+          ],
+          [
+            "**vpnv6**",
+            "IPv6 VPN routes"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The VPNv4 route",
+        "cols": [
+          "Field",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**RD**",
+            "Makes the prefix unique"
+          ],
+          [
+            "**IPv4 prefix**",
+            "The customer route"
+          ],
+          [
+            "**Label**",
+            "VPN service label"
+          ],
+          [
+            "**Next hop**",
+            "The egress PE"
+          ],
+          [
+            "**RT**",
+            "Membership policy"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RD formats and rules",
+        "cols": [
+          "Format",
+          "Example"
+        ],
+        "rows": [
+          [
+            "**ASN:NN**",
+            "65000:100"
+          ],
+          [
+            "**IP:NN**",
+            "10.0.0.1:100"
+          ],
+          [
+            "**Rule**",
+            "Must be unique per VRF on the PE"
+          ],
+          [
+            "**Overlap**",
+            "Customers may reuse the same IPv4 space"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "RT semantics",
+        "cols": [
+          "RT",
+          "Meaning"
+        ],
+        "rows": [
+          [
+            "**Export**",
+            "Tag routes leaving the VRF"
+          ],
+          [
+            "**Import**",
+            "Choose which routes enter the VRF"
+          ],
+          [
+            "**Policy**",
+            "Controls VPN membership"
+          ],
+          [
+            "**Topology**",
+            "Full mesh, hub-and-spoke or extranet"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Configuration",
+        "code": "  router bgp 65000\n   neighbor 192.0.2.2 remote-as 65000\n   !\n   address-family vpnv4\n    neighbor 192.0.2.2 activate\n    neighbor 192.0.2.2 send-community extended\n   exit-address-family\n  !\n  ip vrf CUST1\n   rd 65000:100\n   route-target export 65000:100\n   route-target import 65000:100"
+      },
+      {
+        "kind": "table",
+        "h": "Verification",
+        "cols": [
+          "Command",
+          "Shows"
+        ],
+        "rows": [
+          [
+            "**%%show bgp vpnv4 unicast all%%**",
+            "All VPNv4 routes"
+          ],
+          [
+            "**%%show bgp vpnv4 unicast vrf CUST1%%**",
+            "Routes for one VRF"
+          ],
+          [
+            "**%%show ip vrf detail%%**",
+            "RD and RT configuration"
+          ],
+          [
+            "**%%show ip route vrf CUST1%%**",
+            "Installed VRF routes"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Activate the VPNv4 session",
+        "code": "router bgp 65000\n neighbor 192.0.2.2 remote-as 65000\n address-family vpnv4\n  neighbor 192.0.2.2 activate\n  neighbor 192.0.2.2 send-community extended"
+      },
+      {
+        "label": "Verify VPNv4 routes",
+        "code": "show bgp vpnv4 unicast all\nshow bgp vpnv4 unicast vrf CUST1\nshow bgp vpnv4 all summary"
+      },
+      {
+        "label": "Verify VRF identity and routes",
+        "code": "show ip vrf detail\nshow ip route vrf CUST1"
+      }
+    ],
+    "traps": [
+      "MP-BGP uses the **address family plus RD and RT** model.",
+      "A **VPNv4 NLRI** carries the RD, the IPv4 prefix and a label.",
+      "**RD is uniqueness; RT is membership policy**.",
+      "RTs travel as **extended communities**, so extended send-community is required.",
+      "**%%show bgp vpnv4 unicast vrf X%%** is the key check.",
+      "The RD must be **unique per VRF** on the PE."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "MP-BGP"
+      ],
+      "rows": [
+        [
+          "AF",
+          "VPNv4"
+        ],
+        [
+          "NLRI",
+          "RD plus prefix plus label"
+        ],
+        [
+          "RD",
+          "Uniqueness"
+        ],
+        [
+          "RT",
+          "Membership"
+        ],
+        [
+          "Carries",
+          "Extended community"
+        ],
+        [
+          "Between",
+          "PE routers"
+        ],
+        [
+          "Enable",
+          "activate"
+        ],
+        [
+          "Show",
+          "show bgp vpnv4"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. VRF",
+        "d": "The local routing instance"
+      },
+      {
+        "t": "09. MPLS VPN",
+        "d": "The service it signals"
+      },
+      {
+        "t": "02. Labels",
+        "d": "The service label in the NLRI"
+      }
+    ],
+    "glossary": [
+      "MP-BGP",
+      "BGP",
+      "VRF",
+      "MPLS VPN",
+      "MPLS",
+      "Loopback Address",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "vpn",
+    "title": "MPLS VPN",
+    "blurb": "CE, PE and P roles, two labels, and three routing layers",
+    "overview": "**[[MPLS VPN|MPLS L3VPN]]** delivers private, isolated customer connectivity over a shared service-provider core. Each customer has a **[[VRF]]** on the PE. The PE exchanges routes with the customer edge, turns them into VPNv4 routes with a service label via MP-BGP, and the core carries them in a two-label stack.",
+    "keyIdea": "L3VPN equals VRF plus MP-BGP plus a two-label stack. The top label is transport, the inner is service, and RTs define the VPN topology.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The roles",
+        "cols": [
+          "Role",
+          "Device",
+          "Job"
+        ],
+        "rows": [
+          [
+            "**CE**",
+            "Customer router",
+            "Faces the PE"
+          ],
+          [
+            "**PE**",
+            "Provider edge",
+            "VRF plus MP-BGP"
+          ],
+          [
+            "**P**",
+            "Provider core",
+            "Label switching only"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "The two-label stack",
+        "cols": [
+          "Label",
+          "Layer",
+          "Purpose"
+        ],
+        "rows": [
+          [
+            "**Top**",
+            "Transport",
+            "Reaches the egress PE via LDP"
+          ],
+          [
+            "**Inner**",
+            "Service or VPN",
+            "Selects the VRF or CE at the egress"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "End-to-end flow",
+        "code": "  CE1 --(IP)--> PE1: push [transport | service]\n              P: swap the transport label\n              PE2: pop transport, read service label -> VRF -> CE2"
+      },
+      {
+        "kind": "table",
+        "h": "End-to-end steps",
+        "cols": [
+          "Step",
+          "Who",
+          "Action"
+        ],
+        "rows": [
+          [
+            "1",
+            "CE1",
+            "Sends plain IP"
+          ],
+          [
+            "2",
+            "PE1",
+            "VRF lookup, then push labels"
+          ],
+          [
+            "3",
+            "P",
+            "Swap the top label"
+          ],
+          [
+            "4",
+            "PE2",
+            "Pop transport, use service label, deliver to CE2"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "Control plane plumbing",
+        "cols": [
+          "Plane",
+          "Protocol",
+          "Result"
+        ],
+        "rows": [
+          [
+            "**Core**",
+            "IGP plus LDP",
+            "Transport labels"
+          ],
+          [
+            "**VPN**",
+            "MP-BGP",
+            "VPNv4 and service label"
+          ],
+          [
+            "**CE to PE**",
+            "eBGP, OSPF, EIGRP or static",
+            "Customer routes"
+          ]
+        ]
+      },
+      {
+        "kind": "table",
+        "h": "VPN models",
+        "cols": [
+          "Model",
+          "RT policy"
+        ],
+        "rows": [
+          [
+            "**Full mesh**",
+            "All RTs shared"
+          ],
+          [
+            "**Hub and spoke**",
+            "Import and export split"
+          ],
+          [
+            "**Extranet**",
+            "Selective sharing"
+          ]
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "label": "Verify the end-to-end service",
+        "code": "show ip vrf\nshow ip route vrf CUST1\nshow bgp vpnv4 unicast vrf CUST1"
+      },
+      {
+        "label": "Verify labels and forwarding",
+        "code": "show mpls forwarding-table\nshow mpls forwarding vrf CUST1"
+      },
+      {
+        "label": "Verify from inside the VRF",
+        "code": "ping vrf CUST1 10.10.0.2\ntraceroute vrf CUST1 10.10.0.2"
+      }
+    ],
+    "traps": [
+      "L3VPN equals **VRF plus MP-BGP plus a two-label stack**.",
+      "The **PE** is edge intelligence; the **P** only switches labels.",
+      "The top label is **transport, from LDP**; the inner label is **service or VPN**.",
+      "**RTs** define VPN membership and topology.",
+      "CE to PE routing can be **eBGP, OSPF, EIGRP or static**.",
+      "The core only looks at the **top label**; the egress PE reads the inner one."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "MPLS VPN"
+      ],
+      "rows": [
+        [
+          "Edge",
+          "PE plus VRF"
+        ],
+        [
+          "Core",
+          "P, labels only"
+        ],
+        [
+          "Customer",
+          "CE"
+        ],
+        [
+          "Transport label",
+          "LDP"
+        ],
+        [
+          "Service label",
+          "VPN"
+        ],
+        [
+          "Control",
+          "MP-BGP"
+        ],
+        [
+          "Topology",
+          "RTs"
+        ],
+        [
+          "Verify",
+          "show bgp vpnv4"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "07. VRF",
+        "d": "Customer separation"
+      },
+      {
+        "t": "08. MP-BGP",
+        "d": "Route exchange"
+      },
+      {
+        "t": "02. Labels",
+        "d": "The stack in detail"
+      }
+    ],
+    "glossary": [
+      "MPLS VPN",
+      "MPLS",
+      "VRF",
+      "MP-BGP",
+      "MPLS Label",
+      "LSR",
+      "LER",
+      "BGP",
+      "OSPF",
+      "EIGRP",
+      "QoS",
+      "CEF"
+    ]
+  }
+];
 
         const GROUPS = [
           { key: 'core', label: 'MPLS Core', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
@@ -1465,6 +2888,7 @@
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });

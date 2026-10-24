@@ -391,6 +391,13 @@
 
               <p v-else-if="sec.kind === 'para'" class="prose-block mt-2 text-[14px] leading-7 text-slate-700 dark:text-slate-300" v-html="md(sec.p)"></p>
 
+              <div v-else-if="sec.kind === 'diagram'" class="mt-3">
+                <div class="overflow-x-auto rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/40">
+                  <div class="mx-auto max-w-3xl text-slate-700 dark:text-slate-300" v-html="sec.svg" style="min-width:720px"></div>
+                </div>
+                <p v-if="sec.caption" class="mt-1.5 text-center text-[12px] text-slate-500 dark:text-slate-400">{{ sec.caption }}</p>
+              </div>
+
               <div v-else-if="sec.kind === 'code'" class="mt-2 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
                 <pre class="overflow-x-auto p-4 text-[12.5px] leading-relaxed text-slate-200">{{ sec.code }}</pre>
               </div>
@@ -593,1482 +600,2604 @@
         const heroIntro = `**[[BGP]]** is the routing protocol of the internet, and it is driven entirely by **policy rather than speed**. This level follows the two session types — **[[eBGP]]** and **[[iBGP]]** — the **[[BGP Path Selection|best-path algorithm]]** and the attributes that steer it, **[[AS Path|AS path]]**, **[[Local Preference|local preference]]** and **[[MED]]**, then the scaling and policy work that makes it usable at scale.`;
 
         const topics = [
-          {
-            id: 't01', num: '01', group: 'fund', title: 'eBGP',
-            blurb: 'AD 20, TTL 1 by default, why the next hop changes, and the TCP/179 session underneath',
-            overview: '**[[eBGP]] (External BGP)** runs **between routers in different autonomous systems**. It is the internet’s inter-domain routing protocol, carrying prefixes across provider and customer boundaries. Because it crosses trust boundaries, its defaults are conservative: **AD of 20**, a **TTL of 1**, and the **next hop set to the neighbour’s own address** when advertising.',
-            keyIdea: 'eBGP is external, AD 20, TTL 1 — and it rewrites the next hop to itself on every advertisement.',
-            sections: [
-              { kind: 'table', h: 'The conservative defaults', cols: ['Setting', 'Value'], rows: [
-                ['Administrative Distance', '**20**'],
-                ['Default TTL', '**1**'],
-                ['Transport', 'TCP port **179**'],
-                ['Next hop on advertise', '**Set to the advertising router’s own address**'],
-                ['Re-advertised to other eBGP peers', 'Not by default — AS_PATH prevents that']
-              ]},
-              { kind: 'code', h: 'The session', code:
-`  Router A (AS 65001)              Router B (AS 65002)
-        |                                 |
-        |--------- TCP 179 -------------->|
-        |                                 |
-  Different ASes -> this is eBGP.` },
-              { kind: 'code', h: 'Peering up', code:
-`  router bgp 65001
-   neighbor 203.0.113.2 remote-as 65002
-   address-family ipv4
-    neighbor 203.0.113.2 activate` },
-              { kind: 'para', h: 'TTL 1 means multihop is needed', p: 'A TTL of 1 only reaches directly connected neighbours. Peering to a **loopback** or across a hop in the middle therefore needs **%%ebgp-multihop%%**, or the session simply never establishes.' },
-              { kind: 'code', h: 'Loopback peering', code:
-`  interface Loopback0
-   ip address 192.0.2.1 255.255.255.255
-
-  router bgp 65001
-   neighbor 192.0.2.2 remote-as 65002
-   neighbor 192.0.2.2 ebgp-multihop 2
-   neighbor 192.0.2.2 update-source Loopback0
-
-
-  No multihop, no session.` },
-              { kind: 'para', h: 'The next hop is rewritten', p: 'When eBGP advertises a prefix, it sets the **next hop to its own address**. That is what makes the path usable for the receiver, whose own routing table may know nothing about the sender’s internal topology.' },
-              { kind: 'code', h: 'What changes and what does not', code:
-`  eBGP  advertises  ->  next hop = ME
-  iBGP  advertises  ->  next hop unchanged (see note 02)
-
-
-  This asymmetry is the source of next-hop-self.` },
-              { kind: 'code', h: 'Loop prevention', code:
-`  My AS is already in the AS_PATH
-       |
-  Discard the route.
-
-
-  It is also why an eBGP-learned route is not
-  re-advertised to another eBGP peer in the same way.` },
-              { kind: 'code', h: 'A multihop requirement', code:
-`  router bgp 65001
-   neighbor 198.51.100.1 remote-as 65002
-   neighbor 198.51.100.1 ebgp-multihop 2
-   neighbor 198.51.100.1 update-source Loopback0` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp summary
-  show ip bgp neighbors
-  show tcp brief
-  show ip bgp` }
-            ],
-            commands: [
-              { label: 'Peer across an AS boundary', code:
-`router bgp 65001
- neighbor 203.0.113.2 remote-as 65002
- address-family ipv4
-  neighbor 203.0.113.2 activate` },
-              { label: 'Peer to a loopback', code:
-`router bgp 65001
- neighbor 192.0.2.2 remote-as 65002
- neighbor 192.0.2.2 ebgp-multihop 2
- neighbor 192.0.2.2 update-source Loopback0` },
-              { label: 'Verify the session', code:
-`show ip bgp summary
-show ip bgp neighbors 203.0.113.2` }
-            ],
-            traps: [
-              '**eBGP AD is 20; iBGP AD is 200.** The classic BGP trap.',
-              'Default TTL is **1**, so **%%ebgp-multihop%% is required** for any non-direct eBGP session.',
-              '**eBGP changes the next hop on advertise.** iBGP does not.',
-              'eBGP-learned routes are **not re-advertised to other eBGP peers** — that is the loop prevention.',
-              'Peering runs over **TCP 179**, and the session must reach the neighbour’s **update-source** address.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Full name', 'External BGP'],
-                ['Scope', 'Between different autonomous systems'],
-                ['Administrative Distance', '20'],
-                ['Default TTL', '1'],
-                ['Multihop', 'ebgp-multihop for non-direct peers'],
-                ['Transport', 'TCP port 179'],
-                ['Next hop', 'Set to the advertising router’s own address'],
-                ['Loop prevention', 'AS_PATH'],
-                ['Typical peer address', 'A loopback with update-source'],
-                ['Verification', 'show ip bgp summary']
-              ]
-            },
-            related: [
-              { t: '02. iBGP', d: 'the internal counterpart with very different defaults' },
-              { t: '04. AS Path', d: 'the loop prevention that keeps eBGP safe' },
-              { t: '14. Troubleshooting', d: 'when the session never establishes' }
-            ],
-            glossary: ['eBGP', 'BGP', 'Administrative Distance', 'AS Path', 'Control Plane', 'Loopback Address']
-          },
-          {
-            id: 't02', num: '02', group: 'fund', title: 'iBGP',
-            blurb: 'AD 200, no next-hop rewrite, the split-horizon rule, and the full mesh it forces',
-            overview: '**[[iBGP]] (Internal BGP)** runs **between routers in the same autonomous system**, carrying BGP routes from edge to edge. Because iBGP **does not change the next hop** and applies a **split-horizon** rule, it needs three things to work: a **full mesh** of sessions, **%%next-hop-self%%** at the eBGP boundary, and either **[[Route Reflector|route reflectors]]** or a **[[Confederation|confederation]]** to scale.',
-            keyIdea: 'iBGP leaves the next hop alone, so the edge has to fix it. And it will not tell one iBGP peer what another iBGP peer said.',
-            sections: [
-              { kind: 'table', h: 'The two session types', cols: ['', 'eBGP', 'iBGP'], rows: [
-                ['AS relationship', 'Different ASes', 'The same AS'],
-                ['Administrative Distance', '**20**', '**200**'],
-                ['Next hop on advertise', 'Changed to self', '**Unchanged**'],
-                ['Default TTL', '1', '1'],
-                ['Scaling', 'Session per neighbour', 'Full mesh without help']
-              ]},
-              { kind: 'para', h: 'The next hop has to be fixed', p: 'Because iBGP preserves the next hop, a prefix learned from an **[[eBGP]]** peer arrives inside the AS still pointing at the **external** neighbour. Routers further in may have no route to that address, so the edge router sets **%%next-hop-self%%**.' },
-              { kind: 'code', h: 'The problem and the fix', code:
-`  Edge                     Internal peer
-  10.1.1.1                 10.9.9.9
-    |                          |
-    |-- iBGP advertises ------>|   next hop still 203.0.113.2
-    |                          |   ... which it cannot reach
-    |
-  FIX:  neighbor 10.9.9.9 next-hop-self` },
-              { kind: 'code', h: 'Configuring it', code:
-`  router bgp 65001
-   neighbor 10.9.9.9 remote-as 65001
-   neighbor 10.9.9.9 update-source Loopback0
-   neighbor 10.9.9.9 next-hop-self` },
-              { kind: 'para', h: 'Split horizon is why the mesh exists', p: 'An iBGP-learned route is **not advertised to another iBGP peer**. Without an exception, every router must speak iBGP to every other router — **n(n−1)/2 sessions** — which stops scaling well before the network is large.' },
-              { kind: 'code', h: 'The full mesh', code:
-`  Routers      Sessions
-     4              6
-     8             28
-    16            120
-    50           1225
-
-
-  n(n-1) / 2.
-  This is the problem route reflectors solve.` },
-              { kind: 'code', h: 'The exception', code:
-`  An iBGP-learned route is NOT sent to another iBGP peer.
-
-  EXCEPT through:
-     route reflector   (note 08)
-     confederation     (note 09)
-
-
-  Both bypass split horizon deliberately.` },
-              { kind: 'para', h: 'Synchronization is off by default', p: 'BGP **synchronization** used to require an IGP route before advertising a BGP prefix. It has been off by default for a very long time, so do not expect it to be on, and do not build a design that assumes it.' },
-              { kind: 'code', h: 'Sessions and loopbacks', code:
-`  iBGP sessions conventionally use LOOPBACK addresses,
-  which makes the session independent of any single link.
-
-  neighbor 10.1.1.1 remote-as 65001
-  neighbor 10.1.1.1 update-source Loopback0
-
-
-  Same remote-as on both ends.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp summary
-  show ip bgp neighbors
-  show ip bgp all` }
-            ],
-            commands: [
-              { label: 'Internal sessions with next-hop-self', code:
-`router bgp 65001
- neighbor 10.9.9.9 remote-as 65001
- neighbor 10.9.9.9 update-source Loopback0
- neighbor 10.9.9.9 next-hop-self` },
-              { label: 'Check the session state', code:
-`show ip bgp summary
-show ip bgp neighbors 10.9.9.9` }
-            ],
-            traps: [
-              '**iBGP AD is 200.** eBGP is 20.',
-              '**iBGP does not change the next hop**, so **%%next-hop-self%% is required at the edge.**',
-              '**Split horizon:** an iBGP-learned route is not sent to another iBGP peer — hence the full mesh, reflectors or confederations.',
-              '**Synchronization is off by default.** Do not expect it to be on.',
-              'An iBGP session uses the **same remote-as** on both ends, typically over loopbacks with %%update-source%%.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Full name', 'Internal BGP'],
-                ['Scope', 'Between routers in the same AS'],
-                ['Administrative Distance', '200'],
-                ['Next hop', 'Unchanged — use next-hop-self'],
-                ['Split horizon', 'Yes, iBGP-learned routes are not re-sent'],
-                ['Default full mesh', 'n(n−1)/2 sessions'],
-                ['Scaling options', 'Route reflectors, confederations'],
-                ['Synchronization', 'Off by default'],
-                ['Typical peer address', 'Loopback with update-source'],
-                ['Verification', 'show ip bgp summary']
-              ]
-            },
-            related: [
-              { t: '08. Route Reflector', d: 'the usual answer to the mesh' },
-              { t: '09. Confederation', d: 'the alternative' },
-              { t: '01. eBGP', d: 'the defaults that differ' }
-            ],
-            glossary: ['iBGP', 'BGP', 'Administrative Distance', 'Route Reflector', 'Confederation', 'Loopback Address', 'Data Plane']
-          },
-          {
-            id: 't03', num: '03', group: 'fund', title: 'Path Selection',
-            blurb: 'A strict priority list where the first step that differs decides, and later steps never run',
-            overview: 'When **[[BGP]]** receives several paths for one prefix it runs a **deterministic [[BGP Path Selection|best-path algorithm]]** — a strict priority list. One best path is kept per prefix and installed in the RIB. **The first tie-breaker that differs decides the winner**, and later steps only run when earlier ones tie.',
-            keyIdea: 'Weight, then Local Preference, then AS_PATH, then Origin, then MED. A decision at step 2 means steps 3 onward never run.',
-            sections: [
-              { kind: 'code', h: 'The priority list', code:
-`   1. Weight            highest wins   (Cisco, local only)
-   2. Local Preference  highest wins
-   3. AS_PATH           shortest wins
-   4. Origin            i < e < ?
-   5. MED               lowest wins, same AS only
-   6. eBGP over iBGP
-   7. Lowest IGP metric to the next hop
-   8. Lowest router ID
-   9. Cluster length, then oldest neighbour
-
-
-  Stop at the first one that differs.` },
-              { kind: 'table', h: 'Each step in one place', cols: ['Step', 'Attribute', 'Direction'], rows: [
-                ['1', '**Weight**', 'Highest wins, local only'],
-                ['2', '**Local Preference**', 'Highest wins'],
-                ['3', '**AS_PATH**', 'Shortest wins'],
-                ['4', '**Origin**', 'i beats e beats ?'],
-                ['5', '**MED**', 'Lowest wins, same-AS only'],
-                ['6', '**eBGP before iBGP**', 'External preferred'],
-                ['7', 'Lowest IGP metric', 'Reach the next hop cheaply'],
-                ['8', 'Lowest router ID', 'Final tie-break']
-              ]},
-              { kind: 'para', h: 'The mantra', p: '**Weight beats Local Preference beats AS_PATH beats MED**. If you remember nothing else about BGP, remember that order — it resolves most exam questions outright.' },
-              { kind: 'code', h: 'The mantra, once more', code:
-`  Weight  >  Local Pref  >  AS_PATH  >  MED
-
-
-  Weight        highest
-  Local Pref    highest
-  AS_PATH       shortest
-  MED           lowest` },
-              { kind: 'code', h: 'Origin codes', code:
-`  i  IGP        set by the network statement
-  e  EGP        historic
-  ?  Incomplete redistribution
-
-
-  i beats e beats ?.
-  A redistributed route shows as ?` },
-              { kind: 'para', h: 'The MED rule people miss', p: 'MED is compared **only between paths learned from the same neighbour AS**. Paths from two different providers are simply not ranked against each other on MED unless **%%bgp always-compare-med%%** is configured.' },
-              { kind: 'code', h: 'MED and the same-AS rule', code:
-`  Both paths from AS 65002   ->  MED is compared
-  One from 65002, one from 65003  ->  MED is NOT compared
-
-  Unless:  bgp always-compare-med` },
-              { kind: 'para', h: 'eBGP preference comes late', p: 'The preference for **[[eBGP]]** over **[[iBGP]]** is step 6 — it runs **only after** the metric comparisons. Students often assume external wins immediately; it does not.' },
-              { kind: 'code', h: 'Per prefix, not per neighbour', code:
-`  show ip bgp
-
-  One BEST path per prefix.
-
-  A neighbour can win for one prefix
-  and lose for another.
-  The decision is never per neighbour.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp
-  show ip bgp <prefix>
-  show ip bgp <prefix> longer-prefixes
-  show ip route bgp` }
-            ],
-            commands: [
-              { label: 'Read the table', code:
-`show ip bgp
-show ip bgp 203.0.113.0/24` },
-              { label: 'See the RIB result', code:
-`show ip route bgp` }
-            ],
-            traps: [
-              '**Order matters.** A decision at step 2 means steps 3 to 9 never run.',
-              '**Weight beats Local Preference beats AS_PATH beats MED.**',
-              '**Origin:** i beats e beats ? — a redistributed route is **?**.',
-              'MED is compared **only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.',
-              '**eBGP beats iBGP only at step 6** — after the metric comparisons.',
-              'The best path is per **prefix**, never per neighbour.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Name', 'BGP best-path selection'],
-                ['Style', 'Strict priority, first difference wins'],
-                ['1', 'Weight, highest, local only'],
-                ['2', 'Local Preference, highest'],
-                ['3', 'AS_PATH, shortest'],
-                ['4', 'Origin, i then e then ?'],
-                ['5', 'MED, lowest, same AS only'],
-                ['6', 'eBGP before iBGP'],
-                ['7', 'Lowest IGP metric to next hop'],
-                ['8', 'Lowest router ID'],
-                ['9', 'Cluster length, then oldest neighbour'],
-                ['Scope', 'One best path per prefix'],
-                ['MED caveat', 'Same neighbour AS unless always-compare-med'],
-                ['Verification', 'show ip bgp']
-              ]
-            },
-            related: [
-              { t: '04. AS Path', d: 'step 3 of the list' },
-              { t: '05. Local Preference', d: 'step 2' },
-              { t: '06. MED', d: 'step 5, and its same-AS rule' }
-            ],
-            glossary: ['BGP Path Selection', 'BGP', 'AS Path', 'Local Preference', 'MED', 'eBGP', 'iBGP', 'Routing Table']
-          },
-          {
-            id: 't04', num: '04', group: 'fund', title: 'AS Path',
-            blurb: 'Well-known mandatory, loop prevention and step 3 of best path, plus as-path prepend',
-            overview: '**[[AS Path|AS_PATH]]** is the **well-known mandatory** **[[BGP]]** attribute recording every autonomous system a route traversed. It does two jobs at once: **loop prevention** — a route already containing my AS is discarded — and **path selection**, as step 3 of best path, where **shorter is preferred**.',
-            keyIdea: 'eBGP prepends its own AS; iBGP does not. And when you prepend, you prepend your own AS — never the peer’s.',
-            sections: [
-              { kind: 'code', h: 'What it records', code:
-`  show ip bgp
-
-  *> 203.0.113.0/24  192.0.2.1  0 65001 65002 i
-                             ^      ^^^^^^^^^
-                             |      the AS path
-                             next hop` },
-              { kind: 'table', h: 'The two jobs', cols: ['Job', 'Mechanism'], rows: [
-                ['**Loop prevention**', 'A route whose AS_PATH contains my AS is discarded'],
-                ['**Path selection**', 'Step 3 of best path — shorter wins'],
-                ['**Steering**', '%%as-path prepend%% makes my path look longer to neighbours']
-              ]},
-              { kind: 'para', h: 'eBGP prepends, iBGP does not', p: 'Each **[[eBGP]]** hop adds its AS to the front of the path. **[[iBGP]]** does not, because inside an AS the routers are the same administrative domain — which is why an iBGP-only view shows a single AS.' },
-              { kind: 'code', h: 'The asymmetry', code:
-`  eBGP advertise  ->  my AS is PREPENDED
-  iBGP advertise  ->  the AS path is unchanged
-
-
-  So the path length counts inter-AS hops only.` },
-              { kind: 'para', h: 'Prepending steers inbound traffic', p: 'Adding your own AS to the path a few times makes that route look longer to the neighbour, so they prefer the other side. That is how inbound traffic is steered — but you prepend **your own** AS. Prepending the **peer’s** AS is the classic mistake.' },
-              { kind: 'code', h: 'As-path prepend', code:
-`  route-map PREPEND-OUT permit 10
-   match as-path 10
-   set as-path prepend 65001 65001
-
-  ip as-path access-list 10 permit _65002$
-
-
-  YOUR AS, repeated.
-  Not the peer's.` },
-              { kind: 'code', h: 'The mistake', code:
-`  WRONG:   set as-path prepend 65002   <- the PEER's AS
-  RIGHT:   set as-path prepend 65001   <- your own AS
-
-
-  Prepending the peer's AS confuses loop
-  prevention rather than influencing it.` },
-              { kind: 'para', h: 'The regex vocabulary', p: 'AS-path filtering uses regex. **%%_%% matches a space, brace or comma**, **%%^%% and %%$%% anchor** the start and end, and the pattern **%%^$%%** matches an empty path — a **locally originated** route.' },
-              { kind: 'code', h: 'The regex rules', code:
-`  _        space, brace or comma boundary
-  ^        start of path
-  $        end of path
-  ^$       EMPTY path = locally originated
-
-
-  ip as-path access-list 10 permit ^$
-  ip as-path access-list 10 permit _65001$` },
-              { kind: 'code', h: 'AS_SET', code:
-`  AS_SET appears from AGGREGATION (aggregate-address),
-  not from normal advertisement.
-
-  65001 { 65002, 65003 }
-
-
-  Curly braces = the set of origin ASes.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp
-  show ip bgp regexp _65001$
-  show ip bgp neighbors advertised-routes
-  show ip bgp neighbors received-routes` }
-            ],
-            commands: [
-              { label: 'Prepend to steer inbound', code:
-`ip as-path access-list 10 permit _65002$
-route-map PREPEND-OUT permit 10
- match as-path 10
- set as-path prepend 65001 65001
-router bgp 65001
- neighbor 203.0.113.2 route-map PREPEND-OUT out` },
-              { label: 'Filter with a regex', code:
-`ip as-path access-list 10 permit ^$
-ip as-path access-list 10 permit _65001$` },
-              { label: 'Verify', code:
-`show ip bgp regexp _65001$
-show ip bgp neighbors advertised-routes` }
-            ],
-            traps: [
-              'AS_PATH is **well-known mandatory**.',
-              '**eBGP prepends its own AS; iBGP does not.**',
-              '**Shorter AS path wins** — step 3 of best path.',
-              '**Prepend your own AS only.** Prepending the peer’s AS is the classic exam mistake.',
-              'Regex separators: **%%_%% matches space, brace or comma**; %%^%% and %%$%% anchor; **%%^$%% means a locally originated route**.',
-              '**AS_SET appears from aggregation**, not from normal advertisement.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Name', 'AS_PATH'],
-                ['Class', 'Well-known mandatory'],
-                ['Records', 'Every AS the route traversed'],
-                ['Job 1', 'Loop prevention — my AS already present means discard'],
-                ['Job 2', 'Path selection, step 3, shorter wins'],
-                ['Job 3', 'Steering, via as-path prepend'],
-                ['eBGP', 'Prepends its own AS'],
-                ['iBGP', 'Does not prepend'],
-                ['Prepend target', 'Your own AS, never the peer’s'],
-                ['Regex underscore', 'Space, brace or comma'],
-                ['Regex ^$', 'Empty path, locally originated'],
-                ['AS_SET', 'From aggregation only'],
-                ['Verification', 'show ip bgp']
-              ]
-            },
-            related: [
-              { t: '03. Path Selection', d: 'where it ranks' },
-              { t: '10. Aggregation', d: 'where AS_SET comes from' },
-              { t: '13. Route Maps', d: 'how prepend is applied' }
-            ],
-            glossary: ['AS Path', 'BGP', 'eBGP', 'iBGP', 'BGP Path Selection', 'Route Map', 'Control Plane']
-          },
-          {
-            id: 't05', num: '05', group: 'fund', title: 'Local Preference',
-            blurb: 'Step 2, higher wins, default 100, and the outbound tool the whole AS agrees on',
-            overview: '**[[Local Preference]]** is the **well-known discretionary** attribute telling the **whole autonomous system** which **outbound** path is preferred. **Higher is better** — best-path step 2, right after Weight. It is set **at the edge** on routes received from eBGP, then propagates **inside the AS over iBGP** so every router makes the same choice.',
-            keyIdea: 'Set it locally, inside your AS, and it spreads to everyone. That is why Local Preference is the primary outbound tool.',
-            sections: [
-              { kind: 'table', h: 'The profile', cols: ['Property', 'Value'], rows: [
-                ['Class', '**Well-known discretionary**'],
-                ['Direction', '**Outbound** — which path your AS uses to leave'],
-                ['Comparison', '**Higher is better**, step 2'],
-                ['Default', '**100**'],
-                ['Seen externally', 'Never — it does not leave your AS'],
-                ['Propagates by', '**iBGP**']
-              ]},
-              { kind: 'para', h: 'Set at the edge, agreed by all', p: 'Local Preference is set **where the eBGP route arrives**, then carried inward over **[[iBGP]]**. Every router in the AS sees the same value, so the whole autonomous system exits the same way — which is exactly the property that makes it the main outbound lever.' },
-              { kind: 'code', h: 'Where it is set', code:
-`  Provider A        Provider B
-  AS 65001          AS 65002
-     |                 |
-     +--- Edge -------+
-             |
-        set local-preference HERE
-             |
-             +-- iBGP -->  every other router
-
-
-  Never set at the far end.` },
-              { kind: 'code', h: 'Making one provider the preferred exit', code:
-`  router bgp 65000
-   neighbor 203.0.113.2 route-map SET-LP-IN in
-
-  route-map SET-LP-IN permit 10
-   match ip address prefix-list PROVIDER-A
-   set local-preference 150
-
-
-  Higher than the default 100, so it wins.` },
-              { kind: 'code', h: 'Setting a floor for everything', code:
-`  router bgp 65000
-   bgp default local-preference 130
-
-
-  Global. A per-neighbour route-map
-  overrides it for the prefixes it matches.` },
-              { kind: 'code', h: 'It never leaves', code:
-`  Your AS                     The internet
-     |                            |
-     |-- Local Preference ------->X   stripped
-
-
-  External routers never see it.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp
-  show ip bgp neighbors 203.0.113.2 received-routes
-  show ip route bgp` }
-            ],
-            commands: [
-              { label: 'Prefer one exit', code:
-`ip prefix-list PROVIDER-A seq 10 permit 203.0.113.0/24
-route-map SET-LP-IN permit 10
- match ip address prefix-list PROVIDER-A
- set local-preference 150
-router bgp 65000
- neighbor 203.0.113.2 route-map SET-LP-IN in` },
-              { label: 'Raise the floor globally', code:
-`router bgp 65000
- bgp default local-preference 130` },
-              { label: 'Verify', code:
-`show ip bgp
-show ip bgp neighbors 203.0.113.2 received-routes` }
-            ],
-            traps: [
-              '**Higher Local Preference wins** — step 2, right after Weight.',
-              'The default is **100**.',
-              'It is set **inbound from eBGP** and is **never seen by external routers**.',
-              'It propagates **via iBGP only** — that is the AS-wide consistency trick.',
-              '%%bgp default local-preference%% sets the global default; a **per-neighbour route-map overrides it** for matched prefixes.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Class', 'Well-known discretionary'],
-                ['Purpose', 'Choose the outbound path for the whole AS'],
-                ['Direction', 'Outbound'],
-                ['Comparison', 'Higher is better'],
-                ['Best-path step', '2'],
-                ['Default', '100'],
-                ['Set', 'Inbound, on routes received from eBGP'],
-                ['Propagates', 'Inside the AS via iBGP'],
-                ['External visibility', 'None'],
-                ['Global default', 'bgp default local-preference'],
-                ['Override', 'A per-neighbour route-map'],
-                ['Against MED', 'Step 2 always beats step 5'],
-                ['Verification', 'show ip bgp neighbors received-routes']
-              ]
-            },
-            related: [
-              { t: '03. Path Selection', d: 'where it sits in the order' },
-              { t: '06. MED', d: 'the inbound counterpart' },
-              { t: '13. Route Maps', d: 'how the value is set' }
-            ],
-            glossary: ['Local Preference', 'BGP', 'iBGP', 'eBGP', 'BGP Path Selection', 'Route Map', 'Control Plane']
-          }
-        ,
-          {
-            id: 't06', num: '06', group: 'fund', title: 'MED',
-            blurb: 'Step 5, lower wins, compared only inside the same neighbour AS, and the missing-value trap',
-            overview: '**[[MED]] (Multi-Exit Discriminator)** is the **optional non-transitive** attribute that tells a neighbour AS **which of your exit points** to use for **inbound** traffic. It is **advertised outbound and compared inbound**, **lower is better**, and it is **compared only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.',
-            keyIdea: 'Local Preference is how you choose. MED is how you ask. And it only speaks to one AS at a time.',
-            sections: [
-              { kind: 'table', h: 'The profile', cols: ['Property', 'Value'], rows: [
-                ['Class', '**Optional non-transitive**'],
-                ['Direction', '**Inbound** — influences how a neighbour reaches you'],
-                ['Comparison', '**Lower is better**, step 5'],
-                ['Missing value', '**0**, which can accidentally win'],
-                ['Compared', '**Only between paths from the same neighbour AS**'],
-                ['Bypass', '%%bgp always-compare-med%%']
-              ]},
-              { kind: 'para', h: 'The direction trap', p: 'MED is **set outbound and compared inbound**. You advertise it to ask the neighbour for a particular entry point; the neighbour compares it on the way in. That split direction is the single most common way students invert the concept.' },
-              { kind: 'code', h: 'Set out, compare in', code:
-`  YOUR router                  Neighbour AS
-     |                              |
-     |-- MED advertised ----------->|   you SET it here
-     |                              |
-     |                              +-- compares it
-     |                                 on the way IN` },
-              { kind: 'code', h: 'Lower is better', code:
-`  Exit A  MED 50   ->  preferred
-  Exit B  MED 100  ->  not preferred
-
-
-  Opposite of Local Preference,
-  which is higher-wins.` },
-              { kind: 'para', h: 'The same-AS rule', p: 'MED is compared **only between paths learned from the same neighbour AS**. Two paths from the same provider are ranked on MED; a path from each of two different providers is not — and **%%bgp always-compare-med%%** changes that, at the cost of predictability.' },
-              { kind: 'code', h: 'When MED applies', code:
-`  Both paths learned from AS 65002
-        -> MED compared
-
-  One from AS 65002, one from AS 65003
-        -> MED NOT compared
-
-  bgp always-compare-med
-        -> compared anyway` },
-              { kind: 'code', h: 'A missing MED wins by accident', code:
-`  Exit A  MED 0      (not advertised)
-  Exit B  MED 150
-
-  A wins, because a missing MED is treated as 0.
-
-
-  Advertise MED on every exit you care about.` },
-              { kind: 'para', h: 'It is non-transitive', p: '**[[MED]]** does not cross to a third autonomous system by default, which is the opposite of **[[Communities|communities]]**. If a neighbour has to carry the value onward, it has to be told to.' },
-              { kind: 'code', h: 'Configuring it', code:
-`  route-map SET-MED-OUT permit 10
-   set med 50
-
-  router bgp 65000
-   neighbor 203.0.113.2 route-map SET-MED-OUT out` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp
-  show ip bgp neighbors advertised-routes
-  show ip route bgp` }
-            ],
-            commands: [
-              { label: 'Advertise a MED', code:
-`route-map SET-MED-OUT permit 10
- set med 50
-router bgp 65000
- neighbor 203.0.113.2 route-map SET-MED-OUT out` },
-              { label: 'Allow cross-AS comparison', code:
-`router bgp 65000
- bgp always-compare-med` },
-              { label: 'Verify', code:
-`show ip bgp
-show ip bgp neighbors advertised-routes` }
-            ],
-            traps: [
-              '**Lower MED wins** — step 5 of best path.',
-              'It is compared **only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.',
-              '**Set outbound, compared inbound** — the direction trap.',
-              'A **missing MED is treated as 0**, so it can accidentally win.',
-              'MED is **optional non-transitive** — it does not cross to a third AS, unlike communities.',
-              '**Local Preference, step 2, always beats MED, step 5.**'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Full name', 'Multi-Exit Discriminator'],
-                ['Class', 'Optional non-transitive'],
-                ['Purpose', 'Ask a neighbour AS which of your exits to use'],
-                ['Direction', 'Set outbound, compared inbound'],
-                ['Comparison', 'Lower is better'],
-                ['Best-path step', '5'],
-                ['Missing value', 'Treated as 0'],
-                ['Compared with', 'Only paths from the same neighbour AS'],
-                ['Bypass', 'bgp always-compare-med'],
-                ['Does not cross', 'A third autonomous system'],
-                ['Beaten by', 'Local Preference at step 2'],
-                ['Verification', 'show ip bgp']
-              ]
-            },
-            related: [
-              { t: '05. Local Preference', d: 'the outbound counterpart that outranks it' },
-              { t: '03. Path Selection', d: 'its place in the order' },
-              { t: '14. Troubleshooting', d: 'when MED is not being compared' }
-            ],
-            glossary: ['MED', 'BGP', 'BGP Path Selection', 'Communities', 'Control Plane']
-          },
-          {
-            id: 't07', num: '07', group: 'fund', title: 'Communities',
-            blurb: 'Optional transitive tags, the send-community switch, and the four well-known values',
-            overview: '**[[Communities]]** are **optional transitive** tags attached to routes so operators can group them and apply policy **remotely** — the upstream performs the action, not the sender. Because they are transitive they **travel across AS boundaries**, unlike **[[MED]]**. The exam covers the **well-known communities**, the **ASN:value** format, and the **%%neighbor ... send-community%%** switch.',
-            keyIdea: 'Communities are a signal, not an action. Tagging does nothing on its own — and the tag never leaves unless send-community is configured.',
-            sections: [
-              { kind: 'code', h: 'The format', code:
-`  standard    ASN:value      e.g.  65001:100
-  extended    4-byte ASN:value
-
-
-  65001:100
-     ^   ^
-     |   the community value
-     the advertising ASN` },
-              { kind: 'table', h: 'The well-known communities', cols: ['Value', 'Effect'], rows: [
-                ['**NO_EXPORT**', 'Do not advertise outside this AS'],
-                ['**NO_ADVERTISE**', 'Do not advertise to **any** peer — it dies at this router'],
-                ['NO_PEER', 'Do not advertise to eBGP peers'],
-                ['LOCAL_AS', 'Do not advertise outside the local AS']
-              ]},
-              { kind: 'para', h: 'send-community is mandatory', p: 'Communities are **not sent by default**. Without **%%neighbor ... send-community%%** the tag never leaves the router, which is the number-one reason a community policy silently does nothing.' },
-              { kind: 'code', h: 'The switch everyone forgets', code:
-`  router bgp 65000
-   neighbor 203.0.113.2 send-community
-
-
-  Without this line,
-  the community is stripped on advertise,
-  and every downstream match fails.` },
-              { kind: 'code', h: 'Tagging a route', code:
-`  route-map TAG-OUT permit 10
-   match ip address prefix-list CUSTOMER-A
-   set community 65001:100
-
-  router bgp 65000
-   neighbor 198.51.100.1 route-map TAG-OUT out
-   neighbor 198.51.100.1 send-community` },
-              { kind: 'code', h: 'Acting on it downstream', code:
-`  ip community-list standard PREMIUM permit 65001:100
-
-  route-map SET-LP-IN permit 10
-   match community PREMIUM
-   set local-preference 200
-
-
-  The sender tags; the upstream acts.` },
-              { kind: 'table', h: 'Standard against expanded', cols: ['Type', 'Matching'], rows: [
-                ['**Standard** community-list', '**Exact** value match'],
-                ['**Expanded** community-list', '**Regular expression** match']
-              ]},
-              { kind: 'para', h: 'They cross ASes', p: 'Because communities are **optional transitive**, they cross autonomous systems — the opposite of **[[MED]]**. That is what makes a remote policy possible: the sender cannot apply anything itself.' },
-              { kind: 'code', h: 'NO_EXPORT against NO_ADVERTISE', code:
-`  NO_EXPORT      stays inside THIS AS
-                 -> other routers in my AS may use it
-
-  NO_ADVERTISE   dies at THIS router
-                 -> not sent to any peer at all` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp community 65001:100
-  show ip bgp neighbors 198.51.100.1 advertised-routes
-  show ip community-list` }
-            ],
-            commands: [
-              { label: 'Tag and actually send it', code:
-`route-map TAG-OUT permit 10
- match ip address prefix-list CUSTOMER-A
- set community 65001:100
-router bgp 65000
- neighbor 198.51.100.1 route-map TAG-OUT out
- neighbor 198.51.100.1 send-community` },
-              { label: 'Act on the tag', code:
-`ip community-list standard PREMIUM permit 65001:100
-route-map SET-LP-IN permit 10
- match community PREMIUM
- set local-preference 200` },
-              { label: 'Verify', code:
-`show ip bgp community 65001:100
-show ip bgp neighbors 198.51.100.1 advertised-routes` }
-            ],
-            traps: [
-              '%%send-community%% is **mandatory** — it is the number-one reason communities vanish.',
-              '**NO_EXPORT** stays in the AS; **NO_ADVERTISE** dies at this router.',
-              'Communities are **optional transitive**, so they cross AS boundaries — unlike **[[MED]]**.',
-              'A **standard** community-list matches **exactly**; an **expanded** one matches a **regex**.',
-              'The format is **ASN:value**, for example 65001:100.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Class', 'Optional transitive'],
-                ['Format', 'ASN:value, for example 65001:100'],
-                ['Purpose', 'Tag routes so policy can be applied remotely'],
-                ['Who acts', 'The upstream, not the sender'],
-                ['Default behaviour', 'Not sent — send-community is required'],
-                ['NO_EXPORT', 'Stays inside the AS'],
-                ['NO_ADVERTISE', 'Dies at this router'],
-                ['Standard list', 'Exact match'],
-                ['Expanded list', 'Regular expression'],
-                ['Crosses ASes', 'Yes'],
-                ['Verification', 'show ip bgp community <value>']
-              ]
-            },
-            related: [
-              { t: '06. MED', d: 'the attribute that does not cross' },
-              { t: '13. Route Maps', d: 'where the tag is set and matched' },
-              { t: '14. Troubleshooting', d: 'when the tag disappears' }
-            ],
-            glossary: ['Communities', 'BGP', 'MED', 'Route Map', 'Control Plane']
-          },
-          {
-            id: 't08', num: '08', group: 'scale', title: 'Route Reflector',
-            blurb: 'n(n-1)/2 down to n, the three loop-prevention attributes, and the client rule',
-            overview: 'A **[[Route Reflector|route reflector]]** breaks **[[iBGP]]**’s full-mesh requirement. One or more reflectors act as hubs that **re-advertise iBGP-learned routes**, cutting the session count from **n(n−1)/2 to n**. Loop freedom is guaranteed by three attributes — **ORIGINATOR_ID, CLUSTER_LIST and CLUSTER_ID** — which protect the network while iBGP split horizon is deliberately bypassed.',
-            keyIdea: 'A reflector is allowed to break split horizon because it carries the attributes that keep the result loop-free.',
-            sections: [
-              { kind: 'code', h: 'Before and after', code:
-`  FULL MESH, 16 routers              WITH ONE REFLECTOR
-
-    /\/\  120 sessions                    |
-   / /\ \                                 R
-  / /  \ \                              / | \
-                                        C   C
-  Every router peers with every          |
-  other router.                          C
-
-
-  n(n-1)/2   ->   n` },
-              { kind: 'table', h: 'The reflection rules', cols: ['Route learned from', 'Reflected to'], rows: [
-                ['A **client**', 'Clients **and** non-clients'],
-                ['A **non-client**', '**Clients only**'],
-                ['An **[[eBGP]]** peer', 'Clients and non-clients, as a normal advertisement']
-              ]},
-              { kind: 'para', h: 'Clients peer only with the reflector', p: 'A **client** does not speak iBGP to the other clients. Its only iBGP session is with the reflector, which is precisely why the session count collapses.' },
-              { kind: 'code', h: 'Client discipline', code:
-`  Client A ---- iBGP ----> Reflector <---- iBGP ---- Client B
-                           no session between A and B` },
-              { kind: 'code', h: 'Configuring it', code:
-`  router bgp 65001
-   neighbor 10.1.1.1 remote-as 65001
-   neighbor 10.1.1.1 route-reflector-client
-   neighbor 10.2.2.2 remote-as 65001
-   neighbor 10.2.2.2 route-reflector-client
-
-
-  The command goes on the REFLECTOR,
-  once per client.` },
-              { kind: 'para', h: 'The three loop-prevention attributes', p: '**%%route-reflector-client%%** bypasses iBGP split horizon, so something else has to stop loops. **ORIGINATOR_ID** holds the router that originated the route, **CLUSTER_LIST** records the reflector clusters it passed through, and **CLUSTER_ID** identifies the reflector.' },
-              { kind: 'table', h: 'The three attributes', cols: ['Attribute', 'Role'], rows: [
-                ['**ORIGINATOR_ID**', 'The router ID of the router that originated the route'],
-                ['**CLUSTER_LIST**', 'The sequence of clusters the route has traversed'],
-                ['**CLUSTER_ID**', 'Identifies this reflector; defaults to its router ID']
-              ]},
-              { kind: 'code', h: 'How a loop is broken', code:
-`  My CLUSTER_ID is already in CLUSTER_LIST
-       |
-  Discard the route.` },
-              { kind: 'code', h: 'Redundancy', code:
-`  A second reflector makes the topology survive one loss.
-
-  CLUSTER_ID must MATCH on both reflectors
-  for them to see the same cluster.
-
-
-  Mismatched cluster IDs weaken the loop check.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp neighbors
-  show ip bgp
-  show ip bgp regexp _65001_
-  show ip route bgp` }
-            ],
-            commands: [
-              { label: 'Turn a router into a reflector', code:
-`router bgp 65001
- neighbor 10.1.1.1 remote-as 65001
- neighbor 10.1.1.1 route-reflector-client
- neighbor 10.2.2.2 remote-as 65001
- neighbor 10.2.2.2 route-reflector-client` },
-              { label: 'Verify the sessions', code:
-`show ip bgp summary
-show ip bgp neighbors` }
-            ],
-            traps: [
-              '**A route reflector re-advertises iBGP routes**, bypassing split horizon safely.',
-              '**ORIGINATOR_ID and CLUSTER_LIST** provide the loop prevention.',
-              'Routes from a **non-client** go to **clients only**.',
-              '**Clients peer only with the reflector**, never with each other.',
-              '**%%route-reflector-client%% goes on the reflector**, once per client.',
-              'Redundant reflectors need the **same CLUSTER_ID**.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Break the iBGP full-mesh requirement'],
-                ['Sessions saved', 'n(n−1)/2 down to n'],
-                ['How', 'Re-advertise iBGP-learned routes'],
-                ['From a client', 'To clients and non-clients'],
-                ['From a non-client', 'To clients only'],
-                ['Client sessions', 'Only with the reflector'],
-                ['Loop prevention', 'ORIGINATOR_ID and CLUSTER_LIST'],
-                ['CLUSTER_ID', 'Identifies the reflector, defaults to its router ID'],
-                ['Command', 'route-reflector-client, on the reflector'],
-                ['Redundancy', 'Share the same CLUSTER_ID'],
-                ['Verification', 'show ip bgp neighbors']
-              ]
-            },
-            related: [
-              { t: '02. iBGP', d: 'the rule it bends' },
-              { t: '09. Confederation', d: 'the alternative scaling model' },
-              { t: '14. Troubleshooting', d: 'when reflection creates a loop' }
-            ],
-            glossary: ['Route Reflector', 'iBGP', 'BGP', 'eBGP', 'Control Plane', 'Loopback Address']
-          },
-          {
-            id: 't09', num: '09', group: 'scale', title: 'Confederation',
-            blurb: 'Sub-ASes with eBGP-like sessions, AD 200 inside, and the public AS shown to the world',
-            overview: 'A **[[Confederation|BGP confederation]]** is the alternative to **[[Route Reflector|route reflectors]]** for scaling **[[iBGP]]**. The AS is split into **sub-ASes** that peer with each other using **eBGP-like** sessions, while presenting a **single confederation AS** to the outside world. Attributes survive the sub-AS boundaries — unlike a real eBGP session.',
-            keyIdea: 'It looks like eBGP but behaves like iBGP: AD 200, and local preference and MED carry across.',
-            sections: [
-              { kind: 'code', h: 'The structure', code:
-`            The outside world
-                   |
-          AS 65000  (confederation identifier)
-        +----------+----------+
-        |                     |
-   Sub-AS 65001          Sub-AS 65002
-   (confed peer)        (confed peer)
-
-
-  One AS externally, several internally.` },
-              { kind: 'table', h: 'How the boundaries behave', cols: ['Property', 'Real eBGP', 'Confederation eBGP'], rows: [
-                ['Administrative Distance', '**20**', '**200**'],
-                ['Local Preference', 'Stripped', '**Survives**'],
-                ['MED', 'Stripped', '**Survives**'],
-                ['Next hop', 'Rewritten', '**Survives**'],
-                ['AS path', 'Prepended normally', 'Sub-AS numbers used internally']
-              ]},
-              { kind: 'para', h: 'Attributes survive', p: 'Across a sub-AS boundary, **local preference, MED and the next hop are preserved** — unlike a genuine **[[eBGP]]** session. That is what makes a confederation feel like a scaled-up iBGP domain rather than a collection of external peers.' },
-              { kind: 'code', h: 'The two commands', code:
-`  router bgp 65001
-   !
-   ! the PUBLIC AS the world sees
-   bgp confederation identifier 65000
-   !
-   ! the sub-ASes I peer with internally
-   bgp confederation peers 65002 65003
-   !
-   neighbor 10.1.1.1 remote-as 65002` },
-              { kind: 'para', h: 'identifier against peers', p: '%%bgp confederation identifier%% is the **public autonomous system** advertised to the outside. %%bgp confederation peers%% is the **list of sub-ASes** you peer with inside the confederation. Mixing them up is the usual mistake.' },
-              { kind: 'code', h: 'What the outside sees', code:
-`  The confederation AS_PATH is STRIPPED
-  before the route leaves to real eBGP.
-
-  Outside:      65000 65100
-  Inside:       sub-AS numbers, hidden` },
-              { kind: 'code', h: 'Comparing the two scaling tools', code:
-`  ROUTE REFLECTOR          CONFEDERATION
-    more common               rarer
-    one AS stays one AS       the AS is subdivided
-    AD stays 200              confed eBGP AD 200
-    attributes untouched      attributes survive
-
-
-  Prefer reflectors unless asked for confederations.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp summary
-  show ip bgp neighbors
-  show running-config | section bgp` }
-            ],
-            commands: [
-              { label: 'Split the AS', code:
-`router bgp 65001
- bgp confederation identifier 65000
- bgp confederation peers 65002 65003
- neighbor 10.1.1.1 remote-as 65002` },
-              { label: 'Verify', code:
-`show ip bgp summary
-show running-config | section bgp` }
-            ],
-            traps: [
-              '**Confederation eBGP peers use AD 200**, not 20.',
-              '**Attributes survive** the sub-AS boundaries — local preference, MED and next hop — unlike real eBGP.',
-              '%%bgp confederation identifier%% is the **public AS**; %%bgp confederation peers%% is the **sub-AS list**.',
-              'The confederation AS_PATH is **stripped** before the route leaves to real eBGP.',
-              'In exam answers, **prefer route reflectors** unless a confederation is explicitly asked for.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Scale iBGP without a full mesh'],
-                ['Model', 'Sub-ASes with eBGP-like sessions'],
-                ['To the world', 'A single confederation AS'],
-                ['Confederation eBGP AD', '200'],
-                ['Attributes', 'Survive the sub-AS boundaries'],
-                ['Identifier', 'bgp confederation identifier — the public AS'],
-                ['Peers', 'bgp confederation peers — the sub-AS list'],
-                ['AS_PATH outside', 'Confederation detail stripped'],
-                ['Against reflectors', 'Rarer, and less often the exam answer'],
-                ['Verification', 'show ip bgp summary']
-              ]
-            },
-            related: [
-              { t: '08. Route Reflector', d: 'the more common answer' },
-              { t: '02. iBGP', d: 'the requirement it removes' },
-              { t: '01. eBGP', d: 'the behaviour it imitates' }
-            ],
-            glossary: ['Confederation', 'iBGP', 'BGP', 'eBGP', 'Administrative Distance', 'Local Preference', 'MED']
-          },
-          {
-            id: 't10', num: '10', group: 'scale', title: 'Aggregation',
-            blurb: 'aggregate-address against network, what summary-only and as-set do, and what aggregation loses',
-            overview: '**[[BGP Aggregation|BGP aggregation]]** summarises more-specific prefixes into one shorter prefix before advertising it, shrinking the global table and hiding internal flaps. The commands are **%%aggregate-address%%** and **%%network%%**, and the exam focuses on **%%summary-only%%**, **%%as-set%%**, and the **atomic-aggregate and aggregator** attributes that mark the aggregation point.',
-            keyIdea: 'aggregate-address works from any more-specific; network needs the exact route. And aggregation discards attributes.',
-            sections: [
-              { kind: 'table', h: 'aggregate-address against network', cols: ['', 'aggregate-address', 'network'], rows: [
-                ['Needs', 'Any covering more-specific', '**The exact prefix in the BGP table**'],
-                ['Summary-only', 'Available', 'Not applicable'],
-                ['as-set', 'Available', 'Not applicable'],
-                ['Typical use', 'Advertise one summary', 'Originate a specific prefix']
-              ]},
-              { kind: 'code', h: 'Both ways to originate', code:
-`  ! summarize 203.0.113.0/25 and /26 into a /24
-  router bgp 65000
-   aggregate-address 203.0.113.0 255.255.255.0 summary-only
-
-  ! originate one exact prefix
-  router bgp 65000
-   network 203.0.113.0 mask 255.255.255.0` },
-              { kind: 'para', h: 'summary-only suppresses the details', p: 'Without **%%summary-only%%**, BGP advertises **both** the aggregate and the more-specifics, which defeats much of the purpose. With it, only the summary leaves.' },
-              { kind: 'code', h: 'The difference', code:
-`  WITHOUT summary-only      WITH summary-only
-    203.0.113.0/24            203.0.113.0/24
-    203.0.113.0/25
-    203.0.113.0/26` },
-              { kind: 'para', h: 'as-set records the origin ASes', p: 'Without **%%as-set%%**, the aggregated path shows **only the aggregator’s AS**, which hides the real origins and can create a **[[Routing Loop|routing loop]]** downstream. With it, the origin ASes are recorded in an **AS_SET**.' },
-              { kind: 'code', h: 'What as-set protects against', code:
-`  WITHOUT as-set          WITH as-set
-    65000                   65000 { 65001, 65002 }
-                            ^
-                            the AS_SET
-
-
-  Without it, an origin AS may never see
-  its own number in the path.` },
-              { kind: 'code', h: 'The aggregation marks', code:
-`  ATOMIC_AGGREGATE   the aggregate was formed
-  AGGREGATOR         which router and which AS did it
-
-
-  Both are set by the aggregating router.` },
-              { kind: 'para', h: 'Aggregation loses attributes', p: 'MED, **[[Communities|communities]]** and other path attributes are **lost** at the aggregation point, because the summary is a new prefix rather than a copy of the specifics. That is the tradeoff for a smaller table.' },
-              { kind: 'code', h: 'The tradeoff, plainly', code:
-`  AGGREGATION            SUMMARIZATION GOAL
-    smaller table          fewer prefixes advertised
-    fewer route entries    flaps are hidden
-    attributes LOST        MED, communities gone` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip bgp
-  show ip bgp summary
-  show ip bgp 203.0.113.0/24` }
-            ],
-            commands: [
-              { label: 'Aggregate and suppress details', code:
-`router bgp 65000
- aggregate-address 203.0.113.0 255.255.255.0 summary-only` },
-              { label: 'Preserve the origin ASes', code:
-`router bgp 65000
- aggregate-address 203.0.113.0 255.255.255.0 as-set summary-only` },
-              { label: 'Verify', code:
-`show ip bgp
-show ip bgp 203.0.113.0/24` }
-            ],
-            traps: [
-              '**%%aggregate-address%% works from any more-specific**; **%%network%%** needs the exact route.',
-              '**%%summary-only%%** suppresses the more-specifics — without it, both are advertised.',
-              '**%%as-set%% records the origin ASes**; without it the path looks like only the aggregator, which can loop.',
-              '**atomic-aggregate and aggregator** mark the aggregation and the router that did it.',
-              '**Aggregation loses attributes** such as MED and communities — that is the tradeoff.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Advertise one summary instead of many specifics'],
-                ['Command', 'aggregate-address <prefix> <mask>'],
-                ['Against network', 'network needs the exact prefix in the table'],
-                ['summary-only', 'Suppresses the more-specifics'],
-                ['as-set', 'Records the origin ASes'],
-                ['Without as-set', 'The path shows only the aggregator — loop risk'],
-                ['atomic-aggregate', 'Marks that an aggregate was formed'],
-                ['aggregator', 'Which router and AS aggregated'],
-                ['Attributes lost', 'MED, communities and similar'],
-                ['Benefit', 'Smaller table, hidden internal flaps'],
-                ['Verification', 'show ip bgp']
-              ]
-            },
-            related: [
-              { t: '04. AS Path', d: 'where AS_SET appears' },
-              { t: '03. Path Selection', d: 'how the aggregate ranks' },
-              { t: '12. Prefix Lists', d: 'what summary-only keeps out' }
-            ],
-            glossary: ['BGP Aggregation', 'BGP', 'Summarization', 'AS Path', 'Communities', 'MED', 'Routing Table', 'Routing Loop']
-          }
-        ,
-          {
-            id: 't11', num: '11', group: 'policy', title: 'Policy Routing',
-            blurb: 'Matching on the packet rather than the destination, evaluated before the RIB lookup',
-            overview: '**[[Policy-Based Routing|Policy-based routing (PBR)]]** forwards traffic based on **policy** — source, protocol, DSCP — instead of the destination in the **[[Routing Table|routing table]]**. It uses a **[[Route Map|route-map]]** applied **inbound on an interface**, and because it is evaluated **before the longest-match lookup**, it overrides the RIB for the matched flows.',
-            keyIdea: 'set ip next-hop is an override; set default next-hop is only a fallback. And the match happens before the routing decision.',
-            sections: [
-              { kind: 'code', h: 'Where PBR sits', code:
-`  Packet arrives on an interface
-       |
-  PBR route-map evaluated  <-- HERE
-       |                |
-    match             no match
-       |                |
-  set action        normal longest-match
-       |                |
-       +-------+--------+
-               |
-          FIB / next hop` },
-              { kind: 'table', h: 'What it matches on', cols: ['Match', 'Typical use'], rows: [
-                ['Source address', 'Steer a subnet out a particular link'],
-                ['Protocol', 'Send voice over the low-latency path'],
-                ['DSCP or precedence', 'Follow the QoS marking'],
-                ['Length', 'Fragmented or very small packets']
-              ]},
-              { kind: 'code', h: 'A complete PBR configuration', code:
-`  access-list 150 permit ip 10.1.1.0 0.0.0.255 any
-
-  route-map STEER-VOICE permit 10
-   match ip address 150
-   set ip next-hop 203.0.113.1
-
-  interface GigabitEthernet0/1
-   ip policy route-map STEER-VOICE` },
-              { kind: 'para', h: 'set against set default', p: '**%%set ip next-hop%% overrides** the routing decision outright. **%%set default next-hop%%** is only a **fallback** — it applies if no explicit route exists. Confusing the two is the most common PBR mistake.' },
-              { kind: 'code', h: 'Override against fallback', code:
-`  set ip next-hop        OVERRIDE, always
-  set default next-hop   FALLBACK, only if no route exists
-
-
-  Different commands, different behaviour.` },
-              { kind: 'para', h: 'Locally generated traffic', p: 'The inbound interface route-map only affects traffic **received** by the router. Traffic **originated by the router itself** needs **%%ip local policy route-map%%**.' },
-              { kind: 'code', h: 'Both directions', code:
-`  ip policy route-map X      on an interface
-                              -> received packets
-
-  ip local policy route-map X
-                              -> packets this router generates` },
-              { kind: 'code', h: 'It can also mark', code:
-`  route-map MARK-DSCP permit 10
-   match ip address 150
-   set ip dscp af41` },
-              { kind: 'code', h: 'Verification', code:
-`  show route-map
-  show ip policy
-  show ip route-map STEER-VOICE
-  debug ip policy` }
-            ],
-            commands: [
-              { label: 'Steer by policy', code:
-`access-list 150 permit ip 10.1.1.0 0.0.0.255 any
-route-map STEER-VOICE permit 10
- match ip address 150
- set ip next-hop 203.0.113.1
-interface GigabitEthernet0/1
- ip policy route-map STEER-VOICE` },
-              { label: 'Cover locally generated packets', code:
-`ip local policy route-map STEER-VOICE` },
-              { label: 'Verify', code:
-`show route-map
-show ip route-map STEER-VOICE` }
-            ],
-            traps: [
-              'PBR is applied **inbound on an interface**, and it **overrides the RIB** for matched traffic.',
-              '**%%set ip next-hop%% overrides; %%set default next-hop%% is only a fallback** when no route exists.',
-              '**%%ip local policy route-map%%** is required for **locally sourced** traffic.',
-              'The match and set live in a **[[Route Map|route-map]]**, applied with %%ip policy route-map%%.',
-              'PBR is evaluated **before** the normal routing lookup.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Full name', 'Policy-based routing'],
-                ['Matches on', 'Source, protocol, DSCP, length'],
-                ['Evaluated', 'Before the longest-match lookup'],
-                ['Effect', 'Overrides the RIB for matched flows'],
-                ['Applied', 'Inbound on an interface'],
-                ['Configured with', 'ip policy route-map'],
-                ['Locally sourced', 'ip local policy route-map'],
-                ['set ip next-hop', 'Override'],
-                ['set default next-hop', 'Fallback only'],
-                ['Also used for', 'Marking, such as set ip dscp'],
-                ['Verification', 'show route-map']
-              ]
-            },
-            related: [
-              { t: '13. Route Maps', d: 'the engine underneath' },
-              { t: '12. Prefix Lists', d: 'a cleaner way to match' },
-              { t: '03. Path Selection', d: 'what PBR skips past entirely' }
-            ],
-            glossary: ['Policy-Based Routing', 'Route Map', 'Routing Table', 'Data Plane', 'Default Route']
-          },
-          {
-            id: 't12', num: '12', group: 'policy', title: 'Prefix Lists',
-            blurb: 'ge and le change the length, never the prefix bits, and the implicit deny at the end',
-            overview: '**[[Prefix List|Prefix lists]]** filter routes by **prefix and prefix-length**, and they are the preferred way to match routes in **[[BGP]]** policy — cleaner and faster than access lists for routing. The exam focuses on the **%%ge%% and %%le%%** modifiers and on **first-match-wins** evaluation order.',
-            keyIdea: 'The prefix sets the base. ge and le only change the permitted length — never the prefix bits.',
-            sections: [
-              { kind: 'code', h: 'The anatomy', code:
-`  ip prefix-list NAME seq 10 permit 10.1.0.0/16 le 24
-                              ^             ^^  ^^
-                              |             |   |
-                              |             |   upper length bound
-                              |             lower length bound
-                              the base prefix` },
-              { kind: 'table', h: 'The modifiers', cols: ['Form', 'Matches'], rows: [
-                ['permit 10.1.0.0/16', '**Exactly** /16'],
-                ['permit 10.1.0.0/16 ge 24', '10.1.x.x, length **24 or longer**'],
-                ['permit 10.1.0.0/16 le 24', 'The /16 itself **and** anything longer up to /24'],
-                ['permit 10.1.0.0/16 ge 18 le 22', 'Length **18 to 22** inclusive']
-              ]},
-              { kind: 'para', h: 'ge and le change length, not bits', p: 'This is the rule that gets the most exam wrong answers. **%%ge%% and %%le%% modify the permitted prefix length only.** They never alter which prefix bits must match — the base prefix is always the anchor.' },
-              { kind: 'code', h: 'The rule, plainly', code:
-`  WRONG:  ge/le change the prefix bits
-  RIGHT:  ge/le change the LENGTH only
-
-
-  10.1.0.0/16 ge 24
-
-  still requires 10.1.x.x
-  only widens the permitted length.` },
-              { kind: 'code', h: 'An explicit length matches exactly that length', code:
-`  ip prefix-list NAME permit 10.1.0.0/16
-
-  -> ONLY /16.
-  The implicit "longest prefix" idea is NOT included.
-  You must state le 32 if you want longer too.` },
-              { kind: 'code', h: 'The implicit deny', code:
-`  Every prefix-list ends with an implicit DENY.
-
-  To allow everything after the specific entries:
-    ip prefix-list NAME permit 0.0.0.0/0 le 32
-
-
-  Without it, anything unmatched is denied.` },
-              { kind: 'code', h: 'Ordering by sequence', code:
-`  ip prefix-list NAME seq 10 permit 10.1.0.0/16
-  ip prefix-list NAME seq 20 permit 10.9.0.0/16
-
-  First match wins, by sequence number.
-  Sequence numbers can be reordered or deleted.` },
-              { kind: 'code', h: 'Used in BGP policy', code:
-`  ip prefix-list PROVIDER-A seq 10 permit 203.0.113.0/24
-
-  route-map SET-LP-IN permit 10
-   match ip address prefix-list PROVIDER-A
-   set local-preference 150` },
-              { kind: 'code', h: 'IPv6', code:
-`  ipv6 prefix-list NAME seq 10 permit 2001:db8:1::/48 le 64
-
-  Same modifiers, IPv6 addressing.` },
-              { kind: 'code', h: 'Verification', code:
-`  show ip prefix-list
-  show ip prefix-list NAME
-  show ipv6 prefix-list` }
-            ],
-            commands: [
-              { label: 'Match a range of lengths', code:
-`ip prefix-list PROVIDER-A seq 10 permit 10.1.0.0/16 ge 18 le 22` },
-              { label: 'Allow everything after the specifics', code:
-`ip prefix-list NAME seq 10 permit 10.1.0.0/16
-ip prefix-list NAME seq 90 permit 0.0.0.0/0 le 32` },
-              { label: 'Verify', code:
-`show ip prefix-list` }
-            ],
-            traps: [
-              '**%%ge%% and %%le%% modify the length, not the prefix bits.**',
-              'An **explicit length matches only that exact length** — the longest-prefix idea is not implied.',
-              'There is an **implicit deny** at the end, so add **permit 0.0.0.0/0 le 32** when everything should pass.',
-              '**First match wins**, evaluated by sequence number.',
-              'Sequence numbers can be **reordered and deleted**.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'Filter by prefix and prefix length'],
-                ['Preferred over', 'Access lists, for routing policy'],
-                ['ge', 'Minimum permitted length'],
-                ['le', 'Maximum permitted length'],
-                ['What they change', 'Length only, never the prefix bits'],
-                ['No modifier', 'Exact length match'],
-                ['Implicit', 'A deny at the end'],
-                ['Catch-all', 'permit 0.0.0.0/0 le 32'],
-                ['Ordering', 'First match wins, by sequence'],
-                ['Sequence numbers', 'Reorderable and deletable'],
-                ['IPv6', 'ipv6 prefix-list, same modifiers'],
-                ['Verification', 'show ip prefix-list']
-              ]
-            },
-            related: [
-              { t: '13. Route Maps', d: 'where a prefix list is usually matched' },
-              { t: '11. Policy Routing', d: 'one of its consumers' },
-              { t: '05. Local Preference', d: 'what it selects on' }
-            ],
-            glossary: ['Prefix List', 'Route Map', 'BGP', 'IPv6', 'Control Plane']
-          },
-          {
-            id: 't13', num: '13', group: 'policy', title: 'Route Maps',
-            blurb: 'Sequence-ordered match and set blocks, first match wins, and what a deny actually means',
-            overview: '**[[Route Map|Route maps]]** are the general-purpose policy engine: a sequence of **match and set** blocks used for **[[BGP]]** attribute manipulation, redistribution filtering, **[[Policy-Based Routing|PBR]]**, NAT and route filtering. The exam focuses on **sequence numbers**, **permit and deny** actions, **first-match-wins** order, and how they differ from an access list.',
-            keyIdea: 'A matched deny filters. A matched permit applies the set. Anything unmatched falls through to a final deny.',
-            sections: [
-              { kind: 'code', h: 'The structure', code:
-`  route-map NAME permit 10
-   match ...
-   set ...
-
-  route-map NAME permit 20
-   match ...
-   set ...
-
-  route-map NAME deny 30
-
-
-  Evaluated in sequence order.
-  First match wins.` },
-              { kind: 'table', h: 'What each action means', cols: ['Case', 'Result'], rows: [
-                ['**matched permit**, with a set', '**Apply the set**'],
-                ['**matched permit**, no set', '**Pass through** unchanged'],
-                ['**matched deny**', '**Filter** the route or packet'],
-                ['**Unmatched by any entry**', 'Implicit **deny** at the end']
-              ]},
-              { kind: 'para', h: 'A deny filters — it does not reject the match', p: 'When a **deny** statement matches, the route or packet is **filtered**. It does not fall through to the next entry, and it is not "unmatched". That is a distinct meaning from the deny in an ACL, and the difference is exam-tested.' },
-              { kind: 'code', h: 'An empty permit passes through', code:
-`  route-map NAME permit 20
-   ! no match, no set
-
-
-  Everything matches, nothing changes.
-  The route passes through untouched.` },
-              { kind: 'code', h: 'Manipulating attributes', code:
-`  ip community-list standard PREMIUM permit 65001:100
-
-  route-map SET-LP-IN permit 10
-   match community PREMIUM
-   set local-preference 200
-
-  route-map SET-LP-IN permit 20
-   match ip address prefix-list PROVIDER-A
-   set local-preference 150` },
-              { kind: 'para', h: 'Direction matters', p: 'The same route-map applied **in** and **out** on a neighbour does opposite things. An exam question that omits the direction has usually omitted the answer.' },
-              { kind: 'code', h: 'In against out', code:
-`  neighbor 203.0.113.2 route-map POLICY in
-  neighbor 203.0.113.2 route-map POLICY out
-
-
-  Different direction, different effect.` },
-              { kind: 'para', h: 'Where route maps are used', p: 'BGP attribute manipulation, **redistribution filtering**, **[[Policy-Based Routing|PBR]]**, NAT, and BGP peer policy. They are the shared policy vocabulary of the whole platform, not a BGP-only feature.' },
-              { kind: 'code', h: 'Counters tell you if it fired', code:
-`  show route-map
-
-  route-map NAME, deny, sequence 10
-   Match clauses:
-     match ip address prefix-list X
-   ip access matches: 14        <- it actually fired
-   ip access denies: 0` },
-              { kind: 'code', h: 'Verification', code:
-`  show route-map
-  show route-map NAME
-  show ip route-map NAME` }
-            ],
-            commands: [
-              { label: 'Chain several matches', code:
-`route-map SET-LP-IN permit 10
- match community PREMIUM
- set local-preference 200
-route-map SET-LP-IN permit 20
- match ip address prefix-list PROVIDER-A
- set local-preference 150` },
-              { label: 'Confirm the counters moved', code:
-`show route-map
-show ip route-map SET-LP-IN` }
-            ],
-            traps: [
-              '**First match wins**, evaluated in sequence-number order.',
-              'A **matched deny filters** the route; it does not fall through.',
-              'An **empty permit entry passes traffic through** with no set applied.',
-              'The **in against out** direction is a frequent exam trap.',
-              'Route maps serve **BGP, redistribution, PBR and NAT** alike.',
-              '**%%show route-map%% counters** are how you tell whether the entry actually matched.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Purpose', 'General-purpose policy engine'],
-                ['Structure', 'Sequence-ordered match and set blocks'],
-                ['Ordering', 'First match wins, by sequence'],
-                ['Matched permit', 'Apply the set'],
-                ['Matched permit, no set', 'Pass through unchanged'],
-                ['Matched deny', 'Filter'],
-                ['Unmatched', 'Implicit deny at the end'],
-                ['Also used by', 'Redistribution, PBR, NAT'],
-                ['Direction', 'In and out behave differently'],
-                ['Against an ACL', 'Match and set, not just permit or deny'],
-                ['Verification', 'show route-map']
-              ]
-            },
-            related: [
-              { t: '12. Prefix Lists', d: 'the usual match target' },
-              { t: '11. Policy Routing', d: 'one of its applications' },
-              { t: '07. Communities', d: 'what it tags and acts on' }
-            ],
-            glossary: ['Route Map', 'Prefix List', 'BGP', 'Policy-Based Routing', 'Communities', 'Local Preference', 'MED', 'AS Path', 'Control Plane']
-          },
-          {
-            id: 't14', num: '14', group: 'policy', title: 'Troubleshooting',
-            blurb: 'Session first, then the table, then best path, then policy — and where exam failures actually hide',
-            overview: '**[[BGP]]** troubleshooting spans **session establishment** — TCP 179, TTL, update-source — **route selection**, and **policy effects** from route-maps in each direction. The standard flow is: establish sessions, verify the BGP table, trace the best path, then check policy and the RIB. Most exam failures hide in a **session mismatch**, the **next hop**, or a **route-map applied in the wrong direction**.',
-            keyIdea: 'Established sessions are not the same as advertised routes, and advertised are not the same as received. Check them separately.',
-            sections: [
-              { kind: 'code', h: 'The order', code:
-`  1. Session      TCP 179, remote-as, update-source, TTL
-  2. BGP table    are prefixes arriving at all?
-  3. Best path    which attribute decided?
-  4. Policy       route-maps in and out
-  5. RIB          was the winner installed?
-
-
-  Never start at 3.` },
-              { kind: 'table', h: 'Symptom to cause', cols: ['Symptom', 'Where to look'], rows: [
-                ['**Idle**', 'Unreachable update-source, wrong remote-as'],
-                ['**Active**', '**Reachability or policy — not remote-as**'],
-                ['Established but empty', 'No network statement, no activate, filters'],
-                ['Routes present, not installed', '**[[Data Plane|next hop]] unreachable** — iBGP needs recursion'],
-                ['Policy seemingly ignored', 'The **direction** of the route-map'],
-                ['Communities not arriving', '%%send-community%% missing']
-              ]},
-              { kind: 'para', h: 'Active is about reachability', p: 'A neighbour stuck **Active** cannot reach the update-source address, or is being blocked. It is **not** a wrong %%remote-as%% — that produces **Idle**. Getting those two the wrong way round is a classic exam trap.' },
-              { kind: 'code', h: 'Idle against Active', code:
-`  Idle      wrong remote-as, or unreachable too
-  Active    UNREACHABLE update-source
-            ACL blocking the peer
-            a policy that drops it` },
-              { kind: 'code', h: 'The two direction checks', code:
-`  show ip bgp neighbors 203.0.113.2 received-routes
-  show ip bgp neighbors 203.0.113.2 advertised-routes
-  show ip bgp neighbors 203.0.113.2 routes
-
-
-  received-routes  = what the peer sent us
-  advertised-routes= what we sent the peer
-
-
-  Comparing them locates the policy.` },
-              { kind: 'para', h: 'iBGP routes need a reachable next hop', p: 'An **[[iBGP]]** route preserves the next hop, so a prefix can sit in the BGP table and never reach the RIB because the router cannot get to that next hop. %%next-hop-self%% or an IGP route to it resolves that.' },
-              { kind: 'code', h: 'In the table but not in the RIB', code:
-`  show ip bgp              203.0.113.0/24 present
-  show ip route            203.0.113.0/24 absent
-  show ip route 203.0.113.2
-                           % Network not in table
-
-
-  The next hop is not reachable.` },
-              { kind: 'para', h: 'Check the address family', p: 'A peer that is configured but never activated in the right **address-family** carries nothing. **%%address-family ipv6%%** and **%%address-family ipv4 multicast%%** are separate activations, and forgetting one is a common cause of an established-but-empty session.' },
-              { kind: 'code', h: 'Activation is per family', code:
-`  router bgp 65000
-   neighbor 2001:db8::2 remote-as 65002
-   address-family ipv6
-    neighbor 2001:db8::2 activate
-
-
-  No activate, no routes for that family.` },
-              { kind: 'code', h: 'The MTU trap', code:
-`  Session ESTABLISHED, Idle resets, or large
-  updates drop -> suspect MTU / PMTUD.
-
-  MTU is end to end on every hop,
-  not just on the two peers.` },
-              { kind: 'code', h: 'The full diagnostic set', code:
-`  show ip bgp summary
-  show ip bgp neighbors
-  show ip bgp
-  show ip route bgp
-  show route-map
-  show ip prefix-list` }
-            ],
-            commands: [
-              { label: 'The diagnostic progression', code:
-`show ip bgp summary
-show ip bgp neighbors
-show ip bgp
-show ip route bgp
-show route-map` },
-              { label: 'Split the policy direction', code:
-`show ip bgp neighbors 203.0.113.2 received-routes
-show ip bgp neighbors 203.0.113.2 advertised-routes` },
-              { label: 'Fix the next hop', code:
-`router bgp 65000
- neighbor 10.9.9.9 next-hop-self` }
-            ],
-            traps: [
-              '**Active state means reachability or policy — not a wrong remote-as.**',
-              '**%%received-routes%% against %%advertised-routes%%** splits policy direction, which is how you find a route-map that is doing the wrong thing.',
-              'iBGP routes need **%%next-hop-self%% or IGP recursion** before they will install.',
-              'The **MED same-AS rule** still applies — cross-AS comparison needs **%%bgp always-compare-med%%**.',
-              '**Communities are stripped without %%send-community%%**, so a policy downstream sees nothing.',
-              '**The best path fails at the first differing step**, so stop reading the table at that step.',
-              'A peer that is **not activated** in the right address-family carries nothing at all.',
-              'MTU problems look like flapping sessions — the path must be end to end.'
-            ],
-            table: {
-              cols: ['Item', 'Key point'],
-              rows: [
-                ['Order', 'Session, BGP table, best path, policy, RIB'],
-                ['Transport', 'TCP 179'],
-                ['Idle', 'Wrong remote-as, or unreachable'],
-                ['Active', 'Unreachable update-source — not remote-as'],
-                ['Established but empty', 'No activate, or filters'],
-                ['In the BGP table, not the RIB', 'The next hop is unreachable'],
-                ['received-routes', 'What the peer sent us'],
-                ['advertised-routes', 'What we sent the peer'],
-                ['Communities missing', 'send-community not configured'],
-                ['Address families', 'Each must be activated separately'],
-                ['MTU', 'End to end on every hop'],
-                ['First command', 'show ip bgp summary']
-              ]
-            },
-            related: [
-              { t: '03. Path Selection', d: 'the attribute that decided it' },
-              { t: '02. iBGP', d: 'the next-hop problem it inherits' },
-              { t: '06. MED', d: 'the rule that stops a comparison' }
-            ],
-            glossary: ['BGP', 'iBGP', 'eBGP', 'Control Plane', 'Data Plane', 'MTU', 'IPv6', 'Multicast', 'Routing Table', 'Administrative Distance']
-          }
-        ];
-
+  {
+    "id": "t01",
+    "num": "01",
+    "group": "fund",
+    "title": "eBGP",
+    "blurb": "AD 20, TTL 1 by default, why the next hop changes, and the TCP/179 session underneath",
+    "overview": "**[[eBGP]] (External BGP)** runs **between routers in different autonomous systems**. It is the internet’s inter-domain routing protocol, carrying prefixes across provider and customer boundaries. Because it crosses trust boundaries, its defaults are conservative: **AD of 20**, a **TTL of 1**, and the **next hop set to the neighbour’s own address** when advertising.",
+    "keyIdea": "eBGP is external, AD 20, TTL 1 — and it rewrites the next hop to itself on every advertisement.",
+    "sections": [
+      {
+        "h": "BGP overview",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">BGP</text><rect x=\"60\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#0EA5E9\" fill-opacity=\"0.2\" stroke=\"#0EA5E9\"/><rect x=\"350\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#10B981\" fill-opacity=\"0.2\" stroke=\"#10B981\"/><rect x=\"640\" y=\"80\" width=\"200\" height=\"40\" rx=\"4\" fill=\"#F59E0B\" fill-opacity=\"0.2\" stroke=\"#F59E0B\"/><text x=\"160\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Path Vector</text><text x=\"450\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">AS-Path</text><text x=\"740\" y=\"105\" text-anchor=\"middle\" font-size=\"8\" fill=\"currentColor\">Policy-based</text><text x=\"60\" y=\"170\" font-size=\"8\" fill=\"currentColor\">eBGP/iBGP, Attributes</text></g></svg>",
+        "caption": "Path vector, inter-AS routing, policy control."
+      },
+      {
+        "kind": "table",
+        "h": "The conservative defaults",
+        "cols": [
+          "Setting",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Administrative Distance",
+            "**20**"
+          ],
+          [
+            "Default TTL",
+            "**1**"
+          ],
+          [
+            "Transport",
+            "TCP port **179**"
+          ],
+          [
+            "Next hop on advertise",
+            "**Set to the advertising router’s own address**"
+          ],
+          [
+            "Re-advertised to other eBGP peers",
+            "Not by default — AS_PATH prevents that"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "The session",
+        "code": "  Router A (AS 65001)              Router B (AS 65002)\n        |                                 |\n        |--------- TCP 179 -------------->|\n        |                                 |\n  Different ASes -> this is eBGP."
+      },
+      {
+        "kind": "code",
+        "h": "Peering up",
+        "code": "  router bgp 65001\n   neighbor 203.0.113.2 remote-as 65002\n   address-family ipv4\n    neighbor 203.0.113.2 activate"
+      },
+      {
+        "kind": "para",
+        "h": "TTL 1 means multihop is needed",
+        "p": "A TTL of 1 only reaches directly connected neighbours. Peering to a **loopback** or across a hop in the middle therefore needs **%%ebgp-multihop%%**, or the session simply never establishes."
+      },
+      {
+        "kind": "code",
+        "h": "Loopback peering",
+        "code": "  interface Loopback0\n   ip address 192.0.2.1 255.255.255.255\n\n  router bgp 65001\n   neighbor 192.0.2.2 remote-as 65002\n   neighbor 192.0.2.2 ebgp-multihop 2\n   neighbor 192.0.2.2 update-source Loopback0\n\n\n  No multihop, no session."
+      },
+      {
+        "kind": "para",
+        "h": "The next hop is rewritten",
+        "p": "When eBGP advertises a prefix, it sets the **next hop to its own address**. That is what makes the path usable for the receiver, whose own routing table may know nothing about the sender’s internal topology."
+      },
+      {
+        "kind": "code",
+        "h": "What changes and what does not",
+        "code": "  eBGP  advertises  ->  next hop = ME\n  iBGP  advertises  ->  next hop unchanged (see note 02)\n\n\n  This asymmetry is the source of next-hop-self."
+      },
+      {
+        "kind": "code",
+        "h": "Loop prevention",
+        "code": "  My AS is already in the AS_PATH\n       |\n  Discard the route.\n\n\n  It is also why an eBGP-learned route is not\n  re-advertised to another eBGP peer in the same way."
+      },
+      {
+        "kind": "code",
+        "h": "A multihop requirement",
+        "code": "  router bgp 65001\n   neighbor 198.51.100.1 remote-as 65002\n   neighbor 198.51.100.1 ebgp-multihop 2\n   neighbor 198.51.100.1 update-source Loopback0"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp summary\n  show ip bgp neighbors\n  show tcp brief\n  show ip bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Peer across an AS boundary",
+        "code": "router bgp 65001\n neighbor 203.0.113.2 remote-as 65002\n address-family ipv4\n  neighbor 203.0.113.2 activate"
+      },
+      {
+        "label": "Peer to a loopback",
+        "code": "router bgp 65001\n neighbor 192.0.2.2 remote-as 65002\n neighbor 192.0.2.2 ebgp-multihop 2\n neighbor 192.0.2.2 update-source Loopback0"
+      },
+      {
+        "label": "Verify the session",
+        "code": "show ip bgp summary\nshow ip bgp neighbors 203.0.113.2"
+      }
+    ],
+    "traps": [
+      "**eBGP AD is 20; iBGP AD is 200.** The classic BGP trap.",
+      "Default TTL is **1**, so **%%ebgp-multihop%% is required** for any non-direct eBGP session.",
+      "**eBGP changes the next hop on advertise.** iBGP does not.",
+      "eBGP-learned routes are **not re-advertised to other eBGP peers** — that is the loop prevention.",
+      "Peering runs over **TCP 179**, and the session must reach the neighbour’s **update-source** address."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "External BGP"
+        ],
+        [
+          "Scope",
+          "Between different autonomous systems"
+        ],
+        [
+          "Administrative Distance",
+          "20"
+        ],
+        [
+          "Default TTL",
+          "1"
+        ],
+        [
+          "Multihop",
+          "ebgp-multihop for non-direct peers"
+        ],
+        [
+          "Transport",
+          "TCP port 179"
+        ],
+        [
+          "Next hop",
+          "Set to the advertising router’s own address"
+        ],
+        [
+          "Loop prevention",
+          "AS_PATH"
+        ],
+        [
+          "Typical peer address",
+          "A loopback with update-source"
+        ],
+        [
+          "Verification",
+          "show ip bgp summary"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. iBGP",
+        "d": "the internal counterpart with very different defaults"
+      },
+      {
+        "t": "04. AS Path",
+        "d": "the loop prevention that keeps eBGP safe"
+      },
+      {
+        "t": "14. Troubleshooting",
+        "d": "when the session never establishes"
+      }
+    ],
+    "glossary": [
+      "eBGP",
+      "BGP",
+      "Administrative Distance",
+      "AS Path",
+      "Control Plane",
+      "Loopback Address"
+    ]
+  },
+  {
+    "id": "t02",
+    "num": "02",
+    "group": "fund",
+    "title": "iBGP",
+    "blurb": "AD 200, no next-hop rewrite, the split-horizon rule, and the full mesh it forces",
+    "overview": "**[[iBGP]] (Internal BGP)** runs **between routers in the same autonomous system**, carrying BGP routes from edge to edge. Because iBGP **does not change the next hop** and applies a **split-horizon** rule, it needs three things to work: a **full mesh** of sessions, **%%next-hop-self%%** at the eBGP boundary, and either **[[Route Reflector|route reflectors]]** or a **[[Confederation|confederation]]** to scale.",
+    "keyIdea": "iBGP leaves the next hop alone, so the edge has to fix it. And it will not tell one iBGP peer what another iBGP peer said.",
+    "sections": [
+      {
+        "h": "AS-Path",
+        "kind": "diagram",
+        "svg": "<svg viewBox=\"0 0 900 320\" class=\"mx-auto block h-auto w-full\" style=\"min-width:720px\"><g font-family=\"Inter,sans-serif\"><text x=\"40\" y=\"30\" font-size=\"10\" font-weight=\"700\" fill=\"currentColor\">AS PATH</text><text x=\"60\" y=\"90\" font-size=\"8\" fill=\"currentColor\">Prevents loops between ASes</text></g></svg>",
+        "caption": "Loop prevention and path selection."
+      },
+      {
+        "kind": "table",
+        "h": "The two session types",
+        "cols": [
+          "",
+          "eBGP",
+          "iBGP"
+        ],
+        "rows": [
+          [
+            "AS relationship",
+            "Different ASes",
+            "The same AS"
+          ],
+          [
+            "Administrative Distance",
+            "**20**",
+            "**200**"
+          ],
+          [
+            "Next hop on advertise",
+            "Changed to self",
+            "**Unchanged**"
+          ],
+          [
+            "Default TTL",
+            "1",
+            "1"
+          ],
+          [
+            "Scaling",
+            "Session per neighbour",
+            "Full mesh without help"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The next hop has to be fixed",
+        "p": "Because iBGP preserves the next hop, a prefix learned from an **[[eBGP]]** peer arrives inside the AS still pointing at the **external** neighbour. Routers further in may have no route to that address, so the edge router sets **%%next-hop-self%%**."
+      },
+      {
+        "kind": "code",
+        "h": "The problem and the fix",
+        "code": "  Edge                     Internal peer\n  10.1.1.1                 10.9.9.9\n    |                          |\n    |-- iBGP advertises ------>|   next hop still 203.0.113.2\n    |                          |   ... which it cannot reach\n    |\n  FIX:  neighbor 10.9.9.9 next-hop-self"
+      },
+      {
+        "kind": "code",
+        "h": "Configuring it",
+        "code": "  router bgp 65001\n   neighbor 10.9.9.9 remote-as 65001\n   neighbor 10.9.9.9 update-source Loopback0\n   neighbor 10.9.9.9 next-hop-self"
+      },
+      {
+        "kind": "para",
+        "h": "Split horizon is why the mesh exists",
+        "p": "An iBGP-learned route is **not advertised to another iBGP peer**. Without an exception, every router must speak iBGP to every other router — **n(n−1)/2 sessions** — which stops scaling well before the network is large."
+      },
+      {
+        "kind": "code",
+        "h": "The full mesh",
+        "code": "  Routers      Sessions\n     4              6\n     8             28\n    16            120\n    50           1225\n\n\n  n(n-1) / 2.\n  This is the problem route reflectors solve."
+      },
+      {
+        "kind": "code",
+        "h": "The exception",
+        "code": "  An iBGP-learned route is NOT sent to another iBGP peer.\n\n  EXCEPT through:\n     route reflector   (note 08)\n     confederation     (note 09)\n\n\n  Both bypass split horizon deliberately."
+      },
+      {
+        "kind": "para",
+        "h": "Synchronization is off by default",
+        "p": "BGP **synchronization** used to require an IGP route before advertising a BGP prefix. It has been off by default for a very long time, so do not expect it to be on, and do not build a design that assumes it."
+      },
+      {
+        "kind": "code",
+        "h": "Sessions and loopbacks",
+        "code": "  iBGP sessions conventionally use LOOPBACK addresses,\n  which makes the session independent of any single link.\n\n  neighbor 10.1.1.1 remote-as 65001\n  neighbor 10.1.1.1 update-source Loopback0\n\n\n  Same remote-as on both ends."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp summary\n  show ip bgp neighbors\n  show ip bgp all"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Internal sessions with next-hop-self",
+        "code": "router bgp 65001\n neighbor 10.9.9.9 remote-as 65001\n neighbor 10.9.9.9 update-source Loopback0\n neighbor 10.9.9.9 next-hop-self"
+      },
+      {
+        "label": "Check the session state",
+        "code": "show ip bgp summary\nshow ip bgp neighbors 10.9.9.9"
+      }
+    ],
+    "traps": [
+      "**iBGP AD is 200.** eBGP is 20.",
+      "**iBGP does not change the next hop**, so **%%next-hop-self%% is required at the edge.**",
+      "**Split horizon:** an iBGP-learned route is not sent to another iBGP peer — hence the full mesh, reflectors or confederations.",
+      "**Synchronization is off by default.** Do not expect it to be on.",
+      "An iBGP session uses the **same remote-as** on both ends, typically over loopbacks with %%update-source%%."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "Internal BGP"
+        ],
+        [
+          "Scope",
+          "Between routers in the same AS"
+        ],
+        [
+          "Administrative Distance",
+          "200"
+        ],
+        [
+          "Next hop",
+          "Unchanged — use next-hop-self"
+        ],
+        [
+          "Split horizon",
+          "Yes, iBGP-learned routes are not re-sent"
+        ],
+        [
+          "Default full mesh",
+          "n(n−1)/2 sessions"
+        ],
+        [
+          "Scaling options",
+          "Route reflectors, confederations"
+        ],
+        [
+          "Synchronization",
+          "Off by default"
+        ],
+        [
+          "Typical peer address",
+          "Loopback with update-source"
+        ],
+        [
+          "Verification",
+          "show ip bgp summary"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Route Reflector",
+        "d": "the usual answer to the mesh"
+      },
+      {
+        "t": "09. Confederation",
+        "d": "the alternative"
+      },
+      {
+        "t": "01. eBGP",
+        "d": "the defaults that differ"
+      }
+    ],
+    "glossary": [
+      "iBGP",
+      "BGP",
+      "Administrative Distance",
+      "Route Reflector",
+      "Confederation",
+      "Loopback Address",
+      "Data Plane"
+    ]
+  },
+  {
+    "id": "t03",
+    "num": "03",
+    "group": "fund",
+    "title": "Path Selection",
+    "blurb": "A strict priority list where the first step that differs decides, and later steps never run",
+    "overview": "When **[[BGP]]** receives several paths for one prefix it runs a **deterministic [[BGP Path Selection|best-path algorithm]]** — a strict priority list. One best path is kept per prefix and installed in the RIB. **The first tie-breaker that differs decides the winner**, and later steps only run when earlier ones tie.",
+    "keyIdea": "Weight, then Local Preference, then AS_PATH, then Origin, then MED. A decision at step 2 means steps 3 onward never run.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The priority list",
+        "code": "   1. Weight            highest wins   (Cisco, local only)\n   2. Local Preference  highest wins\n   3. AS_PATH           shortest wins\n   4. Origin            i < e < ?\n   5. MED               lowest wins, same AS only\n   6. eBGP over iBGP\n   7. Lowest IGP metric to the next hop\n   8. Lowest router ID\n   9. Cluster length, then oldest neighbour\n\n\n  Stop at the first one that differs."
+      },
+      {
+        "kind": "table",
+        "h": "Each step in one place",
+        "cols": [
+          "Step",
+          "Attribute",
+          "Direction"
+        ],
+        "rows": [
+          [
+            "1",
+            "**Weight**",
+            "Highest wins, local only"
+          ],
+          [
+            "2",
+            "**Local Preference**",
+            "Highest wins"
+          ],
+          [
+            "3",
+            "**AS_PATH**",
+            "Shortest wins"
+          ],
+          [
+            "4",
+            "**Origin**",
+            "i beats e beats ?"
+          ],
+          [
+            "5",
+            "**MED**",
+            "Lowest wins, same-AS only"
+          ],
+          [
+            "6",
+            "**eBGP before iBGP**",
+            "External preferred"
+          ],
+          [
+            "7",
+            "Lowest IGP metric",
+            "Reach the next hop cheaply"
+          ],
+          [
+            "8",
+            "Lowest router ID",
+            "Final tie-break"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The mantra",
+        "p": "**Weight beats Local Preference beats AS_PATH beats MED**. If you remember nothing else about BGP, remember that order — it resolves most exam questions outright."
+      },
+      {
+        "kind": "code",
+        "h": "The mantra, once more",
+        "code": "  Weight  >  Local Pref  >  AS_PATH  >  MED\n\n\n  Weight        highest\n  Local Pref    highest\n  AS_PATH       shortest\n  MED           lowest"
+      },
+      {
+        "kind": "code",
+        "h": "Origin codes",
+        "code": "  i  IGP        set by the network statement\n  e  EGP        historic\n  ?  Incomplete redistribution\n\n\n  i beats e beats ?.\n  A redistributed route shows as ?"
+      },
+      {
+        "kind": "para",
+        "h": "The MED rule people miss",
+        "p": "MED is compared **only between paths learned from the same neighbour AS**. Paths from two different providers are simply not ranked against each other on MED unless **%%bgp always-compare-med%%** is configured."
+      },
+      {
+        "kind": "code",
+        "h": "MED and the same-AS rule",
+        "code": "  Both paths from AS 65002   ->  MED is compared\n  One from 65002, one from 65003  ->  MED is NOT compared\n\n  Unless:  bgp always-compare-med"
+      },
+      {
+        "kind": "para",
+        "h": "eBGP preference comes late",
+        "p": "The preference for **[[eBGP]]** over **[[iBGP]]** is step 6 — it runs **only after** the metric comparisons. Students often assume external wins immediately; it does not."
+      },
+      {
+        "kind": "code",
+        "h": "Per prefix, not per neighbour",
+        "code": "  show ip bgp\n\n  One BEST path per prefix.\n\n  A neighbour can win for one prefix\n  and lose for another.\n  The decision is never per neighbour."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp <prefix>\n  show ip bgp <prefix> longer-prefixes\n  show ip route bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Read the table",
+        "code": "show ip bgp\nshow ip bgp 203.0.113.0/24"
+      },
+      {
+        "label": "See the RIB result",
+        "code": "show ip route bgp"
+      }
+    ],
+    "traps": [
+      "**Order matters.** A decision at step 2 means steps 3 to 9 never run.",
+      "**Weight beats Local Preference beats AS_PATH beats MED.**",
+      "**Origin:** i beats e beats ? — a redistributed route is **?**.",
+      "MED is compared **only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.",
+      "**eBGP beats iBGP only at step 6** — after the metric comparisons.",
+      "The best path is per **prefix**, never per neighbour."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Name",
+          "BGP best-path selection"
+        ],
+        [
+          "Style",
+          "Strict priority, first difference wins"
+        ],
+        [
+          "1",
+          "Weight, highest, local only"
+        ],
+        [
+          "2",
+          "Local Preference, highest"
+        ],
+        [
+          "3",
+          "AS_PATH, shortest"
+        ],
+        [
+          "4",
+          "Origin, i then e then ?"
+        ],
+        [
+          "5",
+          "MED, lowest, same AS only"
+        ],
+        [
+          "6",
+          "eBGP before iBGP"
+        ],
+        [
+          "7",
+          "Lowest IGP metric to next hop"
+        ],
+        [
+          "8",
+          "Lowest router ID"
+        ],
+        [
+          "9",
+          "Cluster length, then oldest neighbour"
+        ],
+        [
+          "Scope",
+          "One best path per prefix"
+        ],
+        [
+          "MED caveat",
+          "Same neighbour AS unless always-compare-med"
+        ],
+        [
+          "Verification",
+          "show ip bgp"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. AS Path",
+        "d": "step 3 of the list"
+      },
+      {
+        "t": "05. Local Preference",
+        "d": "step 2"
+      },
+      {
+        "t": "06. MED",
+        "d": "step 5, and its same-AS rule"
+      }
+    ],
+    "glossary": [
+      "BGP Path Selection",
+      "BGP",
+      "AS Path",
+      "Local Preference",
+      "MED",
+      "eBGP",
+      "iBGP",
+      "Routing Table"
+    ]
+  },
+  {
+    "id": "t04",
+    "num": "04",
+    "group": "fund",
+    "title": "AS Path",
+    "blurb": "Well-known mandatory, loop prevention and step 3 of best path, plus as-path prepend",
+    "overview": "**[[AS Path|AS_PATH]]** is the **well-known mandatory** **[[BGP]]** attribute recording every autonomous system a route traversed. It does two jobs at once: **loop prevention** — a route already containing my AS is discarded — and **path selection**, as step 3 of best path, where **shorter is preferred**.",
+    "keyIdea": "eBGP prepends its own AS; iBGP does not. And when you prepend, you prepend your own AS — never the peer’s.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "What it records",
+        "code": "  show ip bgp\n\n  *> 203.0.113.0/24  192.0.2.1  0 65001 65002 i\n                             ^      ^^^^^^^^^\n                             |      the AS path\n                             next hop"
+      },
+      {
+        "kind": "table",
+        "h": "The two jobs",
+        "cols": [
+          "Job",
+          "Mechanism"
+        ],
+        "rows": [
+          [
+            "**Loop prevention**",
+            "A route whose AS_PATH contains my AS is discarded"
+          ],
+          [
+            "**Path selection**",
+            "Step 3 of best path — shorter wins"
+          ],
+          [
+            "**Steering**",
+            "%%as-path prepend%% makes my path look longer to neighbours"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "eBGP prepends, iBGP does not",
+        "p": "Each **[[eBGP]]** hop adds its AS to the front of the path. **[[iBGP]]** does not, because inside an AS the routers are the same administrative domain — which is why an iBGP-only view shows a single AS."
+      },
+      {
+        "kind": "code",
+        "h": "The asymmetry",
+        "code": "  eBGP advertise  ->  my AS is PREPENDED\n  iBGP advertise  ->  the AS path is unchanged\n\n\n  So the path length counts inter-AS hops only."
+      },
+      {
+        "kind": "para",
+        "h": "Prepending steers inbound traffic",
+        "p": "Adding your own AS to the path a few times makes that route look longer to the neighbour, so they prefer the other side. That is how inbound traffic is steered — but you prepend **your own** AS. Prepending the **peer’s** AS is the classic mistake."
+      },
+      {
+        "kind": "code",
+        "h": "As-path prepend",
+        "code": "  route-map PREPEND-OUT permit 10\n   match as-path 10\n   set as-path prepend 65001 65001\n\n  ip as-path access-list 10 permit _65002$\n\n\n  YOUR AS, repeated.\n  Not the peer's."
+      },
+      {
+        "kind": "code",
+        "h": "The mistake",
+        "code": "  WRONG:   set as-path prepend 65002   <- the PEER's AS\n  RIGHT:   set as-path prepend 65001   <- your own AS\n\n\n  Prepending the peer's AS confuses loop\n  prevention rather than influencing it."
+      },
+      {
+        "kind": "para",
+        "h": "The regex vocabulary",
+        "p": "AS-path filtering uses regex. **%%_%% matches a space, brace or comma**, **%%^%% and %%$%% anchor** the start and end, and the pattern **%%^$%%** matches an empty path — a **locally originated** route."
+      },
+      {
+        "kind": "code",
+        "h": "The regex rules",
+        "code": "  _        space, brace or comma boundary\n  ^        start of path\n  $        end of path\n  ^$       EMPTY path = locally originated\n\n\n  ip as-path access-list 10 permit ^$\n  ip as-path access-list 10 permit _65001$"
+      },
+      {
+        "kind": "code",
+        "h": "AS_SET",
+        "code": "  AS_SET appears from AGGREGATION (aggregate-address),\n  not from normal advertisement.\n\n  65001 { 65002, 65003 }\n\n\n  Curly braces = the set of origin ASes."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp regexp _65001$\n  show ip bgp neighbors advertised-routes\n  show ip bgp neighbors received-routes"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Prepend to steer inbound",
+        "code": "ip as-path access-list 10 permit _65002$\nroute-map PREPEND-OUT permit 10\n match as-path 10\n set as-path prepend 65001 65001\nrouter bgp 65001\n neighbor 203.0.113.2 route-map PREPEND-OUT out"
+      },
+      {
+        "label": "Filter with a regex",
+        "code": "ip as-path access-list 10 permit ^$\nip as-path access-list 10 permit _65001$"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp regexp _65001$\nshow ip bgp neighbors advertised-routes"
+      }
+    ],
+    "traps": [
+      "AS_PATH is **well-known mandatory**.",
+      "**eBGP prepends its own AS; iBGP does not.**",
+      "**Shorter AS path wins** — step 3 of best path.",
+      "**Prepend your own AS only.** Prepending the peer’s AS is the classic exam mistake.",
+      "Regex separators: **%%_%% matches space, brace or comma**; %%^%% and %%$%% anchor; **%%^$%% means a locally originated route**.",
+      "**AS_SET appears from aggregation**, not from normal advertisement."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Name",
+          "AS_PATH"
+        ],
+        [
+          "Class",
+          "Well-known mandatory"
+        ],
+        [
+          "Records",
+          "Every AS the route traversed"
+        ],
+        [
+          "Job 1",
+          "Loop prevention — my AS already present means discard"
+        ],
+        [
+          "Job 2",
+          "Path selection, step 3, shorter wins"
+        ],
+        [
+          "Job 3",
+          "Steering, via as-path prepend"
+        ],
+        [
+          "eBGP",
+          "Prepends its own AS"
+        ],
+        [
+          "iBGP",
+          "Does not prepend"
+        ],
+        [
+          "Prepend target",
+          "Your own AS, never the peer’s"
+        ],
+        [
+          "Regex underscore",
+          "Space, brace or comma"
+        ],
+        [
+          "Regex ^$",
+          "Empty path, locally originated"
+        ],
+        [
+          "AS_SET",
+          "From aggregation only"
+        ],
+        [
+          "Verification",
+          "show ip bgp"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Path Selection",
+        "d": "where it ranks"
+      },
+      {
+        "t": "10. Aggregation",
+        "d": "where AS_SET comes from"
+      },
+      {
+        "t": "13. Route Maps",
+        "d": "how prepend is applied"
+      }
+    ],
+    "glossary": [
+      "AS Path",
+      "BGP",
+      "eBGP",
+      "iBGP",
+      "BGP Path Selection",
+      "Route Map",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t05",
+    "num": "05",
+    "group": "fund",
+    "title": "Local Preference",
+    "blurb": "Step 2, higher wins, default 100, and the outbound tool the whole AS agrees on",
+    "overview": "**[[Local Preference]]** is the **well-known discretionary** attribute telling the **whole autonomous system** which **outbound** path is preferred. **Higher is better** — best-path step 2, right after Weight. It is set **at the edge** on routes received from eBGP, then propagates **inside the AS over iBGP** so every router makes the same choice.",
+    "keyIdea": "Set it locally, inside your AS, and it spreads to everyone. That is why Local Preference is the primary outbound tool.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The profile",
+        "cols": [
+          "Property",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Class",
+            "**Well-known discretionary**"
+          ],
+          [
+            "Direction",
+            "**Outbound** — which path your AS uses to leave"
+          ],
+          [
+            "Comparison",
+            "**Higher is better**, step 2"
+          ],
+          [
+            "Default",
+            "**100**"
+          ],
+          [
+            "Seen externally",
+            "Never — it does not leave your AS"
+          ],
+          [
+            "Propagates by",
+            "**iBGP**"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Set at the edge, agreed by all",
+        "p": "Local Preference is set **where the eBGP route arrives**, then carried inward over **[[iBGP]]**. Every router in the AS sees the same value, so the whole autonomous system exits the same way — which is exactly the property that makes it the main outbound lever."
+      },
+      {
+        "kind": "code",
+        "h": "Where it is set",
+        "code": "  Provider A        Provider B\n  AS 65001          AS 65002\n     |                 |\n     +--- Edge -------+\n             |\n        set local-preference HERE\n             |\n             +-- iBGP -->  every other router\n\n\n  Never set at the far end."
+      },
+      {
+        "kind": "code",
+        "h": "Making one provider the preferred exit",
+        "code": "  router bgp 65000\n   neighbor 203.0.113.2 route-map SET-LP-IN in\n\n  route-map SET-LP-IN permit 10\n   match ip address prefix-list PROVIDER-A\n   set local-preference 150\n\n\n  Higher than the default 100, so it wins."
+      },
+      {
+        "kind": "code",
+        "h": "Setting a floor for everything",
+        "code": "  router bgp 65000\n   bgp default local-preference 130\n\n\n  Global. A per-neighbour route-map\n  overrides it for the prefixes it matches."
+      },
+      {
+        "kind": "code",
+        "h": "It never leaves",
+        "code": "  Your AS                     The internet\n     |                            |\n     |-- Local Preference ------->X   stripped\n\n\n  External routers never see it."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp neighbors 203.0.113.2 received-routes\n  show ip route bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Prefer one exit",
+        "code": "ip prefix-list PROVIDER-A seq 10 permit 203.0.113.0/24\nroute-map SET-LP-IN permit 10\n match ip address prefix-list PROVIDER-A\n set local-preference 150\nrouter bgp 65000\n neighbor 203.0.113.2 route-map SET-LP-IN in"
+      },
+      {
+        "label": "Raise the floor globally",
+        "code": "router bgp 65000\n bgp default local-preference 130"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp\nshow ip bgp neighbors 203.0.113.2 received-routes"
+      }
+    ],
+    "traps": [
+      "**Higher Local Preference wins** — step 2, right after Weight.",
+      "The default is **100**.",
+      "It is set **inbound from eBGP** and is **never seen by external routers**.",
+      "It propagates **via iBGP only** — that is the AS-wide consistency trick.",
+      "%%bgp default local-preference%% sets the global default; a **per-neighbour route-map overrides it** for matched prefixes."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Class",
+          "Well-known discretionary"
+        ],
+        [
+          "Purpose",
+          "Choose the outbound path for the whole AS"
+        ],
+        [
+          "Direction",
+          "Outbound"
+        ],
+        [
+          "Comparison",
+          "Higher is better"
+        ],
+        [
+          "Best-path step",
+          "2"
+        ],
+        [
+          "Default",
+          "100"
+        ],
+        [
+          "Set",
+          "Inbound, on routes received from eBGP"
+        ],
+        [
+          "Propagates",
+          "Inside the AS via iBGP"
+        ],
+        [
+          "External visibility",
+          "None"
+        ],
+        [
+          "Global default",
+          "bgp default local-preference"
+        ],
+        [
+          "Override",
+          "A per-neighbour route-map"
+        ],
+        [
+          "Against MED",
+          "Step 2 always beats step 5"
+        ],
+        [
+          "Verification",
+          "show ip bgp neighbors received-routes"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Path Selection",
+        "d": "where it sits in the order"
+      },
+      {
+        "t": "06. MED",
+        "d": "the inbound counterpart"
+      },
+      {
+        "t": "13. Route Maps",
+        "d": "how the value is set"
+      }
+    ],
+    "glossary": [
+      "Local Preference",
+      "BGP",
+      "iBGP",
+      "eBGP",
+      "BGP Path Selection",
+      "Route Map",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t06",
+    "num": "06",
+    "group": "fund",
+    "title": "MED",
+    "blurb": "Step 5, lower wins, compared only inside the same neighbour AS, and the missing-value trap",
+    "overview": "**[[MED]] (Multi-Exit Discriminator)** is the **optional non-transitive** attribute that tells a neighbour AS **which of your exit points** to use for **inbound** traffic. It is **advertised outbound and compared inbound**, **lower is better**, and it is **compared only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.",
+    "keyIdea": "Local Preference is how you choose. MED is how you ask. And it only speaks to one AS at a time.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "The profile",
+        "cols": [
+          "Property",
+          "Value"
+        ],
+        "rows": [
+          [
+            "Class",
+            "**Optional non-transitive**"
+          ],
+          [
+            "Direction",
+            "**Inbound** — influences how a neighbour reaches you"
+          ],
+          [
+            "Comparison",
+            "**Lower is better**, step 5"
+          ],
+          [
+            "Missing value",
+            "**0**, which can accidentally win"
+          ],
+          [
+            "Compared",
+            "**Only between paths from the same neighbour AS**"
+          ],
+          [
+            "Bypass",
+            "%%bgp always-compare-med%%"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "The direction trap",
+        "p": "MED is **set outbound and compared inbound**. You advertise it to ask the neighbour for a particular entry point; the neighbour compares it on the way in. That split direction is the single most common way students invert the concept."
+      },
+      {
+        "kind": "code",
+        "h": "Set out, compare in",
+        "code": "  YOUR router                  Neighbour AS\n     |                              |\n     |-- MED advertised ----------->|   you SET it here\n     |                              |\n     |                              +-- compares it\n     |                                 on the way IN"
+      },
+      {
+        "kind": "code",
+        "h": "Lower is better",
+        "code": "  Exit A  MED 50   ->  preferred\n  Exit B  MED 100  ->  not preferred\n\n\n  Opposite of Local Preference,\n  which is higher-wins."
+      },
+      {
+        "kind": "para",
+        "h": "The same-AS rule",
+        "p": "MED is compared **only between paths learned from the same neighbour AS**. Two paths from the same provider are ranked on MED; a path from each of two different providers is not — and **%%bgp always-compare-med%%** changes that, at the cost of predictability."
+      },
+      {
+        "kind": "code",
+        "h": "When MED applies",
+        "code": "  Both paths learned from AS 65002\n        -> MED compared\n\n  One from AS 65002, one from AS 65003\n        -> MED NOT compared\n\n  bgp always-compare-med\n        -> compared anyway"
+      },
+      {
+        "kind": "code",
+        "h": "A missing MED wins by accident",
+        "code": "  Exit A  MED 0      (not advertised)\n  Exit B  MED 150\n\n  A wins, because a missing MED is treated as 0.\n\n\n  Advertise MED on every exit you care about."
+      },
+      {
+        "kind": "para",
+        "h": "It is non-transitive",
+        "p": "**[[MED]]** does not cross to a third autonomous system by default, which is the opposite of **[[Communities|communities]]**. If a neighbour has to carry the value onward, it has to be told to."
+      },
+      {
+        "kind": "code",
+        "h": "Configuring it",
+        "code": "  route-map SET-MED-OUT permit 10\n   set med 50\n\n  router bgp 65000\n   neighbor 203.0.113.2 route-map SET-MED-OUT out"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp neighbors advertised-routes\n  show ip route bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Advertise a MED",
+        "code": "route-map SET-MED-OUT permit 10\n set med 50\nrouter bgp 65000\n neighbor 203.0.113.2 route-map SET-MED-OUT out"
+      },
+      {
+        "label": "Allow cross-AS comparison",
+        "code": "router bgp 65000\n bgp always-compare-med"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp\nshow ip bgp neighbors advertised-routes"
+      }
+    ],
+    "traps": [
+      "**Lower MED wins** — step 5 of best path.",
+      "It is compared **only between paths from the same neighbour AS** unless **%%bgp always-compare-med%%** is set.",
+      "**Set outbound, compared inbound** — the direction trap.",
+      "A **missing MED is treated as 0**, so it can accidentally win.",
+      "MED is **optional non-transitive** — it does not cross to a third AS, unlike communities.",
+      "**Local Preference, step 2, always beats MED, step 5.**"
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "Multi-Exit Discriminator"
+        ],
+        [
+          "Class",
+          "Optional non-transitive"
+        ],
+        [
+          "Purpose",
+          "Ask a neighbour AS which of your exits to use"
+        ],
+        [
+          "Direction",
+          "Set outbound, compared inbound"
+        ],
+        [
+          "Comparison",
+          "Lower is better"
+        ],
+        [
+          "Best-path step",
+          "5"
+        ],
+        [
+          "Missing value",
+          "Treated as 0"
+        ],
+        [
+          "Compared with",
+          "Only paths from the same neighbour AS"
+        ],
+        [
+          "Bypass",
+          "bgp always-compare-med"
+        ],
+        [
+          "Does not cross",
+          "A third autonomous system"
+        ],
+        [
+          "Beaten by",
+          "Local Preference at step 2"
+        ],
+        [
+          "Verification",
+          "show ip bgp"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "05. Local Preference",
+        "d": "the outbound counterpart that outranks it"
+      },
+      {
+        "t": "03. Path Selection",
+        "d": "its place in the order"
+      },
+      {
+        "t": "14. Troubleshooting",
+        "d": "when MED is not being compared"
+      }
+    ],
+    "glossary": [
+      "MED",
+      "BGP",
+      "BGP Path Selection",
+      "Communities",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t07",
+    "num": "07",
+    "group": "fund",
+    "title": "Communities",
+    "blurb": "Optional transitive tags, the send-community switch, and the four well-known values",
+    "overview": "**[[Communities]]** are **optional transitive** tags attached to routes so operators can group them and apply policy **remotely** — the upstream performs the action, not the sender. Because they are transitive they **travel across AS boundaries**, unlike **[[MED]]**. The exam covers the **well-known communities**, the **ASN:value** format, and the **%%neighbor ... send-community%%** switch.",
+    "keyIdea": "Communities are a signal, not an action. Tagging does nothing on its own — and the tag never leaves unless send-community is configured.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The format",
+        "code": "  standard    ASN:value      e.g.  65001:100\n  extended    4-byte ASN:value\n\n\n  65001:100\n     ^   ^\n     |   the community value\n     the advertising ASN"
+      },
+      {
+        "kind": "table",
+        "h": "The well-known communities",
+        "cols": [
+          "Value",
+          "Effect"
+        ],
+        "rows": [
+          [
+            "**NO_EXPORT**",
+            "Do not advertise outside this AS"
+          ],
+          [
+            "**NO_ADVERTISE**",
+            "Do not advertise to **any** peer — it dies at this router"
+          ],
+          [
+            "NO_PEER",
+            "Do not advertise to eBGP peers"
+          ],
+          [
+            "LOCAL_AS",
+            "Do not advertise outside the local AS"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "send-community is mandatory",
+        "p": "Communities are **not sent by default**. Without **%%neighbor ... send-community%%** the tag never leaves the router, which is the number-one reason a community policy silently does nothing."
+      },
+      {
+        "kind": "code",
+        "h": "The switch everyone forgets",
+        "code": "  router bgp 65000\n   neighbor 203.0.113.2 send-community\n\n\n  Without this line,\n  the community is stripped on advertise,\n  and every downstream match fails."
+      },
+      {
+        "kind": "code",
+        "h": "Tagging a route",
+        "code": "  route-map TAG-OUT permit 10\n   match ip address prefix-list CUSTOMER-A\n   set community 65001:100\n\n  router bgp 65000\n   neighbor 198.51.100.1 route-map TAG-OUT out\n   neighbor 198.51.100.1 send-community"
+      },
+      {
+        "kind": "code",
+        "h": "Acting on it downstream",
+        "code": "  ip community-list standard PREMIUM permit 65001:100\n\n  route-map SET-LP-IN permit 10\n   match community PREMIUM\n   set local-preference 200\n\n\n  The sender tags; the upstream acts."
+      },
+      {
+        "kind": "table",
+        "h": "Standard against expanded",
+        "cols": [
+          "Type",
+          "Matching"
+        ],
+        "rows": [
+          [
+            "**Standard** community-list",
+            "**Exact** value match"
+          ],
+          [
+            "**Expanded** community-list",
+            "**Regular expression** match"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "They cross ASes",
+        "p": "Because communities are **optional transitive**, they cross autonomous systems — the opposite of **[[MED]]**. That is what makes a remote policy possible: the sender cannot apply anything itself."
+      },
+      {
+        "kind": "code",
+        "h": "NO_EXPORT against NO_ADVERTISE",
+        "code": "  NO_EXPORT      stays inside THIS AS\n                 -> other routers in my AS may use it\n\n  NO_ADVERTISE   dies at THIS router\n                 -> not sent to any peer at all"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp community 65001:100\n  show ip bgp neighbors 198.51.100.1 advertised-routes\n  show ip community-list"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Tag and actually send it",
+        "code": "route-map TAG-OUT permit 10\n match ip address prefix-list CUSTOMER-A\n set community 65001:100\nrouter bgp 65000\n neighbor 198.51.100.1 route-map TAG-OUT out\n neighbor 198.51.100.1 send-community"
+      },
+      {
+        "label": "Act on the tag",
+        "code": "ip community-list standard PREMIUM permit 65001:100\nroute-map SET-LP-IN permit 10\n match community PREMIUM\n set local-preference 200"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp community 65001:100\nshow ip bgp neighbors 198.51.100.1 advertised-routes"
+      }
+    ],
+    "traps": [
+      "%%send-community%% is **mandatory** — it is the number-one reason communities vanish.",
+      "**NO_EXPORT** stays in the AS; **NO_ADVERTISE** dies at this router.",
+      "Communities are **optional transitive**, so they cross AS boundaries — unlike **[[MED]]**.",
+      "A **standard** community-list matches **exactly**; an **expanded** one matches a **regex**.",
+      "The format is **ASN:value**, for example 65001:100."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Class",
+          "Optional transitive"
+        ],
+        [
+          "Format",
+          "ASN:value, for example 65001:100"
+        ],
+        [
+          "Purpose",
+          "Tag routes so policy can be applied remotely"
+        ],
+        [
+          "Who acts",
+          "The upstream, not the sender"
+        ],
+        [
+          "Default behaviour",
+          "Not sent — send-community is required"
+        ],
+        [
+          "NO_EXPORT",
+          "Stays inside the AS"
+        ],
+        [
+          "NO_ADVERTISE",
+          "Dies at this router"
+        ],
+        [
+          "Standard list",
+          "Exact match"
+        ],
+        [
+          "Expanded list",
+          "Regular expression"
+        ],
+        [
+          "Crosses ASes",
+          "Yes"
+        ],
+        [
+          "Verification",
+          "show ip bgp community <value>"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "06. MED",
+        "d": "the attribute that does not cross"
+      },
+      {
+        "t": "13. Route Maps",
+        "d": "where the tag is set and matched"
+      },
+      {
+        "t": "14. Troubleshooting",
+        "d": "when the tag disappears"
+      }
+    ],
+    "glossary": [
+      "Communities",
+      "BGP",
+      "MED",
+      "Route Map",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t08",
+    "num": "08",
+    "group": "scale",
+    "title": "Route Reflector",
+    "blurb": "n(n-1)/2 down to n, the three loop-prevention attributes, and the client rule",
+    "overview": "A **[[Route Reflector|route reflector]]** breaks **[[iBGP]]**’s full-mesh requirement. One or more reflectors act as hubs that **re-advertise iBGP-learned routes**, cutting the session count from **n(n−1)/2 to n**. Loop freedom is guaranteed by three attributes — **ORIGINATOR_ID, CLUSTER_LIST and CLUSTER_ID** — which protect the network while iBGP split horizon is deliberately bypassed.",
+    "keyIdea": "A reflector is allowed to break split horizon because it carries the attributes that keep the result loop-free.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "Before and after",
+        "code": "  FULL MESH, 16 routers              WITH ONE REFLECTOR\n\n    //  120 sessions                    |\n   / /                                  R\n  / /                                 / |                                         C   C\n  Every router peers with every          |\n  other router.                          C\n\n\n  n(n-1)/2   ->   n"
+      },
+      {
+        "kind": "table",
+        "h": "The reflection rules",
+        "cols": [
+          "Route learned from",
+          "Reflected to"
+        ],
+        "rows": [
+          [
+            "A **client**",
+            "Clients **and** non-clients"
+          ],
+          [
+            "A **non-client**",
+            "**Clients only**"
+          ],
+          [
+            "An **[[eBGP]]** peer",
+            "Clients and non-clients, as a normal advertisement"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Clients peer only with the reflector",
+        "p": "A **client** does not speak iBGP to the other clients. Its only iBGP session is with the reflector, which is precisely why the session count collapses."
+      },
+      {
+        "kind": "code",
+        "h": "Client discipline",
+        "code": "  Client A ---- iBGP ----> Reflector <---- iBGP ---- Client B\n                           no session between A and B"
+      },
+      {
+        "kind": "code",
+        "h": "Configuring it",
+        "code": "  router bgp 65001\n   neighbor 10.1.1.1 remote-as 65001\n   neighbor 10.1.1.1 route-reflector-client\n   neighbor 10.2.2.2 remote-as 65001\n   neighbor 10.2.2.2 route-reflector-client\n\n\n  The command goes on the REFLECTOR,\n  once per client."
+      },
+      {
+        "kind": "para",
+        "h": "The three loop-prevention attributes",
+        "p": "**%%route-reflector-client%%** bypasses iBGP split horizon, so something else has to stop loops. **ORIGINATOR_ID** holds the router that originated the route, **CLUSTER_LIST** records the reflector clusters it passed through, and **CLUSTER_ID** identifies the reflector."
+      },
+      {
+        "kind": "table",
+        "h": "The three attributes",
+        "cols": [
+          "Attribute",
+          "Role"
+        ],
+        "rows": [
+          [
+            "**ORIGINATOR_ID**",
+            "The router ID of the router that originated the route"
+          ],
+          [
+            "**CLUSTER_LIST**",
+            "The sequence of clusters the route has traversed"
+          ],
+          [
+            "**CLUSTER_ID**",
+            "Identifies this reflector; defaults to its router ID"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "How a loop is broken",
+        "code": "  My CLUSTER_ID is already in CLUSTER_LIST\n       |\n  Discard the route."
+      },
+      {
+        "kind": "code",
+        "h": "Redundancy",
+        "code": "  A second reflector makes the topology survive one loss.\n\n  CLUSTER_ID must MATCH on both reflectors\n  for them to see the same cluster.\n\n\n  Mismatched cluster IDs weaken the loop check."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp neighbors\n  show ip bgp\n  show ip bgp regexp _65001_\n  show ip route bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Turn a router into a reflector",
+        "code": "router bgp 65001\n neighbor 10.1.1.1 remote-as 65001\n neighbor 10.1.1.1 route-reflector-client\n neighbor 10.2.2.2 remote-as 65001\n neighbor 10.2.2.2 route-reflector-client"
+      },
+      {
+        "label": "Verify the sessions",
+        "code": "show ip bgp summary\nshow ip bgp neighbors"
+      }
+    ],
+    "traps": [
+      "**A route reflector re-advertises iBGP routes**, bypassing split horizon safely.",
+      "**ORIGINATOR_ID and CLUSTER_LIST** provide the loop prevention.",
+      "Routes from a **non-client** go to **clients only**.",
+      "**Clients peer only with the reflector**, never with each other.",
+      "**%%route-reflector-client%% goes on the reflector**, once per client.",
+      "Redundant reflectors need the **same CLUSTER_ID**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Break the iBGP full-mesh requirement"
+        ],
+        [
+          "Sessions saved",
+          "n(n−1)/2 down to n"
+        ],
+        [
+          "How",
+          "Re-advertise iBGP-learned routes"
+        ],
+        [
+          "From a client",
+          "To clients and non-clients"
+        ],
+        [
+          "From a non-client",
+          "To clients only"
+        ],
+        [
+          "Client sessions",
+          "Only with the reflector"
+        ],
+        [
+          "Loop prevention",
+          "ORIGINATOR_ID and CLUSTER_LIST"
+        ],
+        [
+          "CLUSTER_ID",
+          "Identifies the reflector, defaults to its router ID"
+        ],
+        [
+          "Command",
+          "route-reflector-client, on the reflector"
+        ],
+        [
+          "Redundancy",
+          "Share the same CLUSTER_ID"
+        ],
+        [
+          "Verification",
+          "show ip bgp neighbors"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "02. iBGP",
+        "d": "the rule it bends"
+      },
+      {
+        "t": "09. Confederation",
+        "d": "the alternative scaling model"
+      },
+      {
+        "t": "14. Troubleshooting",
+        "d": "when reflection creates a loop"
+      }
+    ],
+    "glossary": [
+      "Route Reflector",
+      "iBGP",
+      "BGP",
+      "eBGP",
+      "Control Plane",
+      "Loopback Address"
+    ]
+  },
+  {
+    "id": "t09",
+    "num": "09",
+    "group": "scale",
+    "title": "Confederation",
+    "blurb": "Sub-ASes with eBGP-like sessions, AD 200 inside, and the public AS shown to the world",
+    "overview": "A **[[Confederation|BGP confederation]]** is the alternative to **[[Route Reflector|route reflectors]]** for scaling **[[iBGP]]**. The AS is split into **sub-ASes** that peer with each other using **eBGP-like** sessions, while presenting a **single confederation AS** to the outside world. Attributes survive the sub-AS boundaries — unlike a real eBGP session.",
+    "keyIdea": "It looks like eBGP but behaves like iBGP: AD 200, and local preference and MED carry across.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The structure",
+        "code": "            The outside world\n                   |\n          AS 65000  (confederation identifier)\n        +----------+----------+\n        |                     |\n   Sub-AS 65001          Sub-AS 65002\n   (confed peer)        (confed peer)\n\n\n  One AS externally, several internally."
+      },
+      {
+        "kind": "table",
+        "h": "How the boundaries behave",
+        "cols": [
+          "Property",
+          "Real eBGP",
+          "Confederation eBGP"
+        ],
+        "rows": [
+          [
+            "Administrative Distance",
+            "**20**",
+            "**200**"
+          ],
+          [
+            "Local Preference",
+            "Stripped",
+            "**Survives**"
+          ],
+          [
+            "MED",
+            "Stripped",
+            "**Survives**"
+          ],
+          [
+            "Next hop",
+            "Rewritten",
+            "**Survives**"
+          ],
+          [
+            "AS path",
+            "Prepended normally",
+            "Sub-AS numbers used internally"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Attributes survive",
+        "p": "Across a sub-AS boundary, **local preference, MED and the next hop are preserved** — unlike a genuine **[[eBGP]]** session. That is what makes a confederation feel like a scaled-up iBGP domain rather than a collection of external peers."
+      },
+      {
+        "kind": "code",
+        "h": "The two commands",
+        "code": "  router bgp 65001\n   !\n   ! the PUBLIC AS the world sees\n   bgp confederation identifier 65000\n   !\n   ! the sub-ASes I peer with internally\n   bgp confederation peers 65002 65003\n   !\n   neighbor 10.1.1.1 remote-as 65002"
+      },
+      {
+        "kind": "para",
+        "h": "identifier against peers",
+        "p": "%%bgp confederation identifier%% is the **public autonomous system** advertised to the outside. %%bgp confederation peers%% is the **list of sub-ASes** you peer with inside the confederation. Mixing them up is the usual mistake."
+      },
+      {
+        "kind": "code",
+        "h": "What the outside sees",
+        "code": "  The confederation AS_PATH is STRIPPED\n  before the route leaves to real eBGP.\n\n  Outside:      65000 65100\n  Inside:       sub-AS numbers, hidden"
+      },
+      {
+        "kind": "code",
+        "h": "Comparing the two scaling tools",
+        "code": "  ROUTE REFLECTOR          CONFEDERATION\n    more common               rarer\n    one AS stays one AS       the AS is subdivided\n    AD stays 200              confed eBGP AD 200\n    attributes untouched      attributes survive\n\n\n  Prefer reflectors unless asked for confederations."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp summary\n  show ip bgp neighbors\n  show running-config | section bgp"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Split the AS",
+        "code": "router bgp 65001\n bgp confederation identifier 65000\n bgp confederation peers 65002 65003\n neighbor 10.1.1.1 remote-as 65002"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp summary\nshow running-config | section bgp"
+      }
+    ],
+    "traps": [
+      "**Confederation eBGP peers use AD 200**, not 20.",
+      "**Attributes survive** the sub-AS boundaries — local preference, MED and next hop — unlike real eBGP.",
+      "%%bgp confederation identifier%% is the **public AS**; %%bgp confederation peers%% is the **sub-AS list**.",
+      "The confederation AS_PATH is **stripped** before the route leaves to real eBGP.",
+      "In exam answers, **prefer route reflectors** unless a confederation is explicitly asked for."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Scale iBGP without a full mesh"
+        ],
+        [
+          "Model",
+          "Sub-ASes with eBGP-like sessions"
+        ],
+        [
+          "To the world",
+          "A single confederation AS"
+        ],
+        [
+          "Confederation eBGP AD",
+          "200"
+        ],
+        [
+          "Attributes",
+          "Survive the sub-AS boundaries"
+        ],
+        [
+          "Identifier",
+          "bgp confederation identifier — the public AS"
+        ],
+        [
+          "Peers",
+          "bgp confederation peers — the sub-AS list"
+        ],
+        [
+          "AS_PATH outside",
+          "Confederation detail stripped"
+        ],
+        [
+          "Against reflectors",
+          "Rarer, and less often the exam answer"
+        ],
+        [
+          "Verification",
+          "show ip bgp summary"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "08. Route Reflector",
+        "d": "the more common answer"
+      },
+      {
+        "t": "02. iBGP",
+        "d": "the requirement it removes"
+      },
+      {
+        "t": "01. eBGP",
+        "d": "the behaviour it imitates"
+      }
+    ],
+    "glossary": [
+      "Confederation",
+      "iBGP",
+      "BGP",
+      "eBGP",
+      "Administrative Distance",
+      "Local Preference",
+      "MED"
+    ]
+  },
+  {
+    "id": "t10",
+    "num": "10",
+    "group": "scale",
+    "title": "Aggregation",
+    "blurb": "aggregate-address against network, what summary-only and as-set do, and what aggregation loses",
+    "overview": "**[[BGP Aggregation|BGP aggregation]]** summarises more-specific prefixes into one shorter prefix before advertising it, shrinking the global table and hiding internal flaps. The commands are **%%aggregate-address%%** and **%%network%%**, and the exam focuses on **%%summary-only%%**, **%%as-set%%**, and the **atomic-aggregate and aggregator** attributes that mark the aggregation point.",
+    "keyIdea": "aggregate-address works from any more-specific; network needs the exact route. And aggregation discards attributes.",
+    "sections": [
+      {
+        "kind": "table",
+        "h": "aggregate-address against network",
+        "cols": [
+          "",
+          "aggregate-address",
+          "network"
+        ],
+        "rows": [
+          [
+            "Needs",
+            "Any covering more-specific",
+            "**The exact prefix in the BGP table**"
+          ],
+          [
+            "Summary-only",
+            "Available",
+            "Not applicable"
+          ],
+          [
+            "as-set",
+            "Available",
+            "Not applicable"
+          ],
+          [
+            "Typical use",
+            "Advertise one summary",
+            "Originate a specific prefix"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "Both ways to originate",
+        "code": "  ! summarize 203.0.113.0/25 and /26 into a /24\n  router bgp 65000\n   aggregate-address 203.0.113.0 255.255.255.0 summary-only\n\n  ! originate one exact prefix\n  router bgp 65000\n   network 203.0.113.0 mask 255.255.255.0"
+      },
+      {
+        "kind": "para",
+        "h": "summary-only suppresses the details",
+        "p": "Without **%%summary-only%%**, BGP advertises **both** the aggregate and the more-specifics, which defeats much of the purpose. With it, only the summary leaves."
+      },
+      {
+        "kind": "code",
+        "h": "The difference",
+        "code": "  WITHOUT summary-only      WITH summary-only\n    203.0.113.0/24            203.0.113.0/24\n    203.0.113.0/25\n    203.0.113.0/26"
+      },
+      {
+        "kind": "para",
+        "h": "as-set records the origin ASes",
+        "p": "Without **%%as-set%%**, the aggregated path shows **only the aggregator’s AS**, which hides the real origins and can create a **[[Routing Loop|routing loop]]** downstream. With it, the origin ASes are recorded in an **AS_SET**."
+      },
+      {
+        "kind": "code",
+        "h": "What as-set protects against",
+        "code": "  WITHOUT as-set          WITH as-set\n    65000                   65000 { 65001, 65002 }\n                            ^\n                            the AS_SET\n\n\n  Without it, an origin AS may never see\n  its own number in the path."
+      },
+      {
+        "kind": "code",
+        "h": "The aggregation marks",
+        "code": "  ATOMIC_AGGREGATE   the aggregate was formed\n  AGGREGATOR         which router and which AS did it\n\n\n  Both are set by the aggregating router."
+      },
+      {
+        "kind": "para",
+        "h": "Aggregation loses attributes",
+        "p": "MED, **[[Communities|communities]]** and other path attributes are **lost** at the aggregation point, because the summary is a new prefix rather than a copy of the specifics. That is the tradeoff for a smaller table."
+      },
+      {
+        "kind": "code",
+        "h": "The tradeoff, plainly",
+        "code": "  AGGREGATION            SUMMARIZATION GOAL\n    smaller table          fewer prefixes advertised\n    fewer route entries    flaps are hidden\n    attributes LOST        MED, communities gone"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip bgp\n  show ip bgp summary\n  show ip bgp 203.0.113.0/24"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Aggregate and suppress details",
+        "code": "router bgp 65000\n aggregate-address 203.0.113.0 255.255.255.0 summary-only"
+      },
+      {
+        "label": "Preserve the origin ASes",
+        "code": "router bgp 65000\n aggregate-address 203.0.113.0 255.255.255.0 as-set summary-only"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip bgp\nshow ip bgp 203.0.113.0/24"
+      }
+    ],
+    "traps": [
+      "**%%aggregate-address%% works from any more-specific**; **%%network%%** needs the exact route.",
+      "**%%summary-only%%** suppresses the more-specifics — without it, both are advertised.",
+      "**%%as-set%% records the origin ASes**; without it the path looks like only the aggregator, which can loop.",
+      "**atomic-aggregate and aggregator** mark the aggregation and the router that did it.",
+      "**Aggregation loses attributes** such as MED and communities — that is the tradeoff."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Advertise one summary instead of many specifics"
+        ],
+        [
+          "Command",
+          "aggregate-address <prefix> <mask>"
+        ],
+        [
+          "Against network",
+          "network needs the exact prefix in the table"
+        ],
+        [
+          "summary-only",
+          "Suppresses the more-specifics"
+        ],
+        [
+          "as-set",
+          "Records the origin ASes"
+        ],
+        [
+          "Without as-set",
+          "The path shows only the aggregator — loop risk"
+        ],
+        [
+          "atomic-aggregate",
+          "Marks that an aggregate was formed"
+        ],
+        [
+          "aggregator",
+          "Which router and AS aggregated"
+        ],
+        [
+          "Attributes lost",
+          "MED, communities and similar"
+        ],
+        [
+          "Benefit",
+          "Smaller table, hidden internal flaps"
+        ],
+        [
+          "Verification",
+          "show ip bgp"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "04. AS Path",
+        "d": "where AS_SET appears"
+      },
+      {
+        "t": "03. Path Selection",
+        "d": "how the aggregate ranks"
+      },
+      {
+        "t": "12. Prefix Lists",
+        "d": "what summary-only keeps out"
+      }
+    ],
+    "glossary": [
+      "BGP Aggregation",
+      "BGP",
+      "Summarization",
+      "AS Path",
+      "Communities",
+      "MED",
+      "Routing Table",
+      "Routing Loop"
+    ]
+  },
+  {
+    "id": "t11",
+    "num": "11",
+    "group": "policy",
+    "title": "Policy Routing",
+    "blurb": "Matching on the packet rather than the destination, evaluated before the RIB lookup",
+    "overview": "**[[Policy-Based Routing|Policy-based routing (PBR)]]** forwards traffic based on **policy** — source, protocol, DSCP — instead of the destination in the **[[Routing Table|routing table]]**. It uses a **[[Route Map|route-map]]** applied **inbound on an interface**, and because it is evaluated **before the longest-match lookup**, it overrides the RIB for the matched flows.",
+    "keyIdea": "set ip next-hop is an override; set default next-hop is only a fallback. And the match happens before the routing decision.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "Where PBR sits",
+        "code": "  Packet arrives on an interface\n       |\n  PBR route-map evaluated  <-- HERE\n       |                |\n    match             no match\n       |                |\n  set action        normal longest-match\n       |                |\n       +-------+--------+\n               |\n          FIB / next hop"
+      },
+      {
+        "kind": "table",
+        "h": "What it matches on",
+        "cols": [
+          "Match",
+          "Typical use"
+        ],
+        "rows": [
+          [
+            "Source address",
+            "Steer a subnet out a particular link"
+          ],
+          [
+            "Protocol",
+            "Send voice over the low-latency path"
+          ],
+          [
+            "DSCP or precedence",
+            "Follow the QoS marking"
+          ],
+          [
+            "Length",
+            "Fragmented or very small packets"
+          ]
+        ]
+      },
+      {
+        "kind": "code",
+        "h": "A complete PBR configuration",
+        "code": "  access-list 150 permit ip 10.1.1.0 0.0.0.255 any\n\n  route-map STEER-VOICE permit 10\n   match ip address 150\n   set ip next-hop 203.0.113.1\n\n  interface GigabitEthernet0/1\n   ip policy route-map STEER-VOICE"
+      },
+      {
+        "kind": "para",
+        "h": "set against set default",
+        "p": "**%%set ip next-hop%% overrides** the routing decision outright. **%%set default next-hop%%** is only a **fallback** — it applies if no explicit route exists. Confusing the two is the most common PBR mistake."
+      },
+      {
+        "kind": "code",
+        "h": "Override against fallback",
+        "code": "  set ip next-hop        OVERRIDE, always\n  set default next-hop   FALLBACK, only if no route exists\n\n\n  Different commands, different behaviour."
+      },
+      {
+        "kind": "para",
+        "h": "Locally generated traffic",
+        "p": "The inbound interface route-map only affects traffic **received** by the router. Traffic **originated by the router itself** needs **%%ip local policy route-map%%**."
+      },
+      {
+        "kind": "code",
+        "h": "Both directions",
+        "code": "  ip policy route-map X      on an interface\n                              -> received packets\n\n  ip local policy route-map X\n                              -> packets this router generates"
+      },
+      {
+        "kind": "code",
+        "h": "It can also mark",
+        "code": "  route-map MARK-DSCP permit 10\n   match ip address 150\n   set ip dscp af41"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show route-map\n  show ip policy\n  show ip route-map STEER-VOICE\n  debug ip policy"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Steer by policy",
+        "code": "access-list 150 permit ip 10.1.1.0 0.0.0.255 any\nroute-map STEER-VOICE permit 10\n match ip address 150\n set ip next-hop 203.0.113.1\ninterface GigabitEthernet0/1\n ip policy route-map STEER-VOICE"
+      },
+      {
+        "label": "Cover locally generated packets",
+        "code": "ip local policy route-map STEER-VOICE"
+      },
+      {
+        "label": "Verify",
+        "code": "show route-map\nshow ip route-map STEER-VOICE"
+      }
+    ],
+    "traps": [
+      "PBR is applied **inbound on an interface**, and it **overrides the RIB** for matched traffic.",
+      "**%%set ip next-hop%% overrides; %%set default next-hop%% is only a fallback** when no route exists.",
+      "**%%ip local policy route-map%%** is required for **locally sourced** traffic.",
+      "The match and set live in a **[[Route Map|route-map]]**, applied with %%ip policy route-map%%.",
+      "PBR is evaluated **before** the normal routing lookup."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Full name",
+          "Policy-based routing"
+        ],
+        [
+          "Matches on",
+          "Source, protocol, DSCP, length"
+        ],
+        [
+          "Evaluated",
+          "Before the longest-match lookup"
+        ],
+        [
+          "Effect",
+          "Overrides the RIB for matched flows"
+        ],
+        [
+          "Applied",
+          "Inbound on an interface"
+        ],
+        [
+          "Configured with",
+          "ip policy route-map"
+        ],
+        [
+          "Locally sourced",
+          "ip local policy route-map"
+        ],
+        [
+          "set ip next-hop",
+          "Override"
+        ],
+        [
+          "set default next-hop",
+          "Fallback only"
+        ],
+        [
+          "Also used for",
+          "Marking, such as set ip dscp"
+        ],
+        [
+          "Verification",
+          "show route-map"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "13. Route Maps",
+        "d": "the engine underneath"
+      },
+      {
+        "t": "12. Prefix Lists",
+        "d": "a cleaner way to match"
+      },
+      {
+        "t": "03. Path Selection",
+        "d": "what PBR skips past entirely"
+      }
+    ],
+    "glossary": [
+      "Policy-Based Routing",
+      "Route Map",
+      "Routing Table",
+      "Data Plane",
+      "Default Route"
+    ]
+  },
+  {
+    "id": "t12",
+    "num": "12",
+    "group": "policy",
+    "title": "Prefix Lists",
+    "blurb": "ge and le change the length, never the prefix bits, and the implicit deny at the end",
+    "overview": "**[[Prefix List|Prefix lists]]** filter routes by **prefix and prefix-length**, and they are the preferred way to match routes in **[[BGP]]** policy — cleaner and faster than access lists for routing. The exam focuses on the **%%ge%% and %%le%%** modifiers and on **first-match-wins** evaluation order.",
+    "keyIdea": "The prefix sets the base. ge and le only change the permitted length — never the prefix bits.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The anatomy",
+        "code": "  ip prefix-list NAME seq 10 permit 10.1.0.0/16 le 24\n                              ^             ^^  ^^\n                              |             |   |\n                              |             |   upper length bound\n                              |             lower length bound\n                              the base prefix"
+      },
+      {
+        "kind": "table",
+        "h": "The modifiers",
+        "cols": [
+          "Form",
+          "Matches"
+        ],
+        "rows": [
+          [
+            "permit 10.1.0.0/16",
+            "**Exactly** /16"
+          ],
+          [
+            "permit 10.1.0.0/16 ge 24",
+            "10.1.x.x, length **24 or longer**"
+          ],
+          [
+            "permit 10.1.0.0/16 le 24",
+            "The /16 itself **and** anything longer up to /24"
+          ],
+          [
+            "permit 10.1.0.0/16 ge 18 le 22",
+            "Length **18 to 22** inclusive"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "ge and le change length, not bits",
+        "p": "This is the rule that gets the most exam wrong answers. **%%ge%% and %%le%% modify the permitted prefix length only.** They never alter which prefix bits must match — the base prefix is always the anchor."
+      },
+      {
+        "kind": "code",
+        "h": "The rule, plainly",
+        "code": "  WRONG:  ge/le change the prefix bits\n  RIGHT:  ge/le change the LENGTH only\n\n\n  10.1.0.0/16 ge 24\n\n  still requires 10.1.x.x\n  only widens the permitted length."
+      },
+      {
+        "kind": "code",
+        "h": "An explicit length matches exactly that length",
+        "code": "  ip prefix-list NAME permit 10.1.0.0/16\n\n  -> ONLY /16.\n  The implicit \"longest prefix\" idea is NOT included.\n  You must state le 32 if you want longer too."
+      },
+      {
+        "kind": "code",
+        "h": "The implicit deny",
+        "code": "  Every prefix-list ends with an implicit DENY.\n\n  To allow everything after the specific entries:\n    ip prefix-list NAME permit 0.0.0.0/0 le 32\n\n\n  Without it, anything unmatched is denied."
+      },
+      {
+        "kind": "code",
+        "h": "Ordering by sequence",
+        "code": "  ip prefix-list NAME seq 10 permit 10.1.0.0/16\n  ip prefix-list NAME seq 20 permit 10.9.0.0/16\n\n  First match wins, by sequence number.\n  Sequence numbers can be reordered or deleted."
+      },
+      {
+        "kind": "code",
+        "h": "Used in BGP policy",
+        "code": "  ip prefix-list PROVIDER-A seq 10 permit 203.0.113.0/24\n\n  route-map SET-LP-IN permit 10\n   match ip address prefix-list PROVIDER-A\n   set local-preference 150"
+      },
+      {
+        "kind": "code",
+        "h": "IPv6",
+        "code": "  ipv6 prefix-list NAME seq 10 permit 2001:db8:1::/48 le 64\n\n  Same modifiers, IPv6 addressing."
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show ip prefix-list\n  show ip prefix-list NAME\n  show ipv6 prefix-list"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Match a range of lengths",
+        "code": "ip prefix-list PROVIDER-A seq 10 permit 10.1.0.0/16 ge 18 le 22"
+      },
+      {
+        "label": "Allow everything after the specifics",
+        "code": "ip prefix-list NAME seq 10 permit 10.1.0.0/16\nip prefix-list NAME seq 90 permit 0.0.0.0/0 le 32"
+      },
+      {
+        "label": "Verify",
+        "code": "show ip prefix-list"
+      }
+    ],
+    "traps": [
+      "**%%ge%% and %%le%% modify the length, not the prefix bits.**",
+      "An **explicit length matches only that exact length** — the longest-prefix idea is not implied.",
+      "There is an **implicit deny** at the end, so add **permit 0.0.0.0/0 le 32** when everything should pass.",
+      "**First match wins**, evaluated by sequence number.",
+      "Sequence numbers can be **reordered and deleted**."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "Filter by prefix and prefix length"
+        ],
+        [
+          "Preferred over",
+          "Access lists, for routing policy"
+        ],
+        [
+          "ge",
+          "Minimum permitted length"
+        ],
+        [
+          "le",
+          "Maximum permitted length"
+        ],
+        [
+          "What they change",
+          "Length only, never the prefix bits"
+        ],
+        [
+          "No modifier",
+          "Exact length match"
+        ],
+        [
+          "Implicit",
+          "A deny at the end"
+        ],
+        [
+          "Catch-all",
+          "permit 0.0.0.0/0 le 32"
+        ],
+        [
+          "Ordering",
+          "First match wins, by sequence"
+        ],
+        [
+          "Sequence numbers",
+          "Reorderable and deletable"
+        ],
+        [
+          "IPv6",
+          "ipv6 prefix-list, same modifiers"
+        ],
+        [
+          "Verification",
+          "show ip prefix-list"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "13. Route Maps",
+        "d": "where a prefix list is usually matched"
+      },
+      {
+        "t": "11. Policy Routing",
+        "d": "one of its consumers"
+      },
+      {
+        "t": "05. Local Preference",
+        "d": "what it selects on"
+      }
+    ],
+    "glossary": [
+      "Prefix List",
+      "Route Map",
+      "BGP",
+      "IPv6",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t13",
+    "num": "13",
+    "group": "policy",
+    "title": "Route Maps",
+    "blurb": "Sequence-ordered match and set blocks, first match wins, and what a deny actually means",
+    "overview": "**[[Route Map|Route maps]]** are the general-purpose policy engine: a sequence of **match and set** blocks used for **[[BGP]]** attribute manipulation, redistribution filtering, **[[Policy-Based Routing|PBR]]**, NAT and route filtering. The exam focuses on **sequence numbers**, **permit and deny** actions, **first-match-wins** order, and how they differ from an access list.",
+    "keyIdea": "A matched deny filters. A matched permit applies the set. Anything unmatched falls through to a final deny.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The structure",
+        "code": "  route-map NAME permit 10\n   match ...\n   set ...\n\n  route-map NAME permit 20\n   match ...\n   set ...\n\n  route-map NAME deny 30\n\n\n  Evaluated in sequence order.\n  First match wins."
+      },
+      {
+        "kind": "table",
+        "h": "What each action means",
+        "cols": [
+          "Case",
+          "Result"
+        ],
+        "rows": [
+          [
+            "**matched permit**, with a set",
+            "**Apply the set**"
+          ],
+          [
+            "**matched permit**, no set",
+            "**Pass through** unchanged"
+          ],
+          [
+            "**matched deny**",
+            "**Filter** the route or packet"
+          ],
+          [
+            "**Unmatched by any entry**",
+            "Implicit **deny** at the end"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "A deny filters — it does not reject the match",
+        "p": "When a **deny** statement matches, the route or packet is **filtered**. It does not fall through to the next entry, and it is not \"unmatched\". That is a distinct meaning from the deny in an ACL, and the difference is exam-tested."
+      },
+      {
+        "kind": "code",
+        "h": "An empty permit passes through",
+        "code": "  route-map NAME permit 20\n   ! no match, no set\n\n\n  Everything matches, nothing changes.\n  The route passes through untouched."
+      },
+      {
+        "kind": "code",
+        "h": "Manipulating attributes",
+        "code": "  ip community-list standard PREMIUM permit 65001:100\n\n  route-map SET-LP-IN permit 10\n   match community PREMIUM\n   set local-preference 200\n\n  route-map SET-LP-IN permit 20\n   match ip address prefix-list PROVIDER-A\n   set local-preference 150"
+      },
+      {
+        "kind": "para",
+        "h": "Direction matters",
+        "p": "The same route-map applied **in** and **out** on a neighbour does opposite things. An exam question that omits the direction has usually omitted the answer."
+      },
+      {
+        "kind": "code",
+        "h": "In against out",
+        "code": "  neighbor 203.0.113.2 route-map POLICY in\n  neighbor 203.0.113.2 route-map POLICY out\n\n\n  Different direction, different effect."
+      },
+      {
+        "kind": "para",
+        "h": "Where route maps are used",
+        "p": "BGP attribute manipulation, **redistribution filtering**, **[[Policy-Based Routing|PBR]]**, NAT, and BGP peer policy. They are the shared policy vocabulary of the whole platform, not a BGP-only feature."
+      },
+      {
+        "kind": "code",
+        "h": "Counters tell you if it fired",
+        "code": "  show route-map\n\n  route-map NAME, deny, sequence 10\n   Match clauses:\n     match ip address prefix-list X\n   ip access matches: 14        <- it actually fired\n   ip access denies: 0"
+      },
+      {
+        "kind": "code",
+        "h": "Verification",
+        "code": "  show route-map\n  show route-map NAME\n  show ip route-map NAME"
+      }
+    ],
+    "commands": [
+      {
+        "label": "Chain several matches",
+        "code": "route-map SET-LP-IN permit 10\n match community PREMIUM\n set local-preference 200\nroute-map SET-LP-IN permit 20\n match ip address prefix-list PROVIDER-A\n set local-preference 150"
+      },
+      {
+        "label": "Confirm the counters moved",
+        "code": "show route-map\nshow ip route-map SET-LP-IN"
+      }
+    ],
+    "traps": [
+      "**First match wins**, evaluated in sequence-number order.",
+      "A **matched deny filters** the route; it does not fall through.",
+      "An **empty permit entry passes traffic through** with no set applied.",
+      "The **in against out** direction is a frequent exam trap.",
+      "Route maps serve **BGP, redistribution, PBR and NAT** alike.",
+      "**%%show route-map%% counters** are how you tell whether the entry actually matched."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Purpose",
+          "General-purpose policy engine"
+        ],
+        [
+          "Structure",
+          "Sequence-ordered match and set blocks"
+        ],
+        [
+          "Ordering",
+          "First match wins, by sequence"
+        ],
+        [
+          "Matched permit",
+          "Apply the set"
+        ],
+        [
+          "Matched permit, no set",
+          "Pass through unchanged"
+        ],
+        [
+          "Matched deny",
+          "Filter"
+        ],
+        [
+          "Unmatched",
+          "Implicit deny at the end"
+        ],
+        [
+          "Also used by",
+          "Redistribution, PBR, NAT"
+        ],
+        [
+          "Direction",
+          "In and out behave differently"
+        ],
+        [
+          "Against an ACL",
+          "Match and set, not just permit or deny"
+        ],
+        [
+          "Verification",
+          "show route-map"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "12. Prefix Lists",
+        "d": "the usual match target"
+      },
+      {
+        "t": "11. Policy Routing",
+        "d": "one of its applications"
+      },
+      {
+        "t": "07. Communities",
+        "d": "what it tags and acts on"
+      }
+    ],
+    "glossary": [
+      "Route Map",
+      "Prefix List",
+      "BGP",
+      "Policy-Based Routing",
+      "Communities",
+      "Local Preference",
+      "MED",
+      "AS Path",
+      "Control Plane"
+    ]
+  },
+  {
+    "id": "t14",
+    "num": "14",
+    "group": "policy",
+    "title": "Troubleshooting",
+    "blurb": "Session first, then the table, then best path, then policy — and where exam failures actually hide",
+    "overview": "**[[BGP]]** troubleshooting spans **session establishment** — TCP 179, TTL, update-source — **route selection**, and **policy effects** from route-maps in each direction. The standard flow is: establish sessions, verify the BGP table, trace the best path, then check policy and the RIB. Most exam failures hide in a **session mismatch**, the **next hop**, or a **route-map applied in the wrong direction**.",
+    "keyIdea": "Established sessions are not the same as advertised routes, and advertised are not the same as received. Check them separately.",
+    "sections": [
+      {
+        "kind": "code",
+        "h": "The order",
+        "code": "  1. Session      TCP 179, remote-as, update-source, TTL\n  2. BGP table    are prefixes arriving at all?\n  3. Best path    which attribute decided?\n  4. Policy       route-maps in and out\n  5. RIB          was the winner installed?\n\n\n  Never start at 3."
+      },
+      {
+        "kind": "table",
+        "h": "Symptom to cause",
+        "cols": [
+          "Symptom",
+          "Where to look"
+        ],
+        "rows": [
+          [
+            "**Idle**",
+            "Unreachable update-source, wrong remote-as"
+          ],
+          [
+            "**Active**",
+            "**Reachability or policy — not remote-as**"
+          ],
+          [
+            "Established but empty",
+            "No network statement, no activate, filters"
+          ],
+          [
+            "Routes present, not installed",
+            "**[[Data Plane|next hop]] unreachable** — iBGP needs recursion"
+          ],
+          [
+            "Policy seemingly ignored",
+            "The **direction** of the route-map"
+          ],
+          [
+            "Communities not arriving",
+            "%%send-community%% missing"
+          ]
+        ]
+      },
+      {
+        "kind": "para",
+        "h": "Active is about reachability",
+        "p": "A neighbour stuck **Active** cannot reach the update-source address, or is being blocked. It is **not** a wrong %%remote-as%% — that produces **Idle**. Getting those two the wrong way round is a classic exam trap."
+      },
+      {
+        "kind": "code",
+        "h": "Idle against Active",
+        "code": "  Idle      wrong remote-as, or unreachable too\n  Active    UNREACHABLE update-source\n            ACL blocking the peer\n            a policy that drops it"
+      },
+      {
+        "kind": "code",
+        "h": "The two direction checks",
+        "code": "  show ip bgp neighbors 203.0.113.2 received-routes\n  show ip bgp neighbors 203.0.113.2 advertised-routes\n  show ip bgp neighbors 203.0.113.2 routes\n\n\n  received-routes  = what the peer sent us\n  advertised-routes= what we sent the peer\n\n\n  Comparing them locates the policy."
+      },
+      {
+        "kind": "para",
+        "h": "iBGP routes need a reachable next hop",
+        "p": "An **[[iBGP]]** route preserves the next hop, so a prefix can sit in the BGP table and never reach the RIB because the router cannot get to that next hop. %%next-hop-self%% or an IGP route to it resolves that."
+      },
+      {
+        "kind": "code",
+        "h": "In the table but not in the RIB",
+        "code": "  show ip bgp              203.0.113.0/24 present\n  show ip route            203.0.113.0/24 absent\n  show ip route 203.0.113.2\n                           % Network not in table\n\n\n  The next hop is not reachable."
+      },
+      {
+        "kind": "para",
+        "h": "Check the address family",
+        "p": "A peer that is configured but never activated in the right **address-family** carries nothing. **%%address-family ipv6%%** and **%%address-family ipv4 multicast%%** are separate activations, and forgetting one is a common cause of an established-but-empty session."
+      },
+      {
+        "kind": "code",
+        "h": "Activation is per family",
+        "code": "  router bgp 65000\n   neighbor 2001:db8::2 remote-as 65002\n   address-family ipv6\n    neighbor 2001:db8::2 activate\n\n\n  No activate, no routes for that family."
+      },
+      {
+        "kind": "code",
+        "h": "The MTU trap",
+        "code": "  Session ESTABLISHED, Idle resets, or large\n  updates drop -> suspect MTU / PMTUD.\n\n  MTU is end to end on every hop,\n  not just on the two peers."
+      },
+      {
+        "kind": "code",
+        "h": "The full diagnostic set",
+        "code": "  show ip bgp summary\n  show ip bgp neighbors\n  show ip bgp\n  show ip route bgp\n  show route-map\n  show ip prefix-list"
+      }
+    ],
+    "commands": [
+      {
+        "label": "The diagnostic progression",
+        "code": "show ip bgp summary\nshow ip bgp neighbors\nshow ip bgp\nshow ip route bgp\nshow route-map"
+      },
+      {
+        "label": "Split the policy direction",
+        "code": "show ip bgp neighbors 203.0.113.2 received-routes\nshow ip bgp neighbors 203.0.113.2 advertised-routes"
+      },
+      {
+        "label": "Fix the next hop",
+        "code": "router bgp 65000\n neighbor 10.9.9.9 next-hop-self"
+      }
+    ],
+    "traps": [
+      "**Active state means reachability or policy — not a wrong remote-as.**",
+      "**%%received-routes%% against %%advertised-routes%%** splits policy direction, which is how you find a route-map that is doing the wrong thing.",
+      "iBGP routes need **%%next-hop-self%% or IGP recursion** before they will install.",
+      "The **MED same-AS rule** still applies — cross-AS comparison needs **%%bgp always-compare-med%%**.",
+      "**Communities are stripped without %%send-community%%**, so a policy downstream sees nothing.",
+      "**The best path fails at the first differing step**, so stop reading the table at that step.",
+      "A peer that is **not activated** in the right address-family carries nothing at all.",
+      "MTU problems look like flapping sessions — the path must be end to end."
+    ],
+    "table": {
+      "cols": [
+        "Item",
+        "Key point"
+      ],
+      "rows": [
+        [
+          "Order",
+          "Session, BGP table, best path, policy, RIB"
+        ],
+        [
+          "Transport",
+          "TCP 179"
+        ],
+        [
+          "Idle",
+          "Wrong remote-as, or unreachable"
+        ],
+        [
+          "Active",
+          "Unreachable update-source — not remote-as"
+        ],
+        [
+          "Established but empty",
+          "No activate, or filters"
+        ],
+        [
+          "In the BGP table, not the RIB",
+          "The next hop is unreachable"
+        ],
+        [
+          "received-routes",
+          "What the peer sent us"
+        ],
+        [
+          "advertised-routes",
+          "What we sent the peer"
+        ],
+        [
+          "Communities missing",
+          "send-community not configured"
+        ],
+        [
+          "Address families",
+          "Each must be activated separately"
+        ],
+        [
+          "MTU",
+          "End to end on every hop"
+        ],
+        [
+          "First command",
+          "show ip bgp summary"
+        ]
+      ]
+    },
+    "related": [
+      {
+        "t": "03. Path Selection",
+        "d": "the attribute that decided it"
+      },
+      {
+        "t": "02. iBGP",
+        "d": "the next-hop problem it inherits"
+      },
+      {
+        "t": "06. MED",
+        "d": "the rule that stops a comparison"
+      }
+    ],
+    "glossary": [
+      "BGP",
+      "iBGP",
+      "eBGP",
+      "Control Plane",
+      "Data Plane",
+      "MTU",
+      "IPv6",
+      "Multicast",
+      "Routing Table",
+      "Administrative Distance"
+    ]
+  }
+];
         const GROUPS = [
           { key: 'fund', label: 'BGP Fundamentals', chip: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-300', dot: 'bg-indigo-600', bullet: 'text-indigo-600 dark:text-indigo-400' },
           { key: 'scale', label: 'Scaling BGP', chip: 'bg-sky-100 text-sky-700 dark:bg-sky-500/20 dark:text-sky-300', dot: 'bg-sky-600', bullet: 'text-sky-600 dark:text-sky-400' },
@@ -2738,6 +3867,7 @@ show ip bgp neighbors 203.0.113.2 advertised-routes` },
           t.sections.forEach(sec => {
             parts.push(sec.h);
             if (sec.p) parts.push(sec.p);
+            if (sec.caption) parts.push(sec.caption);
             if (sec.items) sec.items.forEach(it => { parts.push(it.t); parts.push(it.d); });
             if (sec.rows) sec.rows.forEach(r => r.forEach(c => parts.push(c)));
           });
